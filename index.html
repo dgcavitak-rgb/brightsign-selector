@@ -1319,7 +1319,7 @@ button{font-family:var(--sans);}
     </div>
     <div class="form-group">
       <label for="login-password">Password<span class="req">*</span></label>
-      <input type="password" id="login-password" placeholder="Enter password" autocomplete="off">
+      <input type="password" id="login-password" placeholder="Enter password" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();handleLogin();}">
     </div>
     <button class="btn-primary" onclick="handleLogin()">Sign in →</button>
     <div id="login-error" class="error-msg"></div>
@@ -1394,7 +1394,7 @@ button{font-family:var(--sans);}
       <div class="form-section">
         <div class="section-head"><div class="section-num">02</div><div><div class="section-title">Deployment & budget</div></div></div>
         <div class="spec-grid three-col" style="margin-bottom:24px;">
-          <div class="field"><label class="field-label">Number of players<span class="req">*</span></label><div class="number-input"><button onclick="adjustQty(-1)">−</button><input type="number" id="f-qty" value="1" min="1" max="10000"><button onclick="adjustQty(1)">+</button></div><div id="mixed-qty-wrap" style="display:none;margin-top:10px;padding:12px 14px;background:var(--surface-2);border-radius:10px;border:1px dashed var(--border-strong);"><div style="font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:8px;">Split for mixed deployment</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px;">Indoor qty</div><input type="number" id="f-qty-indoor" value="0" min="0" max="10000" style="width:100%;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;"></div><div><div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px;">Outdoor qty</div><input type="number" id="f-qty-outdoor" value="0" min="0" max="10000" style="width:100%;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;"></div></div><div style="font-size:11px;color:var(--ink-subtle);margin-top:6px;">Must sum to total quantity above</div></div></div>
+          <div class="field"><label class="field-label">Number of players<span class="req">*</span></label><div class="number-input"><button onclick="adjustQty(-1)">−</button><input type="number" id="f-qty" value="1" min="1" max="10000"><button onclick="adjustQty(1)">+</button></div><div id="mixed-qty-wrap" style="display:none;margin-top:10px;padding:12px 14px;background:var(--surface-2);border-radius:10px;border:1px dashed var(--border-strong);"><div style="font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:8px;">Split for mixed deployment</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px;">Indoor qty</div><input type="number" id="f-qty-indoor" value="0" min="0" max="10000" style="width:100%;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;"></div><div><div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px;">Outdoor qty</div><input type="number" id="f-qty-outdoor" value="0" min="0" max="10000" style="width:100%;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;"></div></div><div style="font-size:11px;color:var(--ink-subtle);margin-top:6px;">Total above auto-updates to Indoor + Outdoor</div></div></div>
           <div class="field"><label class="field-label">Environment<span class="req">*</span></label>
             <div class="choice-grid" data-input="environment">
               <button class="choice-card" data-v="indoor"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="choice-card-name">Indoor</span><span class="choice-card-sub">Standard signage</span></button>
@@ -1561,6 +1561,7 @@ const USERS = {
   'vipul':      {fullName:'Vipul Parihar',     role:'Presales (dvLED)',          password:'cavitak@123', isSuper:false},
   'hritika':    {fullName:'Hritika Sawant',    role:'Sales',                     password:'cavitak@123', isSuper:false},
   'ranjith':    {fullName:'Ranjith Sr',        role:'Presales',                  password:'cavitak@123', isSuper:false},
+  'rahuljain':  {fullName:'Rahul Jain',         role:'Presales',                  password:'cavitak@123', isSuper:false},
   'sachchi':    {fullName:'Sachchi Kaushik',   role:'Sales',                     password:'cavitak@123', isSuper:false},
   'ashish':     {fullName:'Ashish Malshe',     role:'Sales',                     password:'cavitak@123', isSuper:false},
   'rahul':      {fullName:'Rahul Soyanter',    role:'Support',                   password:'cavitak@123', isSuper:false},
@@ -2479,6 +2480,13 @@ function handleLogout(){
 }
 
 function showTab(which){
+  // v17: Auto-reset form when user clicks 'New selection' tab after having viewed a result.
+  // This ensures fresh fields for every new selection — last entry does NOT carry over.
+  if(which==='form' && state.result){
+    resetForm();
+    state.result=null;
+    document.getElementById('tab-result').style.display='none';
+  }
   ['form','result','log'].forEach(t=>{
     document.getElementById('section-'+t).style.display=t===which?'block':'none';
     const btn=document.getElementById('tab-'+t);
@@ -2522,8 +2530,27 @@ document.querySelectorAll('.choice-grid').forEach(group=>{
       // v15: show/hide mixed qty split when environment is picked
       if(key==='environment'){
         const mixedWrap=document.getElementById('mixed-qty-wrap');
+        const totalInp=document.getElementById('f-qty');
+        const totalBtns=document.querySelectorAll('.number-input button');
         mixedWrap.style.display=val==='mixed'?'block':'none';
-        if(val!=='mixed'){
+        if(val==='mixed'){
+          // v17: Make total qty read-only and auto-calculated from indoor+outdoor
+          totalInp.readOnly=true;
+          totalInp.style.background='var(--surface-2)';
+          totalInp.style.color='var(--ink-muted)';
+          totalInp.style.cursor='not-allowed';
+          totalBtns.forEach(b=>{b.disabled=true;b.style.opacity='0.4';b.style.cursor='not-allowed';});
+          // Seed total = sum of current indoor + outdoor (default 0+0=0, but guard minimum 1)
+          const sum=(parseInt(document.getElementById('f-qty-indoor').value)||0)+(parseInt(document.getElementById('f-qty-outdoor').value)||0);
+          totalInp.value=sum>=1?sum:1;
+          state.form.qty=sum>=1?sum:1;
+        } else {
+          // Re-enable total qty for non-mixed modes
+          totalInp.readOnly=false;
+          totalInp.style.background='';
+          totalInp.style.color='';
+          totalInp.style.cursor='';
+          totalBtns.forEach(b=>{b.disabled=false;b.style.opacity='';b.style.cursor='';});
           document.getElementById('f-qty-indoor').value='0';
           document.getElementById('f-qty-outdoor').value='0';
           state.form.qtyIndoor=0;state.form.qtyOutdoor=0;
@@ -2559,6 +2586,20 @@ document.getElementById('f-qty').addEventListener('input',e=>{
   let v=parseInt(e.target.value||'1');
   if(isNaN(v)||v<1)v=1;state.form.qty=v;
 });
+// v17: Mixed deployment auto-calc — total = indoor + outdoor
+function recalcMixedTotal(){
+  const indoor=parseInt(document.getElementById('f-qty-indoor').value)||0;
+  const outdoor=parseInt(document.getElementById('f-qty-outdoor').value)||0;
+  const sum=indoor+outdoor;
+  const totalInp=document.getElementById('f-qty');
+  const finalTotal=sum>=1?sum:1;
+  totalInp.value=finalTotal;
+  state.form.qty=finalTotal;
+  state.form.qtyIndoor=indoor;
+  state.form.qtyOutdoor=outdoor;
+}
+document.getElementById('f-qty-indoor').addEventListener('input',recalcMixedTotal);
+document.getElementById('f-qty-outdoor').addEventListener('input',recalcMixedTotal);
 
 const budgetSlider=document.getElementById('f-budget');
 budgetSlider.addEventListener('input',e=>{setBudget(parseInt(e.target.value));});
@@ -2679,10 +2720,10 @@ function runSelector(){
   }
 
   const failed=orderedChecks.filter(c=>!c.test());
-  // Mixed-deployment qty validation: if env=mixed, indoor+outdoor must sum to total qty
-  if(f.environment==='mixed' && f.qty>=1){
-    if(f.qtyIndoor+f.qtyOutdoor!==parseInt(f.qty)){
-      failed.push({key:'qty-mix',id:'f-qty',label:'Indoor + Outdoor must equal total quantity'});
+  // v17: Mixed-deployment — total auto-calculated from indoor+outdoor, so just require sum >= 1
+  if(f.environment==='mixed'){
+    if(f.qtyIndoor+f.qtyOutdoor<1){
+      failed.push({key:'qty-mix',id:'f-qty-indoor',label:'Enter at least one Indoor or Outdoor quantity'});
     }
   }
 
@@ -2907,8 +2948,9 @@ function buildBOMCard(m,f,cms){
     rows.push({name:`BrightSign ${r.outdoorVariant.id}`, qty:qtyOutdoor, note:`${r.outdoorVariant.tag} · Outdoor slice · aluminium chassis · 64 GB microSD included`});
   }
   if(f.wifi==='yes')rows.push({name:'WD-105 Wi-Fi / Bluetooth module', qty:qtyTotal, note:'M.2 E-Key dual-antenna'});
-  // CMS license rows (On-Prem / Cloud / none) + always-shown TBD placeholder
-  if(cms.rows && cms.rows.length){
+  // v17: CMS license rows — skip entirely when Local + ≤25 players (clean BOM).
+  const isLocalSmall=(f.update==='local' && qtyTotal<=25);
+  if(!isLocalSmall && cms.rows && cms.rows.length){
     cms.rows.forEach(row=>rows.push(row));
   }
   let html=`<div class="result-card"><div class="card-title"><span class="card-title-num">⌲</span>Bill of Materials</div><div class="card-divider"></div><table class="bom-table"><thead><tr><th>Line item</th><th class="num" style="width:90px;">Qty</th></tr></thead><tbody>`;
@@ -3165,10 +3207,14 @@ function downloadQuoteExcel(){
     aoa.push([`BrightSign ${r.outdoorVariant.id}`,qtyOutdoor,`${r.outdoorVariant.tag} · Outdoor slice · aluminium chassis · 64 GB microSD included`]);
   }
   if(f.wifi==='yes')aoa.push(['WD-105 Wi-Fi / Bluetooth module',qtyTotal,'M.2 E-Key dual-antenna']);
-  // CMS license rows (driven by computeCMS v16 logic)
-  const excelCms=computeCMS(f);
-  if(excelCms.rows && excelCms.rows.length){
-    excelCms.rows.forEach(row=>aoa.push([row.name,row.qty,row.note||'']));
+  // v17: CMS license rows in Excel BOM — skip entirely when Local + ≤25 players for a clean BOM.
+  // Otherwise use computeCMS output (On-Prem for Local>25, Cloud for any Cloud qty, plus CMS-TBD).
+  const isLocalSmall=(f.update==='local' && qtyTotal<=25);
+  if(!isLocalSmall){
+    const excelCms=computeCMS(f);
+    if(excelCms.rows && excelCms.rows.length){
+      excelCms.rows.forEach(row=>aoa.push([row.name,row.qty,row.note||'']));
+    }
   }
   aoa.push([]);
   // Tender spec
