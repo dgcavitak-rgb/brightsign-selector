@@ -1,0 +1,2831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BrightSign Product Selector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital,wght@0,400;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#F6F8FC;--surface:#FFFFFF;--surface-2:#F1F5F9;
+  --border:#E2E8F0;--border-strong:#CBD5E1;
+  --ink:#0F172A;--ink-muted:#475569;--ink-subtle:#94A3B8;
+  --indigo:#1E1B4B;--indigo-soft:#312E81;--indigo-light:#E0E7FF;
+  --blue:#2563EB;--blue-dark:#1D4ED8;--blue-light:#DBEAFE;
+  --emerald:#059669;--emerald-light:#D1FAE5;
+  --amber:#D97706;--amber-light:#FEF3C7;
+  --rose:#DC2626;--rose-light:#FEE2E2;
+  --gold:#CA8A04;--gold-light:#FEF9C3;
+  /* TYPOGRAPHY SYSTEM — apply via utility classes, never one-off */
+  --serif:'Instrument Serif',Georgia,serif;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  /* Type scale — 6 levels only */
+  --fs-display:44px;  --lh-display:1.05; --ls-display:-0.03em; --fw-display:400;
+  --fs-h1:22px;       --lh-h1:1.3;       --ls-h1:-0.015em;     --fw-h1:500;
+  --fs-h2:17px;       --lh-h2:1.4;       --ls-h2:-0.01em;      --fw-h2:500;
+  --fs-body:14px;     --lh-body:1.55;    --ls-body:0;           --fw-body:400;
+  --fs-label:11px;    --lh-label:1.4;    --ls-label:0.08em;    --fw-label:600;
+  --fs-meta:11px;     --lh-meta:1.4;     --ls-meta:0.04em;     --fw-meta:500;
+  /* Glass & shadow */
+  --glass-bg:rgba(255,255,255,0.70);
+  --glass-bg-strong:rgba(255,255,255,0.85);
+  --glass-border:rgba(255,255,255,0.6);
+  --glass-blur:blur(20px) saturate(180%);
+  --shadow-sm:0 1px 2px rgba(15,23,42,0.04);
+  --shadow:0 4px 14px rgba(15,23,42,0.06), 0 2px 4px rgba(15,23,42,0.03);
+  --shadow-lg:0 20px 48px rgba(15,23,42,0.10), 0 8px 16px rgba(15,23,42,0.05);
+  --shadow-glass:0 8px 32px rgba(30,27,75,0.08), inset 0 1px 0 rgba(255,255,255,0.9);
+  --shadow-float:0 16px 40px rgba(30,27,75,0.12), 0 4px 12px rgba(30,27,75,0.06), inset 0 1px 0 rgba(255,255,255,0.95);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{
+  font-family:var(--sans);
+  font-size:var(--fs-body);
+  line-height:var(--lh-body);
+  font-weight:var(--fw-body);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+  font-feature-settings:'cv02','cv03','cv04','cv11';
+  min-height:100vh;
+}
+body{
+  background:
+    radial-gradient(ellipse 70% 50% at 12% 8%, rgba(199,210,254,0.55) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 45% at 88% 22%, rgba(147,197,253,0.40) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 55% at 50% 100%, rgba(233,213,255,0.42) 0%, transparent 60%),
+    linear-gradient(180deg,#F6F8FC 0%,#EEF1FB 100%);
+  background-attachment:fixed;position:relative;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(circle 380px at 22% 78%, rgba(129,140,248,0.10) 0%, transparent 70%),
+    radial-gradient(circle 480px at 82% 18%, rgba(96,165,250,0.09) 0%, transparent 70%);
+}
+.page,.container{position:relative;z-index:1;}
+.page{display:none;min-height:100vh;}
+.page.active{display:block;}
+button{font-family:var(--sans);}
+.app-header{
+  background:rgba(255,255,255,0.72);
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border-bottom:1px solid rgba(226,232,240,0.6);
+  padding:16px 36px;display:flex;justify-content:space-between;align-items:center;
+  position:sticky;top:0;z-index:50;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.9), 0 1px 24px rgba(15,23,42,0.04);
+}
+.app-logo{display:flex;align-items:center;gap:12px;}
+.app-logo-mark{
+  width:38px;height:38px;
+  background:linear-gradient(135deg,var(--indigo) 0%,var(--indigo-soft) 100%);
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-family:var(--serif);font-size:18px;font-weight:600;letter-spacing:-0.02em;
+  box-shadow:0 6px 16px rgba(30,27,75,0.30), inset 0 1px 0 rgba(255,255,255,0.20);
+}
+.app-logo-text{display:flex;flex-direction:column;line-height:1.2;}
+.app-logo-name{
+  font-family:var(--serif);
+  font-size:18px;
+  line-height:1.2;
+  letter-spacing:-0.01em;
+  font-weight:500;
+  color:var(--ink);
+}
+.app-logo-sub{
+  font-family:var(--sans);
+  font-size:10px;
+  line-height:1.2;
+  letter-spacing:var(--ls-label);
+  font-weight:var(--fw-label);
+  text-transform:uppercase;
+  color:var(--ink-subtle);
+  margin-top:1px;
+}
+.app-user{display:flex;align-items:center;gap:14px;}
+.app-user-info{text-align:right;}
+.app-user-name{
+  font-family:var(--sans);
+  font-size:13px;
+  line-height:1.3;
+  font-weight:500;
+  color:var(--ink);
+  display:flex;align-items:center;gap:6px;justify-content:flex-end;
+}
+.app-user-role{
+  font-family:var(--sans);
+  font-size:10px;
+  line-height:1.3;
+  letter-spacing:var(--ls-label);
+  font-weight:var(--fw-label);
+  text-transform:uppercase;
+  color:var(--ink-subtle);
+  margin-top:2px;
+}
+.super-pill{
+  background:var(--gold);color:#fff;padding:2px 8px;border-radius:10px;
+  font-family:var(--sans);
+  font-size:9px;line-height:1.3;
+  letter-spacing:0.06em;font-weight:600;text-transform:uppercase;
+}
+.app-user-avatar{
+  width:36px;height:36px;border-radius:50%;
+  background:var(--indigo-light);color:var(--indigo);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--sans);
+  font-size:13px;font-weight:600;
+}
+.app-user-avatar.super{background:var(--gold-light);color:var(--gold);}
+.app-user button{
+  background:transparent;border:1px solid var(--border-strong);color:var(--ink-muted);
+  padding:7px 14px;border-radius:8px;
+  font-family:var(--sans);
+  font-size:12px;line-height:1.3;font-weight:500;
+  cursor:pointer;transition:all 140ms;
+}
+.app-user button:hover{border-color:var(--ink-muted);color:var(--ink);}
+.app-nav{
+  background:rgba(255,255,255,0.55);
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border-bottom:1px solid rgba(226,232,240,0.5);
+  padding:0 36px;display:flex;gap:0;
+}
+.app-nav button{
+  background:transparent;border:none;
+  padding:14px 22px;
+  font-family:var(--sans);
+  font-size:13px;line-height:1.3;font-weight:500;
+  color:var(--ink-muted);
+  cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
+  display:flex;align-items:center;gap:8px;transition:all 140ms;
+}
+.app-nav button.active{color:var(--blue);border-bottom-color:var(--blue);}
+.app-nav button:hover:not(.active){color:var(--ink);}
+.app-nav svg{width:14px;height:14px;}
+.container{max-width:1180px;margin:0 auto;padding:40px 36px 120px;}
+.page-header{margin-bottom:40px;}
+.page-eyebrow{
+  font-family:var(--sans);
+  font-size:var(--fs-label);
+  line-height:var(--lh-label);
+  letter-spacing:var(--ls-label);
+  font-weight:var(--fw-label);
+  text-transform:uppercase;
+  color:var(--blue);
+  margin-bottom:12px;
+}
+.page-title{
+  font-family:var(--serif);
+  font-size:var(--fs-display);
+  line-height:var(--lh-display);
+  letter-spacing:var(--ls-display);
+  font-weight:var(--fw-display);
+  color:var(--ink);
+  margin-bottom:10px;
+}
+.page-subtitle{
+  font-family:var(--sans);
+  font-size:15px;
+  line-height:1.55;
+  font-weight:var(--fw-body);
+  color:var(--ink-muted);
+  max-width:640px;
+}
+.progress-rail{display:flex;gap:4px;margin:28px 0 32px;padding:0 2px;}
+.progress-step{flex:1;height:4px;background:var(--border);border-radius:2px;transition:background 240ms;}
+.progress-step.active{background:var(--blue);}
+.progress-step.done{background:var(--indigo);}
+#page-login{display:none;min-height:100vh;background:
+  radial-gradient(ellipse 60% 50% at 20% 20%, rgba(199,210,254,0.6) 0%, transparent 60%),
+  radial-gradient(ellipse 60% 50% at 80% 80%, rgba(147,197,253,0.5) 0%, transparent 60%),
+  linear-gradient(135deg,#F6F8FC 0%,#E0E7FF 100%);}
+#page-login.active{display:flex;align-items:center;justify-content:center;padding:24px;}
+.login-card{
+  background:var(--glass-bg-strong);
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  width:100%;max-width:440px;padding:44px 40px;
+  border-radius:20px;border:1px solid var(--glass-border);
+  box-shadow:var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,0.9);
+}
+.login-brand{display:flex;align-items:center;gap:12px;margin-bottom:32px;padding-bottom:26px;border-bottom:1px solid var(--border);}
+.login-brand .app-logo-mark{width:44px;height:44px;font-size:22px;}
+.login-brand-text{display:flex;flex-direction:column;}
+.login-brand-name{
+  font-family:var(--serif);
+  font-size:20px;
+  line-height:var(--lh-h2);
+  letter-spacing:var(--ls-h2);
+  font-weight:var(--fw-h2);
+  color:var(--ink);
+}
+.login-brand-sub{
+  font-family:var(--sans);
+  font-size:var(--fs-label);
+  line-height:var(--lh-label);
+  letter-spacing:var(--ls-label);
+  font-weight:var(--fw-label);
+  text-transform:uppercase;
+  color:var(--ink-subtle);
+  margin-top:2px;
+}
+.login-title{
+  font-family:var(--serif);
+  font-size:32px;
+  line-height:1.15;
+  letter-spacing:-0.02em;
+  font-weight:400;
+  color:var(--ink);
+  margin-bottom:8px;
+}
+.login-desc{
+  font-family:var(--sans);
+  font-size:var(--fs-body);
+  line-height:var(--lh-body);
+  color:var(--ink-muted);
+  margin-bottom:26px;
+}
+.form-group{margin-bottom:18px;}
+.form-group label{
+  display:block;
+  font-family:var(--sans);
+  font-size:var(--fs-label);
+  line-height:var(--lh-label);
+  letter-spacing:var(--ls-label);
+  font-weight:var(--fw-label);
+  text-transform:uppercase;
+  color:var(--ink-muted);
+  margin-bottom:7px;
+}
+.form-group .req{color:var(--rose);margin-left:2px;}
+.form-group input,.form-group select{
+  width:100%;padding:12px 14px;
+  border:1px solid var(--border-strong);
+  border-radius:10px;
+  font-family:var(--sans);
+  font-size:var(--fs-body);
+  line-height:var(--lh-body);
+  background:#fff;
+  color:var(--ink);
+  transition:all 140ms;
+}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-light);}
+.form-group input::placeholder{color:var(--ink-subtle);}
+.btn-primary:hover{background:var(--blue-dark);}
+.error-msg{
+  background:var(--rose-light);color:var(--rose);
+  padding:11px 14px;border-radius:10px;
+  font-family:var(--sans);
+  font-size:13px;line-height:1.5;font-weight:500;
+  margin-top:14px;display:none;
+  border:1px solid #FECACA;
+}
+.error-msg.show{display:block;}
+.login-footer{
+  text-align:center;padding:20px;
+  font-family:var(--sans);
+  font-size:12px;line-height:1.4;
+  color:var(--ink-subtle);
+  position:absolute;bottom:0;left:0;right:0;
+}
+.form-section{
+  background:var(--glass-bg-strong);
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-border);
+  border-radius:16px;padding:28px 32px;margin-bottom:18px;
+  box-shadow:var(--shadow-glass);
+  transition:all 240ms cubic-bezier(0.4,0,0.2,1);
+}
+.form-section:hover{
+  box-shadow:var(--shadow-float);
+  border-color:rgba(99,102,241,0.25);
+  transform:translateY(-1px);
+}
+.section-head{display:flex;align-items:center;gap:16px;margin-bottom:24px;}
+.section-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:38px;height:38px;
+  background:linear-gradient(135deg,var(--indigo) 0%,var(--indigo-soft) 100%);
+  color:#fff;border-radius:10px;flex-shrink:0;
+  font-family:var(--mono);
+  font-size:var(--fs-meta);
+  line-height:1;
+  letter-spacing:var(--ls-meta);
+  font-weight:var(--fw-meta);
+  box-shadow:0 4px 12px rgba(30,27,75,0.22), inset 0 1px 0 rgba(255,255,255,0.18);
+}
+.section-title{
+  font-family:var(--serif);
+  font-size:24px;
+  line-height:var(--lh-h2);
+  letter-spacing:var(--ls-h2);
+  font-weight:var(--fw-h2);
+  color:var(--ink);
+}
+.section-hint{
+  font-family:var(--sans);
+  font-size:13px;
+  color:var(--ink-subtle);
+  margin-top:3px;
+  line-height:1.45;
+}
+.field{margin-bottom:22px;}
+.field:last-child{margin-bottom:0;}
+.field-label{
+  font-family:var(--sans);
+  font-size:var(--fs-label);
+  line-height:var(--lh-label);
+  letter-spacing:var(--ls-label);
+  font-weight:var(--fw-label);
+  text-transform:uppercase;
+  color:var(--ink-muted);
+  display:block;
+  margin-bottom:10px;
+}
+.field-label .req{color:var(--rose);margin-left:2px;}
+.spec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px 24px;}
+.spec-grid.two-col{grid-template-columns:repeat(2,1fr);}
+.spec-grid.three-col{grid-template-columns:repeat(3,1fr);}
+.pill-group{display:flex;flex-wrap:wrap;gap:8px;}
+.pill{
+  background:#fff;border:1px solid var(--border-strong);border-radius:8px;
+  padding:10px 16px;
+  font-family:var(--sans);
+  font-size:13px;line-height:1.3;font-weight:500;
+  color:var(--ink);cursor:pointer;transition:all 140ms;
+}
+.pill:hover{border-color:var(--blue);color:var(--blue);}
+.pill.selected{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 2px 6px rgba(37,99,235,0.25);}
+.choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;}
+.choice-card{
+  background:#fff;border:1.5px solid var(--border);border-radius:10px;
+  padding:14px 16px;cursor:pointer;transition:all 140ms;
+  text-align:left;display:flex;flex-direction:column;gap:4px;
+  font-family:var(--sans);
+}
+.choice-card:hover{border-color:var(--blue);transform:translateY(-1px);box-shadow:var(--shadow);}
+.choice-card.selected{border-color:var(--blue);background:var(--blue-light);box-shadow:0 4px 12px rgba(37,99,235,0.15);}
+.choice-card-icon{width:22px;height:22px;color:var(--indigo);margin-bottom:2px;}
+.choice-card.selected .choice-card-icon{color:var(--blue);}
+.choice-card-name{
+  font-family:var(--sans);
+  font-size:14px;line-height:1.35;font-weight:600;
+  color:var(--ink);
+}
+.choice-card.selected .choice-card-name{color:var(--indigo);}
+.choice-card-sub{
+  font-family:var(--sans);
+  font-size:11px;line-height:1.4;font-weight:400;
+  color:var(--ink-muted);
+}
+.number-input{display:inline-flex;align-items:center;border:1.5px solid var(--border-strong);border-radius:10px;overflow:hidden;background:#fff;}
+.number-input button{
+  background:transparent;border:none;width:44px;height:44px;
+  font-family:var(--sans);
+  font-size:18px;font-weight:400;
+  cursor:pointer;color:var(--ink-muted);
+  transition:all 140ms;
+}
+.number-input button:hover{background:var(--surface-2);color:var(--blue);}
+.number-input input{
+  width:80px;border:none;text-align:center;
+  font-family:var(--mono);
+  font-size:15px;line-height:1;font-weight:500;
+  padding:10px 0;background:transparent;color:var(--ink);
+}
+.number-input input:focus{outline:none;}
+.budget-wrap{padding:8px 4px 0;}
+.budget-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;}
+.budget-zone{
+  font-family:var(--serif);
+  font-size:26px;
+  line-height:1.1;
+  letter-spacing:-0.02em;
+  font-weight:400;
+  color:var(--indigo);
+}
+.budget-zone-models{
+  font-family:var(--mono);
+  font-size:var(--fs-meta);
+  line-height:var(--lh-meta);
+  letter-spacing:var(--ls-meta);
+  font-weight:var(--fw-meta);
+  text-transform:uppercase;
+  color:var(--ink-subtle);
+  margin-top:3px;
+}
+.budget-slider{width:100%;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:linear-gradient(to right,#DBEAFE 0%,#93C5FD 25%,#60A5FA 50%,#3B82F6 75%,#1E3A8A 100%);outline:none;cursor:pointer;}
+.budget-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:24px;height:24px;border-radius:50%;background:var(--indigo);border:4px solid #fff;box-shadow:0 2px 8px rgba(30,27,75,0.4);cursor:pointer;transition:transform 140ms;}
+.budget-slider::-webkit-slider-thumb:hover{transform:scale(1.15);}
+.budget-slider::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:var(--indigo);border:4px solid #fff;box-shadow:0 2px 8px rgba(30,27,75,0.4);cursor:pointer;}
+.budget-markers{
+  display:flex;justify-content:space-between;margin-top:12px;
+  font-family:var(--sans);
+  font-size:var(--fs-label);
+  line-height:var(--lh-label);
+  letter-spacing:var(--ls-label);
+  font-weight:var(--fw-label);
+  text-transform:uppercase;
+  color:var(--ink-subtle);
+}
+.budget-markers span{cursor:pointer;transition:color 140ms;}
+.budget-markers span:hover{color:var(--ink);}
+.budget-markers span.active{color:var(--indigo);font-weight:600;}
+.ssd-cap-wrap{margin-top:12px;max-width:240px;display:none;}
+.ssd-cap-wrap.show{display:block;}
+.ssd-cap-wrap select{
+  width:100%;padding:12px 14px;
+  border:1.5px solid var(--border-strong);
+  border-radius:10px;
+  font-family:var(--sans);
+  font-size:var(--fs-body);
+  line-height:var(--lh-body);
+  background:#fff;color:var(--ink);
+}
+.ssd-cap-wrap select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-light);}
+.action-bar{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--glass-bg-strong);
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-border);
+  border-radius:16px;padding:12px 16px;display:flex;gap:10px;
+  box-shadow:var(--shadow-float);z-index:40;
+}
+.btn-secondary{
+  background:transparent;border:1px solid var(--border-strong);color:var(--ink);
+  padding:12px 20px;border-radius:10px;
+  font-family:var(--sans);
+  font-size:14px;line-height:1.3;font-weight:500;letter-spacing:-0.005em;
+  cursor:pointer;transition:all 140ms;
+}
+.btn-secondary:hover{border-color:var(--ink-muted);background:var(--surface-2);}
+.btn-action{
+  background:var(--indigo);color:#fff;border:none;
+  padding:12px 28px;border-radius:10px;
+  font-family:var(--sans);
+  font-size:14px;line-height:1.3;font-weight:500;letter-spacing:-0.005em;
+  cursor:pointer;transition:all 140ms;
+  box-shadow:0 4px 12px rgba(30,27,75,0.25);
+}
+.btn-action:hover{background:var(--indigo-soft);}
+.btn-print{
+  background:var(--emerald);color:#fff;border:none;
+  padding:12px 28px;border-radius:10px;
+  font-family:var(--sans);
+  font-size:14px;line-height:1.3;font-weight:500;letter-spacing:-0.005em;
+  cursor:pointer;transition:all 140ms;
+}
+.btn-print:hover{background:#047857;}
+.btn-gold{
+  background:var(--gold);color:#fff;border:none;
+  padding:12px 22px;border-radius:10px;
+  font-family:var(--sans);
+  font-size:14px;line-height:1.3;font-weight:500;letter-spacing:-0.005em;
+  cursor:pointer;transition:all 140ms;
+}
+.btn-gold:hover{background:#A16207;}
+.btn-primary{
+  width:100%;background:var(--blue);color:#fff;border:none;
+  padding:13px 20px;border-radius:10px;
+  font-family:var(--sans);
+  font-size:14px;line-height:1.3;font-weight:500;letter-spacing:-0.005em;
+  cursor:pointer;transition:all 140ms;margin-top:10px;
+}
+.btn-primary:hover{background:var(--blue-dark);}
+.result-card{
+  background:var(--glass-bg-strong);
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-border);
+  border-radius:16px;padding:32px;margin-bottom:18px;position:relative;
+  box-shadow:var(--shadow-glass);
+}
+.result-card.hero-card{
+  border:1.5px solid rgba(202,138,4,0.4);
+  background:linear-gradient(180deg,rgba(254,252,232,0.85) 0%,rgba(255,255,255,0.82) 40%);
+  box-shadow:0 12px 40px rgba(202,138,4,0.15), inset 0 1px 0 rgba(255,255,255,0.95);
+}
+.hero-badge{
+  position:absolute;top:-14px;right:28px;
+  background:linear-gradient(135deg,var(--gold) 0%,#A16207 100%);
+  color:#fff;padding:7px 14px;border-radius:20px;
+  font-family:var(--sans);
+  font-size:10px;line-height:1.3;font-weight:600;
+  letter-spacing:0.08em;text-transform:uppercase;
+  box-shadow:0 4px 12px rgba(202,138,4,0.3);
+  display:flex;align-items:center;gap:6px;
+}
+.hero-badge svg{width:12px;height:12px;}
+.card-title{
+  font-family:var(--serif);
+  font-size:var(--fs-h1);
+  line-height:var(--lh-h1);
+  letter-spacing:var(--ls-h1);
+  font-weight:var(--fw-h1);
+  color:var(--ink);
+  margin-bottom:6px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.card-title-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:32px;height:32px;
+  background:var(--surface-2);
+  color:var(--indigo);
+  border-radius:9px;
+  font-family:var(--mono);
+  font-size:13px;
+  font-weight:var(--fw-meta);
+  line-height:1;
+}
+.card-divider{height:1px;background:var(--border);margin:22px 0 24px;}
+/* Premium hero banner: photo right, typography left */
+.model-hero-banner{
+  display:grid;
+  grid-template-columns:1fr 320px;
+  gap:32px;
+  align-items:center;
+  padding:8px 0 4px;
+}
+.model-hero-left{min-width:0;}
+.model-hero-photo{
+  position:relative;
+  aspect-ratio:1/1;
+  background:linear-gradient(135deg,rgba(241,245,249,0.6) 0%,rgba(255,255,255,0.4) 100%);
+  border-radius:20px;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+  overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 24px rgba(15,23,42,0.06);
+}
+.model-hero-photo::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 30% 25%, rgba(224,231,255,0.5) 0%, transparent 65%);
+  pointer-events:none;
+}
+.model-hero-photo img{
+  max-width:100%;max-height:100%;
+  object-fit:contain;
+  position:relative;z-index:1;
+  filter:drop-shadow(0 12px 24px rgba(15,23,42,0.18));
+}
+.model-hero-photo-loading{
+  font-family:var(--sans);
+  font-size:11px;line-height:1.4;
+  letter-spacing:var(--ls-label);
+  font-weight:var(--fw-label);
+  text-transform:uppercase;
+  color:var(--ink-subtle);
+}
+.model-hero{display:flex;align-items:baseline;gap:20px;margin-bottom:10px;flex-wrap:wrap;}
+.model-name{
+  font-family:var(--serif);
+  font-size:80px;
+  line-height:0.95;
+  letter-spacing:-0.035em;
+  font-weight:400;
+  color:var(--indigo);
+}
+.model-tag{
+  font-family:var(--sans);
+  font-size:15px;
+  line-height:1.45;
+  font-weight:500;
+  color:var(--ink-muted);
+}
+.model-notes{
+  font-family:var(--sans);
+  font-size:14px;
+  line-height:1.6;
+  color:var(--ink-muted);
+  margin-top:12px;
+}
+@media (max-width:860px){
+  .model-hero-banner{grid-template-columns:1fr;gap:20px;}
+  .model-hero-photo{max-width:260px;margin:0 auto;}
+  .model-name{font-size:60px;}
+}
+.badge-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;}
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:20px;
+  font-family:var(--sans);
+  font-size:12px;line-height:1.3;font-weight:500;
+}
+.badge.success{background:var(--emerald-light);color:var(--emerald);}
+.badge.warning{background:var(--amber-light);color:var(--amber);}
+.badge.info{background:var(--blue-light);color:var(--blue-dark);}
+.badge.gold{background:var(--gold-light);color:var(--gold);}
+.badge.indigo{background:var(--indigo-light);color:var(--indigo);}
+.badge .dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+.alternates-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px;}
+.alt-card{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;}
+.alt-label{
+  font-family:var(--sans);
+  font-size:var(--fs-label);
+  line-height:var(--lh-label);
+  letter-spacing:var(--ls-label);
+  font-weight:var(--fw-label);
+  text-transform:uppercase;
+  color:var(--ink-subtle);
+  margin-bottom:8px;
+  display:flex;align-items:center;gap:6px;
+}
+.alt-label svg{width:11px;height:11px;}
+.alt-model{
+  font-family:var(--serif);
+  font-size:26px;
+  line-height:1.15;
+  letter-spacing:-0.02em;
+  font-weight:400;
+  color:var(--ink);
+}
+.alt-tag{
+  font-family:var(--sans);
+  font-size:12px;
+  line-height:1.4;
+  color:var(--ink-muted);
+  margin-top:3px;
+}
+.budget-note{
+  background:var(--indigo-light);border-left:3px solid var(--indigo);
+  padding:14px 18px;border-radius:0 10px 10px 0;margin-top:18px;
+  font-family:var(--sans);
+  font-size:13px;line-height:1.55;
+  color:var(--indigo);
+}
+.bom-table{
+  width:100%;border-collapse:collapse;
+  font-family:var(--sans);
+  font-size:var(--fs-body);
+  line-height:var(--lh-body);
+}
+.bom-table thead{background:var(--surface-2);}
+.bom-table th{
+  text-align:left;padding:12px 16px;
+  font-family:var(--sans);
+  font-size:var(--fs-label);
+  line-height:var(--lh-label);
+  letter-spacing:var(--ls-label);
+  font-weight:var(--fw-label);
+  text-transform:uppercase;
+  color:var(--ink-subtle);
+  border-bottom:1px solid var(--border);
+}
+.bom-table th.num{text-align:right;}
+.bom-table td{padding:14px 16px;border-bottom:1px solid var(--border);}
+.bom-table td.num{
+  text-align:right;
+  font-family:var(--mono);
+  font-weight:var(--fw-meta);
+  color:var(--indigo);
+}
+.bom-table tr:last-child td{border-bottom:none;}
+.bom-item-name{
+  font-family:var(--sans);
+  font-size:var(--fs-body);
+  font-weight:500;
+  color:var(--ink);
+}
+.bom-item-note{
+  font-family:var(--sans);
+  font-size:12px;
+  line-height:1.45;
+  color:var(--ink-muted);
+  margin-top:3px;
+}
+.concern-box{background:var(--amber-light);border-left:3px solid var(--amber);padding:16px 18px;border-radius:0 10px 10px 0;margin-top:18px;}
+.concern-title{
+  font-family:var(--sans);
+  font-size:13px;line-height:1.4;font-weight:600;
+  color:var(--amber);margin-bottom:8px;
+  display:flex;align-items:center;gap:6px;
+}
+.concern-title svg{width:14px;height:14px;}
+.concern-list{
+  list-style:none;
+  font-family:var(--sans);
+  font-size:13px;line-height:1.6;
+  color:var(--ink-muted);
+}
+.concern-list li{padding-left:16px;position:relative;margin-bottom:6px;}
+.concern-list li::before{content:'';position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%;background:var(--amber);}
+.concern-list li strong{color:var(--ink);font-weight:600;}
+.project-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px 28px;}
+.project-field{display:flex;flex-direction:column;gap:4px;}
+.project-label{
+  font-family:var(--sans);
+  font-size:var(--fs-label);
+  line-height:var(--lh-label);
+  letter-spacing:var(--ls-label);
+  font-weight:var(--fw-label);
+  text-transform:uppercase;
+  color:var(--ink-subtle);
+}
+.project-value{
+  font-family:var(--sans);
+  font-size:14px;
+  line-height:1.45;
+  font-weight:500;
+  color:var(--ink);
+}
+.os-selector{background:linear-gradient(135deg,var(--indigo-light) 0%,#EEF2FF 100%);border:1px solid #C7D2FE;border-radius:12px;padding:22px 24px;margin-top:20px;}
+.os-selector-title{
+  font-family:var(--serif);
+  font-size:19px;
+  line-height:var(--lh-h2);
+  letter-spacing:var(--ls-h2);
+  font-weight:var(--fw-h2);
+  color:var(--indigo);
+  margin-bottom:4px;
+}
+.os-selector-desc{
+  font-family:var(--sans);
+  font-size:12px;line-height:1.5;
+  color:var(--ink-muted);
+  margin-bottom:14px;
+}
+.os-pills{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.os-pill{
+  flex:1;background:#fff;
+  border:1.5px solid var(--border-strong);
+  border-radius:10px;padding:14px 16px;
+  text-align:left;cursor:pointer;transition:all 140ms;
+  font-family:var(--sans);
+}
+.os-pill:hover{border-color:var(--blue);}
+.os-pill.selected{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px var(--blue-light);}
+.os-pill-name{
+  font-family:var(--sans);
+  font-size:14px;line-height:1.35;font-weight:600;
+  color:var(--ink);
+}
+.os-pill-note{
+  font-family:var(--sans);
+  font-size:11px;line-height:1.45;
+  color:var(--ink-muted);
+  margin-top:4px;
+}
+.no-rec-block{background:var(--rose-light);border-left:3px solid var(--rose);padding:22px 26px;border-radius:0 10px 10px 0;}
+.no-rec-title{
+  font-family:var(--serif);
+  font-size:26px;
+  line-height:1.2;
+  letter-spacing:-0.02em;
+  font-weight:400;
+  color:var(--rose);
+  margin-bottom:10px;
+}
+.no-rec-desc{
+  font-family:var(--sans);
+  font-size:14px;line-height:1.65;
+  color:var(--ink-muted);
+}
+.tech-spec-table{
+  width:100%;border-collapse:collapse;
+  font-family:var(--sans);
+  font-size:13px;line-height:1.5;
+  margin-top:10px;
+}
+.tech-spec-table td{padding:10px 0;border-bottom:1px solid var(--border);vertical-align:top;}
+.tech-spec-table td:first-child{width:40%;color:var(--ink-muted);padding-right:14px;font-weight:500;}
+.tech-spec-table td:last-child{font-weight:500;color:var(--ink);}
+.tech-spec-table tr:last-child td{border-bottom:none;}
+/* ===== ROBUST TENDER SPEC CARD ===== */
+.spec-competitor-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px;padding:14px 18px;background:var(--indigo-light);border-radius:10px;border-left:3px solid var(--indigo);}
+.spec-competitor-label{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--indigo);margin-bottom:4px;}
+.spec-competitor-name{font-family:var(--serif);font-size:16px;font-weight:500;color:var(--ink);}
+.spec-competitor-note{font-size:12px;color:var(--ink-muted);margin-top:3px;line-height:1.4;}
+.spec-legend{display:flex;gap:14px;font-size:11px;color:var(--ink-muted);margin-top:6px;flex-wrap:wrap;}
+.spec-legend-item{display:inline-flex;align-items:center;gap:4px;}
+.spec-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.spec-dot.unique{background:var(--gold);}
+.spec-dot.shared{background:var(--emerald);}
+.spec-dot.absent{background:var(--ink-subtle);opacity:0.4;}
+.spec-section{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden;}
+.spec-section-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;user-select:none;transition:background 140ms;}
+.spec-section-head:hover{background:var(--indigo-light);}
+.spec-section-head.open{background:#fff;border-bottom:1px solid var(--border);}
+.spec-section-title{font-family:var(--serif);font-size:15px;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:10px;}
+.spec-section-count{font-size:11px;color:var(--ink-subtle);font-family:var(--mono);background:#fff;padding:2px 8px;border-radius:10px;font-weight:500;}
+.spec-section-head.open .spec-section-count{background:var(--indigo-light);color:var(--indigo);}
+.spec-caret{width:16px;height:16px;color:var(--ink-muted);transition:transform 200ms;}
+.spec-section-head.open .spec-caret{transform:rotate(90deg);color:var(--indigo);}
+.spec-section-body{display:none;background:#fff;padding:4px 0;}
+.spec-section.open .spec-section-body{display:block;}
+/* ===== PRESCRIPTIVE TENDER SPEC VIEW ===== */
+.tender-view-tabs{display:flex;gap:0;margin-bottom:18px;border-bottom:1px solid var(--border);}
+.tender-view-tab{background:transparent;border:none;padding:10px 20px;font-size:13px;font-weight:500;color:var(--ink-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 140ms;font-family:var(--sans);}
+.tender-view-tab.active{color:var(--indigo);border-bottom-color:var(--indigo);}
+.tender-view-tab:hover:not(.active){color:var(--ink);}
+.tender-view-content{display:none;}
+.tender-view-content.active{display:block;}
+.prescriptive-intro{background:var(--surface-2);border-left:3px solid var(--indigo);padding:14px 18px;border-radius:0 10px 10px 0;margin-bottom:16px;font-size:13px;color:var(--ink-muted);line-height:1.6;}
+.prescriptive-intro strong{color:var(--ink);}
+.clause-section{background:#fff;border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;}
+.clause-section-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;cursor:pointer;user-select:none;
+  background:var(--surface-2);transition:background 140ms;
+}
+.clause-section-head:hover{background:var(--indigo-light);}
+.clause-section-head.open{background:var(--indigo);color:#fff;}
+.clause-section-head.open .clause-count{background:rgba(255,255,255,0.2);color:#fff;}
+.clause-section-title{
+  font-family:var(--serif);
+  font-size:17px;
+  line-height:var(--lh-h2);
+  letter-spacing:var(--ls-h2);
+  font-weight:var(--fw-h2);
+  display:flex;align-items:center;gap:10px;
+}
+.clause-count{
+  font-family:var(--mono);
+  font-size:var(--fs-meta);
+  line-height:var(--lh-meta);
+  letter-spacing:var(--ls-meta);
+  font-weight:var(--fw-meta);
+  background:#fff;color:var(--ink-muted);
+  padding:3px 10px;border-radius:10px;
+}
+.clause-caret{width:16px;height:16px;transition:transform 200ms;}
+.clause-section-head.open .clause-caret{transform:rotate(90deg);}
+.clause-section-body{display:none;padding:4px 0;}
+.clause-section.open .clause-section-body{display:block;}
+.clause-row{
+  display:grid;grid-template-columns:48px 1fr 70px 70px 160px;
+  gap:12px;align-items:start;padding:16px 20px;
+  border-bottom:1px solid var(--border);
+  font-family:var(--sans);
+  font-size:13px;line-height:1.6;
+}
+.clause-row:last-child{border-bottom:none;}
+.clause-num{
+  font-family:var(--mono);
+  font-size:var(--fs-meta);
+  line-height:1.4;
+  letter-spacing:var(--ls-meta);
+  font-weight:600;
+  color:var(--ink-subtle);
+  padding-top:2px;
+}
+.clause-text{color:var(--ink);line-height:1.6;}
+.clause-comply{display:flex;justify-content:center;align-items:center;padding-top:2px;}
+.clause-check{
+  width:22px;height:22px;border:1.5px solid var(--border-strong);
+  border-radius:4px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--sans);
+  font-size:12px;font-weight:600;
+  color:var(--ink-subtle);background:#fff;
+}
+.clause-remark{
+  background:#fff;border:1px solid var(--border-strong);
+  border-radius:6px;padding:6px 10px;
+  font-family:var(--sans);
+  font-size:12px;line-height:1.45;
+  color:var(--ink);min-height:32px;resize:vertical;
+}
+.clause-header-row{
+  display:grid;grid-template-columns:48px 1fr 70px 70px 160px;
+  gap:12px;padding:10px 20px;
+  background:var(--indigo-light);
+  font-family:var(--sans);
+  font-size:var(--fs-label);
+  line-height:var(--lh-label);
+  letter-spacing:var(--ls-label);
+  font-weight:var(--fw-label);
+  text-transform:uppercase;
+  color:var(--indigo);
+  border-bottom:1px solid var(--border);
+}
+.clause-header-row div:nth-child(3),.clause-header-row div:nth-child(4){text-align:center;}
+.tender-footer-box{background:linear-gradient(135deg,var(--indigo-light) 0%,#EEF2FF 100%);border:1px solid #C7D2FE;border-radius:10px;padding:16px 20px;margin-top:18px;font-size:12px;color:var(--ink-muted);line-height:1.55;}
+.tender-footer-box strong{color:var(--indigo);}
+@media print{
+  .tender-view-tabs{display:none;}
+  .tender-view-content{display:block !important;}
+  #tender-comparison-view{display:none !important;}
+  .clause-section{break-inside:avoid;border:0.5pt solid #ccc;}
+  .clause-section .clause-section-body{display:block !important;}
+  .clause-section-head{background:#1E1B4B !important;color:#fff !important;cursor:default;}
+  .clause-section-head .clause-count{background:rgba(255,255,255,0.2) !important;color:#fff !important;}
+  .clause-caret{display:none;}
+  .clause-row{font-size:9pt;padding:6pt 8pt;grid-template-columns:30pt 1fr 40pt 40pt 100pt;gap:6pt;}
+  .clause-header-row{font-size:7pt;padding:4pt 8pt;grid-template-columns:30pt 1fr 40pt 40pt 100pt;gap:6pt;}
+  .clause-num{font-size:7pt;}
+  .clause-text{font-size:9pt;line-height:1.35;}
+  .prescriptive-intro{background:#fff !important;}
+  .tender-footer-box{background:#fff !important;border:0.5pt solid #ccc;}
+}
+@media (max-width:720px){
+  .clause-row,.clause-header-row{grid-template-columns:30px 1fr 44px 44px 100px;gap:6px;padding:10px 12px;font-size:12px;}
+  .clause-text{font-size:12px;}
+}
+.spec-row{display:grid;grid-template-columns:1fr 70px 140px;gap:14px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--border);font-size:13px;}
+.spec-row:last-child{border-bottom:none;}
+.spec-row-desc{color:var(--ink);line-height:1.45;}
+.spec-row-bs{text-align:center;}
+.spec-row-comp{text-align:center;font-size:11px;color:var(--ink-muted);}
+.spec-mark{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-weight:600;font-size:12px;}
+.spec-mark.yes{background:var(--emerald-light);color:var(--emerald);}
+.spec-mark.no{background:var(--surface-2);color:var(--ink-subtle);}
+.spec-mark.unique{background:var(--gold-light);color:var(--gold);border:1.5px solid var(--gold);}
+.spec-row-comp-yes{color:var(--emerald);font-weight:500;}
+.spec-row-comp-no{color:var(--rose);font-weight:500;}
+.spec-summary-row{display:grid;grid-template-columns:1fr 70px 140px;gap:14px;padding:10px 18px;background:var(--indigo-light);font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--indigo);border-bottom:1px solid var(--border);}
+.spec-summary-row div:nth-child(2),.spec-summary-row div:nth-child(3){text-align:center;}
+.spec-controls{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.spec-ctrl-btn{background:transparent;border:1px solid var(--border-strong);color:var(--ink-muted);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;transition:all 140ms;font-family:var(--sans);}
+.spec-ctrl-btn:hover{border-color:var(--indigo);color:var(--indigo);}
+.diff-summary{background:linear-gradient(135deg,var(--gold-light) 0%,#FEF3C7 100%);border:1px solid #FCD34D;border-radius:10px;padding:14px 18px;margin-top:14px;}
+.diff-title{font-family:var(--serif);font-size:14px;font-weight:600;color:var(--ink);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.diff-title svg{width:14px;height:14px;color:var(--gold);}
+.diff-list{list-style:none;font-size:12px;color:var(--ink-muted);line-height:1.6;}
+.diff-list li{padding-left:14px;position:relative;margin-bottom:3px;}
+.diff-list li::before{content:'★';position:absolute;left:0;color:var(--gold);font-size:10px;top:2px;}
+@media print{
+  .spec-section{background:#fff !important;border:0.5pt solid #ccc;break-inside:avoid;}
+  .spec-section .spec-section-body{display:block !important;}
+  .spec-section-head{background:#F3F4F6 !important;cursor:default;}
+  .spec-caret{display:none;}
+  .spec-controls{display:none;}
+  .spec-row{font-size:9pt;padding:5pt 8pt;}
+  .spec-summary-row{font-size:7pt;padding:4pt 8pt;}
+  .spec-competitor-head{background:#F3F4F6 !important;}
+  .diff-summary{background:#FEFCE8 !important;}
+}
+@media (max-width:720px){
+  .spec-row{grid-template-columns:1fr 50px 90px;gap:8px;padding:10px 12px;font-size:12px;}
+  .spec-summary-row{grid-template-columns:1fr 50px 90px;gap:8px;padding:8px 12px;}
+  .spec-competitor-head{flex-direction:column;}
+}
+.log-empty{text-align:center;padding:80px 20px;color:var(--ink-subtle);}
+.log-empty-icon{width:56px;height:56px;margin:0 auto 16px;color:var(--ink-subtle);opacity:0.5;}
+.log-empty-title{
+  font-family:var(--serif);
+  font-size:22px;
+  line-height:1.2;
+  letter-spacing:-0.015em;
+  font-weight:400;
+  color:var(--ink-muted);
+  margin-bottom:6px;
+}
+.log-entry{
+  background:var(--glass-bg-strong);
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-border);
+  border-radius:14px;padding:20px 24px;margin-bottom:12px;
+  display:grid;grid-template-columns:180px 1fr auto;gap:24px;align-items:center;
+  box-shadow:var(--shadow-glass);
+  transition:all 140ms;
+}
+.log-entry:hover{border-color:rgba(99,102,241,0.2);box-shadow:var(--shadow-float);transform:translateY(-1px);}
+.log-date{
+  font-family:var(--mono);
+  font-size:var(--fs-meta);
+  line-height:1.55;
+  letter-spacing:var(--ls-meta);
+  font-weight:var(--fw-meta);
+  color:var(--ink-subtle);
+}
+.log-main{display:flex;flex-direction:column;gap:4px;}
+.log-project{
+  font-family:var(--sans);
+  font-size:15px;
+  line-height:1.35;
+  font-weight:600;
+  color:var(--ink);
+}
+.log-detail{
+  font-family:var(--sans);
+  font-size:12px;
+  line-height:1.45;
+  color:var(--ink-muted);
+}
+.log-model{
+  font-family:var(--serif);
+  font-size:28px;
+  line-height:1;
+  letter-spacing:-0.02em;
+  font-weight:400;
+  color:var(--indigo);
+}
+.super-banner{
+  background:linear-gradient(135deg,var(--gold-light) 0%,#FEF08A 100%);
+  border:1px solid #FCD34D;border-radius:14px;padding:18px 24px;margin-bottom:26px;
+  display:flex;align-items:center;gap:16px;
+}
+.super-banner-icon{width:40px;height:40px;background:var(--gold);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.super-banner-text{flex:1;}
+.super-banner-title{
+  font-family:var(--serif);
+  font-size:17px;
+  line-height:var(--lh-h2);
+  letter-spacing:var(--ls-h2);
+  font-weight:var(--fw-h2);
+  color:var(--ink);
+}
+.super-banner-sub{
+  font-family:var(--sans);
+  font-size:12px;
+  line-height:1.45;
+  color:var(--ink-muted);
+  margin-top:3px;
+}
+.super-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:28px;}
+.stat-card{
+  background:var(--glass-bg-strong);
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-border);
+  border-radius:12px;padding:16px 20px;
+  box-shadow:var(--shadow-glass);
+}
+.stat-label{
+  font-family:var(--sans);
+  font-size:var(--fs-label);
+  line-height:var(--lh-label);
+  letter-spacing:var(--ls-label);
+  font-weight:var(--fw-label);
+  text-transform:uppercase;
+  color:var(--ink-subtle);
+}
+.stat-value{
+  font-family:var(--serif);
+  font-size:32px;
+  line-height:1.05;
+  letter-spacing:-0.025em;
+  font-weight:400;
+  color:var(--indigo);
+  margin-top:6px;
+}
+.sync-status{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--glass-bg-strong);
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-border);border-radius:12px;
+  padding:10px 14px;
+  font-family:var(--sans);
+  font-size:12px;line-height:1.4;font-weight:500;
+  color:var(--ink-muted);
+  box-shadow:var(--shadow);
+  display:none;align-items:center;gap:8px;z-index:30;
+}
+.sync-status.show{display:flex;}
+.sync-status.success{color:var(--emerald);border-color:rgba(5,150,105,0.3);}
+.sync-status.error{color:var(--amber);border-color:rgba(217,119,6,0.3);}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:currentColor;}
+@media print{
+  body{background:#fff;color:#000;font-size:10pt;}
+  .page{display:block !important;}
+  #page-login,#section-form,#section-log,.app-nav,.app-header,.action-bar,.sync-status{display:none !important;}
+  #section-result{display:block !important;}
+  .container{padding:0;max-width:100%;}
+  .page-title{font-size:18pt;margin-bottom:4pt;}
+  .page-eyebrow{font-size:8pt;margin-bottom:4pt;}
+  .page-subtitle{font-size:9pt;margin-bottom:12pt;}
+  .result-card{border:0.5pt solid #999;border-radius:0;box-shadow:none;margin-bottom:10pt;padding:12pt 14pt;page-break-inside:avoid;background:#fff !important;}
+  .result-card.hero-card{border:1.2pt solid #CA8A04;background:#fff !important;}
+  .hero-badge{background:#CA8A04 !important;font-size:7pt;padding:1pt 8pt;top:-6pt;}
+  .card-title{font-size:12pt;gap:8pt;}
+  .card-title-num{width:22pt;height:22pt;font-size:9pt;}
+  .model-name{font-size:26pt;color:#1E1B4B;}
+  .model-hero{gap:10pt;}
+  .model-tag{font-size:10pt;}
+  .badge{font-size:8pt;padding:2pt 8pt;}
+  .alt-card{background:#fff;border:0.5pt solid #999;}
+  .bom-table{font-size:9pt;}
+  .bom-table td{padding:6pt 8pt;}
+  .bom-table th{padding:5pt 8pt;font-size:8pt;}
+  .concern-box,.budget-note{page-break-inside:avoid;}
+  .os-selector{background:#fff !important;border:0.5pt solid #ccc;}
+  .print-only-header{display:block !important;margin-bottom:16pt;padding-bottom:10pt;border-bottom:1.5pt solid #1E1B4B;}
+  .print-only-footer{display:block !important;margin-top:14pt;padding-top:8pt;border-top:0.5pt solid #999;text-align:center;font-size:8pt;color:#666;}
+  @page{margin:1.5cm 1.3cm;size:A4;}
+}
+.print-only-header,.print-only-footer{display:none;}
+@media (max-width:720px){
+  .app-header{padding:12px 18px;}
+  .app-nav{padding:0 18px;overflow-x:auto;}
+  .app-nav button{padding:12px 14px;font-size:12px;white-space:nowrap;}
+  .container{padding:24px 18px 140px;}
+  .page-title{font-size:28px;}
+  .form-section{padding:20px;}
+  .section-head{gap:12px;margin-bottom:18px;}
+  .section-num{width:32px;height:32px;font-size:12px;}
+  .section-title{font-size:17px;}
+  .spec-grid.two-col,.spec-grid.three-col{grid-template-columns:1fr;}
+  .choice-grid{grid-template-columns:repeat(2,1fr);}
+  .os-pills{grid-template-columns:1fr;}
+  .alternates-row{grid-template-columns:1fr;}
+  .model-name{font-size:40px;}
+  .log-entry{grid-template-columns:1fr;gap:10px;}
+  .login-card{padding:32px 24px;}
+  .app-user-info{display:none;}
+  .action-bar{width:calc(100% - 24px);left:12px;right:12px;transform:none;justify-content:space-between;}
+  .action-bar button{flex:1;padding:12px 10px;font-size:13px;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="page-login" class="page active">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-brand-text">
+        <div class="login-brand-name">BrightSign Selector</div>
+        <div class="login-brand-sub">Product selection tool</div>
+      </div>
+    </div>
+    <div class="login-title">Sign in</div>
+    <div class="login-desc">Enter your first name and password to access the selector.</div>
+    <div class="form-group">
+      <label for="login-name">First name<span class="req">*</span></label>
+      <input type="text" id="login-name" placeholder="e.g. Mohit" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label for="login-password">Password<span class="req">*</span></label>
+      <input type="password" id="login-password" placeholder="Enter password" autocomplete="off">
+    </div>
+    <button class="btn-primary" onclick="handleLogin()">Sign in →</button>
+    <div id="login-error" class="error-msg"></div>
+  </div>
+  <div class="login-footer">Dipenkumar Gajjar · National Product Manager · +91 8160 756 906 · dipen.g@cavitak.com</div>
+</div>
+
+<!-- APP -->
+<div id="page-app" class="page">
+  <div class="app-header">
+    <div class="app-logo">
+      <div class="app-logo-text">
+        <div class="app-logo-name">BrightSign Selector</div>
+        <div class="app-logo-sub">Product selection tool</div>
+      </div>
+    </div>
+    <div class="app-user">
+      <div class="app-user-info">
+        <div class="app-user-name" id="user-label-name">—</div>
+        <div class="app-user-role" id="user-label-role">—</div>
+      </div>
+      <div class="app-user-avatar" id="user-avatar">?</div>
+      <button onclick="handleLogout()">Sign out</button>
+    </div>
+  </div>
+  <div class="app-nav">
+    <button id="tab-form" class="active" onclick="showTab('form')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      New selection
+    </button>
+    <button id="tab-result" onclick="showTab('result')" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Result
+    </button>
+    <button id="tab-log" onclick="showTab('log')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span id="log-tab-label">History</span>
+    </button>
+  </div>
+
+  <div id="section-form">
+    <div class="container">
+      <div class="page-header">
+        <div class="page-eyebrow">New selection</div>
+        <div class="page-title">Find the right BrightSign player</div>
+        <div class="page-subtitle">Enter project details — we'll recommend the right Series 5 player.</div>
+        <div class="progress-rail">
+          <div class="progress-step active"></div>
+          <div class="progress-step"></div>
+          <div class="progress-step"></div>
+          <div class="progress-step"></div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-head"><div class="section-num">01</div><div><div class="section-title">Project context</div></div></div>
+        <div class="spec-grid two-col">
+          <div class="form-group" style="margin:0;"><label>Project name<span class="req">*</span></label><input type="text" id="f-project" placeholder="e.g. Retail flagship — Chennai"></div>
+          <div class="form-group" style="margin:0;"><label>End-user / Client<span class="req">*</span></label><input type="text" id="f-enduser" placeholder="e.g. Reliance Retail"></div>
+          <div class="form-group" style="margin:0;"><label>Venue / Location<span class="req">*</span></label><input type="text" id="f-venue" placeholder="e.g. Phoenix Marketcity"></div>
+          <div class="form-group" style="margin:0;"><label>Partner / SI<span class="req">*</span></label><input type="text" id="f-partner" placeholder="e.g. Inviot AV Solutions"></div>
+          <div class="form-group" style="margin:0;"><label>Consultant<span class="req">*</span></label><input type="text" id="f-consultant" placeholder="e.g. AV-Technik / Direct"></div>
+          <div class="form-group" style="margin:0;"><label>City<span class="req">*</span></label><select id="f-city"><option value="">Select city…</option><option>Ahmedabad</option><option>Bangalore</option><option>Chennai</option><option>Delhi / NCR</option><option>Hyderabad</option><option>Kolkata</option><option>Mumbai</option><option>Pune</option><option>Jaipur</option><option>Kochi</option><option>Chandigarh</option><option>Lucknow</option><option>Indore</option><option>Bhubaneswar</option><option>Nagpur</option><option>Surat</option><option>Vadodara</option><option>Goa</option><option>Other</option></select></div>
+          <div class="form-group" style="margin:0;"><label>Deal stage<span class="req">*</span></label><select id="f-stage"><option value="">Select stage…</option><option>Lead</option><option>Opportunity</option><option>Proposal</option><option>Negotiation</option><option>Order</option></select></div>
+          <div class="form-group" style="margin:0;"><label>Expected close month<span class="req">*</span></label><input type="month" id="f-closemonth"></div>
+          <div class="form-group" style="margin:0;"><label>Contact person<span class="req">*</span></label><input type="text" id="f-contactname" placeholder="End-user contact name"></div>
+          <div class="form-group" style="margin:0;"><label>Contact phone<span class="req">*</span></label><input type="tel" id="f-contactphone" placeholder="+91 …"></div>
+          <div class="form-group" style="margin:0;"><label>Contact email<span class="req">*</span></label><input type="email" id="f-contactemail" placeholder="name@client.com"></div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-head"><div class="section-num">02</div><div><div class="section-title">Deployment & budget</div></div></div>
+        <div class="spec-grid three-col" style="margin-bottom:24px;">
+          <div class="field"><label class="field-label">Number of players<span class="req">*</span></label><div class="number-input"><button onclick="adjustQty(-1)">−</button><input type="number" id="f-qty" value="1" min="1" max="10000"><button onclick="adjustQty(1)">+</button></div></div>
+          <div class="field"><label class="field-label">Environment<span class="req">*</span></label>
+            <div class="choice-grid" data-input="environment">
+              <button class="choice-card" data-v="indoor"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="choice-card-name">Indoor</span><span class="choice-card-sub">Standard signage</span></button>
+              <button class="choice-card" data-v="outdoor"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg><span class="choice-card-name">Outdoor</span><span class="choice-card-sub">Enclosure required</span></button>
+            </div>
+          </div>
+          <div class="field"><label class="field-label">Content update<span class="req">*</span></label>
+            <div class="choice-grid" data-input="update">
+              <button class="choice-card" data-v="local"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><span class="choice-card-name">Local network</span><span class="choice-card-sub">On-premises LAN</span></button>
+              <button class="choice-card" data-v="cloud"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg><span class="choice-card-name">Remote / Cloud</span><span class="choice-card-sub">BSN.cloud managed</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">Budget tier<span class="req">*</span></label>
+          <div class="budget-head"><div><div class="budget-zone" id="budget-zone-label">Standard</div><div class="budget-zone-models" id="budget-zone-models">HD · XD series</div></div></div>
+          <div class="budget-wrap">
+            <input type="range" class="budget-slider" id="f-budget" min="1" max="5" step="1" value="2">
+            <div class="budget-markers">
+              <span id="mk-1" onclick="setBudget(1)">Basic</span>
+              <span id="mk-2" class="active" onclick="setBudget(2)">Standard</span>
+              <span id="mk-3" onclick="setBudget(3)">Deployable</span>
+              <span id="mk-4" onclick="setBudget(4)">Performance</span>
+              <span id="mk-5" onclick="setBudget(5)">Flagship</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-head"><div class="section-num">03</div><div><div class="section-title">Content type</div></div></div>
+        <div class="field" style="margin-bottom:0;"><label class="field-label">Playback content<span class="req">*</span></label>
+          <div class="choice-grid" data-input="content">
+            <button class="choice-card" data-v="video"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><span class="choice-card-name">Video only</span><span class="choice-card-sub">Silent signage</span></button>
+            <button class="choice-card" data-v="av"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><span class="choice-card-name">Audio + Video</span><span class="choice-card-sub">Full AV signage</span></button>
+            <button class="choice-card" data-v="audio"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg><span class="choice-card-name">Audio only</span><span class="choice-card-sub">AU335 player</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section" id="section-video-specs">
+        <div class="section-head"><div class="section-num">04</div><div><div class="section-title">Video & interactivity</div></div></div>
+        <div class="spec-grid two-col">
+          <div class="field" style="margin-bottom:0;"><label class="field-label">Resolution<span class="req">*</span></label><div class="pill-group" data-input="resolution"><button class="pill" data-v="hd">Full HD</button><button class="pill" data-v="4k">4K</button><button class="pill" data-v="8k">8K</button></div></div>
+          <div class="field" style="margin-bottom:0;"><label class="field-label">Displays per player<span class="req">*</span></label><div class="pill-group" data-input="outputs"><button class="pill" data-v="1">1</button><button class="pill" data-v="2">2</button><button class="pill" data-v="4">4</button></div></div>
+          <div class="field" style="margin-bottom:0;"><label class="field-label">HDMI input<span class="req">*</span></label><div class="pill-group" data-input="hdmi-in"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
+          <div class="field" style="margin-bottom:0;"><label class="field-label">Touch / interactive<span class="req">*</span></label><div class="pill-group" data-input="touch"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
+          <div class="field" style="margin-bottom:0;"><label class="field-label">Wi-Fi<span class="req">*</span></label><div class="pill-group" data-input="wifi"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
+          <div class="field" style="margin-bottom:0;"><label class="field-label">SSD required<span class="req">*</span></label><div class="pill-group" data-input="ssd"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div><div class="ssd-cap-wrap" id="ssd-cap-wrap"><select id="f-ssd-cap"><option value="">Storage capacity…</option><option value="128">128 GB</option><option value="256">256 GB</option><option value="512">512 GB</option><option value="1024">1 TB</option></select></div></div>
+        </div>
+      </div>
+
+      <div id="form-error" class="error-msg"></div>
+    </div>
+    <div class="action-bar">
+      <button class="btn-secondary" onclick="resetForm()">Reset</button>
+      <button class="btn-action" onclick="runSelector()">Recommend →</button>
+    </div>
+  </div>
+
+  <div id="section-result" style="display:none;">
+    <div class="container">
+      <div class="print-only-header">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div><div style="font-family:var(--serif);font-size:14pt;font-weight:500;">Dipenkumar Gajjar</div><div style="font-size:9pt;color:#666;">National Product Manager · +91 8160 756 906 · dipen.g@cavitak.com</div></div>
+          <div style="text-align:right;font-size:9pt;color:#666;"><div>Quote generated: <span id="print-date"></span></div><div>Ref: <span id="print-ref"></span></div></div>
+        </div>
+      </div>
+      <div class="page-header"><div class="page-eyebrow">Result</div><div class="page-title">Your recommendation</div></div>
+      <div id="result-content"></div>
+      <div class="print-only-footer"><div>Dipenkumar Gajjar · National Product Manager · +91 8160 756 906 · dipen.g@cavitak.com</div><div>This document is for internal reference and customer discussion. Pricing subject to current price list, forex, and landed-cost variations.</div></div>
+    </div>
+    <div class="action-bar">
+      <button class="btn-secondary" onclick="showTab('form')">← Back</button>
+      <button class="btn-action" onclick="confirmSelection()">Confirm ✓</button>
+      <button class="btn-print" onclick="downloadQuoteExcel()">Download Excel ↓</button>
+    </div>
+  </div>
+
+  <div id="section-log" style="display:none;">
+    <div class="container">
+      <div class="page-header"><div class="page-eyebrow">History</div><div class="page-title" id="log-page-title">Selection history</div><div class="page-subtitle" id="log-page-subtitle">All past recommendations.</div></div>
+      <div id="super-dashboard" style="display:none;"></div>
+      <div id="log-content"></div>
+    </div>
+    <div class="action-bar" id="log-action-bar" style="display:none;">
+      <button class="btn-secondary" onclick="refreshLog()">↻ Refresh</button>
+      <button class="btn-gold" id="export-btn" onclick="exportCSV()" style="display:none;">Export CSV</button>
+      <button class="btn-secondary" onclick="clearLog()">Clear</button>
+    </div>
+  </div>
+</div>
+
+<div class="sync-status" id="sync-status"><span class="sync-dot"></span><span id="sync-msg">Saving…</span></div>
+
+<script>
+/* ================================================================
+   GOOGLE SHEETS WEBHOOK
+   Paste your Apps Script web-app URL in WEBHOOK_URL below.
+   See "apps-script-setup.md" for the setup guide.
+   If blank, data saves to browser localStorage only.
+================================================================ */
+const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbys2amxa3c-54UWIAvlrB50WJhMpFluLr2DjcZd7RTlH1ZPC-Um-ECvAvB1tVMDoHXC/exec';  // ← PASTE YOUR APPS SCRIPT WEB-APP URL HERE
+
+/* ================================================================
+   USER ALLOWLIST (first-name login, case-insensitive)
+   Change passwords here if needed.
+================================================================ */
+const USERS = {
+  'dipenkumar': {fullName:'Dipenkumar Gajjar', role:'National Product Manager', password:'cavitak@27052142', isSuper:true},
+  'mohit':      {fullName:'Mohit Chaturvedi',  role:'Presales',                  password:'cavitak@123', isSuper:false},
+  'vipul':      {fullName:'Vipul Parihar',     role:'Presales (dvLED)',          password:'cavitak@123', isSuper:false},
+  'hritika':    {fullName:'Hritika Sawant',    role:'Sales',                     password:'cavitak@123', isSuper:false},
+  'ranjith':    {fullName:'Ranjith Sr',        role:'Presales',                  password:'cavitak@123', isSuper:false},
+  'sachchi':    {fullName:'Sachchi Kaushik',   role:'Sales',                     password:'cavitak@123', isSuper:false},
+  'ashish':     {fullName:'Ashish Malshe',     role:'Sales',                     password:'cavitak@123', isSuper:false}
+};
+
+/* ================================================================
+   CATALOGUE — strict 12-point price rank (low → high)
+   Series ladder: AU → LS → HD → XD → XT → XC
+================================================================ */
+const MODELS = [
+  { rank:1, id:'AU335', available:true, series:5, group:'AU', tag:'Audio-only · Series 5', audio:true, res:['audio'], outputs:0, hdmiIn:false, touch:false, chassis:'plastic', poe:false, ssdCapable:false, hero:false, notes:'Up to 3 audio zones · HDMI ARC/eARC · USB-C · 3.5mm analog output' },
+  { rank:2, id:'LS425', available:true, series:5, group:'LS', tag:'Affordable HD · Basic I/O', audio:false, res:['hd'], outputs:1, hdmiIn:false, touch:false, chassis:'plastic', poe:false, ssdCapable:false, hero:false, notes:'Full HD · HDMI 2.0a · 10/100 Ethernet · microSD primary' },
+  { rank:3, id:'LS445', available:true, series:5, group:'LS', tag:'Affordable 4K · Basic I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:false, chassis:'plastic', poe:false, ssdCapable:false, hero:false, notes:'4K 8-bit @ 60p · HDMI 2.0a · 10/100 Ethernet · microSD primary' },
+  { rank:4, id:'HD225', available:true, series:5, group:'HD', tag:'Entry 4K HDR · Standard I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:false, chassis:'plastic', poe:false, ssdCapable:null, hero:false, notes:'4K 10-bit HDR · HDMI 2.0a · Gigabit · GPIO · IR' },
+  { rank:5, id:'HD1025', available:true, series:5, group:'HD', tag:'Entry 4K HDR · Expanded I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:true, chassis:'plastic', poe:false, ssdCapable:null, hero:false, notes:'4K 10-bit HDR · USB-A · RS-232 · GPIO · IR · touch-ready' },
+  { rank:6, id:'XD235', available:true, series:5, group:'XD', tag:'4K Deployable · Standard I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:false, chassis:'aluminium', poe:true, ssdCapable:null, hero:false, notes:'4K 10-bit HDR · PoE+ · anodised aluminium · extended operating temp' },
+  { rank:7, id:'XD1035', available:true, series:5, group:'XD', tag:'4K Deployable · Expanded I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:true, chassis:'aluminium', poe:true, ssdCapable:null, hero:false, notes:'4K 10-bit HDR · PoE+ · USB-A · RS-232 · GPIO · touch · aluminium' },
+  { rank:8, id:'XT245', available:true, series:5, group:'XT', tag:'Power & Performance · Standard I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:false, chassis:'aluminium', poe:true, ssdCapable:null, hero:false, notes:'4K HDR · HDMI 2.1a · PoE+ · USB-C · aluminium chassis' },
+  { rank:9, id:'XT1145', available:true, series:5, group:'XT', tag:'8K-capable · HDMI-in · Hero product', audio:false, res:['hd','4k','8k'], outputs:1, hdmiIn:true, touch:true, chassis:'aluminium', poe:true, ssdCapable:null, hero:true, notes:'8K decode · HDMI 2.1a · HDMI-in · PoE+ · touch · aluminium · live TV capable' },
+  { rank:10, id:'XT2145', available:true, series:5, group:'XT', tag:'8K · Dual HDMI out + HDMI-in', audio:false, res:['hd','4k','8k'], outputs:2, hdmiIn:true, touch:true, chassis:'aluminium', poe:true, ssdCapable:null, hero:false, notes:'8K · 2× HDMI out · HDMI-in · PoE+ · aluminium · dual-display' },
+  { rank:11, id:'XC2055', available:true, series:5, group:'XC', tag:'Most Powerful · 8K · 2-screen', audio:false, res:['hd','4k','8k'], outputs:2, hdmiIn:false, touch:true, chassis:'metal', poe:false, ssdCapable:null, hero:false, xc:true, notes:'Intel Gen 11 Celeron · 8GB RAM · 8K · 2× HDMI · BrightSignOS or Windows IoT' },
+  { rank:12, id:'XC4055', available:true, series:5, group:'XC', tag:'Flagship · 8K · 4-screen', audio:false, res:['hd','4k','8k'], outputs:4, hdmiIn:false, touch:true, chassis:'metal', poe:false, ssdCapable:null, hero:false, xc:true, notes:'Intel Gen 11 i5 · 8GB RAM · 8K · 5× HDMI · dual-OS · flagship' },
+  // Series 6 stubs — flip available:true in Sept 2026
+  { rank:4.5, id:'HD226', available:false, series:6, group:'HD', tag:'Series 6 · NPU · Standard I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:false, chassis:'plastic', poe:false, ssdCapable:true, hero:false, notes:'Launches India Sept 2026' },
+  { rank:5.5, id:'HD1026', available:false, series:6, group:'HD', tag:'Series 6 · NPU · Expanded I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:true, chassis:'plastic', poe:false, ssdCapable:true, hero:false, notes:'Launches India Sept 2026' },
+  { rank:6.5, id:'XD236', available:false, series:6, group:'XD', tag:'Series 6 · NPU · Deployable PoE+', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:false, chassis:'aluminium', poe:true, ssdCapable:true, hero:false, notes:'Launches India Sept 2026' },
+  { rank:7.5, id:'XD1036', available:false, series:6, group:'XD', tag:'Series 6 · NPU · Deployable Expanded', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:true, chassis:'aluminium', poe:true, ssdCapable:true, hero:false, notes:'Launches India Sept 2026' }
+];
+
+const BUDGET_ZONES = {
+  1:{name:'Basic',       models:'LS series',         groups:['LS']},
+  2:{name:'Standard',    models:'HD series',         groups:['HD']},
+  3:{name:'Deployable',  models:'XD series · PoE+',  groups:['XD']},
+  4:{name:'Performance', models:'XT series · 8K',    groups:['XT']},
+  5:{name:'Flagship',    models:'XC series · x86',   groups:['XC']}
+};
+const SERIES_LADDER = ['AU','LS','HD','XD','XT','XC'];
+
+/* BrightSign product photos — series-level images from brightsign.biz CDN.
+   One photo per series (BrightSign uses visually identical photos for sub-variants).
+   If BrightSign changes their CDN paths, update these URLs or swap for local images. */
+const MODEL_PHOTOS = {
+  'AU335':  'https://www.brightsign.biz/wp-content/uploads/2023/03/AU5_Main_White.jpg',
+  'LS425':  'https://www.brightsign.biz/wp-content/uploads/2023/03/LS5-1.png',
+  'LS445':  'https://www.brightsign.biz/wp-content/uploads/2023/03/LS5-1.png',
+  'HD225':  'https://www.brightsign.biz/wp-content/uploads/2023/03/HD5-1.png',
+  'HD1025': 'https://www.brightsign.biz/wp-content/uploads/2023/03/HD5-1.png',
+  'XD235':  'https://www.brightsign.biz/wp-content/uploads/2023/03/XD5-1.png',
+  'XD1035': 'https://www.brightsign.biz/wp-content/uploads/2023/03/XD5-1.png',
+  'XT245':  'https://www.brightsign.biz/wp-content/uploads/2023/03/XT5_Recolor-1.png',
+  'XT1145': 'https://www.brightsign.biz/wp-content/uploads/2023/03/XT5_Recolor-1.png',
+  'XT2145': 'https://www.brightsign.biz/wp-content/uploads/2023/03/XT5_Recolor-1.png',
+  'XC2055': 'https://www.brightsign.biz/wp-content/uploads/2023/03/XC5-1.png',
+  'XC4055': 'https://www.brightsign.biz/wp-content/uploads/2023/03/XC5-1.png'
+};
+
+/* ================================================================
+   ROBUST TENDER SPECIFICATIONS
+   Per-model spec data across 6 categories with competitor comparison.
+   Each spec point: {d: description, c: competitor supported? (true/false/unique)}
+   'unique' = BrightSign-only feature with no competitor equivalent
+   True source: Matrix-Product-Portfolio-2025.pdf + tender Excel
+================================================================ */
+
+// Competitor mapping per model (matches the tender Excel)
+const COMPETITOR_MAP = {
+  'AU335':  {name:'No dedicated audio-only competitor', note:'AU335 is a niche audio-only signage player. SpinetiX, IAdea, Giada, AOpen, Advantech target video signage. Audio-only comparison requires generic Raspberry Pi / ad-hoc solutions which lack signage OS.'},
+  'LS425':  {name:'IAdea XMP-8550', note:'IAdea XMP-8550 — Android-based HD signage player at ~$399 price point. Comparable entry-level use case.'},
+  'LS445':  {name:'IAdea XMP-8550', note:'Closest 4K entry-level competitor. IAdea XMP-8550 supports 4K decode with Android OS, no dedicated signage OS.'},
+  'HD225':  {name:'Giada D77', note:'Giada D77 — strongest hardware-spec challenger with Android OS, 6 TOPS NPU, M.2 NVMe. No signage OS or bundled CMS.'},
+  'HD1025': {name:'Giada D77', note:'Same competitor class — Giada D77 with expanded I/O positioning.'},
+  'XD235':  {name:'SpinetiX HMP400', note:'SpinetiX HMP400 — Swiss-engineered signage player with DSOS purpose-built OS, PoE+, 2-3× BrightSign price. Advanced CMS tiers are paid.'},
+  'XD1035': {name:'SpinetiX HMP400', note:'Expanded I/O variant vs SpinetiX HMP400. Same philosophical rival.'},
+  'XT245':  {name:'Giada DN84', note:'Giada DN84 — high-end Android signage with quad HDMI 2.1, M.2 NVMe. No signage OS, no CMS.'},
+  'XT1145': {name:'Giada DN84', note:'8K-capable tier — Giada DN84 is the closest but lacks HDMI-in + signage OS combination.'},
+  'XT2145': {name:'Giada DN84', note:'Dual HDMI out + HDMI-in tier — no direct equivalent; Giada DN84 is the benchmark spec competitor.'},
+  'XC2055': {name:'AOpen DEX5750', note:'AOpen DEX5750 — Intel-based ChromeOS/Windows IoT player with 8K, RS-232, M.2 NVMe. No GPIO/IR, no free CMS.'},
+  'XC4055': {name:'AOpen DEX5750-S', note:'AOpen DEX5750-S — flagship variant. 4-screen 8K capability comparable; still no free CMS or signage-specific OS.'}
+};
+
+// Spec data: per-model, organized by section. c='unique'|true|false (competitor supported)
+// Built from PDF spec sheet + tender Excel competitor benchmark data
+const SPEC_DATA = {
+  // ========== AU335 ==========
+  'AU335': {
+    'Audio Engine':[
+      {d:'Up to 3 independent audio zones playback', c:'unique'},
+      {d:'HDMI ARC / eARC output for return-audio to TV', c:false},
+      {d:'USB-C audio output with high-speed host mode', c:false},
+      {d:'3.5 mm analog / SPDIF audio output', c:true},
+      {d:'Audio codecs: MP2, MP3, AAC, WAV (AC3 passed through)', c:true}
+    ],
+    'Hardware Interfaces':[
+      {d:'Ethernet: 10/100 Base-T', c:true},
+      {d:'M.2 E-Key slot for Wi-Fi / Bluetooth module (WD-105)', c:'unique'},
+      {d:'Reset & Service buttons', c:true},
+      {d:'Locking Power Connector', c:'unique'},
+      {d:'Real Time Clock with 14-day battery life', c:'unique'},
+      {d:'Status LED', c:true}
+    ],
+    'Software & Services':[
+      {d:'BrightSignOS™ purpose-built signage OS', c:'unique'},
+      {d:'Free brightAuthor:connected software', c:'unique'},
+      {d:'Free bsn.Control subscription', c:'unique'},
+      {d:'Optional bsn.Content paid subscription', c:false},
+      {d:'BrightSign Mobile USB modem supported', c:false}
+    ],
+    'Physical & Power':[
+      {d:'Compact plastic enclosure, indoor-rated', c:true},
+      {d:'Power Supply: 12V / 3A locking DC', c:true},
+      {d:'Multi-Country Power & Regulatory Approvals (CE/FCC/UL)', c:true},
+      {d:'Built-in Wall Mounting Brackets', c:'unique'}
+    ]
+  },
+  // ========== LS425 ==========
+  'LS425': {
+    'Video & HTML5 Engine':[
+      {d:'Full HD @ 60p video decoding', c:true},
+      {d:'Supports 4K IP streaming', c:true},
+      {d:'HD images & graphics', c:true},
+      {d:'HTML5: Popular widgets & simple motion graphics', c:true},
+      {d:'HTML5, CSS, JavaScript, SVG, WebGL, Chromium compatible', c:true}
+    ],
+    'Media Formats':[
+      {d:'Full HD Codecs: H.265, H.264 (MPEG-4 Part 10), MPEG-2', c:true},
+      {d:'Full HD Containers: .ts, .mpg, .vob, .mov, .mp4, .m2ts', c:true},
+      {d:'Full HD Resolutions: 1920×1080 @ 23.97–60p', c:true},
+      {d:'Images: BMP, JPEG, PNG (HD)', c:true},
+      {d:'Audio: MP2, MP3, AAC, WAV (AC3 passed)', c:true},
+      {d:'Supports non-standard aspect ratios', c:'unique'}
+    ],
+    'Hardware Interfaces':[
+      {d:'1× HDMI 2.0a Output', c:true},
+      {d:'Ethernet: 10/100 Base-T', c:true},
+      {d:'USB-C: high-speed host, 5V/1A peripheral power', c:false},
+      {d:'3.5 mm Audio Output (Analog or SPDIF)', c:true},
+      {d:'Primary Storage: External microSD card slot', c:true},
+      {d:'M.2 E Key for Wi-Fi / Bluetooth module', c:'unique'},
+      {d:'Reset & Service Buttons', c:true},
+      {d:'Locking Power Connector', c:'unique'},
+      {d:'Real Time Clock with 14-day battery life', c:'unique'},
+      {d:'1× Status LED', c:true}
+    ],
+    'Accessories & Software':[
+      {d:'BP200 & BP900 USB Button Pads supported', c:'unique'},
+      {d:'Micro SD Class 10 cards (various capacities)', c:true},
+      {d:'BrightSign Mobile USB modem supported', c:'unique'},
+      {d:'CBL-USBC to USBA + 3.5mm Serial cable', c:'unique'},
+      {d:'GP800-C: USB-C to GPIO 12-pin Cable Kit', c:'unique'},
+      {d:'CBL-IR RCVR USBC LS Series: USB-C to IR receiver', c:'unique'},
+      {d:'BrightSignOS™', c:'unique'},
+      {d:'Free brightAuthor:connected or brightAuthor software', c:'unique'},
+      {d:'Free bsn.Control Subscription', c:'unique'},
+      {d:'Optional bsn.Content Paid Subscription', c:false},
+      {d:'Optional BrightSign Mobile Service', c:false}
+    ],
+    'Physical & Power':[
+      {d:'Dimensions: 126.6 × 141.84 × 19.41 mm (W×D×H)', c:false},
+      {d:'Player Weight: 0.18 kg', c:false},
+      {d:'Power Supply: 12V / 3A', c:true},
+      {d:'Multi-Country Power & Regulatory Approvals (CE/FCC/UL)', c:true},
+      {d:'Built-in Wall Mounting Brackets', c:'unique'}
+    ]
+  },
+  // ========== LS445 ==========
+  'LS445': {
+    'Video & HTML5 Engine':[
+      {d:'4K video decoding: 8-bit @ 60p / 10-bit @ 30p', c:true},
+      {d:'Full HD @ 60p video decoding', c:true},
+      {d:'Dual HD @ 60p video decode', c:'unique'},
+      {d:'Supports 4K IP streaming', c:true},
+      {d:'HD images & graphics', c:true},
+      {d:'HTML5: Popular widgets & simple motion graphics', c:true},
+      {d:'HTML5, CSS, JavaScript, SVG, WebGL, Chromium compatible', c:true}
+    ],
+    'Media Formats':[
+      {d:'4K Video Codecs: H.265 @ 60p & H.264 @ 30p', c:true},
+      {d:'4K Video Containers: .ts, .mov, .mp4, .mkv', c:true},
+      {d:'4K Video Resolutions: 4096×2160 & 3840×2160 @ up to 60p', c:true},
+      {d:'Full HD Codecs: H.265, H.264 (MPEG-4 Part 10), MPEG-2', c:true},
+      {d:'Full HD Containers: .ts, .mpg, .vob, .mov, .mp4, .m2ts', c:true},
+      {d:'Full HD Resolutions: 1920×1080 @ 23.97–60p', c:true},
+      {d:'Images: BMP, JPEG, PNG (HD)', c:true},
+      {d:'Audio: MP2, MP3, AAC, WAV (AC3 passed)', c:true},
+      {d:'Supports non-standard aspect ratios', c:'unique'}
+    ],
+    'Hardware Interfaces':[
+      {d:'1× HDMI 2.0a Output', c:true},
+      {d:'Ethernet: 10/100 Base-T', c:true},
+      {d:'USB-C: high-speed host, 5V/1A peripheral power', c:false},
+      {d:'3.5 mm Audio Output (Analog or SPDIF)', c:true},
+      {d:'Primary Storage: External microSD card slot', c:true},
+      {d:'M.2 E Key for Wi-Fi / Bluetooth module', c:'unique'},
+      {d:'Reset & Service Buttons', c:true},
+      {d:'Locking Power Connector', c:'unique'},
+      {d:'Real Time Clock with 14-day battery life', c:'unique'},
+      {d:'1× Status LED', c:true}
+    ],
+    'Accessories & Software':[
+      {d:'BP200 & BP900 USB Button Pads supported', c:'unique'},
+      {d:'Micro SD Class 10 cards (various capacities)', c:true},
+      {d:'BrightSign Mobile USB modem supported', c:'unique'},
+      {d:'CBL-USBC to USBA + 3.5mm Serial cable', c:'unique'},
+      {d:'GP800-C: USB-C to GPIO 12-pin Cable Kit', c:'unique'},
+      {d:'CBL-IR RCVR USBC LS Series: USB-C to IR receiver', c:'unique'},
+      {d:'BrightSignOS™', c:'unique'},
+      {d:'Free brightAuthor:connected or brightAuthor software', c:'unique'},
+      {d:'Free bsn.Control Subscription', c:'unique'}
+    ],
+    'Physical & Power':[
+      {d:'Dimensions: 126.6 × 141.84 × 19.41 mm (W×D×H)', c:false},
+      {d:'Player Weight: 0.18 kg', c:false},
+      {d:'Power Supply: 12V / 3A', c:true},
+      {d:'Multi-Country Power & Regulatory Approvals (CE/FCC/UL)', c:true},
+      {d:'Built-in Wall Mounting Brackets', c:'unique'}
+    ]
+  },
+  // ========== HD225 ==========
+  'HD225': {
+    'Video & HTML5 Engine':[
+      {d:'4K video decoding: 10-bit @ 60p', c:true},
+      {d:'4K video rotation', c:true},
+      {d:'HDR10, HLG & Rec.2020/BT.2020 support', c:true},
+      {d:'Full HD @ 60p video decoding', c:true},
+      {d:'Dual HD @ 60p video decode', c:'unique'},
+      {d:'HD video rotation (Single)', c:true},
+      {d:'HD images & graphics', c:true},
+      {d:'Supports 4K IP streaming', c:true},
+      {d:'HTML5: Modular 2D motion graphics', c:true},
+      {d:'HTML5, CSS, JavaScript, SVG, WebGL, Chromium compatible', c:true}
+    ],
+    'Media Formats':[
+      {d:'4K Video Codecs: H.265 @ 60p & H.264 @ 60p', c:true},
+      {d:'4K Video Containers: .ts, .mov, .mp4, .mkv', c:true},
+      {d:'4K Video Resolutions: 4096×2160 & 3840×2160 @ up to 60p', c:true},
+      {d:'Full HD Codecs: H.265, H.264 (MPEG-4 Part 10), MPEG-2', c:true},
+      {d:'Full HD Resolutions: 1920×1080 @ 23.97–60p', c:true},
+      {d:'Images: BMP, JPEG, PNG (HD)', c:true},
+      {d:'Audio: MP2, MP3, AAC, WAV (AC3 passed)', c:true},
+      {d:'Supports non-standard aspect ratios', c:'unique'}
+    ],
+    'Hardware Interfaces':[
+      {d:'1× HDMI 2.0a Output', c:true},
+      {d:'Ethernet: Gigabit', c:true},
+      {d:'GPIO: 12-pin Phoenix Connector · 8 bi-directional ports', c:'unique'},
+      {d:'IR: 3.5mm In / Out', c:'unique'},
+      {d:'3.5 mm Audio Output (Analog or SPDIF)', c:true},
+      {d:'Primary Storage: External microSD card slot', c:true},
+      {d:'M.2 E Key for Wi-Fi / Bluetooth module', c:true},
+      {d:'Reset & Service Buttons', c:true},
+      {d:'Locking Power Connector', c:'unique'},
+      {d:'Real Time Clock with 14-day battery life', c:'unique'},
+      {d:'4× Status LEDs', c:true}
+    ],
+    'Accessories & Software':[
+      {d:'Micro SD Class 10 cards (various capacities)', c:'unique'},
+      {d:'BrightSignOS™', c:'unique'},
+      {d:'Free brightAuthor:connected software', c:'unique'},
+      {d:'Free bsn.Control Subscription', c:'unique'},
+      {d:'Optional bsn.Content Paid Subscription', c:false}
+    ],
+    'Physical & Power':[
+      {d:'Dimensions: 205 × 185.9 × 19.2 mm (W×D×H)', c:false},
+      {d:'Player Weight: 0.59 kg', c:false},
+      {d:'Shipping Weight: 1.3 kg', c:false},
+      {d:'Power Supply: 12V / 3A', c:true},
+      {d:'Multi-Country Power & Regulatory Approvals (CE/FCC/UL)', c:true},
+      {d:'Built-in Wall Mounting Brackets', c:'unique'}
+    ]
+  },
+  // ========== HD1025 ==========
+  'HD1025': {
+    'Video & HTML5 Engine':[
+      {d:'4K video decoding: 10-bit @ 60p', c:true},
+      {d:'4K video rotation', c:true},
+      {d:'HDR10, HLG & Rec.2020/BT.2020 support', c:true},
+      {d:'Full HD @ 60p video decoding', c:true},
+      {d:'Dual HD @ 60p video decode', c:'unique'},
+      {d:'HD video rotation (Single)', c:true},
+      {d:'Supports 4K IP streaming', c:true},
+      {d:'HTML5: Interactive 2D motion graphics · touch-ready', c:true},
+      {d:'HTML5, CSS, JavaScript, SVG, WebGL, Chromium compatible', c:true}
+    ],
+    'Media Formats':[
+      {d:'4K Video Codecs: H.265 @ 60p & H.264 @ 60p', c:true},
+      {d:'4K Video Resolutions: 4096×2160 & 3840×2160 @ up to 60p', c:true},
+      {d:'Full HD Codecs: H.265, H.264 (MPEG-4 Part 10), MPEG-2', c:true},
+      {d:'Images: BMP, JPEG, PNG (HD)', c:true},
+      {d:'Audio: MP2, MP3, AAC, WAV (AC3 passed)', c:true},
+      {d:'Supports non-standard aspect ratios', c:'unique'}
+    ],
+    'Hardware Interfaces':[
+      {d:'1× HDMI 2.0a Output', c:true},
+      {d:'Ethernet: Gigabit', c:true},
+      {d:'USB-A: 5V/1A power to peripheral devices', c:true},
+      {d:'GPIO: 12-pin Phoenix · 8 bi-directional ports', c:'unique'},
+      {d:'IR: 3.5mm In / Out', c:'unique'},
+      {d:'Serial: 3.5mm RS-232 (compact form-factor)', c:'unique'},
+      {d:'3.5 mm Audio Output (Analog or SPDIF)', c:true},
+      {d:'Primary Storage: External microSD card slot', c:true},
+      {d:'M.2 E Key for Wi-Fi / Bluetooth module', c:true},
+      {d:'Reset & Service Buttons', c:true},
+      {d:'Locking Power Connector', c:'unique'},
+      {d:'Real Time Clock with 14-day battery life', c:'unique'},
+      {d:'4× Status LEDs', c:true}
+    ],
+    'Accessories & Software':[
+      {d:'BP200 & BP900 USB Button Pads supported', c:'unique'},
+      {d:'Micro SD Class 10 cards (various capacities)', c:'unique'},
+      {d:'BrightSign Mobile USB modem supported', c:'unique'},
+      {d:'BrightSignOS™', c:'unique'},
+      {d:'Free brightAuthor:connected software', c:'unique'},
+      {d:'Free bsn.Control Subscription', c:'unique'},
+      {d:'Optional bsn.Content Paid Subscription', c:false},
+      {d:'Optional BrightSign Mobile Service', c:false}
+    ],
+    'Physical & Power':[
+      {d:'Dimensions: 205 × 185.9 × 19.2 mm (W×D×H)', c:false},
+      {d:'Player Weight: 0.59 kg · Shipping: 1.3 kg', c:false},
+      {d:'Power Supply: 12V / 3A locking DC', c:true},
+      {d:'Multi-Country Power & Regulatory Approvals', c:true},
+      {d:'Built-in Wall Mounting Brackets', c:'unique'}
+    ]
+  },
+  // ========== XD235 ==========
+  'XD235': {
+    'Video & HTML5 Engine':[
+      {d:'4K video decoding: 10-bit @ 60p', c:true},
+      {d:'Dual 4K video decoding', c:'unique'},
+      {d:'4K video rotation', c:true},
+      {d:'HDR10, HLG & Rec.2020/BT.2020 support', c:true},
+      {d:'Full HD @ 60p video decoding', c:true},
+      {d:'Dual HD @ 60p video decode', c:'unique'},
+      {d:'HD video rotation (Single)', c:true},
+      {d:'4K resolution images & graphics', c:true},
+      {d:'Supports 4K IP streaming', c:true},
+      {d:'HTML5: Smooth full-screen 2D WebGL motion', c:true},
+      {d:'HTML5, CSS, JavaScript, SVG, WebGL, Chromium compatible', c:true}
+    ],
+    'Media Formats':[
+      {d:'4K Video Codecs: H.265 @ 60p & H.264 @ 60p', c:true},
+      {d:'4K Video Resolutions: 4096×2160 & 3840×2160 @ up to 60p', c:true},
+      {d:'Full HD Codecs: H.265, H.264 (MPEG-4 Part 10), MPEG-2', c:true},
+      {d:'Images: BMP, JPEG, PNG (HD & 4K)', c:true},
+      {d:'Audio: MP2, MP3, AAC, WAV (AC3 passed)', c:true},
+      {d:'Supports non-standard aspect ratios', c:'unique'}
+    ],
+    'Hardware Interfaces':[
+      {d:'1× HDMI 2.0a Output', c:true},
+      {d:'Ethernet: Gigabit with PoE+ (IEEE 802.3at)', c:true},
+      {d:'GPIO: 12-pin Phoenix · 8 bi-directional ports', c:'unique'},
+      {d:'IR: 3.5mm In / Out', c:'unique'},
+      {d:'3.5 mm Audio Output (Analog or SPDIF)', c:true},
+      {d:'Primary Storage: External microSD card slot', c:'unique'},
+      {d:'Optional M.2 PCIe NVMe SSD slot', c:false},
+      {d:'M.2 E Key for Wi-Fi / Bluetooth module', c:true},
+      {d:'Reset & Service Buttons', c:true},
+      {d:'Locking Power Connector', c:'unique'},
+      {d:'Real Time Clock with 14-day battery life', c:'unique'},
+      {d:'4× Status LEDs', c:true}
+    ],
+    'Accessories & Software':[
+      {d:'Micro SD Class 10 cards (various capacities)', c:'unique'},
+      {d:'256GB PCIe NVMe M.2 SSD supported', c:false},
+      {d:'Anodized aluminium enclosure for extended operating temp', c:true},
+      {d:'BrightSignOS™', c:'unique'},
+      {d:'Free brightAuthor:connected software', c:'unique'},
+      {d:'Free bsn.Control Subscription', c:'unique'}
+    ],
+    'Physical & Power':[
+      {d:'Dimensions: 205 × 185.9 × 19.2 mm (W×D×H)', c:false},
+      {d:'Player Weight: 0.59 kg · Shipping: 1.3 kg', c:false},
+      {d:'Power Supply: 12V / 3A or PoE+', c:true},
+      {d:'Multi-Country Power & Regulatory Approvals', c:true},
+      {d:'Built-in Wall Mounting Brackets', c:'unique'}
+    ]
+  },
+  // ========== XD1035 ==========
+  'XD1035': {
+    'Video & HTML5 Engine':[
+      {d:'4K video decoding: 10-bit @ 60p', c:true},
+      {d:'Dual 4K video decoding', c:'unique'},
+      {d:'4K video rotation', c:true},
+      {d:'HDR10, HLG & Rec.2020/BT.2020 support', c:true},
+      {d:'Full HD @ 60p video decoding', c:true},
+      {d:'Dual HD @ 60p video decode', c:'unique'},
+      {d:'4K resolution images & graphics', c:true},
+      {d:'HTML5: Responsive multi-touch 2D WebGL', c:true},
+      {d:'HTML5, CSS, JavaScript, SVG, WebGL, Chromium compatible', c:true}
+    ],
+    'Media Formats':[
+      {d:'4K Video Codecs: H.265 @ 60p & H.264 @ 60p', c:true},
+      {d:'4K Video Resolutions: 4096×2160 & 3840×2160 @ up to 60p', c:true},
+      {d:'Full HD Codecs: H.265, H.264 (MPEG-4 Part 10), MPEG-2', c:true},
+      {d:'Images: BMP, JPEG, PNG (HD & 4K)', c:true},
+      {d:'Supports non-standard aspect ratios', c:'unique'}
+    ],
+    'Hardware Interfaces':[
+      {d:'1× HDMI 2.0a Output', c:true},
+      {d:'Ethernet: Gigabit with PoE+ (IEEE 802.3at)', c:true},
+      {d:'USB-A: 5V/1A peripheral power', c:false},
+      {d:'GPIO: 12-pin Phoenix · 8 bi-directional', c:'unique'},
+      {d:'IR: 3.5mm In / Out', c:'unique'},
+      {d:'Serial: 3.5mm RS-232', c:'unique'},
+      {d:'3.5 mm Audio Output (Analog or SPDIF)', c:true},
+      {d:'Primary Storage: External microSD slot', c:'unique'},
+      {d:'Optional M.2 PCIe NVMe SSD', c:false},
+      {d:'M.2 E Key for Wi-Fi / Bluetooth', c:true},
+      {d:'Locking Power Connector', c:'unique'},
+      {d:'Real Time Clock with 14-day battery', c:'unique'},
+      {d:'4× Status LEDs', c:true}
+    ],
+    'Accessories & Software':[
+      {d:'BP200 & BP900 USB Button Pads supported', c:'unique'},
+      {d:'BrightSign Mobile USB modem', c:'unique'},
+      {d:'CBL-USBC to USBA + 3.5mm Serial cable', c:'unique'},
+      {d:'GP800-C: USB-C to GPIO 12-pin Cable Kit', c:'unique'},
+      {d:'Anodized aluminium enclosure', c:true},
+      {d:'BrightSignOS™', c:'unique'},
+      {d:'Free brightAuthor:connected + bsn.Control', c:'unique'},
+      {d:'Optional bsn.Content + BrightSign Mobile Service', c:false}
+    ],
+    'Physical & Power':[
+      {d:'Dimensions: 205 × 185.9 × 19.2 mm', c:false},
+      {d:'Player Weight: 0.59 kg', c:false},
+      {d:'Power Supply: 12V / 3A or PoE+', c:true},
+      {d:'Multi-Country Regulatory Approvals', c:true},
+      {d:'Built-in Wall Mounting Brackets', c:'unique'}
+    ]
+  },
+  // ========== XT245 ==========
+  'XT245': {
+    'Video & HTML5 Engine':[
+      {d:'4K video decoding: 10-bit @ 60p', c:true},
+      {d:'Dual 4K video decoding', c:'unique'},
+      {d:'4K video rotation', c:true},
+      {d:'HDR10, HLG & Rec.2020/BT.2020 support', c:true},
+      {d:'Full HD @ 60p video decoding', c:true},
+      {d:'Dual HD @ 60p video decode', c:'unique'},
+      {d:'HD video rotation', c:true},
+      {d:'4K resolution images & graphics', c:true},
+      {d:'Supports 4K IP streaming', c:true},
+      {d:'HTML5: 3D WebGL & real-time data visualisation', c:true},
+      {d:'HTML5, CSS, JavaScript, SVG, WebGL, Chromium compatible', c:true}
+    ],
+    'Media Formats':[
+      {d:'4K Video Codecs: H.265 @ 60p & H.264 @ 60p', c:true},
+      {d:'4K Video Resolutions: 4096×2160 & 3840×2160 @ up to 60p', c:true},
+      {d:'Full HD Codecs: H.265, H.264 (MPEG-4 Part 10), MPEG-2', c:true},
+      {d:'Images: BMP, JPEG, PNG (HD & 4K)', c:true},
+      {d:'Supports non-standard aspect ratios', c:'unique'}
+    ],
+    'Hardware Interfaces':[
+      {d:'1× HDMI 2.1a Output (higher-bandwidth)', c:true},
+      {d:'Ethernet: Gigabit with PoE+ (IEEE 802.3at)', c:false},
+      {d:'GPIO: 12-pin Phoenix · 8 bi-directional', c:'unique'},
+      {d:'IR: 3.5mm In / Out', c:'unique'},
+      {d:'USB-C: high-speed host, 5V/1A peripheral', c:true},
+      {d:'3.5 mm Audio Output (Analog or SPDIF)', c:true},
+      {d:'Primary Storage: External microSD slot', c:'unique'},
+      {d:'Optional M.2 PCIe NVMe SSD', c:true},
+      {d:'M.2 E Key for Wi-Fi / Bluetooth', c:true},
+      {d:'Locking Power Connector', c:'unique'},
+      {d:'Real Time Clock with 14-day battery', c:'unique'},
+      {d:'4× Status LEDs', c:true}
+    ],
+    'Accessories & Software':[
+      {d:'Micro SD Class 10 cards', c:'unique'},
+      {d:'256GB PCIe NVMe M.2 SSD', c:true},
+      {d:'GP800-C: USB-C to GPIO Cable Kit', c:'unique'},
+      {d:'Anodized aluminium enclosure · extended operating temp', c:true},
+      {d:'BrightSignOS™', c:'unique'},
+      {d:'Free brightAuthor:connected + bsn.Control', c:'unique'},
+      {d:'Optional bsn.Content subscription', c:false}
+    ],
+    'Physical & Power':[
+      {d:'Dimensions: 238.62 × 185.90 × 19.19 mm', c:false},
+      {d:'Player Weight: 0.68 kg', c:false},
+      {d:'Power Supply: 12V / 3A or PoE+', c:true},
+      {d:'Multi-Country Regulatory Approvals', c:true},
+      {d:'Built-in Wall Mounting Brackets', c:'unique'}
+    ]
+  },
+  // ========== XT1145 (Hero) ==========
+  'XT1145': {
+    'Video & HTML5 Engine':[
+      {d:'Single 8K60p video decoding (H.265)', c:false},
+      {d:'4K60p video decoding', c:true},
+      {d:'HDR10, HLG & Rec.2020/BT.2020 support', c:true},
+      {d:'4K video rotation', c:true},
+      {d:'4K Full Resolution Images & Graphics', c:true},
+      {d:'HTML5: Intense graphics, video and live TV', c:true},
+      {d:'HTML5, CSS, JavaScript, SVG, WebGL, Chromium compatible', c:true}
+    ],
+    'Media Formats':[
+      {d:'8K Video Codecs: H.265', c:false},
+      {d:'8K Containers: .ts, .mov, .mp4, .mkv', c:false},
+      {d:'8K Resolutions: 7680×4320 @ 23.97–60p', c:false},
+      {d:'4K Video Codecs: H.265 @ 60p & H.264 @ 60p', c:true},
+      {d:'4K Resolutions: 4096×2160 & 3840×2160 @ up to 60p', c:true},
+      {d:'Images: BMP, JPEG, PNG up to 4K', c:true},
+      {d:'Supports non-standard aspect ratios', c:'unique'}
+    ],
+    'Hardware Interfaces':[
+      {d:'1× HDMI 2.1a Output', c:true},
+      {d:'1× HDMI 2.0a Input (HDCP on roadmap)', c:true},
+      {d:'Ethernet: Gigabit with PoE+ (IEEE 802.3at)', c:false},
+      {d:'IR: 3.5mm In / Out', c:'unique'},
+      {d:'Serial: 3.5mm RS-232', c:'unique'},
+      {d:'2× USB Ports (1× USB-C + 1× USB-A)', c:true},
+      {d:'GPIO: 12-pin Phoenix · 8 bi-directional', c:'unique'},
+      {d:'3.5 mm Audio Output (Analog or SPDIF)', c:true},
+      {d:'Primary Storage: External microSD slot', c:'unique'},
+      {d:'Optional M.2 PCIe NVMe SSD', c:true},
+      {d:'M.2 E Key for Wi-Fi / Bluetooth', c:true},
+      {d:'Locking Power Connector', c:'unique'},
+      {d:'Real Time Clock with 14-day battery', c:'unique'},
+      {d:'4× Status LEDs', c:true}
+    ],
+    'Accessories & Software':[
+      {d:'BP200 & BP900 USB Button Pads', c:'unique'},
+      {d:'Micro SD Class 10 cards', c:'unique'},
+      {d:'256GB PCIe NVMe M.2 SSD', c:true},
+      {d:'BrightSign Mobile USB modem', c:'unique'},
+      {d:'CBL-USBC to USBA + 3.5mm Serial cable', c:'unique'},
+      {d:'GP800-C: USB-C to GPIO Cable Kit', c:'unique'},
+      {d:'Anodized aluminium enclosure · extended operating temp', c:true},
+      {d:'BrightSignOS™', c:'unique'},
+      {d:'Free brightAuthor:connected + bsn.Control', c:'unique'},
+      {d:'Optional bsn.Content + BrightSign Mobile Service', c:false}
+    ],
+    'Physical & Power':[
+      {d:'Dimensions: 238.62 × 185.90 × 19.19 mm', c:false},
+      {d:'Player Weight: 0.68 kg', c:false},
+      {d:'Power Supply: 12V / 3A or PoE+', c:true},
+      {d:'Multi-Country Regulatory Approvals', c:true},
+      {d:'Built-in Wall Mounting Brackets', c:'unique'}
+    ]
+  },
+  // ========== XT2145 ==========
+  'XT2145': {
+    'Video & HTML5 Engine':[
+      {d:'Single 8K60p video decoding', c:false},
+      {d:'4K60p video decoding', c:true},
+      {d:'Dual 4K video decoding', c:'unique'},
+      {d:'HDR10, HLG & Rec.2020/BT.2020 support', c:true},
+      {d:'4K video rotation', c:true},
+      {d:'4K resolution images & graphics', c:true},
+      {d:'Supports 4K IP streaming', c:true},
+      {d:'HTML5: Dual HTML presentations driving 2 screens', c:false},
+      {d:'HTML5, CSS, JavaScript, SVG, WebGL, Chromium compatible', c:true}
+    ],
+    'Media Formats':[
+      {d:'8K Video Codecs: H.265', c:false},
+      {d:'8K Resolutions: 7680×4320 @ 23.97–60p', c:false},
+      {d:'4K Video Codecs: H.265 @ 60p & H.264 @ 60p', c:true},
+      {d:'4K Resolutions: 4096×2160 & 3840×2160 @ up to 60p', c:true},
+      {d:'Images: BMP, JPEG, PNG (HD & 4K)', c:true},
+      {d:'Supports non-standard aspect ratios', c:'unique'}
+    ],
+    'Hardware Interfaces':[
+      {d:'2× HDMI Outputs (1× HDMI 2.1a + 1× HDMI 2.0a)', c:false},
+      {d:'1× HDMI 2.0a Input (HDCP on roadmap)', c:true},
+      {d:'Ethernet: Gigabit with PoE+ (IEEE 802.3at)', c:false},
+      {d:'GPIO: 12-pin Phoenix · 8 bi-directional', c:'unique'},
+      {d:'IR: 3.5mm In / Out', c:'unique'},
+      {d:'Serial: 3.5mm RS-232', c:'unique'},
+      {d:'USB-C: high-speed host, 5V/1A peripheral', c:true},
+      {d:'3.5 mm Audio Output (Analog or SPDIF)', c:true},
+      {d:'Primary Storage: External microSD slot', c:'unique'},
+      {d:'Optional M.2 PCIe NVMe SSD', c:true},
+      {d:'M.2 E Key for Wi-Fi / Bluetooth', c:true},
+      {d:'Locking Power Connector', c:'unique'},
+      {d:'Real Time Clock with 14-day battery', c:'unique'},
+      {d:'4× Status LEDs', c:true}
+    ],
+    'Accessories & Software':[
+      {d:'Micro SD Class 10 cards', c:'unique'},
+      {d:'256GB PCIe NVMe M.2 SSD', c:true},
+      {d:'GP800-C: USB-C to GPIO Cable Kit', c:'unique'},
+      {d:'Anodized aluminium enclosure · extended operating temp', c:true},
+      {d:'BrightSignOS™', c:'unique'},
+      {d:'Free brightAuthor:connected + bsn.Control', c:'unique'},
+      {d:'Optional bsn.Content + BrightSign Mobile Service', c:false}
+    ],
+    'Physical & Power':[
+      {d:'Dimensions: 238.62 × 185.90 × 19.19 mm', c:false},
+      {d:'Player Weight: 0.68 kg', c:false},
+      {d:'Power Supply: 12V / 3A or PoE+', c:true},
+      {d:'Multi-Country Regulatory Approvals', c:true},
+      {d:'Built-in Wall Mounting Brackets', c:'unique'}
+    ]
+  },
+  // ========== XC2055 ==========
+  'XC2055': {
+    'AI & Processing':[
+      {d:'Intel Gen 11 Celeron Processor with 8GB RAM', c:true}
+    ],
+    'Video & HTML5 Engine':[
+      {d:'8K video decoding: 10-bit @ 60p', c:true},
+      {d:'4K video decoding: 10-bit @ 60p', c:true},
+      {d:'Dual 4K video decoding', c:true},
+      {d:'HDR10, HLG & Rec.2020/BT.2020 support', c:true},
+      {d:'4K video rotation', c:true},
+      {d:'8K resolution images & graphics', c:true},
+      {d:'4K resolution images & graphics', c:true},
+      {d:'Supports 4K IP streaming', c:true},
+      {d:'HTML5: Up to 8K 3D WebGL across 2 screens', c:true},
+      {d:'HTML5, CSS, JavaScript, SVG, WebGL, OpenGL, Chromium compatible', c:true}
+    ],
+    'Media Formats':[
+      {d:'8K Video Codecs: H.265', c:true},
+      {d:'8K Resolutions: 7680×4320 @ 23.97–60p', c:true},
+      {d:'4K Video Codecs: H.265 @ 60p & H.264 @ 60p', c:true},
+      {d:'4K Resolutions: 4096×2160 & 3840×2160 @ up to 60p', c:true},
+      {d:'Images: BMP, JPEG, PNG (HD, 4K & 8K)', c:true},
+      {d:'Supports non-standard aspect ratios', c:'unique'}
+    ],
+    'Hardware Interfaces':[
+      {d:'2× HDMI Outputs (HDMI 2.1a + HDMI 2.0a)', c:true},
+      {d:'Ethernet: Gigabit', c:true},
+      {d:'GPIO: Via USB-C + GP800-C (BrightSignOS only)', c:'unique'},
+      {d:'IR: 3.5mm In / Out', c:'unique'},
+      {d:'Serial: 3.5mm RS-232', c:true},
+      {d:'USB-A + USB-C: peripheral power', c:true},
+      {d:'3.5 mm Audio Output (Analog or SPDIF)', c:true},
+      {d:'Primary Storage: External microSD slot', c:'unique'},
+      {d:'Optional M.2 PCIe NVMe SSD', c:true},
+      {d:'M.2 E Key for Wi-Fi / Bluetooth', c:true},
+      {d:'Locking Power Connector', c:'unique'},
+      {d:'Real Time Clock with 14-day battery', c:'unique'},
+      {d:'4× Status LEDs', c:true}
+    ],
+    'Operating System (dual-OS)':[
+      {d:'BrightSignOS™ (full ports: GPIO/IR/RS-232/USB-C active)', c:'unique'},
+      {d:'Windows 10 LTSC 2019 / 2021', c:true},
+      {d:'Windows 11 IoT', c:true}
+    ],
+    'Accessories & Software':[
+      {d:'BP200 & BP900 USB Button Pads', c:'unique'},
+      {d:'Micro SD Class 10 cards', c:'unique'},
+      {d:'256GB PCIe NVMe M.2 SSD', c:true},
+      {d:'BrightSign Mobile USB modem', c:'unique'},
+      {d:'CBL-USBC to USBA + 3.5mm Serial cable', c:'unique'},
+      {d:'GP800-C: USB-C to GPIO Cable Kit', c:'unique'},
+      {d:'Free brightAuthor:connected + bsn.Control', c:'unique'},
+      {d:'Optional bsn.Content + BrightSign Mobile Service', c:false}
+    ],
+    'Physical & Power':[
+      {d:'Dimensions: 253.2 × 232.12 × 48 mm', c:false},
+      {d:'Player Weight: 1.41 kg · Shipping: 3 kg', c:false},
+      {d:'Power Supply: 19V / 4.7A locking DC', c:true},
+      {d:'Multi-Country Regulatory Approvals', c:true},
+      {d:'Built-in Wall Mounting Brackets', c:'unique'}
+    ]
+  },
+  // ========== XC4055 ==========
+  'XC4055': {
+    'AI & Processing':[
+      {d:'Intel Gen 11 i5 Processor with 8GB RAM', c:true}
+    ],
+    'Video & HTML5 Engine':[
+      {d:'8K video decoding: 10-bit @ 60p', c:true},
+      {d:'4K video decoding: 10-bit @ 60p', c:true},
+      {d:'Quad 4K video decode (flagship-only)', c:true},
+      {d:'HDR10, HLG & Rec.2020/BT.2020 support', c:true},
+      {d:'4K video rotation', c:true},
+      {d:'8K resolution images & graphics', c:true},
+      {d:'4K resolution images & graphics', c:true},
+      {d:'HTML5: 2× the power of XC2055 across 4 screens', c:true},
+      {d:'HTML5, CSS, JavaScript, SVG, WebGL, OpenGL, Chromium compatible', c:true}
+    ],
+    'Media Formats':[
+      {d:'8K Video Codecs: H.265', c:true},
+      {d:'8K Resolutions: 7680×4320 @ 23.97–60p', c:true},
+      {d:'4K Video Codecs: H.265 @ 60p & H.264 @ 60p', c:true},
+      {d:'Images: BMP, JPEG, PNG (HD, 4K & 8K)', c:true},
+      {d:'Supports non-standard aspect ratios', c:'unique'}
+    ],
+    'Hardware Interfaces':[
+      {d:'4× HDMI Outputs (1× HDMI 2.1a + 3× HDMI 2.0a)', c:true},
+      {d:'Ethernet: Gigabit', c:true},
+      {d:'GPIO: Via USB-C + GP800-C (BrightSignOS only)', c:'unique'},
+      {d:'IR: 3.5mm In / Out', c:'unique'},
+      {d:'Serial: 3.5mm RS-232', c:true},
+      {d:'USB-A + USB-C: peripheral power', c:true},
+      {d:'3.5 mm Audio Output (Analog or SPDIF)', c:true},
+      {d:'Primary Storage: External microSD slot', c:'unique'},
+      {d:'Optional M.2 PCIe NVMe SSD', c:true},
+      {d:'M.2 E Key for Wi-Fi / Bluetooth', c:true},
+      {d:'Locking Power Connector', c:'unique'},
+      {d:'Real Time Clock with 14-day battery', c:'unique'},
+      {d:'4× Status LEDs', c:true}
+    ],
+    'Operating System (dual-OS)':[
+      {d:'BrightSignOS™ (full ports: GPIO/IR/RS-232/USB-C active)', c:'unique'},
+      {d:'Windows 10 LTSC 2019 / 2021', c:true},
+      {d:'Windows 11 IoT', c:true}
+    ],
+    'Accessories & Software':[
+      {d:'BP200 & BP900 USB Button Pads', c:'unique'},
+      {d:'Micro SD Class 10 cards', c:'unique'},
+      {d:'256GB PCIe NVMe M.2 SSD', c:true},
+      {d:'BrightSign Mobile USB modem', c:'unique'},
+      {d:'CBL-USBC to USBA + 3.5mm Serial cable', c:'unique'},
+      {d:'GP800-C: USB-C to GPIO Cable Kit', c:'unique'},
+      {d:'Free brightAuthor:connected + bsn.Control', c:'unique'},
+      {d:'Optional bsn.Content + BrightSign Mobile Service', c:false}
+    ],
+    'Physical & Power':[
+      {d:'Dimensions: 253.2 × 232.12 × 48 mm', c:false},
+      {d:'Player Weight: 1.41 kg · Shipping: 3 kg', c:false},
+      {d:'Power Supply: 19V / 4.7A locking DC', c:true},
+      {d:'Multi-Country Regulatory Approvals', c:true},
+      {d:'Built-in Wall Mounting Brackets', c:'unique'}
+    ]
+  }
+};
+
+/* ================================================================
+   PRESCRIPTIVE TENDER CLAUSES (NEUTRAL LANGUAGE)
+   Vendor-neutral hardware + software + CMS clauses engineered to
+   match BrightSign's capability profile. No brand names mentioned.
+   Each clause has a defensible technical justification for
+   digital signage deployments.
+   
+   Structure: baseline clauses apply to all models; per-group clauses
+   add tier-specific requirements (HD adds 4K HDR, XT adds HDMI 2.1a,
+   XC adds Intel x86 + dual-OS, etc.)
+================================================================ */
+
+const TENDER_CLAUSES = {
+  // ========== BASELINE CLAUSES (all models) ==========
+  baseline: {
+    'Operating System & Firmware':[
+      'Media player shall operate on a purpose-built embedded signage operating system with a locked-down firmware model. General-purpose desktop operating systems (Windows Desktop, macOS, standard Linux distributions, Android) as the primary playback runtime shall not be accepted for unattended 24×7 signage deployment due to patch-cycle and security-exposure risk.',
+    'All OS updates shall be delivered as digitally signed firmware images verified by the player prior to installation. Unsigned or user-modifiable OS binaries are not permitted.',
+    'Player shall include a hardware-level watchdog timer with automatic soft-reboot and playback auto-resume on application hang or kernel fault, without operator intervention.',
+    'The operating system and CMS client shall be maintained and version-controlled by the hardware OEM on a single release train, ensuring hardware-software compatibility for the full warranty period.',
+    'Player shall ship with zero pre-installed third-party content, anti-virus agents, or personally identifiable user accounts at time of first boot.'
+    ],
+    'Content Management & CMS':[
+      'Player shall support a fully integrated, first-party Content Management System developed by the same manufacturer as the hardware. Third-party CMS platforms running on generic PC/Android hardware (including PC-based signage software requiring a separate media-player license) shall be considered non-compliant unless the hardware manufacturer supplies and warrants both hardware and CMS under a single SLA.',
+      'Player shall support out-of-the-box cloud management, scheduling, health monitoring, and remote content push without requiring any third-party CMS subscription for basic operation. Cloud management for the entire deployment lifecycle shall be included at no additional recurring cost for standard features.',
+      'CMS authoring software (desktop + cloud) shall be provided by the OEM free of charge for the hardware warranty period. Per-player recurring license fees for standard signage content management shall not apply.',
+      'Player shall interoperate with at least three independent third-party CMS platforms via published SDK / REST API, to prevent single-vendor software lock-in at the CMS layer.',
+      'Content delivery shall support both on-premise (LAN-only) peer-to-peer operation for high-security deployments, and cloud-managed operation for multi-site deployments, selectable in the CMS client. Cloud-only architectures shall not be accepted where on-premise fallback is unavailable.'
+    ],
+    'Power & Reliability':[
+      'Player shall use a locking-type DC power connector (threaded, bayonet, or equivalent positive-locking mechanism). Standard barrel jack or USB-C-only power inputs without a locking retention feature shall not be accepted for unattended deployments due to cable-dislodge risk.',
+      'Player shall include a Real-Time Clock backed by a supercapacitor or similar solid-state energy reserve, maintaining accurate time-of-day for a minimum of 14 (fourteen) days after AC power loss, without requiring an internet time-sync upon restart. Coin-cell battery implementations requiring periodic replacement shall be considered non-compliant.',
+      'Player power supply shall hold Multi-Country regulatory approvals including CE, FCC, UL, and shall accept 100–240 V AC universal input without manual voltage selection.',
+      'Power consumption under full-load 4K HDR playback shall not exceed 25 W per player for standard models (higher-performance 8K / multi-screen models may exceed this, subject to documented TDP figures).'
+    ],
+    'Physical & Thermal Design':[
+      'Player shall employ a solid-state electronics architecture with no spinning magnetic storage and no mechanical cooling components requiring field-serviceable parts. Thermal design shall rely on passive convection or low-noise active cooling not exceeding 30 dB(A) measured at 1 metre distance, suitable for library, retail, hospital, and boardroom acoustic environments.',
+      'Player chassis shall include factory-integrated wall mounting brackets and/or VESA-compatible mounting provision. Requirement for separately-purchased mounting hardware from a third-party accessory catalogue shall be considered a non-compliance.',
+      'Player shall be rated for continuous 24×7×365 operation, with declared MTBF and defined operating-temperature range on the product datasheet.',
+      'For outdoor-adjacent or extended-temperature deployments (transportation hubs, factory floors, non-climate-controlled retail), player enclosure shall be metal (anodised aluminium preferred) with demonstrated operating range of 0–40 °C ambient or wider.'
+    ],
+    'Hardware Interfaces (baseline)':[
+      'Player shall provide a minimum of one (1) HDMI output at HDMI 2.0a specification or higher, supporting HDCP 2.2 for premium content playback.',
+      'Player shall provide a dedicated Ethernet port (10/100 Mbps minimum; Gigabit preferred for 4K deployments). Wi-Fi-only players without a wired Ethernet option shall not be accepted for fleet deployments.',
+      'Player shall provide an M.2 E-Key slot for field-installable Wi-Fi / Bluetooth module, OR shall include factory-integrated Wi-Fi. Proprietary non-replaceable Wi-Fi modules limiting future-upgrade options shall be noted.',
+      'Player shall provide dedicated 3.5 mm analog audio output with SPDIF capability for independent audio routing to external amplifiers or audio-distribution systems.',
+      'Player shall provide physical Reset and Service buttons accessible without disassembly, for firmware recovery and factory reset operations.',
+      'Player shall provide minimum one (1) status LED indicator for operational state (power / playback / network / fault).',
+      'Primary storage shall be field-replaceable external Class 10 microSD card (or equivalent removable flash media) with minimum 64 GB capacity supplied, to enable rapid on-site content pre-staging and failed-unit field-swap without central CMS dependency.'
+    ],
+    'Interactive & Control I/O':[
+      'Player shall support interactive deployments via General Purpose Input/Output (GPIO) — either natively through a dedicated multi-pin Phoenix-style connector with bi-directional digital I/O, or through a manufacturer-supplied USB-to-GPIO adapter cable kit. USB-only players requiring third-party GPIO converters shall provide the OEM-supplied kit as part of the quoted BOM.',
+      'Player shall support bi-directional Infrared (IR) control — either through a dedicated 3.5 mm IR in/out jack, or through a manufacturer-supplied USB-to-IR receiver cable. IR control via separate third-party dongles shall be noted as a minor deviation.',
+      'Player shall support RS-232 serial control for integration with display panels, projectors, and building-control systems — either through a dedicated 3.5 mm serial jack or through a manufacturer-supplied USB-to-serial cable kit. Players requiring customer-sourced USB-to-serial adapters shall not be accepted for tender.',
+      'Player shall support manufacturer-supplied dedicated button-pad accessories for push-button interactive signage (museum, way-finding, quiz kiosk deployments). Generic USB keyboard emulation is not equivalent.'
+    ],
+    'Security & Compliance':[
+      'Player firmware shall be signed and verified. Secure boot or equivalent chain-of-trust mechanism shall be implemented to prevent unauthorised OS or bootloader replacement.',
+      'Player shall not run a user-accessible command shell, desktop environment, or file manager at runtime. Hardened embedded runtime with no interactive login is required for public-facing deployments.',
+      'Player network stack shall support HTTPS content delivery, TLS 1.2 or higher, and signed update channels. HTTP-only and unsigned update mechanisms are not acceptable.',
+      'Player shall support deployment behind enterprise firewalls with outbound-only connection patterns. Inbound-port or NAT-traversal requirements for cloud CMS operation shall be documented.'
+    ],
+    'Warranty & Support':[
+      'Player shall carry a minimum 5-year standard manufacturer warranty from date of despatch, covering manufacturing defects and firmware issues.',
+      'RMA turn-around time shall not exceed 15 working days for in-warranty failures, with in-country depot support.',
+      'Manufacturer shall provide a documented product lifecycle plan with minimum 7 years from launch date, including firmware security updates for the full lifecycle.',
+      'Manufacturer shall maintain an authorised distribution and service channel in India with demonstrable 3+ year continuous presence.'
+    ]
+  },
+
+  // ========== PER-GROUP ADDITIONAL CLAUSES ==========
+  AU:{
+    'Audio-Specific Requirements':[
+      'Player shall support minimum three (3) independent audio zones with separate content scheduling per zone, enabling multi-area audio deployment from a single unit.',
+      'Player shall provide HDMI with Audio Return Channel (ARC) and Enhanced Audio Return Channel (eARC) for integration with modern AV receivers and soundbars.',
+      'Player shall support USB-C audio output with host-mode capability for integration with USB DAC and pro-audio equipment.',
+      'Player shall handle AAC, MP2, MP3, WAV codecs natively, with AC3 pass-through for multi-channel audio delivery.'
+    ]
+  },
+
+  LS:{
+    'Video Engine Requirements (HD / 4K entry tier)':[
+      'Player shall decode Full HD 1920×1080 video at up to 60p natively in H.264 and H.265.',
+      'Player shall support 4K IP streaming playback (for 4K-capable model variants).',
+      'Player shall support non-standard and customisable display resolutions and aspect ratios for unique screen geometries (portrait digital posters, ribbon displays, irregular LED canvases) without requiring manual GPU driver configuration.'
+    ]
+  },
+
+  HD:{
+    'Video Engine Requirements (4K HDR mid-tier)':[
+      'Player shall decode 4K UHD (3840×2160 / 4096×2160) at 10-bit colour depth, up to 60 frames per second, in H.264 and H.265 codecs.',
+      'Player shall support the HDR10, HLG, and Rec.2020 / BT.2020 colour gamuts for wide-colour-gamut retail and hospitality displays.',
+      'Player shall support hardware 4K video rotation (90°/180°/270°) for portrait-orientation digital signage without CPU-side rotation penalties.',
+      'Player shall support single-player dual HD at 60p decode for picture-in-picture or multi-zone HD content presentation.'
+    ],
+    'Hardware Interfaces (mid-tier)':[
+      'Player shall provide Gigabit Ethernet (1000BASE-T).',
+      'Player shall provide a 12-pin Phoenix-style GPIO connector with minimum 8 bi-directional digital I/O ports for direct wiring to sensors, relays, and control systems, without requiring external USB adapters or GPIO expansion boxes.',
+      'Player shall provide dedicated 3.5 mm bi-directional IR input/output jack.'
+    ]
+  },
+
+  XD:{
+    'Video Engine Requirements (4K HDR deployable)':[
+      'Player shall decode 4K UHD at 10-bit @ 60p with HDR10, HLG, and Rec.2020 / BT.2020 support.',
+      'Player shall support dual simultaneous 4K video decode for synchronised multi-screen or picture-in-picture use cases.',
+      'Player shall support 4K video rotation in hardware.'
+    ],
+    'Hardware Interfaces (deployable tier)':[
+      'Player shall provide Gigabit Ethernet with Power over Ethernet Plus (PoE+, IEEE 802.3at) for single-cable power+data deployments, particularly for ceiling-mounted, wayfinding, and deployed-anywhere signage where local AC is impractical. PoE (802.3af) without the higher-power PoE+ specification shall not be accepted for 4K HDR deployments.',
+      'Player shall provide a 12-pin Phoenix-style GPIO connector with 8 bi-directional digital I/O ports, 3.5 mm bi-directional IR jack, and 3.5 mm RS-232 serial interface (expanded-I/O variants).',
+      'Player shall support optional user-installable M.2 PCIe NVMe SSD for local content cache (deployable-anywhere variants).'
+    ],
+    'Chassis (deployable tier)':[
+      'Player shall use an anodised aluminium enclosure rated for extended operating-temperature environments, suitable for ceiling plenums, retail window wells, and deployed-anywhere physical contexts. Plastic enclosures shall not be accepted for deployable-anywhere quoted positions.'
+    ]
+  },
+
+  XT:{
+    'Video Engine Requirements (power & performance tier)':[
+      'Player shall decode 4K UHD at 10-bit @ 60p with HDR10, HLG, and Rec.2020 / BT.2020 support.',
+      'Player shall support dual simultaneous 4K video decode for multi-zone or picture-in-picture applications.',
+      'Higher-tier variants shall additionally support single 8K (7680×4320) @ 60p video decode in H.265 for premium 8K display deployments.',
+      'Player shall support HTML5 with intensive graphics, real-time data visualisation, 3D WebGL, and live-TV-style interactive applications.'
+    ],
+    'Hardware Interfaces (high-performance tier)':[
+      'Player shall provide minimum one (1) HDMI 2.1a output for higher-bandwidth 8K and HFR (high-frame-rate) applications. HDMI 2.0-only players shall not be accepted for 8K-capable quoted positions.',
+      'Higher-tier variants shall provide HDMI 2.0a input for live-TV capture, in-store broadcast pass-through, and source-switching applications. HDCP support shall be specified on the OEM roadmap.',
+      'Player shall provide Gigabit Ethernet with Power over Ethernet Plus (PoE+, IEEE 802.3at).',
+      'Player shall provide comprehensive interactive I/O including 12-pin Phoenix GPIO, 3.5 mm IR, 3.5 mm RS-232 serial, USB-A and USB-C ports, and M.2 PCIe NVMe SSD slot.'
+    ]
+  },
+
+  XC:{
+    'Compute & Operating System (top-tier flagship)':[
+      'Player shall include an Intel Gen 11 or later x86-64 processor with minimum 8 GB RAM for intensive HTML5, 3D WebGL, and multi-screen 8K applications.',
+      'Player shall support dual operating system capability: embedded signage OS (primary) and Microsoft Windows 10/11 IoT LTSC as a secondary selectable option, allowing deployments requiring Windows-native applications (Power BI dashboards, Windows-only SDKs) to be served from the same hardware platform.',
+      'When operating under embedded signage OS, player shall expose full hardware I/O (GPIO, IR, RS-232, USB-C host mode). Operating-system-driven port restrictions shall be documented in the compliance matrix.'
+    ],
+    'Video Engine Requirements (flagship 8K multi-screen)':[
+      'Player shall decode 8K UHD (7680×4320) at 10-bit @ 60p in H.265.',
+      'Player shall support HDR10, HLG, and Rec.2020 / BT.2020 colour gamuts.',
+      'Player shall support 8K resolution images and graphics, 4K resolution images and graphics, and HTML5 WebGL / OpenGL rendering across all connected displays.',
+      'Higher-tier variants shall support quad (4×) simultaneous 4K video decode for four-screen multi-display deployments.'
+    ],
+    'Multi-Display Hardware Interfaces':[
+      'Player shall provide minimum two (2) HDMI outputs (one HDMI 2.1a + one HDMI 2.0a) for two-screen deployments, or four (4) HDMI outputs for four-screen flagship deployments.',
+      'Player shall provide Gigabit Ethernet, multiple USB-A and USB-C ports, M.2 PCIe NVMe SSD slot, and M.2 E-Key Wi-Fi slot.',
+      'Player shall support external GPIO via manufacturer-supplied USB-C-to-GPIO cable kit when operating under the embedded signage OS.'
+    ],
+    'Chassis (flagship tier)':[
+      'Player shall use a metal enclosure with low-noise thermal management, rated for continuous 24×7 operation in office, boardroom, and retail back-of-house environments.'
+    ]
+  }
+};
+
+
+const state = {
+  user:null,
+  form:{project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,ssd:null,ssdCap:''},
+  result:null,
+  osChoice:'brightsignos'
+};
+
+/* ===== LOGIN ===== */
+function handleLogin(){
+  const name=document.getElementById('login-name').value.trim().toLowerCase();
+  const password=document.getElementById('login-password').value;
+  const err=document.getElementById('login-error');
+  if(!name||!password){err.textContent='Please enter both name and password.';err.classList.add('show');return;}
+  const user=USERS[name];
+  if(!user){err.textContent='Access denied. This name is not on the allowlist.';err.classList.add('show');return;}
+  if(user.password!==password){err.textContent='Incorrect password.';err.classList.add('show');return;}
+  err.classList.remove('show');
+  state.user={loginName:name,fullName:user.fullName,role:user.role,isSuper:user.isSuper,loginAt:new Date().toISOString()};
+  const nameEl=document.getElementById('user-label-name');
+  nameEl.innerHTML=user.fullName+(user.isSuper?' <span class="super-pill">Super</span>':'');
+  document.getElementById('user-label-role').textContent=user.role;
+  const initials=user.fullName.split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase();
+  const avatar=document.getElementById('user-avatar');
+  avatar.textContent=initials;
+  avatar.classList.toggle('super',user.isSuper);
+  document.getElementById('log-tab-label').textContent=user.isSuper?'All team':'My history';
+  document.getElementById('page-login').classList.remove('active');
+  document.getElementById('page-app').classList.add('active');
+  renderLog();
+}
+function handleLogout(){
+  state.user=null;
+  document.getElementById('page-login').classList.add('active');
+  document.getElementById('page-app').classList.remove('active');
+  ['login-name','login-password'].forEach(id=>document.getElementById(id).value='');
+}
+
+function showTab(which){
+  ['form','result','log'].forEach(t=>{
+    document.getElementById('section-'+t).style.display=t===which?'block':'none';
+    const btn=document.getElementById('tab-'+t);
+    if(btn)btn.classList.toggle('active',t===which);
+  });
+  if(which==='log')renderLog();
+  window.scrollTo(0,0);
+}
+
+document.querySelectorAll('.pill-group').forEach(group=>{
+  const key=group.getAttribute('data-input');
+  group.querySelectorAll('.pill').forEach(pill=>{
+    pill.addEventListener('click',()=>{
+      group.querySelectorAll('.pill').forEach(p=>p.classList.remove('selected'));
+      pill.classList.add('selected');
+      const val=pill.getAttribute('data-v');
+      const keyMap={'resolution':'resolution','outputs':'outputs','hdmi-in':'hdmiIn','touch':'touch','wifi':'wifi','ssd':'ssd'};
+      state.form[keyMap[key]]=val;
+      if(key==='ssd'){
+        const capWrap=document.getElementById('ssd-cap-wrap');
+        capWrap.classList.toggle('show',val==='yes');
+        if(val==='no'){state.form.ssdCap='';document.getElementById('f-ssd-cap').value='';}
+      }
+      updateProgress();
+    });
+  });
+});
+
+document.querySelectorAll('.choice-grid').forEach(group=>{
+  const key=group.getAttribute('data-input');
+  group.querySelectorAll('.choice-card').forEach(card=>{
+    card.addEventListener('click',()=>{
+      group.querySelectorAll('.choice-card').forEach(c=>c.classList.remove('selected'));
+      card.classList.add('selected');
+      const val=card.getAttribute('data-v');
+      const keyMap={'environment':'environment','update':'update','content':'content'};
+      state.form[keyMap[key]]=val;
+      if(key==='content')document.getElementById('section-video-specs').style.display=val==='audio'?'none':'block';
+      updateProgress();
+    });
+  });
+});
+
+document.getElementById('f-ssd-cap').addEventListener('change',e=>{state.form.ssdCap=e.target.value;});
+
+function adjustQty(delta){
+  const inp=document.getElementById('f-qty');
+  let v=parseInt(inp.value||'1')+delta;
+  if(v<1)v=1;if(v>10000)v=10000;
+  inp.value=v;state.form.qty=v;
+}
+document.getElementById('f-qty').addEventListener('input',e=>{
+  let v=parseInt(e.target.value||'1');
+  if(isNaN(v)||v<1)v=1;state.form.qty=v;
+});
+
+const budgetSlider=document.getElementById('f-budget');
+budgetSlider.addEventListener('input',e=>{setBudget(parseInt(e.target.value));});
+function setBudget(val){
+  state.form.budget=val;budgetSlider.value=val;
+  const zone=BUDGET_ZONES[val];
+  document.getElementById('budget-zone-label').textContent=zone.name;
+  document.getElementById('budget-zone-models').textContent=zone.models;
+  for(let i=1;i<=5;i++)document.getElementById('mk-'+i).classList.toggle('active',i===val);
+}
+
+function updateProgress(){
+  const f=state.form;
+  const projDone=f.project||f.enduser||f.venue||f.partner||f.consultant||f.city||f.contactname||f.contactphone||f.contactemail||f.stage||f.closemonth;
+  const deployDone=f.environment&&f.update;
+  const contentDone=f.content;
+  const videoDone=f.content==='audio'||(f.resolution&&f.outputs&&f.hdmiIn&&f.touch&&f.wifi&&f.ssd);
+  const steps=document.querySelectorAll('.progress-step');
+  steps[0].classList.toggle('done',!!projDone);
+  steps[1].classList.toggle('done',!!deployDone);
+  steps[2].classList.toggle('done',!!contentDone);
+  steps[3].classList.toggle('done',!!videoDone);
+}
+['f-project','f-enduser','f-venue','f-partner','f-consultant','f-city','f-contactname','f-contactphone','f-contactemail','f-stage','f-closemonth'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',updateProgress);
+  document.getElementById(id).addEventListener('change',updateProgress);
+});
+
+function resetForm(){
+  ['f-project','f-enduser','f-venue','f-partner','f-consultant','f-contactname','f-contactphone','f-contactemail','f-closemonth'].forEach(id=>document.getElementById(id).value='');
+  ['f-city','f-stage','f-ssd-cap'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-qty').value=1;
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('selected'));
+  document.querySelectorAll('.choice-card').forEach(p=>p.classList.remove('selected'));
+  document.getElementById('section-video-specs').style.display='block';
+  document.getElementById('ssd-cap-wrap').classList.remove('show');
+  document.getElementById('form-error').classList.remove('show');
+  state.form={project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,ssd:null,ssdCap:''};
+  setBudget(2);
+  document.querySelectorAll('.progress-step').forEach(s=>s.classList.remove('done'));
+}
+
+/* ===== ENGINE ===== */
+function runSelector(){
+  state.form.project=document.getElementById('f-project').value.trim();
+  state.form.enduser=document.getElementById('f-enduser').value.trim();
+  state.form.venue=document.getElementById('f-venue').value.trim();
+  state.form.partner=document.getElementById('f-partner').value.trim();
+  state.form.consultant=document.getElementById('f-consultant').value.trim();
+  state.form.city=document.getElementById('f-city').value;
+  state.form.contactname=document.getElementById('f-contactname').value.trim();
+  state.form.contactphone=document.getElementById('f-contactphone').value.trim();
+  state.form.contactemail=document.getElementById('f-contactemail').value.trim();
+  state.form.stage=document.getElementById('f-stage').value;
+  state.form.closemonth=document.getElementById('f-closemonth').value;
+  state.form.ssdCap=document.getElementById('f-ssd-cap').value;
+  const f=state.form;const err=document.getElementById('form-error');const missing=[];
+  if(!f.project)missing.push('Project');if(!f.enduser)missing.push('End-user');if(!f.venue)missing.push('Venue');if(!f.partner)missing.push('Partner');if(!f.consultant)missing.push('Consultant');if(!f.city)missing.push('City');if(!f.contactname)missing.push('Contact name');if(!f.contactphone)missing.push('Contact phone');if(!f.contactemail)missing.push('Contact email');if(!f.stage)missing.push('Deal stage');if(!f.closemonth)missing.push('Close month');if(!f.qty||f.qty<1)missing.push('Quantity');if(!f.environment)missing.push('Environment');if(!f.update)missing.push('Content update');if(!f.content)missing.push('Content type');
+  if(f.content!=='audio'){if(!f.resolution)missing.push('Resolution');if(!f.outputs)missing.push('Displays');if(!f.hdmiIn)missing.push('HDMI input');if(!f.touch)missing.push('Touch');if(!f.wifi)missing.push('Wi-Fi');if(!f.ssd)missing.push('SSD');if(f.ssd==='yes' && !f.ssdCap)missing.push('SSD capacity');}
+  if(missing.length){err.textContent='Please complete: '+missing.join(', ');err.classList.add('show');window.scrollTo({top:0,behavior:'smooth'});return;}
+  err.classList.remove('show');
+  if(f.content==='audio'){const au=MODELS.find(m=>m.id==='AU335'&&m.available);state.result={model:au,alt_down:null,alt_up:null,noRec:false,budgetUpgraded:false};} else {state.result=pickModel(f);}
+  // Generate unique ref ID for this selection (used for save→confirm upgrade)
+  state.result.refId='BS-'+Date.now().toString().slice(-8);
+  state.result.confirmed=false;
+  // Save-first pattern: log to central Google Sheet BEFORE showing result.
+  // Always preserves local fallback. 'no-cors' webhook resolves regardless of
+  // server response, so worst case this adds a small network-round-trip delay.
+  logEntry('viewed',function(){
+    renderResult();
+    document.getElementById('tab-result').style.display='inline-flex';
+    showTab('result');
+  });
+}
+
+function pickModel(f){
+  const qualified=MODELS.filter(m=>m.available && !m.audio).map(m=>({m,score:scoreModel(m,f)})).filter(x=>x.score>-500).sort((a,b)=>a.m.rank-b.m.rank);
+  if(!qualified.length)return {model:null,alt_down:null,alt_up:null,noRec:true,budgetUpgraded:false};
+  const minCompliant=qualified[0].m;
+  const zone=BUDGET_ZONES[f.budget];
+  const minGroupIdx=SERIES_LADDER.indexOf(minCompliant.group);
+  const zoneTargetGroup=zone.groups[zone.groups.length-1];
+  const zoneTargetIdx=SERIES_LADDER.indexOf(zoneTargetGroup);
+  let primary=minCompliant;let budgetUpgraded=false;let climbPath=[minCompliant.group];
+  if(minGroupIdx<zoneTargetIdx){
+    for(let i=minGroupIdx+1;i<=zoneTargetIdx;i++){
+      const nextGroup=SERIES_LADDER[i];
+      const cand=qualified.find(x=>x.m.group===nextGroup);
+      if(cand){primary=cand.m;climbPath.push(nextGroup);}
+    }
+    if(climbPath.length>1)budgetUpgraded=true;
+  }
+  const cheaper=qualified.filter(x=>x.m.rank<primary.rank)[0];
+  const pricier=qualified.filter(x=>x.m.rank>primary.rank)[0];
+  return {model:primary,alt_down:cheaper?cheaper.m:null,alt_up:pricier?pricier.m:null,noRec:false,budgetUpgraded:budgetUpgraded,minCompliantId:minCompliant.id,climbPath:climbPath};
+}
+
+function scoreModel(m,f){
+  if(!m.res.includes(f.resolution))return -1000;
+  if(m.outputs<parseInt(f.outputs))return -1000;
+  if(f.hdmiIn==='yes' && !m.hdmiIn)return -1000;
+  if(f.touch==='yes' && !m.touch)return -1000;
+  if(f.environment==='outdoor' && m.chassis!=='aluminium')return -1000;
+  return 100-m.rank;
+}
+
+function renderResult(){
+  document.getElementById('print-date').textContent=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  document.getElementById('print-ref').textContent='BS-'+Date.now().toString().slice(-8);
+  const r=state.result;const host=document.getElementById('result-content');const f=state.form;
+  if(r.noRec){host.innerHTML=`<div class="result-card"><div class="no-rec-block"><div class="no-rec-title">No single player matches these requirements</div><div class="no-rec-desc">The combination of resolution, screens, HDMI input, touch, and outdoor chassis doesn't fit any current Series 5 model. Common causes: 8K with 4 screens + HDMI input, or outdoor deployment needing plastic-body tier. Consider splitting into two player types, or relaxing one input.</div></div></div>${buildProjectCard()}`;return;}
+  const m=r.model;const isXC=m.xc===true;
+  const poeBadge=m.poe?`<span class="badge success"><span class="dot"></span>PoE+ supported</span>`:`<span class="badge warning"><span class="dot"></span>DC power supply required</span>`;
+  const cms=computeCMS(f);const cmsBadge=`<span class="badge info"><span class="dot"></span>${cms.badge}</span>`;
+  const chassisBadge=m.chassis==='aluminium'?`<span class="badge success"><span class="dot"></span>Aluminium · extended temp</span>`:m.chassis==='metal'?`<span class="badge indigo"><span class="dot"></span>Metal · active cooling</span>`:`<span class="badge warning"><span class="dot"></span>Plastic · indoor only</span>`;
+  let html=`<div class="result-card ${m.hero?'hero-card':''}">`;
+  if(m.hero)html+=`<div class="hero-badge"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Hero product</div>`;
+  html+=`<div class="card-title"><span class="card-title-num">★</span>Recommended model</div><div class="card-divider"></div><div class="model-hero-banner"><div class="model-hero-left"><div class="model-hero"><div class="model-name">${m.id}</div><div class="model-tag">${m.tag}</div></div><div class="model-notes">${m.notes}</div><div class="badge-row">${poeBadge}${cmsBadge}${chassisBadge}${f.wifi==='yes'?`<span class="badge info"><span class="dot"></span>Wi-Fi via WD-105</span>`:''}${m.hero?`<span class="badge gold"><span class="dot"></span>Hero product</span>`:''}</div></div><div class="model-hero-photo">${MODEL_PHOTOS[m.id]?`<img src="${MODEL_PHOTOS[m.id]}" alt="BrightSign ${m.id}" onerror="this.parentElement.innerHTML='<div class=&quot;model-hero-photo-loading&quot;>Photo unavailable</div>';">`:`<div class="model-hero-photo-loading">No photo</div>`}</div></div>`;
+  if(r.budgetUpgraded)html+=`<div class="budget-note"><strong>Series upgrade path:</strong> technical minimum is <strong>${r.minCompliantId}</strong> (${r.climbPath[0]}). Your <strong>${BUDGET_ZONES[f.budget].name}</strong> budget climbs <strong>${r.climbPath.join(' → ')}</strong>, landing on <strong>${m.id}</strong>.</div>`;
+  if(isXC)html+=`<div class="os-selector"><div class="os-selector-title">OS selection (XC series only)</div><div class="os-selector-desc">Choose based on the project's software requirements.</div><div class="os-pills"><button class="os-pill selected" data-os="brightsignos" onclick="selectOS('brightsignos')"><div class="os-pill-name">BrightSignOS</div><div class="os-pill-note">All ports active · GPIO · IR · RS-232 · USB-C · Full bsn.Control</div></button><button class="os-pill" data-os="windows" onclick="selectOS('windows')"><div class="os-pill-name">Windows 10/11 IoT</div><div class="os-pill-note">GPIO / IR / RS-232 / USB-C disabled · Windows-based CMS only</div></button></div></div>`;
+  if(r.alt_down||r.alt_up){
+    html+=`<div class="alternates-row">`;
+    html+=r.alt_down?`<div class="alt-card"><div class="alt-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Step down</div><div class="alt-model">${r.alt_down.id}</div><div class="alt-tag">${r.alt_down.tag}</div></div>`:`<div class="alt-card"><div class="alt-label">Step down</div><div class="alt-model" style="color:var(--ink-subtle);">—</div><div class="alt-tag">No cheaper option qualifies</div></div>`;
+    html+=r.alt_up?`<div class="alt-card"><div class="alt-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>Step up</div><div class="alt-model">${r.alt_up.id}</div><div class="alt-tag">${r.alt_up.tag}</div></div>`:`<div class="alt-card"><div class="alt-label">Step up</div><div class="alt-model" style="color:var(--ink-subtle);">—</div><div class="alt-tag">Already at flagship tier</div></div>`;
+    html+=`</div>`;
+  }
+  const concerns=buildConcerns(m,f);
+  if(concerns.length)html+=`<div class="concern-box"><div class="concern-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Deployment notes</div><ul class="concern-list">${concerns.map(c=>`<li>${c}</li>`).join('')}</ul></div>`;
+  html+=`</div>`;
+  html+=buildBOMCard(m,f,cms);
+  html+=buildTenderSpecCard(m);
+  html+=buildProjectCard();
+  host.innerHTML=html;
+}
+
+function computeCMS(f){
+  // CMS deferred — placeholder until Pickcel / Korbyt integration lands
+  return {badge:`CMS · TBD`,bom:{name:'CMS subscription — TBD', qty:parseInt(f.qty)||1, note:'Pickcel / Korbyt / third-party CMS integration coming in next release'}};
+}
+function buildConcerns(m,f){
+  const list=[];
+  if(f.environment==='outdoor')list.push('<strong>Outdoor</strong> requires third-party IP-rated enclosure.');
+  if(m.chassis==='metal' && f.environment==='outdoor')list.push('<strong>XC metal chassis</strong> is indoor-rated. Consider XT series.');
+  if(f.hdmiIn==='yes')list.push('<strong>HDMI input</strong> — HDCP on OS roadmap.');
+  if(f.update==='cloud' && f.wifi==='no')list.push('<strong>Remote cloud + no Wi-Fi</strong> — ensure wired Ethernet on site.');
+  if(parseInt(f.qty)>100)list.push(`<strong>${f.qty} players</strong> — confirm CMS scaling early.`);
+  if(f.ssd==='yes' && m.ssdCapable===null)list.push('<strong>SSD</strong> — verify M.2 NVMe compatibility with BrightSign rep.');
+  if(f.ssd==='yes' && m.ssdCapable===false)list.push(`<strong>SSD not supported</strong> on ${m.id}. 64 GB microSD included.`);
+  return list;
+}
+function buildBOMCard(m,f,cms){
+  const qty=parseInt(f.qty)||1;const rows=[];
+  const ssdActive=f.ssd==='yes' && m.ssdCapable!==false && f.ssdCap;
+  if(ssdActive){
+    rows.push({name:`BrightSign ${m.id}`, qty:qty, note:m.tag});
+    const capLabel=f.ssdCap==='1024'?'1 TB':f.ssdCap+' GB';
+    rows.push({name:`M.2 NVMe SSD — ${capLabel}`, qty:qty, note:m.ssdCapable===null?'Verify M.2 NVMe compatibility · cost excluded':'Cost excluded'});
+  } else {
+    rows.push({name:`BrightSign ${m.id}`, qty:qty, note:`${m.tag} · 64 GB microSD included`});
+  }
+  if(f.wifi==='yes')rows.push({name:'WD-105 Wi-Fi / Bluetooth module', qty:qty, note:'M.2 E-Key dual-antenna'});
+  rows.push({name:'CMS — TBD', qty:qty, note:'Pickcel / Korbyt / third-party integration coming'});
+  let html=`<div class="result-card"><div class="card-title"><span class="card-title-num">⌲</span>Bill of Materials</div><div class="card-divider"></div><table class="bom-table"><thead><tr><th>Line item</th><th class="num" style="width:90px;">Qty</th></tr></thead><tbody>`;
+  rows.forEach(r=>{html+=`<tr><td><div class="bom-item-name">${r.name}</div>${r.note?`<div class="bom-item-note">${r.note}</div>`:''}</td><td class="num">${r.qty}</td></tr>`;});
+  html+=`</tbody></table></div>`;
+  return html;
+}
+function buildTenderSpecCard(m){
+  const groupClauses=TENDER_CLAUSES[m.group]||{};
+  const prescriptive={...TENDER_CLAUSES.baseline};
+  Object.keys(groupClauses).forEach(section=>{prescriptive[section]=groupClauses[section];});
+  let totalClauses=0;
+  Object.keys(prescriptive).forEach(sec=>{totalClauses+=prescriptive[sec].length;});
+
+  let html=`<div class="result-card"><div class="card-title"><span class="card-title-num">☰</span>Tender specifications<span style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-subtle);font-weight:500;letter-spacing:0.04em;text-transform:uppercase;">${totalClauses} clauses · ${Object.keys(prescriptive).length} categories</span></div><div class="card-divider"></div>`;
+
+  let clauseNum=0;
+  Object.keys(prescriptive).forEach((sectionName,idx)=>{
+    const clauses=prescriptive[sectionName];
+    const isOpen=idx===0;
+    html+=`<div class="clause-section ${isOpen?'open':''}">
+      <div class="clause-section-head ${isOpen?'open':''}" onclick="toggleClauseSection(this)">
+        <div class="clause-section-title">
+          <svg class="clause-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          ${sectionName}
+        </div>
+        <div class="clause-count">${clauses.length}</div>
+      </div>
+      <div class="clause-section-body">
+        <div class="clause-header-row">
+          <div>#</div><div>Clause</div><div>✓</div><div>✗</div><div>Remarks</div>
+        </div>`;
+    clauses.forEach(clause=>{
+      clauseNum++;
+      html+=`<div class="clause-row">
+        <div class="clause-num">${String(clauseNum).padStart(2,'0')}</div>
+        <div class="clause-text">${clause}</div>
+        <div class="clause-comply"><span class="clause-check"></span></div>
+        <div class="clause-comply"><span class="clause-check"></span></div>
+        <div><input type="text" class="clause-remark" placeholder="Make / model / remarks"></div>
+      </div>`;
+    });
+    html+=`</div></div>`;
+  });
+
+  html+=`</div>`;
+  return html;
+}
+
+function toggleClauseSection(el){
+  const section=el.closest('.clause-section');
+  section.classList.toggle('open');
+  el.classList.toggle('open');
+}
+
+function toggleSpecSection(el){
+  const section=el.closest('.spec-section');
+  section.classList.toggle('open');
+  el.classList.toggle('open');
+}
+function toggleAllSpecs(open){
+  document.querySelectorAll('.spec-section').forEach(s=>{
+    s.classList.toggle('open',open);
+    s.querySelector('.spec-section-head').classList.toggle('open',open);
+  });
+}
+function buildProjectCard(){
+  const f=state.form;
+  const contentLabel=f.content==='audio'?'Audio only':f.content==='video'?'Video only':f.content==='av'?'Audio + Video':'—';
+  const closeLabel=f.closemonth?new Date(f.closemonth+'-01').toLocaleDateString('en-IN',{month:'short',year:'numeric'}):'—';
+  return `<div class="result-card"><div class="card-title"><span class="card-title-num">⎙</span>Project summary</div><div class="card-divider"></div><div class="project-grid"><div class="project-field"><div class="project-label">Project</div><div class="project-value">${f.project||'—'}</div></div><div class="project-field"><div class="project-label">End-user</div><div class="project-value">${f.enduser||'—'}</div></div><div class="project-field"><div class="project-label">Venue</div><div class="project-value">${f.venue||'—'}</div></div><div class="project-field"><div class="project-label">Partner / SI</div><div class="project-value">${f.partner||'—'}</div></div><div class="project-field"><div class="project-label">Consultant</div><div class="project-value">${f.consultant||'—'}</div></div><div class="project-field"><div class="project-label">City</div><div class="project-value">${f.city||'—'}</div></div><div class="project-field"><div class="project-label">Contact person</div><div class="project-value">${f.contactname||'—'}</div></div><div class="project-field"><div class="project-label">Contact phone</div><div class="project-value">${f.contactphone||'—'}</div></div><div class="project-field"><div class="project-label">Contact email</div><div class="project-value">${f.contactemail||'—'}</div></div><div class="project-field"><div class="project-label">Deal stage</div><div class="project-value">${f.stage||'—'}</div></div><div class="project-field"><div class="project-label">Expected close</div><div class="project-value">${closeLabel}</div></div><div class="project-field"><div class="project-label">Quantity</div><div class="project-value">${f.qty||'—'} players</div></div><div class="project-field"><div class="project-label">Environment</div><div class="project-value">${f.environment==='indoor'?'Indoor':f.environment==='outdoor'?'Outdoor':'—'}</div></div><div class="project-field"><div class="project-label">Content type</div><div class="project-value">${contentLabel}</div></div><div class="project-field"><div class="project-label">Budget tier</div><div class="project-value">${BUDGET_ZONES[f.budget]?BUDGET_ZONES[f.budget].name:'—'}</div></div><div class="project-field"><div class="project-label">Generated by</div><div class="project-value">${state.user?state.user.fullName:'—'}</div></div></div></div>`;
+}
+function selectOS(os){state.osChoice=os;document.querySelectorAll('.os-pill').forEach(p=>p.classList.toggle('selected',p.getAttribute('data-os')===os));}
+
+/* ===== LOG / SYNC ===== */
+function showSync(msg,type){
+  const el=document.getElementById('sync-status');
+  el.className='sync-status show '+(type||'');
+  document.getElementById('sync-msg').textContent=msg;
+  if(type!=='error')setTimeout(()=>el.classList.remove('show'),2500);
+}
+function loadLocalLog(){try{const raw=localStorage.getItem('bs-selector-log');return raw?JSON.parse(raw):[];}catch(e){return [];}}
+function saveLocalLog(entries){try{localStorage.setItem('bs-selector-log',JSON.stringify(entries));}catch(e){}}
+
+/* Build entry payload from current state (shared by logEntry + downloadQuoteExcel) */
+function buildEntryPayload(status){
+  const f=state.form;const r=state.result;
+  if(!r||r.noRec)return null;
+  return {
+    refId:r.refId,
+    ts:new Date().toISOString(),
+    status:status||'viewed',
+    user:state.user?state.user.fullName:'—',
+    loginName:state.user?state.user.loginName:'—',
+    role:state.user?state.user.role:'—',
+    project:f.project||'(unnamed)',enduser:f.enduser||'—',venue:f.venue||'—',
+    partner:f.partner||'—',consultant:f.consultant||'—',city:f.city||'—',
+    contactname:f.contactname||'—',contactphone:f.contactphone||'—',contactemail:f.contactemail||'—',
+    stage:f.stage||'—',closemonth:f.closemonth||'—',
+    qty:f.qty,model:r.model.id,tag:r.model.tag,
+    content:f.content||'—',resolution:f.resolution||'—',
+    environment:f.environment||'—',update:f.update||'—',
+    budget:BUDGET_ZONES[f.budget]?BUDGET_ZONES[f.budget].name:'—',
+    hdmiIn:f.hdmiIn||'—',touch:f.touch||'—',wifi:f.wifi||'—',
+    ssd:f.ssd==='yes'?(f.ssdCap==='1024'?'1TB':f.ssdCap+'GB'):'no',
+    os:r.model.xc?state.osChoice:'—'
+  };
+}
+
+/* Log entry with status — called automatically on Recommend and on Confirm.
+   onDone callback fires after the save attempt completes (success or fail),
+   so runSelector can chain renderResult() after the central-log roundtrip. */
+function logEntry(status,onDone){
+  const entry=buildEntryPayload(status);
+  if(!entry){if(onDone)onDone();return;}
+  // Local fallback (dedupe by refId so viewed→saved doesn't double-row)
+  const entries=loadLocalLog();
+  const existingIdx=entries.findIndex(e=>e.refId===entry.refId);
+  if(existingIdx>=0)entries[existingIdx]=entry;
+  else entries.unshift(entry);
+  if(entries.length>500)entries.length=500;
+  saveLocalLog(entries);
+  // Central webhook
+  if(WEBHOOK_URL){
+    const msg=status==='saved'?'Confirming…':'Logging…';
+    showSync(msg);
+    fetch(WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(entry)})
+      .then(()=>{showSync(status==='saved'?'Confirmed ✓':'Logged ✓','success');if(onDone)onDone();})
+      .catch(err=>{console.warn('Webhook failed:',err);showSync('Saved locally (central offline)','error');if(onDone)onDone();});
+  } else {
+    showSync(status==='saved'?'Confirmed locally ✓':'Logged locally ✓','success');
+    if(onDone)onDone();
+  }
+}
+
+/* Confirm button — upgrades row status from 'viewed' to 'saved' */
+function confirmSelection(){
+  if(!state.result||state.result.noRec)return;
+  state.result.confirmed=true;
+  logEntry('saved');
+  // Update Confirm button to show feedback
+  const btn=document.querySelector('#section-result .action-bar .btn-action');
+  if(btn){btn.textContent='Confirmed ✓';btn.style.background='var(--emerald)';btn.disabled=true;}
+}
+
+/* Download quote as single-sheet .xlsx — contains contact header, project details, all inputs, recommendation, tender spec */
+function downloadQuoteExcel(){
+  if(!state.result||state.result.noRec){alert('No recommendation available to export.');return;}
+  if(typeof XLSX==='undefined'){alert('Excel library not loaded. Check internet connection and reload.');return;}
+  const f=state.form;const r=state.result;const m=r.model;
+  const refId=r.refId||'BS-'+Date.now().toString().slice(-8);
+  const dateStr=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+
+  const aoa=[];
+  // Header: contact block
+  aoa.push(['BrightSign Product Quote']);
+  aoa.push([]);
+  aoa.push(['Generated by','Dipenkumar Gajjar']);
+  aoa.push(['Title','National Product Manager']);
+  aoa.push(['Phone','+91 8160 756 906']);
+  aoa.push(['Email','dipen.g@cavitak.com']);
+  aoa.push(['Reference',refId]);
+  aoa.push(['Date',dateStr]);
+  aoa.push([]);
+  // Project details
+  aoa.push(['PROJECT DETAILS']);
+  aoa.push(['Project name',f.project||'—']);
+  aoa.push(['End-user / Client',f.enduser||'—']);
+  aoa.push(['Venue / Location',f.venue||'—']);
+  aoa.push(['Partner / SI',f.partner||'—']);
+  aoa.push(['Consultant',f.consultant||'—']);
+  aoa.push(['City',f.city||'—']);
+  aoa.push(['Deal stage',f.stage||'—']);
+  aoa.push(['Expected close',f.closemonth||'—']);
+  aoa.push([]);
+  // Client contact
+  aoa.push(['CLIENT CONTACT']);
+  aoa.push(['Contact name',f.contactname||'—']);
+  aoa.push(['Contact phone',f.contactphone||'—']);
+  aoa.push(['Contact email',f.contactemail||'—']);
+  aoa.push([]);
+  // Deployment inputs
+  aoa.push(['DEPLOYMENT REQUIREMENTS']);
+  aoa.push(['Quantity',f.qty||'—']);
+  aoa.push(['Environment',f.environment==='indoor'?'Indoor':f.environment==='outdoor'?'Outdoor':'—']);
+  aoa.push(['Content update',f.update==='local'?'Local network':f.update==='cloud'?'Remote / Cloud':'—']);
+  aoa.push(['Budget tier',BUDGET_ZONES[f.budget]?BUDGET_ZONES[f.budget].name:'—']);
+  aoa.push(['Content type',f.content==='audio'?'Audio only':f.content==='video'?'Video only':f.content==='av'?'Audio + Video':'—']);
+  if(f.content!=='audio'){
+    aoa.push(['Resolution',(f.resolution||'—').toUpperCase()]);
+    aoa.push(['Displays per player',f.outputs||'—']);
+    aoa.push(['HDMI input',f.hdmiIn==='yes'?'Yes':'No']);
+    aoa.push(['Touch / interactive',f.touch==='yes'?'Yes':'No']);
+    aoa.push(['Wi-Fi',f.wifi==='yes'?'Yes':'No']);
+    aoa.push(['SSD',f.ssd==='yes'?(f.ssdCap==='1024'?'1 TB':f.ssdCap+' GB'):'No']);
+  }
+  if(m.xc)aoa.push(['OS choice',state.osChoice==='brightsignos'?'BrightSignOS':'Windows 10/11 IoT']);
+  aoa.push([]);
+  // Recommendation
+  aoa.push(['RECOMMENDED MODEL']);
+  aoa.push(['Model',m.id]);
+  aoa.push(['Series','Series '+m.series]);
+  aoa.push(['Category',m.tag]);
+  aoa.push(['Technical notes',m.notes]);
+  aoa.push([]);
+  // BOM
+  aoa.push(['BILL OF MATERIALS']);
+  aoa.push(['Line item','Quantity','Notes']);
+  const qty=parseInt(f.qty)||1;
+  const ssdActive=f.ssd==='yes' && m.ssdCapable!==false && f.ssdCap;
+  if(ssdActive){
+    aoa.push([`BrightSign ${m.id}`,qty,m.tag]);
+    const capLabel=f.ssdCap==='1024'?'1 TB':f.ssdCap+' GB';
+    aoa.push([`M.2 NVMe SSD — ${capLabel}`,qty,m.ssdCapable===null?'Verify M.2 NVMe compatibility · cost excluded':'Cost excluded']);
+  } else {
+    aoa.push([`BrightSign ${m.id}`,qty,`${m.tag} · 64 GB microSD included`]);
+  }
+  if(f.wifi==='yes')aoa.push(['WD-105 Wi-Fi / Bluetooth module',qty,'M.2 E-Key dual-antenna']);
+  aoa.push(['CMS — TBD',qty,'Pickcel / Korbyt / third-party integration']);
+  aoa.push([]);
+  // Tender spec
+  aoa.push(['TENDER SPECIFICATIONS']);
+  aoa.push(['Clause #','Category','Specification','Comply (Y/N)','Remarks / Make & Model']);
+  const groupClauses=TENDER_CLAUSES[m.group]||{};
+  const prescriptive={...TENDER_CLAUSES.baseline};
+  Object.keys(groupClauses).forEach(section=>{prescriptive[section]=groupClauses[section];});
+  let clauseNum=0;
+  Object.keys(prescriptive).forEach(sectionName=>{
+    prescriptive[sectionName].forEach(clause=>{
+      clauseNum++;
+      aoa.push([String(clauseNum).padStart(2,'0'),sectionName,clause,'','']);
+    });
+  });
+  aoa.push([]);
+  // Footer
+  aoa.push(['This quote is for internal reference and customer discussion.']);
+  aoa.push(['Pricing subject to current price list, forex, and landed-cost variations.']);
+  aoa.push(['Dipenkumar Gajjar · National Product Manager · +91 8160 756 906 · dipen.g@cavitak.com']);
+
+  // Build sheet with column widths
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:18},{wch:50},{wch:60},{wch:14},{wch:40}];
+
+  // Merge header title across 5 columns
+  ws['!merges']=ws['!merges']||[];
+  ws['!merges'].push({s:{r:0,c:0},e:{r:0,c:4}});
+
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Quote');
+
+  const fname=`BrightSign-Quote-${m.id}-${(f.project||'Project').replace(/[^a-zA-Z0-9]/g,'_').slice(0,30)}-${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb,fname);
+  showSync('Excel downloaded ✓','success');
+}
+
+function clearLog(){if(confirm('Clear LOCAL history? (Central Google Sheet is not affected.)')){saveLocalLog([]);renderLog();}}
+
+async function refreshLog(){
+  showSync('Refreshing…');
+  if(WEBHOOK_URL && state.user && state.user.isSuper){
+    try{
+      const resp=await fetch(WEBHOOK_URL+'?action=read',{method:'GET'});
+      const data=await resp.json();
+      if(Array.isArray(data)){
+        window._centralLog=data;
+        showSync('Central log loaded ✓','success');
+        renderLog();
+        return;
+      }
+    } catch(e){console.warn(e);showSync('Central fetch failed (showing local)','error');}
+  } else {showSync('Local refresh ✓','success');}
+  renderLog();
+}
+
+function renderLog(){
+  if(!state.user)return;
+  const isSuper=state.user.isSuper;
+  const host=document.getElementById('log-content');
+  const superDash=document.getElementById('super-dashboard');
+  const actionBar=document.getElementById('log-action-bar');
+  const exportBtn=document.getElementById('export-btn');
+  const pageTitle=document.getElementById('log-page-title');
+  const pageSubtitle=document.getElementById('log-page-subtitle');
+
+  let entries=[];
+  if(isSuper){
+    entries=(window._centralLog&&window._centralLog.length)?window._centralLog:loadLocalLog();
+    pageTitle.textContent='All-team selection history';
+    pageSubtitle.textContent=WEBHOOK_URL?'Aggregated from the central Google Sheet. Click Refresh to sync.':'Aggregated from local browser storage. Configure WEBHOOK_URL in the file to enable central sync.';
+    exportBtn.style.display='inline-flex';
+  } else {
+    const all=loadLocalLog();
+    entries=all.filter(e=>e.loginName===state.user.loginName||e.user===state.user.fullName);
+    pageTitle.textContent='My selection history';
+    pageSubtitle.textContent='Your past recommendations.';
+    exportBtn.style.display='none';
+  }
+
+  // Super user dashboard
+  if(isSuper && entries.length){
+    const users={};const stages={};const cities={};const models={};
+    entries.forEach(e=>{users[e.user]=(users[e.user]||0)+1;stages[e.stage]=(stages[e.stage]||0)+1;cities[e.city]=(cities[e.city]||0)+1;models[e.model]=(models[e.model]||0)+1;});
+    const totalQty=entries.reduce((sum,e)=>sum+(parseInt(e.qty)||0),0);
+    superDash.style.display='block';
+    superDash.innerHTML=`
+      <div class="super-banner">
+        <div class="super-banner-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+        <div class="super-banner-text">
+          <div class="super-banner-title">Super user dashboard</div>
+          <div class="super-banner-sub">You're viewing all-team pipeline data. Regular users see only their own history.</div>
+        </div>
+      </div>
+      <div class="super-stats">
+        <div class="stat-card"><div class="stat-label">Total selections</div><div class="stat-value">${entries.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Total player qty</div><div class="stat-value">${totalQty}</div></div>
+        <div class="stat-card"><div class="stat-label">Active users</div><div class="stat-value">${Object.keys(users).length}</div></div>
+        <div class="stat-card"><div class="stat-label">Cities covered</div><div class="stat-value">${Object.keys(cities).length}</div></div>
+      </div>`;
+  } else {superDash.style.display='none';}
+
+  if(!entries.length){
+    host.innerHTML=`<div class="log-empty"><svg class="log-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div class="log-empty-title">No selections yet</div><div>Run your first selection on the "New selection" tab.</div></div>`;
+    actionBar.style.display='none';return;
+  }
+  actionBar.style.display='flex';
+  host.innerHTML=entries.map(e=>{
+    const d=new Date(e.ts);
+    const dateStr=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+    const timeStr=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    const resStr=e.resolution==='audio'?'AUDIO':(e.resolution||'—').toUpperCase();
+    const statusLabel=e.status==='saved'?'CONFIRMED':'VIEWED';
+    const statusColor=e.status==='saved'?'var(--emerald)':'var(--ink-subtle)';
+    const statusBg=e.status==='saved'?'var(--emerald-light)':'var(--surface-2)';
+    return `<div class="log-entry"><div class="log-date">${dateStr}<br>${timeStr}<br><span style="color:var(--ink-muted);">${e.user}</span>${e.refId?`<br><span style="font-size:10px;opacity:0.7;">${e.refId}</span>`:''}</div><div class="log-main"><div class="log-project">${e.project} <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;letter-spacing:0.05em;background:${statusBg};color:${statusColor};margin-left:6px;vertical-align:middle;">${statusLabel}</span></div><div class="log-detail">${e.enduser} · ${e.venue} · ${e.city} · ${e.partner}</div><div class="log-detail">${e.qty} × ${e.model} · ${resStr} · ${e.environment} · ${e.update} · ${e.stage} · ${e.budget}${e.os&&e.os!=='—'?' · '+(e.os==='brightsignos'?'BSOS':'Win IoT'):''}</div></div><div class="log-model">${e.model}</div></div>`;
+  }).join('');
+}
+
+function exportCSV(){
+  const entries=(window._centralLog&&window._centralLog.length)?window._centralLog:loadLocalLog();
+  if(!entries.length){alert('No data to export.');return;}
+  const headers=['Ref ID','Status','Timestamp','User','Role','Project','End-user','Venue','Partner','Consultant','City','Contact name','Contact phone','Contact email','Deal stage','Close month','Qty','Model','Content type','Resolution','Environment','Content update','Budget','HDMI in','Touch','Wi-Fi','SSD','OS'];
+  const rows=entries.map(e=>[e.refId||'',e.status||'viewed',e.ts,e.user,e.role,e.project,e.enduser,e.venue,e.partner,e.consultant,e.city,e.contactname,e.contactphone,e.contactemail,e.stage,e.closemonth,e.qty,e.model,e.content,e.resolution,e.environment,e.update,e.budget,e.hdmiIn,e.touch,e.wifi,e.ssd,e.os]);
+  const csv=[headers,...rows].map(r=>r.map(c=>`"${(c||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`brightsign-selector-log-${new Date().toISOString().slice(0,10)}.csv`;a.click();
+  URL.revokeObjectURL(url);
+}
+
+setBudget(2);
+</script>
+</body>
+</html>
