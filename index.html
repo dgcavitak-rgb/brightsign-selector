@@ -6,8 +6,9 @@
 <title>BrightSign Product Selector</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital,wght@0,400;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root{
   --bg:#F6F8FC;--surface:#FFFFFF;--surface-2:#F1F5F9;
@@ -19,17 +20,19 @@
   --amber:#D97706;--amber-light:#FEF3C7;
   --rose:#DC2626;--rose-light:#FEE2E2;
   --gold:#CA8A04;--gold-light:#FEF9C3;
-  /* TYPOGRAPHY SYSTEM — apply via utility classes, never one-off */
-  --serif:'Instrument Serif',Georgia,serif;
-  --sans:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
-  --mono:'JetBrains Mono',ui-monospace,monospace;
-  /* Type scale — 6 levels only */
-  --fs-display:44px;  --lh-display:1.05; --ls-display:-0.03em; --fw-display:400;
-  --fs-h1:22px;       --lh-h1:1.3;       --ls-h1:-0.015em;     --fw-h1:500;
-  --fs-h2:17px;       --lh-h2:1.4;       --ls-h2:-0.01em;      --fw-h2:500;
-  --fs-body:14px;     --lh-body:1.55;    --ls-body:0;           --fw-body:400;
-  --fs-label:11px;    --lh-label:1.4;    --ls-label:0.08em;    --fw-label:600;
-  --fs-meta:11px;     --lh-meta:1.4;     --ls-meta:0.04em;     --fw-meta:500;
+  /* TYPOGRAPHY SYSTEM — IBM Plex family: engineered B2B SaaS feel.
+     All three styles share Plex DNA (same x-height, matching stroke widths). */
+  --serif:'IBM Plex Serif',Georgia,serif;
+  --sans:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  /* Type scale — 6 levels. v14: Plex supports multiple weights, so display
+     now goes 500 for proper authority; sans stays heavy at 500 body / 700 labels. */
+  --fs-display:48px;  --lh-display:1.1;  --ls-display:-0.025em; --fw-display:500;
+  --fs-h1:24px;       --lh-h1:1.3;       --ls-h1:-0.015em;     --fw-h1:600;
+  --fs-h2:19px;       --lh-h2:1.4;       --ls-h2:-0.01em;      --fw-h2:600;
+  --fs-body:15px;     --lh-body:1.55;    --ls-body:0;           --fw-body:500;
+  --fs-label:11px;    --lh-label:1.4;    --ls-label:0.08em;    --fw-label:700;
+  --fs-meta:11px;     --lh-meta:1.4;     --ls-meta:0.04em;     --fw-meta:600;
   /* Glass & shadow */
   --glass-bg:rgba(255,255,255,0.70);
   --glass-bg-strong:rgba(255,255,255,0.85);
@@ -51,7 +54,6 @@ html,body{
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
   text-rendering:optimizeLegibility;
-  font-feature-settings:'cv02','cv03','cv04','cv11';
   min-height:100vh;
 }
 body{
@@ -86,7 +88,7 @@ button{font-family:var(--sans);}
   width:38px;height:38px;
   background:linear-gradient(135deg,var(--indigo) 0%,var(--indigo-soft) 100%);
   border-radius:10px;display:flex;align-items:center;justify-content:center;
-  color:#fff;font-family:var(--serif);font-size:18px;font-weight:600;letter-spacing:-0.02em;
+  color:#fff;font-family:var(--serif);font-size:18px;font-weight:700;letter-spacing:-0.02em;
   box-shadow:0 6px 16px rgba(30,27,75,0.30), inset 0 1px 0 rgba(255,255,255,0.20);
 }
 .app-logo-text{display:flex;flex-direction:column;line-height:1.2;}
@@ -95,7 +97,7 @@ button{font-family:var(--sans);}
   font-size:18px;
   line-height:1.2;
   letter-spacing:-0.01em;
-  font-weight:500;
+  font-weight:600;
   color:var(--ink);
 }
 .app-logo-sub{
@@ -114,7 +116,7 @@ button{font-family:var(--sans);}
   font-family:var(--sans);
   font-size:13px;
   line-height:1.3;
-  font-weight:500;
+  font-weight:600;
   color:var(--ink);
   display:flex;align-items:center;gap:6px;justify-content:flex-end;
 }
@@ -132,21 +134,21 @@ button{font-family:var(--sans);}
   background:var(--gold);color:#fff;padding:2px 8px;border-radius:10px;
   font-family:var(--sans);
   font-size:9px;line-height:1.3;
-  letter-spacing:0.06em;font-weight:600;text-transform:uppercase;
+  letter-spacing:0.06em;font-weight:700;text-transform:uppercase;
 }
 .app-user-avatar{
   width:36px;height:36px;border-radius:50%;
   background:var(--indigo-light);color:var(--indigo);
   display:flex;align-items:center;justify-content:center;
   font-family:var(--sans);
-  font-size:13px;font-weight:600;
+  font-size:13px;font-weight:700;
 }
 .app-user-avatar.super{background:var(--gold-light);color:var(--gold);}
 .app-user button{
   background:transparent;border:1px solid var(--border-strong);color:var(--ink-muted);
   padding:7px 14px;border-radius:8px;
   font-family:var(--sans);
-  font-size:12px;line-height:1.3;font-weight:500;
+  font-size:12px;line-height:1.3;font-weight:600;
   cursor:pointer;transition:all 140ms;
 }
 .app-user button:hover{border-color:var(--ink-muted);color:var(--ink);}
@@ -161,7 +163,7 @@ button{font-family:var(--sans);}
   background:transparent;border:none;
   padding:14px 22px;
   font-family:var(--sans);
-  font-size:13px;line-height:1.3;font-weight:500;
+  font-size:13px;line-height:1.3;font-weight:600;
   color:var(--ink-muted);
   cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
   display:flex;align-items:center;gap:8px;transition:all 140ms;
@@ -283,7 +285,7 @@ button{font-family:var(--sans);}
   background:var(--rose-light);color:var(--rose);
   padding:11px 14px;border-radius:10px;
   font-family:var(--sans);
-  font-size:13px;line-height:1.5;font-weight:500;
+  font-size:13px;line-height:1.5;font-weight:600;
   margin-top:14px;display:none;
   border:1px solid #FECACA;
 }
@@ -359,7 +361,7 @@ button{font-family:var(--sans);}
   background:#fff;border:1px solid var(--border-strong);border-radius:8px;
   padding:10px 16px;
   font-family:var(--sans);
-  font-size:13px;line-height:1.3;font-weight:500;
+  font-size:13px;line-height:1.3;font-weight:600;
   color:var(--ink);cursor:pointer;transition:all 140ms;
 }
 .pill:hover{border-color:var(--blue);color:var(--blue);}
@@ -377,7 +379,7 @@ button{font-family:var(--sans);}
 .choice-card.selected .choice-card-icon{color:var(--blue);}
 .choice-card-name{
   font-family:var(--sans);
-  font-size:14px;line-height:1.35;font-weight:600;
+  font-size:14px;line-height:1.35;font-weight:700;
   color:var(--ink);
 }
 .choice-card.selected .choice-card-name{color:var(--indigo);}
@@ -398,7 +400,7 @@ button{font-family:var(--sans);}
 .number-input input{
   width:80px;border:none;text-align:center;
   font-family:var(--mono);
-  font-size:15px;line-height:1;font-weight:500;
+  font-size:15px;line-height:1;font-weight:600;
   padding:10px 0;background:transparent;color:var(--ink);
 }
 .number-input input:focus{outline:none;}
@@ -438,7 +440,7 @@ button{font-family:var(--sans);}
 }
 .budget-markers span{cursor:pointer;transition:color 140ms;}
 .budget-markers span:hover{color:var(--ink);}
-.budget-markers span.active{color:var(--indigo);font-weight:600;}
+.budget-markers span.active{color:var(--indigo);font-weight:700;}
 .ssd-cap-wrap{margin-top:12px;max-width:240px;display:none;}
 .ssd-cap-wrap.show{display:block;}
 .ssd-cap-wrap select{
@@ -464,7 +466,7 @@ button{font-family:var(--sans);}
   background:transparent;border:1px solid var(--border-strong);color:var(--ink);
   padding:12px 20px;border-radius:10px;
   font-family:var(--sans);
-  font-size:14px;line-height:1.3;font-weight:500;letter-spacing:-0.005em;
+  font-size:14px;line-height:1.3;font-weight:600;letter-spacing:-0.005em;
   cursor:pointer;transition:all 140ms;
 }
 .btn-secondary:hover{border-color:var(--ink-muted);background:var(--surface-2);}
@@ -472,7 +474,7 @@ button{font-family:var(--sans);}
   background:var(--indigo);color:#fff;border:none;
   padding:12px 28px;border-radius:10px;
   font-family:var(--sans);
-  font-size:14px;line-height:1.3;font-weight:500;letter-spacing:-0.005em;
+  font-size:14px;line-height:1.3;font-weight:600;letter-spacing:-0.005em;
   cursor:pointer;transition:all 140ms;
   box-shadow:0 4px 12px rgba(30,27,75,0.25);
 }
@@ -481,7 +483,7 @@ button{font-family:var(--sans);}
   background:var(--emerald);color:#fff;border:none;
   padding:12px 28px;border-radius:10px;
   font-family:var(--sans);
-  font-size:14px;line-height:1.3;font-weight:500;letter-spacing:-0.005em;
+  font-size:14px;line-height:1.3;font-weight:600;letter-spacing:-0.005em;
   cursor:pointer;transition:all 140ms;
 }
 .btn-print:hover{background:#047857;}
@@ -489,7 +491,7 @@ button{font-family:var(--sans);}
   background:var(--gold);color:#fff;border:none;
   padding:12px 22px;border-radius:10px;
   font-family:var(--sans);
-  font-size:14px;line-height:1.3;font-weight:500;letter-spacing:-0.005em;
+  font-size:14px;line-height:1.3;font-weight:600;letter-spacing:-0.005em;
   cursor:pointer;transition:all 140ms;
 }
 .btn-gold:hover{background:#A16207;}
@@ -497,7 +499,7 @@ button{font-family:var(--sans);}
   width:100%;background:var(--blue);color:#fff;border:none;
   padding:13px 20px;border-radius:10px;
   font-family:var(--sans);
-  font-size:14px;line-height:1.3;font-weight:500;letter-spacing:-0.005em;
+  font-size:14px;line-height:1.3;font-weight:600;letter-spacing:-0.005em;
   cursor:pointer;transition:all 140ms;margin-top:10px;
 }
 .btn-primary:hover{background:var(--blue-dark);}
@@ -519,7 +521,7 @@ button{font-family:var(--sans);}
   background:linear-gradient(135deg,var(--gold) 0%,#A16207 100%);
   color:#fff;padding:7px 14px;border-radius:20px;
   font-family:var(--sans);
-  font-size:10px;line-height:1.3;font-weight:600;
+  font-size:10px;line-height:1.3;font-weight:700;
   letter-spacing:0.08em;text-transform:uppercase;
   box-shadow:0 4px 12px rgba(202,138,4,0.3);
   display:flex;align-items:center;gap:6px;
@@ -590,17 +592,17 @@ button{font-family:var(--sans);}
 .model-hero{display:flex;align-items:baseline;gap:20px;margin-bottom:10px;flex-wrap:wrap;}
 .model-name{
   font-family:var(--serif);
-  font-size:80px;
-  line-height:0.95;
-  letter-spacing:-0.035em;
-  font-weight:400;
+  font-size:76px;
+  line-height:0.98;
+  letter-spacing:-0.025em;
+  font-weight:500;
   color:var(--indigo);
 }
 .model-tag{
   font-family:var(--sans);
   font-size:15px;
   line-height:1.45;
-  font-weight:500;
+  font-weight:600;
   color:var(--ink-muted);
 }
 .model-notes{
@@ -620,7 +622,7 @@ button{font-family:var(--sans);}
   display:inline-flex;align-items:center;gap:6px;
   padding:7px 14px;border-radius:20px;
   font-family:var(--sans);
-  font-size:12px;line-height:1.3;font-weight:500;
+  font-size:12px;line-height:1.3;font-weight:600;
 }
 .badge.success{background:var(--emerald-light);color:var(--emerald);}
 .badge.warning{background:var(--amber-light);color:var(--amber);}
@@ -694,7 +696,7 @@ button{font-family:var(--sans);}
 .bom-item-name{
   font-family:var(--sans);
   font-size:var(--fs-body);
-  font-weight:500;
+  font-weight:600;
   color:var(--ink);
 }
 .bom-item-note{
@@ -707,7 +709,7 @@ button{font-family:var(--sans);}
 .concern-box{background:var(--amber-light);border-left:3px solid var(--amber);padding:16px 18px;border-radius:0 10px 10px 0;margin-top:18px;}
 .concern-title{
   font-family:var(--sans);
-  font-size:13px;line-height:1.4;font-weight:600;
+  font-size:13px;line-height:1.4;font-weight:700;
   color:var(--amber);margin-bottom:8px;
   display:flex;align-items:center;gap:6px;
 }
@@ -720,7 +722,7 @@ button{font-family:var(--sans);}
 }
 .concern-list li{padding-left:16px;position:relative;margin-bottom:6px;}
 .concern-list li::before{content:'';position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%;background:var(--amber);}
-.concern-list li strong{color:var(--ink);font-weight:600;}
+.concern-list li strong{color:var(--ink);font-weight:700;}
 .project-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px 28px;}
 .project-field{display:flex;flex-direction:column;gap:4px;}
 .project-label{
@@ -736,7 +738,7 @@ button{font-family:var(--sans);}
   font-family:var(--sans);
   font-size:14px;
   line-height:1.45;
-  font-weight:500;
+  font-weight:600;
   color:var(--ink);
 }
 .os-selector{background:linear-gradient(135deg,var(--indigo-light) 0%,#EEF2FF 100%);border:1px solid #C7D2FE;border-radius:12px;padding:22px 24px;margin-top:20px;}
@@ -767,7 +769,7 @@ button{font-family:var(--sans);}
 .os-pill.selected{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px var(--blue-light);}
 .os-pill-name{
   font-family:var(--sans);
-  font-size:14px;line-height:1.35;font-weight:600;
+  font-size:14px;line-height:1.35;font-weight:700;
   color:var(--ink);
 }
 .os-pill-note{
@@ -798,13 +800,13 @@ button{font-family:var(--sans);}
   margin-top:10px;
 }
 .tech-spec-table td{padding:10px 0;border-bottom:1px solid var(--border);vertical-align:top;}
-.tech-spec-table td:first-child{width:40%;color:var(--ink-muted);padding-right:14px;font-weight:500;}
-.tech-spec-table td:last-child{font-weight:500;color:var(--ink);}
+.tech-spec-table td:first-child{width:40%;color:var(--ink-muted);padding-right:14px;font-weight:600;}
+.tech-spec-table td:last-child{font-weight:600;color:var(--ink);}
 .tech-spec-table tr:last-child td{border-bottom:none;}
 /* ===== ROBUST TENDER SPEC CARD ===== */
 .spec-competitor-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px;padding:14px 18px;background:var(--indigo-light);border-radius:10px;border-left:3px solid var(--indigo);}
-.spec-competitor-label{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--indigo);margin-bottom:4px;}
-.spec-competitor-name{font-family:var(--serif);font-size:16px;font-weight:500;color:var(--ink);}
+.spec-competitor-label{font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--indigo);margin-bottom:4px;}
+.spec-competitor-name{font-family:var(--serif);font-size:16px;font-weight:600;color:var(--ink);}
 .spec-competitor-note{font-size:12px;color:var(--ink-muted);margin-top:3px;line-height:1.4;}
 .spec-legend{display:flex;gap:14px;font-size:11px;color:var(--ink-muted);margin-top:6px;flex-wrap:wrap;}
 .spec-legend-item{display:inline-flex;align-items:center;gap:4px;}
@@ -816,8 +818,8 @@ button{font-family:var(--sans);}
 .spec-section-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;user-select:none;transition:background 140ms;}
 .spec-section-head:hover{background:var(--indigo-light);}
 .spec-section-head.open{background:#fff;border-bottom:1px solid var(--border);}
-.spec-section-title{font-family:var(--serif);font-size:15px;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:10px;}
-.spec-section-count{font-size:11px;color:var(--ink-subtle);font-family:var(--mono);background:#fff;padding:2px 8px;border-radius:10px;font-weight:500;}
+.spec-section-title{font-family:var(--serif);font-size:15px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:10px;}
+.spec-section-count{font-size:11px;color:var(--ink-subtle);font-family:var(--mono);background:#fff;padding:2px 8px;border-radius:10px;font-weight:600;}
 .spec-section-head.open .spec-section-count{background:var(--indigo-light);color:var(--indigo);}
 .spec-caret{width:16px;height:16px;color:var(--ink-muted);transition:transform 200ms;}
 .spec-section-head.open .spec-caret{transform:rotate(90deg);color:var(--indigo);}
@@ -825,7 +827,7 @@ button{font-family:var(--sans);}
 .spec-section.open .spec-section-body{display:block;}
 /* ===== PRESCRIPTIVE TENDER SPEC VIEW ===== */
 .tender-view-tabs{display:flex;gap:0;margin-bottom:18px;border-bottom:1px solid var(--border);}
-.tender-view-tab{background:transparent;border:none;padding:10px 20px;font-size:13px;font-weight:500;color:var(--ink-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 140ms;font-family:var(--sans);}
+.tender-view-tab{background:transparent;border:none;padding:10px 20px;font-size:13px;font-weight:600;color:var(--ink-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 140ms;font-family:var(--sans);}
 .tender-view-tab.active{color:var(--indigo);border-bottom-color:var(--indigo);}
 .tender-view-tab:hover:not(.active){color:var(--ink);}
 .tender-view-content{display:none;}
@@ -875,7 +877,7 @@ button{font-family:var(--sans);}
   font-size:var(--fs-meta);
   line-height:1.4;
   letter-spacing:var(--ls-meta);
-  font-weight:600;
+  font-weight:700;
   color:var(--ink-subtle);
   padding-top:2px;
 }
@@ -885,7 +887,7 @@ button{font-family:var(--sans);}
   width:22px;height:22px;border:1.5px solid var(--border-strong);
   border-radius:4px;display:flex;align-items:center;justify-content:center;
   font-family:var(--sans);
-  font-size:12px;font-weight:600;
+  font-size:12px;font-weight:700;
   color:var(--ink-subtle);background:#fff;
 }
 .clause-remark{
@@ -936,19 +938,19 @@ button{font-family:var(--sans);}
 .spec-row-desc{color:var(--ink);line-height:1.45;}
 .spec-row-bs{text-align:center;}
 .spec-row-comp{text-align:center;font-size:11px;color:var(--ink-muted);}
-.spec-mark{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-weight:600;font-size:12px;}
+.spec-mark{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-weight:700;font-size:12px;}
 .spec-mark.yes{background:var(--emerald-light);color:var(--emerald);}
 .spec-mark.no{background:var(--surface-2);color:var(--ink-subtle);}
 .spec-mark.unique{background:var(--gold-light);color:var(--gold);border:1.5px solid var(--gold);}
-.spec-row-comp-yes{color:var(--emerald);font-weight:500;}
-.spec-row-comp-no{color:var(--rose);font-weight:500;}
-.spec-summary-row{display:grid;grid-template-columns:1fr 70px 140px;gap:14px;padding:10px 18px;background:var(--indigo-light);font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--indigo);border-bottom:1px solid var(--border);}
+.spec-row-comp-yes{color:var(--emerald);font-weight:600;}
+.spec-row-comp-no{color:var(--rose);font-weight:600;}
+.spec-summary-row{display:grid;grid-template-columns:1fr 70px 140px;gap:14px;padding:10px 18px;background:var(--indigo-light);font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--indigo);border-bottom:1px solid var(--border);}
 .spec-summary-row div:nth-child(2),.spec-summary-row div:nth-child(3){text-align:center;}
 .spec-controls{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
 .spec-ctrl-btn{background:transparent;border:1px solid var(--border-strong);color:var(--ink-muted);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;transition:all 140ms;font-family:var(--sans);}
 .spec-ctrl-btn:hover{border-color:var(--indigo);color:var(--indigo);}
 .diff-summary{background:linear-gradient(135deg,var(--gold-light) 0%,#FEF3C7 100%);border:1px solid #FCD34D;border-radius:10px;padding:14px 18px;margin-top:14px;}
-.diff-title{font-family:var(--serif);font-size:14px;font-weight:600;color:var(--ink);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.diff-title{font-family:var(--serif);font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
 .diff-title svg{width:14px;height:14px;color:var(--gold);}
 .diff-list{list-style:none;font-size:12px;color:var(--ink-muted);line-height:1.6;}
 .diff-list li{padding-left:14px;position:relative;margin-bottom:3px;}
@@ -968,6 +970,165 @@ button{font-family:var(--sans);}
   .spec-row{grid-template-columns:1fr 50px 90px;gap:8px;padding:10px 12px;font-size:12px;}
   .spec-summary-row{grid-template-columns:1fr 50px 90px;gap:8px;padding:8px 12px;}
   .spec-competitor-head{flex-direction:column;}
+}
+/* ============ v15 EMPTY-FIELD ERROR STATE ============ */
+.field.field-error .field-label,
+.form-group.field-error label{color:var(--rose) !important;}
+.field.field-error input,
+.field.field-error select,
+.field.field-error textarea,
+.form-group.field-error input,
+.form-group.field-error select{
+  border-color:var(--rose) !important;
+  background:#FEF2F2 !important;
+  box-shadow:0 0 0 3px rgba(220,38,38,0.10) !important;
+}
+.field.field-error .choice-card,
+.field.field-error .pill{border-color:var(--rose) !important;}
+.field.field-error .number-input{border-color:var(--rose) !important;background:#FEF2F2 !important;}
+.field.field-error .budget-slider{outline:2px solid var(--rose);outline-offset:2px;border-radius:4px;}
+.field-error-text{
+  display:none;
+  font-family:var(--sans);
+  font-size:11px;
+  line-height:1.4;
+  font-weight:700;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  color:var(--rose);
+  margin-top:6px;
+}
+.field.field-error .field-error-text{display:block;}
+/* ============ v15 FILTER BAR + CHART DASHBOARD ============ */
+.filter-bar{
+  display:grid;
+  grid-template-columns:repeat(5,1fr) auto;
+  gap:12px;
+  margin-bottom:22px;
+  padding:18px 20px;
+  background:var(--glass-bg-strong);
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-border);
+  border-radius:14px;
+  box-shadow:var(--shadow-glass);
+  align-items:end;
+}
+.filter-field{display:flex;flex-direction:column;gap:6px;min-width:0;}
+.filter-label{
+  font-family:var(--sans);
+  font-size:var(--fs-label);
+  line-height:var(--lh-label);
+  letter-spacing:var(--ls-label);
+  font-weight:var(--fw-label);
+  text-transform:uppercase;
+  color:var(--ink-muted);
+}
+.filter-select{
+  width:100%;
+  padding:9px 12px;
+  border:1px solid var(--border-strong);
+  border-radius:8px;
+  font-family:var(--sans);
+  font-size:13px;
+  font-weight:600;
+  background:#fff;
+  color:var(--ink);
+  cursor:pointer;
+  transition:all 140ms;
+}
+.filter-select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-light);}
+.filter-select:hover{border-color:var(--blue);}
+.filter-clear{
+  background:transparent;
+  border:1px solid var(--border-strong);
+  color:var(--ink-muted);
+  padding:9px 14px;
+  border-radius:8px;
+  font-family:var(--sans);
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 140ms;
+  white-space:nowrap;
+}
+.filter-clear:hover{border-color:var(--ink-muted);color:var(--ink);background:var(--surface-2);}
+.filter-result-count{
+  font-family:var(--mono);
+  font-size:var(--fs-meta);
+  line-height:var(--lh-meta);
+  letter-spacing:var(--ls-meta);
+  font-weight:var(--fw-meta);
+  text-transform:uppercase;
+  color:var(--ink-subtle);
+  margin-bottom:14px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.filter-result-count strong{color:var(--indigo);}
+@media (max-width:900px){
+  .filter-bar{grid-template-columns:repeat(2,1fr);}
+}
+.chart-grid{
+  display:grid;
+  grid-template-columns:1.2fr 1fr;
+  gap:16px;
+  margin-bottom:24px;
+}
+.chart-grid-row-2{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:16px;
+  margin-bottom:24px;
+}
+.chart-card{
+  background:var(--glass-bg-strong);
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-border);
+  border-radius:14px;
+  padding:22px 24px;
+  box-shadow:var(--shadow-glass);
+  transition:all 240ms cubic-bezier(0.4,0,0.2,1);
+}
+.chart-card:hover{
+  box-shadow:var(--shadow-float);
+  border-color:rgba(99,102,241,0.2);
+}
+.chart-title{
+  font-family:var(--serif);
+  font-size:18px;
+  line-height:var(--lh-h2);
+  letter-spacing:var(--ls-h2);
+  font-weight:var(--fw-h2);
+  color:var(--ink);
+  margin-bottom:4px;
+}
+.chart-subtitle{
+  font-family:var(--sans);
+  font-size:12px;
+  line-height:1.4;
+  color:var(--ink-muted);
+  margin-bottom:16px;
+}
+.chart-canvas-wrap{
+  position:relative;
+  height:260px;
+}
+.chart-canvas-wrap-wide{
+  position:relative;
+  height:240px;
+}
+.chart-empty{
+  text-align:center;
+  padding:60px 20px;
+  font-family:var(--sans);
+  font-size:13px;
+  color:var(--ink-subtle);
+}
+@media (max-width:900px){
+  .chart-grid{grid-template-columns:1fr;}
 }
 .log-empty{text-align:center;padding:80px 20px;color:var(--ink-subtle);}
 .log-empty-icon{width:56px;height:56px;margin:0 auto 16px;color:var(--ink-subtle);opacity:0.5;}
@@ -1004,7 +1165,7 @@ button{font-family:var(--sans);}
   font-family:var(--sans);
   font-size:15px;
   line-height:1.35;
-  font-weight:600;
+  font-weight:700;
   color:var(--ink);
 }
 .log-detail{
@@ -1078,7 +1239,7 @@ button{font-family:var(--sans);}
   border:1px solid var(--glass-border);border-radius:12px;
   padding:10px 14px;
   font-family:var(--sans);
-  font-size:12px;line-height:1.4;font-weight:500;
+  font-size:12px;line-height:1.4;font-weight:600;
   color:var(--ink-muted);
   box-shadow:var(--shadow);
   display:none;align-items:center;gap:8px;z-index:30;
@@ -1233,11 +1394,12 @@ button{font-family:var(--sans);}
       <div class="form-section">
         <div class="section-head"><div class="section-num">02</div><div><div class="section-title">Deployment & budget</div></div></div>
         <div class="spec-grid three-col" style="margin-bottom:24px;">
-          <div class="field"><label class="field-label">Number of players<span class="req">*</span></label><div class="number-input"><button onclick="adjustQty(-1)">−</button><input type="number" id="f-qty" value="1" min="1" max="10000"><button onclick="adjustQty(1)">+</button></div></div>
+          <div class="field"><label class="field-label">Number of players<span class="req">*</span></label><div class="number-input"><button onclick="adjustQty(-1)">−</button><input type="number" id="f-qty" value="1" min="1" max="10000"><button onclick="adjustQty(1)">+</button></div><div id="mixed-qty-wrap" style="display:none;margin-top:10px;padding:12px 14px;background:var(--surface-2);border-radius:10px;border:1px dashed var(--border-strong);"><div style="font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:8px;">Split for mixed deployment</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px;">Indoor qty</div><input type="number" id="f-qty-indoor" value="0" min="0" max="10000" style="width:100%;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;"></div><div><div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px;">Outdoor qty</div><input type="number" id="f-qty-outdoor" value="0" min="0" max="10000" style="width:100%;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;"></div></div><div style="font-size:11px;color:var(--ink-subtle);margin-top:6px;">Must sum to total quantity above</div></div></div>
           <div class="field"><label class="field-label">Environment<span class="req">*</span></label>
             <div class="choice-grid" data-input="environment">
               <button class="choice-card" data-v="indoor"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="choice-card-name">Indoor</span><span class="choice-card-sub">Standard signage</span></button>
               <button class="choice-card" data-v="outdoor"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg><span class="choice-card-name">Outdoor</span><span class="choice-card-sub">Enclosure required</span></button>
+              <button class="choice-card" data-v="mixed"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="17" cy="17" r="3"/><line x1="17" y1="14" x2="17" y2="15"/><line x1="17" y1="19" x2="17" y2="20"/></svg><span class="choice-card-name">Mixed</span><span class="choice-card-sub">Indoor + Outdoor</span></button>
             </div>
           </div>
           <div class="field"><label class="field-label">Content update<span class="req">*</span></label>
@@ -1282,6 +1444,7 @@ button{font-family:var(--sans);}
           <div class="field" style="margin-bottom:0;"><label class="field-label">HDMI input<span class="req">*</span></label><div class="pill-group" data-input="hdmi-in"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
           <div class="field" style="margin-bottom:0;"><label class="field-label">Touch / interactive<span class="req">*</span></label><div class="pill-group" data-input="touch"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
           <div class="field" style="margin-bottom:0;"><label class="field-label">Wi-Fi<span class="req">*</span></label><div class="pill-group" data-input="wifi"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
+          <div class="field" style="margin-bottom:0;"><label class="field-label">GPIO port required<span class="req">*</span></label><div class="pill-group" data-input="gpio"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div><div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;line-height:1.4;">12-pin Phoenix for sensors, buttons, relays</div></div>
           <div class="field" style="margin-bottom:0;"><label class="field-label">SSD required<span class="req">*</span></label><div class="pill-group" data-input="ssd"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div><div class="ssd-cap-wrap" id="ssd-cap-wrap"><select id="f-ssd-cap"><option value="">Storage capacity…</option><option value="128">128 GB</option><option value="256">256 GB</option><option value="512">512 GB</option><option value="1024">1 TB</option></select></div></div>
         </div>
       </div>
@@ -1316,6 +1479,56 @@ button{font-family:var(--sans);}
   <div id="section-log" style="display:none;">
     <div class="container">
       <div class="page-header"><div class="page-eyebrow">History</div><div class="page-title" id="log-page-title">Selection history</div><div class="page-subtitle" id="log-page-subtitle">All past recommendations.</div></div>
+
+      <!-- v13: super-user charts dashboard -->
+      <div id="super-charts" style="display:none;">
+        <div class="chart-grid">
+          <div class="chart-card">
+            <div class="chart-title">Selections per user</div>
+            <div class="chart-subtitle">Total selections by each team member · gold for confirmed, gray for viewed</div>
+            <div class="chart-canvas-wrap"><canvas id="chart-users"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Model group distribution</div>
+            <div class="chart-subtitle">Share of selections by product series</div>
+            <div class="chart-canvas-wrap"><canvas id="chart-groups"></canvas></div>
+          </div>
+        </div>
+        <div class="chart-grid-row-2">
+          <div class="chart-card">
+            <div class="chart-title">Activity over time</div>
+            <div class="chart-subtitle">Daily selection volume — last 30 days</div>
+            <div class="chart-canvas-wrap-wide"><canvas id="chart-activity"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- v13: filter bar (super users only) -->
+      <div id="filter-bar" class="filter-bar" style="display:none;">
+        <div class="filter-field">
+          <div class="filter-label">State / Region</div>
+          <select id="flt-city" class="filter-select" onchange="applyFilters()"><option value="">All</option></select>
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">User</div>
+          <select id="flt-user" class="filter-select" onchange="applyFilters()"><option value="">All</option></select>
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Project</div>
+          <select id="flt-project" class="filter-select" onchange="applyFilters()"><option value="">All</option></select>
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Partner / SI</div>
+          <select id="flt-partner" class="filter-select" onchange="applyFilters()"><option value="">All</option></select>
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Consultant</div>
+          <select id="flt-consultant" class="filter-select" onchange="applyFilters()"><option value="">All</option></select>
+        </div>
+        <button class="filter-clear" onclick="clearFilters()">Clear</button>
+      </div>
+      <div id="filter-count" class="filter-result-count" style="display:none;"></div>
+
       <div id="super-dashboard" style="display:none;"></div>
       <div id="log-content"></div>
     </div>
@@ -1336,7 +1549,7 @@ button{font-family:var(--sans);}
    See "apps-script-setup.md" for the setup guide.
    If blank, data saves to browser localStorage only.
 ================================================================ */
-const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbys2amxa3c-54UWIAvlrB50WJhMpFluLr2DjcZd7RTlH1ZPC-Um-ECvAvB1tVMDoHXC/exec';  // ← PASTE YOUR APPS SCRIPT WEB-APP URL HERE
+const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl70gHWF4fehCMYe_L7B8vtf28AjqK8tUKL-FAP--iW995AMMeJ/exec';  // ← PASTE YOUR APPS SCRIPT WEB-APP URL HERE
 
 /* ================================================================
    USER ALLOWLIST (first-name login, case-insensitive)
@@ -1349,7 +1562,12 @@ const USERS = {
   'hritika':    {fullName:'Hritika Sawant',    role:'Sales',                     password:'cavitak@123', isSuper:false},
   'ranjith':    {fullName:'Ranjith Sr',        role:'Presales',                  password:'cavitak@123', isSuper:false},
   'sachchi':    {fullName:'Sachchi Kaushik',   role:'Sales',                     password:'cavitak@123', isSuper:false},
-  'ashish':     {fullName:'Ashish Malshe',     role:'Sales',                     password:'cavitak@123', isSuper:false}
+  'ashish':     {fullName:'Ashish Malshe',     role:'Sales',                     password:'cavitak@123', isSuper:false},
+  'rahul':      {fullName:'Rahul Soyanter',    role:'Support',                   password:'cavitak@123', isSuper:false},
+  'nikul':      {fullName:'Nikul Suthar',      role:'Support',                   password:'cavitak@123', isSuper:false},
+  'jenish':     {fullName:'Jenish Patel',      role:'Support',                   password:'cavitak@123', isSuper:false},
+  'rushang':    {fullName:'Rushang Mahale',    role:'Support',                   password:'cavitak@123', isSuper:false},
+  'hardik':     {fullName:'Hardik Barot',      role:'Support',                   password:'cavitak@123', isSuper:false}
 };
 
 /* ================================================================
@@ -1357,23 +1575,23 @@ const USERS = {
    Series ladder: AU → LS → HD → XD → XT → XC
 ================================================================ */
 const MODELS = [
-  { rank:1, id:'AU335', available:true, series:5, group:'AU', tag:'Audio-only · Series 5', audio:true, res:['audio'], outputs:0, hdmiIn:false, touch:false, chassis:'plastic', poe:false, ssdCapable:false, hero:false, notes:'Up to 3 audio zones · HDMI ARC/eARC · USB-C · 3.5mm analog output' },
-  { rank:2, id:'LS425', available:true, series:5, group:'LS', tag:'Affordable HD · Basic I/O', audio:false, res:['hd'], outputs:1, hdmiIn:false, touch:false, chassis:'plastic', poe:false, ssdCapable:false, hero:false, notes:'Full HD · HDMI 2.0a · 10/100 Ethernet · microSD primary' },
-  { rank:3, id:'LS445', available:true, series:5, group:'LS', tag:'Affordable 4K · Basic I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:false, chassis:'plastic', poe:false, ssdCapable:false, hero:false, notes:'4K 8-bit @ 60p · HDMI 2.0a · 10/100 Ethernet · microSD primary' },
-  { rank:4, id:'HD225', available:true, series:5, group:'HD', tag:'Entry 4K HDR · Standard I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:false, chassis:'plastic', poe:false, ssdCapable:null, hero:false, notes:'4K 10-bit HDR · HDMI 2.0a · Gigabit · GPIO · IR' },
-  { rank:5, id:'HD1025', available:true, series:5, group:'HD', tag:'Entry 4K HDR · Expanded I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:true, chassis:'plastic', poe:false, ssdCapable:null, hero:false, notes:'4K 10-bit HDR · USB-A · RS-232 · GPIO · IR · touch-ready' },
-  { rank:6, id:'XD235', available:true, series:5, group:'XD', tag:'4K Deployable · Standard I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:false, chassis:'aluminium', poe:true, ssdCapable:null, hero:false, notes:'4K 10-bit HDR · PoE+ · anodised aluminium · extended operating temp' },
-  { rank:7, id:'XD1035', available:true, series:5, group:'XD', tag:'4K Deployable · Expanded I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:true, chassis:'aluminium', poe:true, ssdCapable:null, hero:false, notes:'4K 10-bit HDR · PoE+ · USB-A · RS-232 · GPIO · touch · aluminium' },
-  { rank:8, id:'XT245', available:true, series:5, group:'XT', tag:'Power & Performance · Standard I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:false, chassis:'aluminium', poe:true, ssdCapable:null, hero:false, notes:'4K HDR · HDMI 2.1a · PoE+ · USB-C · aluminium chassis' },
-  { rank:9, id:'XT1145', available:true, series:5, group:'XT', tag:'8K-capable · HDMI-in · Hero product', audio:false, res:['hd','4k','8k'], outputs:1, hdmiIn:true, touch:true, chassis:'aluminium', poe:true, ssdCapable:null, hero:true, notes:'8K decode · HDMI 2.1a · HDMI-in · PoE+ · touch · aluminium · live TV capable' },
-  { rank:10, id:'XT2145', available:true, series:5, group:'XT', tag:'8K · Dual HDMI out + HDMI-in', audio:false, res:['hd','4k','8k'], outputs:2, hdmiIn:true, touch:true, chassis:'aluminium', poe:true, ssdCapable:null, hero:false, notes:'8K · 2× HDMI out · HDMI-in · PoE+ · aluminium · dual-display' },
-  { rank:11, id:'XC2055', available:true, series:5, group:'XC', tag:'Most Powerful · 8K · 2-screen', audio:false, res:['hd','4k','8k'], outputs:2, hdmiIn:false, touch:true, chassis:'metal', poe:false, ssdCapable:null, hero:false, xc:true, notes:'Intel Gen 11 Celeron · 8GB RAM · 8K · 2× HDMI · BrightSignOS or Windows IoT' },
-  { rank:12, id:'XC4055', available:true, series:5, group:'XC', tag:'Flagship · 8K · 4-screen', audio:false, res:['hd','4k','8k'], outputs:4, hdmiIn:false, touch:true, chassis:'metal', poe:false, ssdCapable:null, hero:false, xc:true, notes:'Intel Gen 11 i5 · 8GB RAM · 8K · 5× HDMI · dual-OS · flagship' },
+  { rank:1, id:'AU335', available:true, series:5, group:'AU', tag:'Audio-only · Series 5', audio:true, res:['audio'], outputs:0, hdmiIn:false, touch:false, chassis:'plastic', poe:false, ssdCapable:false, hero:false, gpio:false, notes:'Up to 3 audio zones · HDMI ARC/eARC · USB-C · 3.5mm analog output' },
+  { rank:2, id:'LS425', available:true, series:5, group:'LS', tag:'Affordable HD · Basic I/O', audio:false, res:['hd'], outputs:1, hdmiIn:false, touch:false, chassis:'plastic', poe:false, ssdCapable:false, hero:false, gpio:false, notes:'Full HD · HDMI 2.0a · 10/100 Ethernet · microSD primary' },
+  { rank:3, id:'LS445', available:true, series:5, group:'LS', tag:'Affordable 4K · Basic I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:false, chassis:'plastic', poe:false, ssdCapable:false, hero:false, gpio:false, notes:'4K 8-bit @ 60p · HDMI 2.0a · 10/100 Ethernet · microSD primary' },
+  { rank:4, id:'HD225', available:true, series:5, group:'HD', tag:'Entry 4K HDR · Standard I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:false, chassis:'plastic', poe:false, ssdCapable:null, hero:false, gpio:true, notes:'4K 10-bit HDR · HDMI 2.0a · Gigabit · GPIO · IR' },
+  { rank:5, id:'HD1025', available:true, series:5, group:'HD', tag:'Entry 4K HDR · Expanded I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:true, chassis:'plastic', poe:false, ssdCapable:null, hero:false, gpio:true, notes:'4K 10-bit HDR · USB-A · RS-232 · GPIO · IR · touch-ready' },
+  { rank:6, id:'XD235', available:true, series:5, group:'XD', tag:'4K Deployable · Standard I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:false, chassis:'aluminium', poe:true, ssdCapable:null, hero:false, gpio:true, notes:'4K 10-bit HDR · PoE+ · anodised aluminium · extended operating temp' },
+  { rank:7, id:'XD1035', available:true, series:5, group:'XD', tag:'4K Deployable · Expanded I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:true, chassis:'aluminium', poe:true, ssdCapable:null, hero:false, gpio:true, notes:'4K 10-bit HDR · PoE+ · USB-A · RS-232 · GPIO · touch · aluminium' },
+  { rank:8, id:'XT245', available:true, series:5, group:'XT', tag:'Power & Performance · Standard I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:false, chassis:'aluminium', poe:true, ssdCapable:null, hero:false, gpio:true, notes:'4K HDR · HDMI 2.1a · PoE+ · USB-C · aluminium chassis' },
+  { rank:9, id:'XT1145', available:true, series:5, group:'XT', tag:'8K-capable · HDMI-in · Hero product', audio:false, res:['hd','4k','8k'], outputs:1, hdmiIn:true, touch:true, chassis:'aluminium', poe:true, ssdCapable:null, hero:true, gpio:true, notes:'8K decode · HDMI 2.1a · HDMI-in · PoE+ · touch · aluminium · live TV capable' },
+  { rank:10, id:'XT2145', available:true, series:5, group:'XT', tag:'8K · Dual HDMI out + HDMI-in', audio:false, res:['hd','4k','8k'], outputs:2, hdmiIn:true, touch:true, chassis:'aluminium', poe:true, ssdCapable:null, hero:false, gpio:true, notes:'8K · 2× HDMI out · HDMI-in · PoE+ · aluminium · dual-display' },
+  { rank:11, id:'XC2055', available:true, series:5, group:'XC', tag:'Most Powerful · 8K · 2-screen', audio:false, res:['hd','4k','8k'], outputs:2, hdmiIn:false, touch:true, chassis:'metal', poe:false, ssdCapable:null, hero:false, xc:true, gpio:true, notes:'Intel Gen 11 Celeron · 8GB RAM · 8K · 2× HDMI · BrightSignOS or Windows IoT' },
+  { rank:12, id:'XC4055', available:true, series:5, group:'XC', tag:'Flagship · 8K · 4-screen', audio:false, res:['hd','4k','8k'], outputs:4, hdmiIn:false, touch:true, chassis:'metal', poe:false, ssdCapable:null, hero:false, xc:true, gpio:true, notes:'Intel Gen 11 i5 · 8GB RAM · 8K · 5× HDMI · dual-OS · flagship' },
   // Series 6 stubs — flip available:true in Sept 2026
-  { rank:4.5, id:'HD226', available:false, series:6, group:'HD', tag:'Series 6 · NPU · Standard I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:false, chassis:'plastic', poe:false, ssdCapable:true, hero:false, notes:'Launches India Sept 2026' },
-  { rank:5.5, id:'HD1026', available:false, series:6, group:'HD', tag:'Series 6 · NPU · Expanded I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:true, chassis:'plastic', poe:false, ssdCapable:true, hero:false, notes:'Launches India Sept 2026' },
-  { rank:6.5, id:'XD236', available:false, series:6, group:'XD', tag:'Series 6 · NPU · Deployable PoE+', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:false, chassis:'aluminium', poe:true, ssdCapable:true, hero:false, notes:'Launches India Sept 2026' },
-  { rank:7.5, id:'XD1036', available:false, series:6, group:'XD', tag:'Series 6 · NPU · Deployable Expanded', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:true, chassis:'aluminium', poe:true, ssdCapable:true, hero:false, notes:'Launches India Sept 2026' }
+  { rank:4.5, id:'HD226', available:false, series:6, group:'HD', tag:'Series 6 · NPU · Standard I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:false, chassis:'plastic', poe:false, ssdCapable:true, hero:false, gpio:true, notes:'Launches India Sept 2026' },
+  { rank:5.5, id:'HD1026', available:false, series:6, group:'HD', tag:'Series 6 · NPU · Expanded I/O', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:true, chassis:'plastic', poe:false, ssdCapable:true, hero:false, gpio:true, notes:'Launches India Sept 2026' },
+  { rank:6.5, id:'XD236', available:false, series:6, group:'XD', tag:'Series 6 · NPU · Deployable PoE+', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:false, chassis:'aluminium', poe:true, ssdCapable:true, hero:false, gpio:true, notes:'Launches India Sept 2026' },
+  { rank:7.5, id:'XD1036', available:false, series:6, group:'XD', tag:'Series 6 · NPU · Deployable Expanded', audio:false, res:['hd','4k'], outputs:1, hdmiIn:false, touch:true, chassis:'aluminium', poe:true, ssdCapable:true, hero:false, gpio:true, notes:'Launches India Sept 2026' }
 ];
 
 const BUDGET_ZONES = {
@@ -2225,7 +2443,7 @@ const TENDER_CLAUSES = {
 
 const state = {
   user:null,
-  form:{project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,ssd:null,ssdCap:''},
+  form:{project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:''},
   result:null,
   osChoice:'brightsignos'
 };
@@ -2277,13 +2495,15 @@ document.querySelectorAll('.pill-group').forEach(group=>{
       group.querySelectorAll('.pill').forEach(p=>p.classList.remove('selected'));
       pill.classList.add('selected');
       const val=pill.getAttribute('data-v');
-      const keyMap={'resolution':'resolution','outputs':'outputs','hdmi-in':'hdmiIn','touch':'touch','wifi':'wifi','ssd':'ssd'};
+      const keyMap={'resolution':'resolution','outputs':'outputs','hdmi-in':'hdmiIn','touch':'touch','wifi':'wifi','ssd':'ssd','gpio':'gpio'};
       state.form[keyMap[key]]=val;
       if(key==='ssd'){
         const capWrap=document.getElementById('ssd-cap-wrap');
         capWrap.classList.toggle('show',val==='yes');
         if(val==='no'){state.form.ssdCap='';document.getElementById('f-ssd-cap').value='';}
       }
+      // v15: clear field-error state when user picks a value
+      const wrap=group.closest('.field');if(wrap)wrap.classList.remove('field-error');
       updateProgress();
     });
   });
@@ -2299,8 +2519,31 @@ document.querySelectorAll('.choice-grid').forEach(group=>{
       const keyMap={'environment':'environment','update':'update','content':'content'};
       state.form[keyMap[key]]=val;
       if(key==='content')document.getElementById('section-video-specs').style.display=val==='audio'?'none':'block';
+      // v15: show/hide mixed qty split when environment is picked
+      if(key==='environment'){
+        const mixedWrap=document.getElementById('mixed-qty-wrap');
+        mixedWrap.style.display=val==='mixed'?'block':'none';
+        if(val!=='mixed'){
+          document.getElementById('f-qty-indoor').value='0';
+          document.getElementById('f-qty-outdoor').value='0';
+          state.form.qtyIndoor=0;state.form.qtyOutdoor=0;
+        }
+      }
+      const wrap=group.closest('.field');if(wrap)wrap.classList.remove('field-error');
       updateProgress();
     });
+  });
+});
+
+// v15: clear errors on any text input / select change
+document.querySelectorAll('#section-form input, #section-form select').forEach(el=>{
+  el.addEventListener('input',()=>{
+    const wrap=el.closest('.field')||el.closest('.form-group');
+    if(wrap)wrap.classList.remove('field-error');
+  });
+  el.addEventListener('change',()=>{
+    const wrap=el.closest('.field')||el.closest('.form-group');
+    if(wrap)wrap.classList.remove('field-error');
   });
 });
 
@@ -2348,17 +2591,43 @@ function resetForm(){
   ['f-project','f-enduser','f-venue','f-partner','f-consultant','f-contactname','f-contactphone','f-contactemail','f-closemonth'].forEach(id=>document.getElementById(id).value='');
   ['f-city','f-stage','f-ssd-cap'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-qty').value=1;
+  document.getElementById('f-qty-indoor').value='0';
+  document.getElementById('f-qty-outdoor').value='0';
+  document.getElementById('mixed-qty-wrap').style.display='none';
   document.querySelectorAll('.pill').forEach(p=>p.classList.remove('selected'));
   document.querySelectorAll('.choice-card').forEach(p=>p.classList.remove('selected'));
   document.getElementById('section-video-specs').style.display='block';
   document.getElementById('ssd-cap-wrap').classList.remove('show');
   document.getElementById('form-error').classList.remove('show');
-  state.form={project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,ssd:null,ssdCap:''};
+  clearFieldErrors();
+  state.form={project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:''};
   setBudget(2);
   document.querySelectorAll('.progress-step').forEach(s=>s.classList.remove('done'));
 }
 
 /* ===== ENGINE ===== */
+/* Clear any previous red-border error states before re-validating */
+function clearFieldErrors(){
+  document.querySelectorAll('.field.field-error, .form-group.field-error').forEach(el=>el.classList.remove('field-error'));
+}
+
+/* Mark a field as errored by finding the .field or .form-group wrapper of a given element ID,
+   or the wrapper containing a pill/choice-group with given data-input attribute.
+   Returns the wrapper element (for scroll targeting). */
+function markFieldError(selector){
+  let target=null;
+  if(selector.startsWith('data-input:')){
+    const key=selector.slice('data-input:'.length);
+    const group=document.querySelector(`[data-input="${key}"]`);
+    if(group)target=group.closest('.field')||group.closest('.form-group');
+  } else {
+    const el=document.getElementById(selector);
+    if(el)target=el.closest('.field')||el.closest('.form-group');
+  }
+  if(target)target.classList.add('field-error');
+  return target;
+}
+
 function runSelector(){
   state.form.project=document.getElementById('f-project').value.trim();
   state.form.enduser=document.getElementById('f-enduser').value.trim();
@@ -2372,18 +2641,78 @@ function runSelector(){
   state.form.stage=document.getElementById('f-stage').value;
   state.form.closemonth=document.getElementById('f-closemonth').value;
   state.form.ssdCap=document.getElementById('f-ssd-cap').value;
-  const f=state.form;const err=document.getElementById('form-error');const missing=[];
-  if(!f.project)missing.push('Project');if(!f.enduser)missing.push('End-user');if(!f.venue)missing.push('Venue');if(!f.partner)missing.push('Partner');if(!f.consultant)missing.push('Consultant');if(!f.city)missing.push('City');if(!f.contactname)missing.push('Contact name');if(!f.contactphone)missing.push('Contact phone');if(!f.contactemail)missing.push('Contact email');if(!f.stage)missing.push('Deal stage');if(!f.closemonth)missing.push('Close month');if(!f.qty||f.qty<1)missing.push('Quantity');if(!f.environment)missing.push('Environment');if(!f.update)missing.push('Content update');if(!f.content)missing.push('Content type');
-  if(f.content!=='audio'){if(!f.resolution)missing.push('Resolution');if(!f.outputs)missing.push('Displays');if(!f.hdmiIn)missing.push('HDMI input');if(!f.touch)missing.push('Touch');if(!f.wifi)missing.push('Wi-Fi');if(!f.ssd)missing.push('SSD');if(f.ssd==='yes' && !f.ssdCap)missing.push('SSD capacity');}
-  if(missing.length){err.textContent='Please complete: '+missing.join(', ');err.classList.add('show');window.scrollTo({top:0,behavior:'smooth'});return;}
+  // v15: capture indoor/outdoor split for mixed deployment
+  state.form.qtyIndoor=parseInt(document.getElementById('f-qty-indoor').value)||0;
+  state.form.qtyOutdoor=parseInt(document.getElementById('f-qty-outdoor').value)||0;
+  const f=state.form;const err=document.getElementById('form-error');
+  clearFieldErrors();
+
+  // Ordered validation — must match form order, top to bottom, so auto-scroll targets the FIRST missing
+  const orderedChecks=[
+    {key:'project',test:()=>!!f.project,id:'f-project',label:'Project'},
+    {key:'enduser',test:()=>!!f.enduser,id:'f-enduser',label:'End-user'},
+    {key:'venue',test:()=>!!f.venue,id:'f-venue',label:'Venue'},
+    {key:'partner',test:()=>!!f.partner,id:'f-partner',label:'Partner'},
+    {key:'consultant',test:()=>!!f.consultant,id:'f-consultant',label:'Consultant'},
+    {key:'city',test:()=>!!f.city,id:'f-city',label:'City'},
+    {key:'contactname',test:()=>!!f.contactname,id:'f-contactname',label:'Contact name'},
+    {key:'contactphone',test:()=>!!f.contactphone,id:'f-contactphone',label:'Contact phone'},
+    {key:'contactemail',test:()=>!!f.contactemail,id:'f-contactemail',label:'Contact email'},
+    {key:'stage',test:()=>!!f.stage,id:'f-stage',label:'Deal stage'},
+    {key:'closemonth',test:()=>!!f.closemonth,id:'f-closemonth',label:'Close month'},
+    {key:'qty',test:()=>f.qty>=1,id:'f-qty',label:'Quantity'},
+    {key:'environment',test:()=>!!f.environment,id:'data-input:environment',label:'Environment'},
+    {key:'update',test:()=>!!f.update,id:'data-input:update',label:'Content update'},
+    {key:'content',test:()=>!!f.content,id:'data-input:content',label:'Content type'}
+  ];
+  if(f.content!=='audio'){
+    orderedChecks.push(
+      {key:'resolution',test:()=>!!f.resolution,id:'data-input:resolution',label:'Resolution'},
+      {key:'outputs',test:()=>!!f.outputs,id:'data-input:outputs',label:'Displays'},
+      {key:'hdmiIn',test:()=>!!f.hdmiIn,id:'data-input:hdmi-in',label:'HDMI input'},
+      {key:'touch',test:()=>!!f.touch,id:'data-input:touch',label:'Touch'},
+      {key:'wifi',test:()=>!!f.wifi,id:'data-input:wifi',label:'Wi-Fi'},
+      {key:'gpio',test:()=>!!f.gpio,id:'data-input:gpio',label:'GPIO port'},
+      {key:'ssd',test:()=>!!f.ssd,id:'data-input:ssd',label:'SSD'}
+    );
+    if(f.ssd==='yes')orderedChecks.push({key:'ssdCap',test:()=>!!f.ssdCap,id:'f-ssd-cap',label:'SSD capacity'});
+  }
+
+  const failed=orderedChecks.filter(c=>!c.test());
+  // Mixed-deployment qty validation: if env=mixed, indoor+outdoor must sum to total qty
+  if(f.environment==='mixed' && f.qty>=1){
+    if(f.qtyIndoor+f.qtyOutdoor!==parseInt(f.qty)){
+      failed.push({key:'qty-mix',id:'f-qty',label:'Indoor + Outdoor must equal total quantity'});
+    }
+  }
+
+  if(failed.length){
+    // Mark every missing field in red
+    failed.forEach(c=>markFieldError(c.id));
+    // Scroll to FIRST missing, focus cursor
+    const firstTarget=markFieldError(failed[0].id);
+    err.textContent='Please complete: '+failed.map(c=>c.label).join(', ');
+    err.classList.add('show');
+    if(firstTarget){
+      firstTarget.scrollIntoView({behavior:'smooth',block:'center'});
+      // Focus the first input inside the target
+      setTimeout(()=>{
+        const inp=firstTarget.querySelector('input:not([type=hidden]), select, button.pill, button.choice-card');
+        if(inp && inp.focus)inp.focus({preventScroll:true});
+      },420);
+    }
+    return;
+  }
   err.classList.remove('show');
-  if(f.content==='audio'){const au=MODELS.find(m=>m.id==='AU335'&&m.available);state.result={model:au,alt_down:null,alt_up:null,noRec:false,budgetUpgraded:false};} else {state.result=pickModel(f);}
-  // Generate unique ref ID for this selection (used for save→confirm upgrade)
+
+  if(f.content==='audio'){
+    const au=MODELS.find(m=>m.id==='AU335'&&m.available);
+    state.result={model:au,alt_down:null,alt_up:null,noRec:false,budgetUpgraded:false};
+  } else {
+    state.result=pickModel(f);
+  }
   state.result.refId='BS-'+Date.now().toString().slice(-8);
   state.result.confirmed=false;
-  // Save-first pattern: log to central Google Sheet BEFORE showing result.
-  // Always preserves local fallback. 'no-cors' webhook resolves regardless of
-  // server response, so worst case this adds a small network-round-trip delay.
   logEntry('viewed',function(){
     renderResult();
     document.getElementById('tab-result').style.display='inline-flex';
@@ -2392,7 +2721,30 @@ function runSelector(){
 }
 
 function pickModel(f){
-  const qualified=MODELS.filter(m=>m.available && !m.audio).map(m=>({m,score:scoreModel(m,f)})).filter(x=>x.score>-500).sort((a,b)=>a.m.rank-b.m.rank);
+  // ----- FLAGSHIP OVERRIDE: budget tier 5 → always XC4055 regardless of screens -----
+  if(parseInt(f.budget)===5){
+    const xc4055=MODELS.find(m=>m.id==='XC4055' && m.available);
+    if(xc4055 && xc4055.res.includes(f.resolution)){
+      // GPIO/touch/HDMI-in requirements still honoured
+      if(f.gpio==='yes' && !xc4055.gpio)return pickModelStandard(f);
+      if(f.touch==='yes' && !xc4055.touch)return pickModelStandard(f);
+      if(f.hdmiIn==='yes' && !xc4055.hdmiIn)return pickModelStandard(f);  // XC has no HDMI-in
+      // Mixed/outdoor: XC is metal, not aluminium — outdoor still needs aluminium enclosure
+      return {
+        model:xc4055,alt_down:MODELS.find(m=>m.id==='XC2055' && m.available)||null,
+        alt_up:null,noRec:false,budgetUpgraded:false,minCompliantId:xc4055.id,climbPath:['XC'],
+        flagshipOverride:true,
+        outdoorVariant:(f.environment==='mixed'||f.environment==='outdoor')?pickOutdoorOnly(f):null
+      };
+    }
+  }
+  return pickModelStandard(f);
+}
+
+function pickModelStandard(f){
+  // Standard scoring: respect all filters including environment
+  const envForFilter = f.environment==='mixed' ? 'indoor' : f.environment;
+  const qualified=MODELS.filter(m=>m.available && !m.audio).map(m=>({m,score:scoreModel(m,f,envForFilter)})).filter(x=>x.score>-500).sort((a,b)=>a.m.rank-b.m.rank);
   if(!qualified.length)return {model:null,alt_down:null,alt_up:null,noRec:true,budgetUpgraded:false};
   const minCompliant=qualified[0].m;
   const zone=BUDGET_ZONES[f.budget];
@@ -2410,15 +2762,38 @@ function pickModel(f){
   }
   const cheaper=qualified.filter(x=>x.m.rank<primary.rank)[0];
   const pricier=qualified.filter(x=>x.m.rank>primary.rank)[0];
-  return {model:primary,alt_down:cheaper?cheaper.m:null,alt_up:pricier?pricier.m:null,noRec:false,budgetUpgraded:budgetUpgraded,minCompliantId:minCompliant.id,climbPath:climbPath};
+  // Mixed environment: also compute an outdoor-only variant
+  const outdoorVariant = (f.environment==='mixed') ? pickOutdoorOnly(f) : null;
+  return {model:primary,alt_down:cheaper?cheaper.m:null,alt_up:pricier?pricier.m:null,noRec:false,budgetUpgraded:budgetUpgraded,minCompliantId:minCompliant.id,climbPath:climbPath,outdoorVariant:outdoorVariant};
 }
 
-function scoreModel(m,f){
+/* Mixed deployment helper — pick the best aluminium-chassis model for outdoor slice */
+function pickOutdoorOnly(f){
+  const qualified=MODELS.filter(m=>m.available && !m.audio).map(m=>({m,score:scoreModel(m,f,'outdoor')})).filter(x=>x.score>-500).sort((a,b)=>a.m.rank-b.m.rank);
+  if(!qualified.length)return null;
+  const minCompliant=qualified[0].m;
+  const zone=BUDGET_ZONES[f.budget];
+  const minGroupIdx=SERIES_LADDER.indexOf(minCompliant.group);
+  const zoneTargetGroup=zone.groups[zone.groups.length-1];
+  const zoneTargetIdx=SERIES_LADDER.indexOf(zoneTargetGroup);
+  let primary=minCompliant;
+  if(minGroupIdx<zoneTargetIdx){
+    for(let i=minGroupIdx+1;i<=zoneTargetIdx;i++){
+      const cand=qualified.find(x=>x.m.group===SERIES_LADDER[i]);
+      if(cand)primary=cand.m;
+    }
+  }
+  return primary;
+}
+
+function scoreModel(m,f,envOverride){
+  const env = envOverride || f.environment;  // caller can force 'outdoor' for split recommendation
   if(!m.res.includes(f.resolution))return -1000;
   if(m.outputs<parseInt(f.outputs))return -1000;
   if(f.hdmiIn==='yes' && !m.hdmiIn)return -1000;
   if(f.touch==='yes' && !m.touch)return -1000;
-  if(f.environment==='outdoor' && m.chassis!=='aluminium')return -1000;
+  if(f.gpio==='yes' && !m.gpio)return -1000;
+  if(env==='outdoor' && m.chassis!=='aluminium')return -1000;
   return 100-m.rank;
 }
 
@@ -2435,6 +2810,27 @@ function renderResult(){
   if(m.hero)html+=`<div class="hero-badge"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Hero product</div>`;
   html+=`<div class="card-title"><span class="card-title-num">★</span>Recommended model</div><div class="card-divider"></div><div class="model-hero-banner"><div class="model-hero-left"><div class="model-hero"><div class="model-name">${m.id}</div><div class="model-tag">${m.tag}</div></div><div class="model-notes">${m.notes}</div><div class="badge-row">${poeBadge}${cmsBadge}${chassisBadge}${f.wifi==='yes'?`<span class="badge info"><span class="dot"></span>Wi-Fi via WD-105</span>`:''}${m.hero?`<span class="badge gold"><span class="dot"></span>Hero product</span>`:''}</div></div><div class="model-hero-photo">${MODEL_PHOTOS[m.id]?`<img src="${MODEL_PHOTOS[m.id]}" alt="BrightSign ${m.id}" onerror="this.parentElement.innerHTML='<div class=&quot;model-hero-photo-loading&quot;>Photo unavailable</div>';">`:`<div class="model-hero-photo-loading">No photo</div>`}</div></div>`;
   if(r.budgetUpgraded)html+=`<div class="budget-note"><strong>Series upgrade path:</strong> technical minimum is <strong>${r.minCompliantId}</strong> (${r.climbPath[0]}). Your <strong>${BUDGET_ZONES[f.budget].name}</strong> budget climbs <strong>${r.climbPath.join(' → ')}</strong>, landing on <strong>${m.id}</strong>.</div>`;
+  if(r.flagshipOverride)html+=`<div class="budget-note" style="background:var(--gold-light);border-left-color:var(--gold);color:#78350F;"><strong>Flagship tier override:</strong> When Flagship budget is selected, we recommend <strong>XC4055</strong> as the standard — full 8K, 4-screen capable, Intel Gen 11 i5, dual-OS — regardless of the display count needed. This is our highest-tier player for projects where performance headroom matters.</div>`;
+  if(f.environment==='mixed' && r.outdoorVariant && r.outdoorVariant.id!==m.id){
+    const om=r.outdoorVariant;
+    html+=`<div style="margin-top:20px;padding:20px 24px;background:linear-gradient(135deg,#FEF3C7 0%,#FFFBEB 100%);border:1px solid #FCD34D;border-radius:14px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#CA8A04" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+        <div style="font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#92400E;">Mixed deployment · outdoor variant</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 160px;gap:20px;align-items:center;">
+        <div>
+          <div style="font-family:var(--serif);font-size:44px;line-height:1;letter-spacing:-0.02em;font-weight:500;color:var(--indigo);margin-bottom:6px;">${om.id}</div>
+          <div style="font-family:var(--sans);font-size:14px;font-weight:600;color:var(--ink-muted);margin-bottom:6px;">${om.tag}</div>
+          <div style="font-family:var(--sans);font-size:13px;color:var(--ink-muted);line-height:1.5;">${om.notes}</div>
+          <div style="font-family:var(--mono);font-size:12px;font-weight:600;color:#92400E;margin-top:10px;letter-spacing:0.04em;">${f.qtyOutdoor||0} unit${(f.qtyOutdoor||0)===1?'':'s'} for outdoor slice · aluminium chassis required</div>
+        </div>
+        <div style="aspect-ratio:1/1;background:linear-gradient(135deg,rgba(255,251,235,0.7) 0%,rgba(255,255,255,0.4) 100%);border-radius:14px;display:flex;align-items:center;justify-content:center;padding:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.9);">
+          ${MODEL_PHOTOS[om.id]?`<img src="${MODEL_PHOTOS[om.id]}" alt="BrightSign ${om.id}" style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 8px 16px rgba(15,23,42,0.18));">`:`<div style="font-family:var(--sans);font-size:11px;color:var(--ink-subtle);">No photo</div>`}
+        </div>
+      </div>
+    </div>`;
+  }
   if(isXC)html+=`<div class="os-selector"><div class="os-selector-title">OS selection (XC series only)</div><div class="os-selector-desc">Choose based on the project's software requirements.</div><div class="os-pills"><button class="os-pill selected" data-os="brightsignos" onclick="selectOS('brightsignos')"><div class="os-pill-name">BrightSignOS</div><div class="os-pill-note">All ports active · GPIO · IR · RS-232 · USB-C · Full bsn.Control</div></button><button class="os-pill" data-os="windows" onclick="selectOS('windows')"><div class="os-pill-name">Windows 10/11 IoT</div><div class="os-pill-note">GPIO / IR / RS-232 / USB-C disabled · Windows-based CMS only</div></button></div></div>`;
   if(r.alt_down||r.alt_up){
     html+=`<div class="alternates-row">`;
@@ -2452,8 +2848,32 @@ function renderResult(){
 }
 
 function computeCMS(f){
-  // CMS deferred — placeholder until Pickcel / Korbyt integration lands
-  return {badge:`CMS · TBD`,bom:{name:'CMS subscription — TBD', qty:parseInt(f.qty)||1, note:'Pickcel / Korbyt / third-party CMS integration coming in next release'}};
+  // CMS license logic v16:
+  //   Local + ≤25 players → no license required
+  //   Local + >25 players → On-Prem CMS License × total players
+  //   Cloud (any qty)     → Cloud CMS License × total players
+  // Mixed deployment: indoor qty + outdoor qty sum counts as total
+  // TBD placeholder (Pickcel/Korbyt) is ALWAYS shown alongside
+  const qty=parseInt(f.qty)||1;
+  const rows=[];
+  let badge='';
+  if(f.update==='local'){
+    if(qty<=25){
+      badge='No CMS license required';
+      // No row added — standalone / peer-to-peer mode
+    } else {
+      badge=`On-Prem CMS × ${qty}`;
+      rows.push({name:'On-Prem CMS License',qty:qty,note:'Per-player on-premise license (local network, >25 players)'});
+    }
+  } else if(f.update==='cloud'){
+    badge=`Cloud CMS × ${qty}`;
+    rows.push({name:'Cloud CMS License',qty:qty,note:'Per-player cloud subscription (annual · from first player)'});
+  } else {
+    badge='CMS · TBD';
+  }
+  // Always show third-party CMS placeholder alongside native license
+  rows.push({name:'CMS — TBD',qty:qty,note:'Pickcel / Korbyt / third-party integration coming'});
+  return {badge:badge,rows:rows};
 }
 function buildConcerns(m,f){
   const list=[];
@@ -2467,19 +2887,32 @@ function buildConcerns(m,f){
   return list;
 }
 function buildBOMCard(m,f,cms){
-  const qty=parseInt(f.qty)||1;const rows=[];
+  const r=state.result;
+  const isMixed=f.environment==='mixed';
+  const qtyTotal=parseInt(f.qty)||1;
+  const qtyIndoor=isMixed?(parseInt(f.qtyIndoor)||0):qtyTotal;
+  const qtyOutdoor=isMixed?(parseInt(f.qtyOutdoor)||0):0;
+  const rows=[];
   const ssdActive=f.ssd==='yes' && m.ssdCapable!==false && f.ssdCap;
+  // Primary model line (indoor slice if mixed, else full qty)
   if(ssdActive){
-    rows.push({name:`BrightSign ${m.id}`, qty:qty, note:m.tag});
+    rows.push({name:`BrightSign ${m.id}`, qty:qtyIndoor, note:m.tag+(isMixed?' · Indoor slice':'')});
     const capLabel=f.ssdCap==='1024'?'1 TB':f.ssdCap+' GB';
-    rows.push({name:`M.2 NVMe SSD — ${capLabel}`, qty:qty, note:m.ssdCapable===null?'Verify M.2 NVMe compatibility · cost excluded':'Cost excluded'});
+    rows.push({name:`M.2 NVMe SSD — ${capLabel}`, qty:qtyTotal, note:m.ssdCapable===null?'Verify M.2 NVMe compatibility · cost excluded':'Cost excluded'});
   } else {
-    rows.push({name:`BrightSign ${m.id}`, qty:qty, note:`${m.tag} · 64 GB microSD included`});
+    rows.push({name:`BrightSign ${m.id}`, qty:qtyIndoor, note:`${m.tag}${isMixed?' · Indoor slice':''} · 64 GB microSD included`});
   }
-  if(f.wifi==='yes')rows.push({name:'WD-105 Wi-Fi / Bluetooth module', qty:qty, note:'M.2 E-Key dual-antenna'});
-  rows.push({name:'CMS — TBD', qty:qty, note:'Pickcel / Korbyt / third-party integration coming'});
+  // Outdoor variant line for mixed deployments
+  if(isMixed && r && r.outdoorVariant && qtyOutdoor>0){
+    rows.push({name:`BrightSign ${r.outdoorVariant.id}`, qty:qtyOutdoor, note:`${r.outdoorVariant.tag} · Outdoor slice · aluminium chassis · 64 GB microSD included`});
+  }
+  if(f.wifi==='yes')rows.push({name:'WD-105 Wi-Fi / Bluetooth module', qty:qtyTotal, note:'M.2 E-Key dual-antenna'});
+  // CMS license rows (On-Prem / Cloud / none) + always-shown TBD placeholder
+  if(cms.rows && cms.rows.length){
+    cms.rows.forEach(row=>rows.push(row));
+  }
   let html=`<div class="result-card"><div class="card-title"><span class="card-title-num">⌲</span>Bill of Materials</div><div class="card-divider"></div><table class="bom-table"><thead><tr><th>Line item</th><th class="num" style="width:90px;">Qty</th></tr></thead><tbody>`;
-  rows.forEach(r=>{html+=`<tr><td><div class="bom-item-name">${r.name}</div>${r.note?`<div class="bom-item-note">${r.note}</div>`:''}</td><td class="num">${r.qty}</td></tr>`;});
+  rows.forEach(row=>{html+=`<tr><td><div class="bom-item-name">${row.name}</div>${row.note?`<div class="bom-item-note">${row.note}</div>`:''}</td><td class="num">${row.qty}</td></tr>`;});
   html+=`</tbody></table></div>`;
   return html;
 }
@@ -2546,7 +2979,12 @@ function buildProjectCard(){
   const f=state.form;
   const contentLabel=f.content==='audio'?'Audio only':f.content==='video'?'Video only':f.content==='av'?'Audio + Video':'—';
   const closeLabel=f.closemonth?new Date(f.closemonth+'-01').toLocaleDateString('en-IN',{month:'short',year:'numeric'}):'—';
-  return `<div class="result-card"><div class="card-title"><span class="card-title-num">⎙</span>Project summary</div><div class="card-divider"></div><div class="project-grid"><div class="project-field"><div class="project-label">Project</div><div class="project-value">${f.project||'—'}</div></div><div class="project-field"><div class="project-label">End-user</div><div class="project-value">${f.enduser||'—'}</div></div><div class="project-field"><div class="project-label">Venue</div><div class="project-value">${f.venue||'—'}</div></div><div class="project-field"><div class="project-label">Partner / SI</div><div class="project-value">${f.partner||'—'}</div></div><div class="project-field"><div class="project-label">Consultant</div><div class="project-value">${f.consultant||'—'}</div></div><div class="project-field"><div class="project-label">City</div><div class="project-value">${f.city||'—'}</div></div><div class="project-field"><div class="project-label">Contact person</div><div class="project-value">${f.contactname||'—'}</div></div><div class="project-field"><div class="project-label">Contact phone</div><div class="project-value">${f.contactphone||'—'}</div></div><div class="project-field"><div class="project-label">Contact email</div><div class="project-value">${f.contactemail||'—'}</div></div><div class="project-field"><div class="project-label">Deal stage</div><div class="project-value">${f.stage||'—'}</div></div><div class="project-field"><div class="project-label">Expected close</div><div class="project-value">${closeLabel}</div></div><div class="project-field"><div class="project-label">Quantity</div><div class="project-value">${f.qty||'—'} players</div></div><div class="project-field"><div class="project-label">Environment</div><div class="project-value">${f.environment==='indoor'?'Indoor':f.environment==='outdoor'?'Outdoor':'—'}</div></div><div class="project-field"><div class="project-label">Content type</div><div class="project-value">${contentLabel}</div></div><div class="project-field"><div class="project-label">Budget tier</div><div class="project-value">${BUDGET_ZONES[f.budget]?BUDGET_ZONES[f.budget].name:'—'}</div></div><div class="project-field"><div class="project-label">Generated by</div><div class="project-value">${state.user?state.user.fullName:'—'}</div></div></div></div>`;
+  let envLabel='—';
+  if(f.environment==='indoor')envLabel='Indoor';
+  else if(f.environment==='outdoor')envLabel='Outdoor';
+  else if(f.environment==='mixed')envLabel=`Mixed (${f.qtyIndoor||0} indoor / ${f.qtyOutdoor||0} outdoor)`;
+  const gpioLabel=f.gpio==='yes'?'Yes · 12-pin Phoenix':f.gpio==='no'?'No':'—';
+  return `<div class="result-card"><div class="card-title"><span class="card-title-num">⎙</span>Project summary</div><div class="card-divider"></div><div class="project-grid"><div class="project-field"><div class="project-label">Project</div><div class="project-value">${f.project||'—'}</div></div><div class="project-field"><div class="project-label">End-user</div><div class="project-value">${f.enduser||'—'}</div></div><div class="project-field"><div class="project-label">Venue</div><div class="project-value">${f.venue||'—'}</div></div><div class="project-field"><div class="project-label">Partner / SI</div><div class="project-value">${f.partner||'—'}</div></div><div class="project-field"><div class="project-label">Consultant</div><div class="project-value">${f.consultant||'—'}</div></div><div class="project-field"><div class="project-label">City</div><div class="project-value">${f.city||'—'}</div></div><div class="project-field"><div class="project-label">Contact person</div><div class="project-value">${f.contactname||'—'}</div></div><div class="project-field"><div class="project-label">Contact phone</div><div class="project-value">${f.contactphone||'—'}</div></div><div class="project-field"><div class="project-label">Contact email</div><div class="project-value">${f.contactemail||'—'}</div></div><div class="project-field"><div class="project-label">Deal stage</div><div class="project-value">${f.stage||'—'}</div></div><div class="project-field"><div class="project-label">Expected close</div><div class="project-value">${closeLabel}</div></div><div class="project-field"><div class="project-label">Quantity</div><div class="project-value">${f.qty||'—'} players</div></div><div class="project-field"><div class="project-label">Environment</div><div class="project-value">${envLabel}</div></div><div class="project-field"><div class="project-label">Content type</div><div class="project-value">${contentLabel}</div></div><div class="project-field"><div class="project-label">GPIO required</div><div class="project-value">${gpioLabel}</div></div><div class="project-field"><div class="project-label">Budget tier</div><div class="project-value">${BUDGET_ZONES[f.budget]?BUDGET_ZONES[f.budget].name:'—'}</div></div><div class="project-field"><div class="project-label">Generated by</div><div class="project-value">${state.user?state.user.fullName:'—'}</div></div></div></div>`;
 }
 function selectOS(os){state.osChoice=os;document.querySelectorAll('.os-pill').forEach(p=>p.classList.toggle('selected',p.getAttribute('data-os')===os));}
 
@@ -2575,11 +3013,16 @@ function buildEntryPayload(status){
     partner:f.partner||'—',consultant:f.consultant||'—',city:f.city||'—',
     contactname:f.contactname||'—',contactphone:f.contactphone||'—',contactemail:f.contactemail||'—',
     stage:f.stage||'—',closemonth:f.closemonth||'—',
-    qty:f.qty,model:r.model.id,tag:r.model.tag,
+    qty:f.qty,
+    qtyIndoor:f.environment==='mixed'?(f.qtyIndoor||0):'',
+    qtyOutdoor:f.environment==='mixed'?(f.qtyOutdoor||0):'',
+    model:r.model.id,tag:r.model.tag,
+    outdoorModel:r.outdoorVariant?r.outdoorVariant.id:'',
     content:f.content||'—',resolution:f.resolution||'—',
     environment:f.environment||'—',update:f.update||'—',
     budget:BUDGET_ZONES[f.budget]?BUDGET_ZONES[f.budget].name:'—',
     hdmiIn:f.hdmiIn||'—',touch:f.touch||'—',wifi:f.wifi||'—',
+    gpio:f.gpio||'—',
     ssd:f.ssd==='yes'?(f.ssdCap==='1024'?'1TB':f.ssdCap+'GB'):'no',
     os:r.model.xc?state.osChoice:'—'
   };
@@ -2628,9 +3071,13 @@ function downloadQuoteExcel(){
   const f=state.form;const r=state.result;const m=r.model;
   const refId=r.refId||'BS-'+Date.now().toString().slice(-8);
   const dateStr=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  const isMixed=f.environment==='mixed';
+  const qtyIndoor=parseInt(f.qtyIndoor)||0;
+  const qtyOutdoor=parseInt(f.qtyOutdoor)||0;
+  const qtyTotal=parseInt(f.qty)||1;
 
   const aoa=[];
-  // Header: contact block
+  // Header: title + contact block
   aoa.push(['BrightSign Product Quote']);
   aoa.push([]);
   aoa.push(['Generated by','Dipenkumar Gajjar']);
@@ -2659,8 +3106,14 @@ function downloadQuoteExcel(){
   aoa.push([]);
   // Deployment inputs
   aoa.push(['DEPLOYMENT REQUIREMENTS']);
-  aoa.push(['Quantity',f.qty||'—']);
-  aoa.push(['Environment',f.environment==='indoor'?'Indoor':f.environment==='outdoor'?'Outdoor':'—']);
+  aoa.push(['Total quantity',qtyTotal]);
+  if(isMixed){
+    aoa.push(['Deployment type','Mixed (Indoor + Outdoor)']);
+    aoa.push(['  Indoor qty',qtyIndoor]);
+    aoa.push(['  Outdoor qty',qtyOutdoor]);
+  } else {
+    aoa.push(['Environment',f.environment==='indoor'?'Indoor':f.environment==='outdoor'?'Outdoor':'—']);
+  }
   aoa.push(['Content update',f.update==='local'?'Local network':f.update==='cloud'?'Remote / Cloud':'—']);
   aoa.push(['Budget tier',BUDGET_ZONES[f.budget]?BUDGET_ZONES[f.budget].name:'—']);
   aoa.push(['Content type',f.content==='audio'?'Audio only':f.content==='video'?'Video only':f.content==='av'?'Audio + Video':'—']);
@@ -2670,31 +3123,53 @@ function downloadQuoteExcel(){
     aoa.push(['HDMI input',f.hdmiIn==='yes'?'Yes':'No']);
     aoa.push(['Touch / interactive',f.touch==='yes'?'Yes':'No']);
     aoa.push(['Wi-Fi',f.wifi==='yes'?'Yes':'No']);
+    aoa.push(['GPIO port required',f.gpio==='yes'?'Yes · 12-pin Phoenix':'No']);
     aoa.push(['SSD',f.ssd==='yes'?(f.ssdCap==='1024'?'1 TB':f.ssdCap+' GB'):'No']);
   }
   if(m.xc)aoa.push(['OS choice',state.osChoice==='brightsignos'?'BrightSignOS':'Windows 10/11 IoT']);
   aoa.push([]);
   // Recommendation
   aoa.push(['RECOMMENDED MODEL']);
-  aoa.push(['Model',m.id]);
+  aoa.push(['Primary model',m.id]);
   aoa.push(['Series','Series '+m.series]);
   aoa.push(['Category',m.tag]);
   aoa.push(['Technical notes',m.notes]);
+  if(r.flagshipOverride){
+    aoa.push(['Note','Flagship tier selected — XC4055 recommended regardless of screen count (full 8K · 4-screen · dual-OS)']);
+  }
+  // Outdoor variant section for mixed deployments
+  if(isMixed && r.outdoorVariant && r.outdoorVariant.id!==m.id){
+    const om=r.outdoorVariant;
+    aoa.push([]);
+    aoa.push(['OUTDOOR VARIANT (mixed deployment)']);
+    aoa.push(['Outdoor model',om.id]);
+    aoa.push(['Outdoor category',om.tag]);
+    aoa.push(['Outdoor notes',om.notes]);
+    aoa.push(['Outdoor chassis','Aluminium (IP-rated enclosure still required)']);
+  }
   aoa.push([]);
   // BOM
   aoa.push(['BILL OF MATERIALS']);
   aoa.push(['Line item','Quantity','Notes']);
-  const qty=parseInt(f.qty)||1;
   const ssdActive=f.ssd==='yes' && m.ssdCapable!==false && f.ssdCap;
+  const primaryQty=isMixed?qtyIndoor:qtyTotal;
   if(ssdActive){
-    aoa.push([`BrightSign ${m.id}`,qty,m.tag]);
+    aoa.push([`BrightSign ${m.id}`,primaryQty,m.tag+(isMixed?' · Indoor slice':'')]);
     const capLabel=f.ssdCap==='1024'?'1 TB':f.ssdCap+' GB';
-    aoa.push([`M.2 NVMe SSD — ${capLabel}`,qty,m.ssdCapable===null?'Verify M.2 NVMe compatibility · cost excluded':'Cost excluded']);
+    aoa.push([`M.2 NVMe SSD — ${capLabel}`,qtyTotal,m.ssdCapable===null?'Verify M.2 NVMe compatibility · cost excluded':'Cost excluded']);
   } else {
-    aoa.push([`BrightSign ${m.id}`,qty,`${m.tag} · 64 GB microSD included`]);
+    aoa.push([`BrightSign ${m.id}`,primaryQty,`${m.tag}${isMixed?' · Indoor slice':''} · 64 GB microSD included`]);
   }
-  if(f.wifi==='yes')aoa.push(['WD-105 Wi-Fi / Bluetooth module',qty,'M.2 E-Key dual-antenna']);
-  aoa.push(['CMS — TBD',qty,'Pickcel / Korbyt / third-party integration']);
+  // Outdoor line when mixed
+  if(isMixed && r.outdoorVariant && qtyOutdoor>0){
+    aoa.push([`BrightSign ${r.outdoorVariant.id}`,qtyOutdoor,`${r.outdoorVariant.tag} · Outdoor slice · aluminium chassis · 64 GB microSD included`]);
+  }
+  if(f.wifi==='yes')aoa.push(['WD-105 Wi-Fi / Bluetooth module',qtyTotal,'M.2 E-Key dual-antenna']);
+  // CMS license rows (driven by computeCMS v16 logic)
+  const excelCms=computeCMS(f);
+  if(excelCms.rows && excelCms.rows.length){
+    excelCms.rows.forEach(row=>aoa.push([row.name,row.qty,row.note||'']));
+  }
   aoa.push([]);
   // Tender spec
   aoa.push(['TENDER SPECIFICATIONS']);
@@ -2710,18 +3185,50 @@ function downloadQuoteExcel(){
     });
   });
   aoa.push([]);
-  // Footer
+  aoa.push([]);
+  // ===== PROMINENT PRICING CALLOUT BOX at bottom =====
+  aoa.push(['━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━']);
+  aoa.push(['FOR BEST PRICING, CONTACT:']);
+  aoa.push(['Dipenkumar Gajjar · National Product Manager']);
+  aoa.push(['Phone: +91 8160 756 906']);
+  aoa.push(['Email: dipen.g@cavitak.com']);
+  aoa.push(['━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━']);
+  aoa.push([]);
   aoa.push(['This quote is for internal reference and customer discussion.']);
   aoa.push(['Pricing subject to current price list, forex, and landed-cost variations.']);
-  aoa.push(['Dipenkumar Gajjar · National Product Manager · +91 8160 756 906 · dipen.g@cavitak.com']);
 
   // Build sheet with column widths
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[{wch:18},{wch:50},{wch:60},{wch:14},{wch:40}];
+  ws['!cols']=[{wch:22},{wch:50},{wch:60},{wch:14},{wch:40}];
 
   // Merge header title across 5 columns
   ws['!merges']=ws['!merges']||[];
   ws['!merges'].push({s:{r:0,c:0},e:{r:0,c:4}});
+
+  // Find row indices of the pricing callout title/body rows for cell styling
+  const pricingTitleRow=aoa.findIndex(row=>row[0]==='FOR BEST PRICING, CONTACT:');
+  if(pricingTitleRow>=0){
+    // Merge the callout lines across 5 columns and apply bold/highlight
+    for(let i=0;i<5;i++){  // 5 rows: divider, title, name, phone, email (the bottom divider will also be merged below)
+      const rowIdx=pricingTitleRow-1+i;  // -1 to start from top divider
+      ws['!merges'].push({s:{r:rowIdx,c:0},e:{r:rowIdx,c:4}});
+    }
+    // Bottom divider
+    ws['!merges'].push({s:{r:pricingTitleRow+4,c:0},e:{r:pricingTitleRow+4,c:4}});
+    // Apply cell styling: gold background + bold for the 4 content rows
+    ['A','B','C','D','E'].forEach((col,ci)=>{
+      for(let i=0;i<6;i++){
+        const rowIdx=pricingTitleRow-1+i;
+        const cellRef=col+(rowIdx+1);
+        if(!ws[cellRef])ws[cellRef]={v:aoa[rowIdx][ci]||''};
+        ws[cellRef].s={
+          fill:{fgColor:{rgb:'FEF3C7'}},  // gold-light background
+          font:{bold:i===1||i===2,color:{rgb:'78350F'},sz:i===1?13:11},  // darker brown text
+          alignment:{horizontal:'center',vertical:'center'}
+        };
+      }
+    });
+  }
 
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Quote');
@@ -2750,11 +3257,19 @@ async function refreshLog(){
   renderLog();
 }
 
+/* v13: global chart instances — keep references so we can destroy before re-rendering */
+window._charts={users:null,groups:null,activity:null};
+/* v13: current filter state */
+window._filters={city:'',user:'',project:'',partner:'',consultant:''};
+
 function renderLog(){
   if(!state.user)return;
   const isSuper=state.user.isSuper;
   const host=document.getElementById('log-content');
   const superDash=document.getElementById('super-dashboard');
+  const superCharts=document.getElementById('super-charts');
+  const filterBar=document.getElementById('filter-bar');
+  const filterCount=document.getElementById('filter-count');
   const actionBar=document.getElementById('log-action-bar');
   const exportBtn=document.getElementById('export-btn');
   const pageTitle=document.getElementById('log-page-title');
@@ -2764,7 +3279,7 @@ function renderLog(){
   if(isSuper){
     entries=(window._centralLog&&window._centralLog.length)?window._centralLog:loadLocalLog();
     pageTitle.textContent='All-team selection history';
-    pageSubtitle.textContent=WEBHOOK_URL?'Aggregated from the central Google Sheet. Click Refresh to sync.':'Aggregated from local browser storage. Configure WEBHOOK_URL in the file to enable central sync.';
+    pageSubtitle.textContent=WEBHOOK_URL?'Aggregated from the central Google Sheet. Click Refresh to sync.':'Aggregated from local browser storage.';
     exportBtn.style.display='inline-flex';
   } else {
     const all=loadLocalLog();
@@ -2774,31 +3289,26 @@ function renderLog(){
     exportBtn.style.display='none';
   }
 
-  // Super user dashboard
+  // v13: Super-user filter bar + charts
   if(isSuper && entries.length){
-    const users={};const stages={};const cities={};const models={};
-    entries.forEach(e=>{users[e.user]=(users[e.user]||0)+1;stages[e.stage]=(stages[e.stage]||0)+1;cities[e.city]=(cities[e.city]||0)+1;models[e.model]=(models[e.model]||0)+1;});
-    const totalQty=entries.reduce((sum,e)=>sum+(parseInt(e.qty)||0),0);
-    superDash.style.display='block';
-    superDash.innerHTML=`
-      <div class="super-banner">
-        <div class="super-banner-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
-        <div class="super-banner-text">
-          <div class="super-banner-title">Super user dashboard</div>
-          <div class="super-banner-sub">You're viewing all-team pipeline data. Regular users see only their own history.</div>
-        </div>
-      </div>
-      <div class="super-stats">
-        <div class="stat-card"><div class="stat-label">Total selections</div><div class="stat-value">${entries.length}</div></div>
-        <div class="stat-card"><div class="stat-label">Total player qty</div><div class="stat-value">${totalQty}</div></div>
-        <div class="stat-card"><div class="stat-label">Active users</div><div class="stat-value">${Object.keys(users).length}</div></div>
-        <div class="stat-card"><div class="stat-label">Cities covered</div><div class="stat-value">${Object.keys(cities).length}</div></div>
-      </div>`;
-  } else {superDash.style.display='none';}
+    filterBar.style.display='grid';
+    superCharts.style.display='block';
+    populateFilterOptions(entries);
+    const filtered=applyFiltersToEntries(entries);
+    renderCharts(filtered);
+    renderSuperStats(filtered,superDash);
+    renderFilterCount(filtered.length,entries.length,filterCount);
+    entries=filtered;
+  } else {
+    filterBar.style.display='none';
+    superCharts.style.display='none';
+    filterCount.style.display='none';
+    superDash.style.display='none';
+  }
 
   if(!entries.length){
-    host.innerHTML=`<div class="log-empty"><svg class="log-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div class="log-empty-title">No selections yet</div><div>Run your first selection on the "New selection" tab.</div></div>`;
-    actionBar.style.display='none';return;
+    host.innerHTML=`<div class="log-empty"><svg class="log-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div class="log-empty-title">${isSuper&&hasActiveFilters()?'No matches':'No selections yet'}</div><div>${isSuper&&hasActiveFilters()?'Try different filter values or clear all filters.':'Run your first selection on the "New selection" tab.'}</div></div>`;
+    actionBar.style.display='flex';return;
   }
   actionBar.style.display='flex';
   host.innerHTML=entries.map(e=>{
@@ -2809,15 +3319,204 @@ function renderLog(){
     const statusLabel=e.status==='saved'?'CONFIRMED':'VIEWED';
     const statusColor=e.status==='saved'?'var(--emerald)':'var(--ink-subtle)';
     const statusBg=e.status==='saved'?'var(--emerald-light)':'var(--surface-2)';
-    return `<div class="log-entry"><div class="log-date">${dateStr}<br>${timeStr}<br><span style="color:var(--ink-muted);">${e.user}</span>${e.refId?`<br><span style="font-size:10px;opacity:0.7;">${e.refId}</span>`:''}</div><div class="log-main"><div class="log-project">${e.project} <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;letter-spacing:0.05em;background:${statusBg};color:${statusColor};margin-left:6px;vertical-align:middle;">${statusLabel}</span></div><div class="log-detail">${e.enduser} · ${e.venue} · ${e.city} · ${e.partner}</div><div class="log-detail">${e.qty} × ${e.model} · ${resStr} · ${e.environment} · ${e.update} · ${e.stage} · ${e.budget}${e.os&&e.os!=='—'?' · '+(e.os==='brightsignos'?'BSOS':'Win IoT'):''}</div></div><div class="log-model">${e.model}</div></div>`;
+    return `<div class="log-entry"><div class="log-date">${dateStr}<br>${timeStr}<br><span style="color:var(--ink-muted);">${e.user}</span>${e.refId?`<br><span style="font-size:10px;opacity:0.7;">${e.refId}</span>`:''}</div><div class="log-main"><div class="log-project">${e.project} <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:${statusBg};color:${statusColor};margin-left:6px;vertical-align:middle;">${statusLabel}</span></div><div class="log-detail">${e.enduser} · ${e.venue} · ${e.city} · ${e.partner}</div><div class="log-detail">${e.qty} × ${e.model} · ${resStr} · ${e.environment} · ${e.update} · ${e.stage} · ${e.budget}${e.os&&e.os!=='—'?' · '+(e.os==='brightsignos'?'BSOS':'Win IoT'):''}</div></div><div class="log-model">${e.model}</div></div>`;
   }).join('');
 }
 
+/* v13: populate filter dropdowns from unique values in entries */
+function populateFilterOptions(entries){
+  const fields=['city','user','project','partner','consultant'];
+  fields.forEach(f=>{
+    const sel=document.getElementById('flt-'+f);
+    const currentVal=sel.value;
+    const values=[...new Set(entries.map(e=>e[f]).filter(v=>v&&v!=='—'&&v!=='(unnamed)'))].sort();
+    sel.innerHTML='<option value="">All</option>'+values.map(v=>`<option value="${v.replace(/"/g,'&quot;')}"${v===currentVal?' selected':''}>${v}</option>`).join('');
+  });
+}
+
+function applyFilters(){
+  window._filters.city=document.getElementById('flt-city').value;
+  window._filters.user=document.getElementById('flt-user').value;
+  window._filters.project=document.getElementById('flt-project').value;
+  window._filters.partner=document.getElementById('flt-partner').value;
+  window._filters.consultant=document.getElementById('flt-consultant').value;
+  renderLog();
+}
+
+function applyFiltersToEntries(entries){
+  const f=window._filters;
+  return entries.filter(e=>{
+    if(f.city && e.city!==f.city)return false;
+    if(f.user && e.user!==f.user)return false;
+    if(f.project && e.project!==f.project)return false;
+    if(f.partner && e.partner!==f.partner)return false;
+    if(f.consultant && e.consultant!==f.consultant)return false;
+    return true;
+  });
+}
+
+function hasActiveFilters(){
+  const f=window._filters;
+  return !!(f.city||f.user||f.project||f.partner||f.consultant);
+}
+
+function clearFilters(){
+  window._filters={city:'',user:'',project:'',partner:'',consultant:''};
+  ['city','user','project','partner','consultant'].forEach(f=>{document.getElementById('flt-'+f).value='';});
+  renderLog();
+}
+
+function renderFilterCount(shown,total,el){
+  el.style.display='flex';
+  if(shown===total){
+    el.innerHTML=`Showing <strong>${total}</strong> entries`;
+  } else {
+    el.innerHTML=`Showing <strong>${shown}</strong> of ${total} entries${hasActiveFilters()?' · <span style="color:var(--blue);cursor:pointer;" onclick="clearFilters()">Clear filters</span>':''}`;
+  }
+}
+
+function renderSuperStats(entries,dashEl){
+  if(!entries.length){dashEl.style.display='none';return;}
+  const users={};const cities={};
+  entries.forEach(e=>{users[e.user]=(users[e.user]||0)+1;cities[e.city]=(cities[e.city]||0)+1;});
+  const totalQty=entries.reduce((sum,e)=>sum+(parseInt(e.qty)||0),0);
+  const confirmed=entries.filter(e=>e.status==='saved').length;
+  const confirmedPct=entries.length?Math.round(confirmed/entries.length*100):0;
+  dashEl.style.display='block';
+  dashEl.innerHTML=`
+    <div class="super-banner">
+      <div class="super-banner-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+      <div class="super-banner-text">
+        <div class="super-banner-title">Super user dashboard</div>
+        <div class="super-banner-sub">All-team pipeline view · use filters above to drill down</div>
+      </div>
+    </div>
+    <div class="super-stats">
+      <div class="stat-card"><div class="stat-label">Selections</div><div class="stat-value">${entries.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Total player qty</div><div class="stat-value">${totalQty}</div></div>
+      <div class="stat-card"><div class="stat-label">Active users</div><div class="stat-value">${Object.keys(users).length}</div></div>
+      <div class="stat-card"><div class="stat-label">Confirmed rate</div><div class="stat-value">${confirmedPct}%</div></div>
+    </div>`;
+}
+
+/* v13: Render three Chart.js charts — users bar, groups pie, activity line */
+function renderCharts(entries){
+  if(typeof Chart==='undefined')return;  // Chart.js not loaded yet
+  // Destroy previous instances to avoid canvas reuse errors
+  ['users','groups','activity'].forEach(k=>{if(window._charts[k]){window._charts[k].destroy();window._charts[k]=null;}});
+  if(!entries.length)return;
+
+  const fontSans="'IBM Plex Sans',-apple-system,sans-serif";
+  const colorInk='#0F172A';const colorMuted='#64748B';const colorBorder='#E2E8F0';
+
+  // Chart 1: Selections per user (stacked bar — viewed vs confirmed)
+  const userMap={};
+  entries.forEach(e=>{
+    if(!userMap[e.user])userMap[e.user]={viewed:0,saved:0};
+    if(e.status==='saved')userMap[e.user].saved++;else userMap[e.user].viewed++;
+  });
+  const userLabels=Object.keys(userMap).sort((a,b)=>(userMap[b].viewed+userMap[b].saved)-(userMap[a].viewed+userMap[a].saved));
+  const viewedData=userLabels.map(u=>userMap[u].viewed);
+  const savedData=userLabels.map(u=>userMap[u].saved);
+  const ctxUsers=document.getElementById('chart-users');
+  if(ctxUsers){
+    window._charts.users=new Chart(ctxUsers,{
+      type:'bar',
+      data:{labels:userLabels,datasets:[
+        {label:'Viewed',data:viewedData,backgroundColor:'#CBD5E1',borderRadius:4,stack:'total'},
+        {label:'Confirmed',data:savedData,backgroundColor:'#CA8A04',borderRadius:4,stack:'total'}
+      ]},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{
+          legend:{position:'top',align:'end',labels:{font:{family:fontSans,size:11,weight:'600'},boxWidth:10,boxHeight:10,usePointStyle:true,padding:14}},
+          tooltip:{titleFont:{family:fontSans,weight:'700'},bodyFont:{family:fontSans}}
+        },
+        scales:{
+          x:{grid:{display:false},ticks:{font:{family:fontSans,size:11,weight:'600'},color:colorInk}},
+          y:{beginAtZero:true,grid:{color:colorBorder},ticks:{font:{family:fontSans,size:11},color:colorMuted,precision:0}}
+        }
+      }
+    });
+  }
+
+  // Chart 2: Model-group distribution (pie)
+  const groupMap={};
+  entries.forEach(e=>{
+    const grp=(e.model||'').match(/^[A-Z]+/);
+    const key=grp?grp[0]:'Other';
+    groupMap[key]=(groupMap[key]||0)+1;
+  });
+  const groupLabels=Object.keys(groupMap).sort();
+  const groupData=groupLabels.map(g=>groupMap[g]);
+  const groupColors={'AU':'#94A3B8','LS':'#60A5FA','HD':'#3B82F6','XD':'#2563EB','XT':'#1E40AF','XC':'#1E1B4B'};
+  const palette=groupLabels.map(g=>groupColors[g]||'#64748B');
+  const ctxGroups=document.getElementById('chart-groups');
+  if(ctxGroups){
+    window._charts.groups=new Chart(ctxGroups,{
+      type:'doughnut',
+      data:{labels:groupLabels.map(g=>g+' series'),datasets:[{data:groupData,backgroundColor:palette,borderWidth:2,borderColor:'#fff'}]},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        cutout:'60%',
+        plugins:{
+          legend:{position:'right',labels:{font:{family:fontSans,size:11,weight:'600'},boxWidth:10,boxHeight:10,usePointStyle:true,padding:12}},
+          tooltip:{titleFont:{family:fontSans,weight:'700'},bodyFont:{family:fontSans}}
+        }
+      }
+    });
+  }
+
+  // Chart 3: Activity over time (last 30 days, line)
+  const dayMap={};
+  const now=new Date();
+  for(let i=29;i>=0;i--){
+    const d=new Date(now.getTime()-i*86400000);
+    const key=d.toISOString().slice(0,10);
+    dayMap[key]=0;
+  }
+  entries.forEach(e=>{
+    const key=(e.ts||'').slice(0,10);
+    if(key in dayMap)dayMap[key]++;
+  });
+  const dayLabels=Object.keys(dayMap);
+  const dayData=dayLabels.map(k=>dayMap[k]);
+  const dayDisplayLabels=dayLabels.map(k=>{
+    const d=new Date(k);
+    return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+  });
+  const ctxActivity=document.getElementById('chart-activity');
+  if(ctxActivity){
+    window._charts.activity=new Chart(ctxActivity,{
+      type:'line',
+      data:{labels:dayDisplayLabels,datasets:[{
+        label:'Selections',data:dayData,
+        borderColor:'#2563EB',backgroundColor:'rgba(37,99,235,0.08)',
+        borderWidth:2,tension:0.35,
+        pointRadius:3,pointBackgroundColor:'#2563EB',pointHoverRadius:5,
+        fill:true
+      }]},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{titleFont:{family:fontSans,weight:'700'},bodyFont:{family:fontSans}}
+        },
+        scales:{
+          x:{grid:{display:false},ticks:{font:{family:fontSans,size:10,weight:'500'},color:colorMuted,maxRotation:0,autoSkip:true,maxTicksLimit:10}},
+          y:{beginAtZero:true,grid:{color:colorBorder},ticks:{font:{family:fontSans,size:11},color:colorMuted,precision:0}}
+        }
+      }
+    });
+  }
+}
+
 function exportCSV(){
-  const entries=(window._centralLog&&window._centralLog.length)?window._centralLog:loadLocalLog();
+  let entries=(window._centralLog&&window._centralLog.length)?window._centralLog:loadLocalLog();
+  if(state.user&&state.user.isSuper&&hasActiveFilters())entries=applyFiltersToEntries(entries);
   if(!entries.length){alert('No data to export.');return;}
-  const headers=['Ref ID','Status','Timestamp','User','Role','Project','End-user','Venue','Partner','Consultant','City','Contact name','Contact phone','Contact email','Deal stage','Close month','Qty','Model','Content type','Resolution','Environment','Content update','Budget','HDMI in','Touch','Wi-Fi','SSD','OS'];
-  const rows=entries.map(e=>[e.refId||'',e.status||'viewed',e.ts,e.user,e.role,e.project,e.enduser,e.venue,e.partner,e.consultant,e.city,e.contactname,e.contactphone,e.contactemail,e.stage,e.closemonth,e.qty,e.model,e.content,e.resolution,e.environment,e.update,e.budget,e.hdmiIn,e.touch,e.wifi,e.ssd,e.os]);
+  const headers=['Ref ID','Status','Timestamp','User','Role','Project','End-user','Venue','Partner','Consultant','City','Contact name','Contact phone','Contact email','Deal stage','Close month','Qty','Indoor Qty','Outdoor Qty','Model','Outdoor Model','Content type','Resolution','Environment','Content update','Budget','HDMI in','Touch','Wi-Fi','GPIO','SSD','OS'];
+  const rows=entries.map(e=>[e.refId||'',e.status||'viewed',e.ts,e.user,e.role,e.project,e.enduser,e.venue,e.partner,e.consultant,e.city,e.contactname,e.contactphone,e.contactemail,e.stage,e.closemonth,e.qty,e.qtyIndoor||'',e.qtyOutdoor||'',e.model,e.outdoorModel||'',e.content,e.resolution,e.environment,e.update,e.budget,e.hdmiIn,e.touch,e.wifi,e.gpio||'—',e.ssd,e.os]);
   const csv=[headers,...rows].map(r=>r.map(c=>`"${(c||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);
