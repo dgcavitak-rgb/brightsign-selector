@@ -63,6 +63,264 @@
   --shadow-glass:0 8px 32px rgba(30,27,75,0.08), inset 0 1px 0 rgba(255,255,255,0.9);
   --shadow-float:0 16px 40px rgba(30,27,75,0.12), 0 4px 12px rgba(30,27,75,0.06), inset 0 1px 0 rgba(255,255,255,0.95);
 }
+
+/* v21.8: DARK THEME — matches primary hero's deep navy/indigo aesthetic.
+   Activates when <html data-theme="dark"> is set. Toggle in top header.
+   Persists in localStorage. Result hero banners stay dark in both themes (intentional). */
+html[data-theme="dark"]{
+  --bg:#0B1025;--surface:#141937;--surface-2:#1B2142;
+  --border:rgba(148,163,184,0.18);--border-strong:rgba(148,163,184,0.30);
+  --ink:#F1F5F9;--ink-muted:#CBD5E1;--ink-subtle:#94A3B8;
+  --indigo:#C7D2FE;--indigo-soft:#A5B4FC;--indigo-light:rgba(99,102,241,0.18);
+  --blue:#60A5FA;--blue-dark:#3B82F6;--blue-light:rgba(59,130,246,0.18);
+  --emerald:#34D399;--emerald-light:rgba(5,150,105,0.22);
+  --amber:#FBBF24;--amber-light:rgba(217,119,6,0.22);
+  --rose:#F87171;--rose-light:rgba(220,38,38,0.22);
+  --gold:#FCD34D;--gold-light:rgba(202,138,4,0.22);
+  --violet:#A78BFA;--violet-light:rgba(124,58,237,0.22);
+  --teal:#5EEAD4;--teal-light:rgba(13,148,136,0.22);
+  --pink:#F472B6;--pink-light:rgba(219,39,119,0.22);
+  --slate:#CBD5E1;--slate-soft:#94A3B8;
+  --glass-bg:rgba(27,33,66,0.72);
+  --glass-bg-strong:rgba(27,33,66,0.88);
+  --glass-border:rgba(148,163,184,0.16);
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.25);
+  --shadow:0 4px 14px rgba(0,0,0,0.32), 0 2px 4px rgba(0,0,0,0.20);
+  --shadow-lg:0 20px 48px rgba(0,0,0,0.45), 0 8px 16px rgba(0,0,0,0.30);
+  --shadow-glass:0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+  --shadow-float:0 16px 40px rgba(0,0,0,0.45), 0 4px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08);
+  --shadow-kpi:0 10px 30px rgba(0,0,0,0.40), 0 4px 8px rgba(0,0,0,0.25);
+  --shadow-kpi-hover:0 20px 45px rgba(0,0,0,0.55), 0 8px 16px rgba(0,0,0,0.35);
+  --grad-mesh:radial-gradient(circle at 15% 20%,rgba(124,58,237,0.14),transparent 50%),radial-gradient(circle at 85% 80%,rgba(37,99,235,0.10),transparent 50%),radial-gradient(circle at 50% 50%,rgba(79,70,229,0.08),transparent 60%);
+}
+html[data-theme="dark"] body{
+  background:
+    radial-gradient(ellipse 70% 50% at 12% 8%, rgba(79,70,229,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 45% at 88% 22%, rgba(124,58,237,0.14) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 55% at 50% 100%, rgba(30,27,75,0.45) 0%, transparent 60%),
+    linear-gradient(180deg,#060915 0%,#0B1025 100%) !important;
+}
+/* Dark: Glass cards — tint surface darker */
+html[data-theme="dark"] .glass-card{
+  background:linear-gradient(135deg,rgba(27,33,66,0.82) 0%,rgba(20,25,55,0.75) 100%) !important;
+  box-shadow:0 10px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+}
+/* Dark: Form inputs — dark surface, light text */
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea{
+  background:rgba(11,16,37,0.6) !important;
+  color:var(--ink) !important;
+  border-color:var(--border) !important;
+}
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder{
+  color:var(--ink-subtle) !important;
+}
+/* Dark: Pills + buttons — tweak backgrounds */
+html[data-theme="dark"] .pill{
+  background:rgba(27,33,66,0.6) !important;
+  color:var(--ink) !important;
+  border-color:var(--border) !important;
+}
+html[data-theme="dark"] .pill.selected{
+  background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%) !important;
+  color:#FFFFFF !important;
+  border-color:transparent !important;
+}
+html[data-theme="dark"] .pill:hover:not(.selected){
+  background:rgba(79,70,229,0.18) !important;
+  border-color:rgba(165,180,252,0.35) !important;
+}
+/* Dark: Tab bar */
+html[data-theme="dark"] .tab-bar{
+  background:rgba(20,25,55,0.88) !important;
+  border-color:var(--border) !important;
+}
+html[data-theme="dark"] .tab{color:var(--ink-muted) !important;}
+html[data-theme="dark"] .tab.active{color:var(--ink) !important;background:rgba(79,70,229,0.18) !important;}
+/* Dark: Login page */
+html[data-theme="dark"] .login-card{
+  background:linear-gradient(135deg,rgba(27,33,66,0.92) 0%,rgba(20,25,55,0.88) 100%) !important;
+  box-shadow:0 20px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08) !important;
+}
+/* Dark: Header */
+html[data-theme="dark"] .app-header{
+  background:rgba(11,16,37,0.85) !important;
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border) !important;
+}
+/* Dark: BOM table + other tables */
+html[data-theme="dark" ] .bom-table-v21 th,
+html[data-theme="dark"] .bom-table-v21 td{
+  color:var(--ink) !important;
+  border-color:var(--border) !important;
+}
+html[data-theme="dark"] .bom-table-v21 thead{
+  background:rgba(79,70,229,0.14) !important;
+}
+html[data-theme="dark"] .bom-table-v21 tbody tr:nth-child(even){
+  background:rgba(27,33,66,0.4) !important;
+}
+/* Dark: Progress steps */
+html[data-theme="dark"] .progress-step{
+  background:rgba(27,33,66,0.6);
+  color:var(--ink-muted);
+}
+html[data-theme="dark"] .progress-step.done{
+  background:linear-gradient(135deg,#4F46E5,#7C3AED);
+  color:#FFFFFF;
+}
+/* Dark: Dashboard KPI tiles — keep gradients but darken base */
+html[data-theme="dark"] .kpi-tile{
+  background:linear-gradient(135deg,rgba(27,33,66,0.88) 0%,rgba(20,25,55,0.82) 100%) !important;
+}
+/* Dark: Log table */
+html[data-theme="dark"] .log-table th,
+html[data-theme="dark"] .log-table td{
+  color:var(--ink) !important;
+  border-color:var(--border) !important;
+}
+html[data-theme="dark"] .log-table thead{
+  background:rgba(79,70,229,0.14) !important;
+}
+html[data-theme="dark"] .log-table tbody tr:hover{
+  background:rgba(79,70,229,0.12) !important;
+}
+/* Smooth transition on theme switch — applied to commonly-colored elements */
+body,
+.glass-card,
+.pill,
+.tab-bar,
+.tab,
+input,select,textarea,
+.login-card,
+.app-header,
+.kpi-tile,
+.bom-table-v21 th,.bom-table-v21 td,
+.log-table th,.log-table td{
+  transition:background-color 0.35s cubic-bezier(0.16,1,0.3,1), color 0.3s ease, border-color 0.3s ease !important;
+}
+
+/* v21.8: Theme toggle button (sun/moon) in top header */
+.theme-toggle{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:38px;
+  height:38px;
+  border-radius:10px;
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--ink-muted);
+  cursor:pointer;
+  transition:all 0.25s cubic-bezier(0.16,1,0.3,1);
+  padding:0;
+  margin-right:8px;
+  position:relative;
+  overflow:hidden;
+}
+.theme-toggle:hover{
+  background:var(--surface-2);
+  color:var(--ink);
+  border-color:var(--border-strong);
+  transform:translateY(-1px);
+}
+.theme-toggle:active{transform:translateY(0);}
+.theme-toggle svg{
+  width:18px;
+  height:18px;
+  transition:transform 0.4s cubic-bezier(0.68,-0.55,0.27,1.55),opacity 0.25s ease;
+}
+.theme-toggle .theme-icon-sun{display:block;}
+.theme-toggle .theme-icon-moon{display:none;}
+html[data-theme="dark"] .theme-toggle .theme-icon-sun{display:none;}
+html[data-theme="dark"] .theme-toggle .theme-icon-moon{display:block;}
+.theme-toggle:hover svg{transform:rotate(15deg);}
+/* v21.9: Login page toggle floats top-right with subtle backdrop */
+.theme-toggle-login{
+  position:fixed;
+  top:20px;
+  right:20px;
+  z-index:100;
+  width:44px;
+  height:44px;
+  background:rgba(255,255,255,0.80);
+  backdrop-filter:blur(12px) saturate(180%);
+  -webkit-backdrop-filter:blur(12px) saturate(180%);
+  box-shadow:0 4px 14px rgba(30,27,75,0.08);
+}
+html[data-theme="dark"] .theme-toggle-login{
+  background:rgba(27,33,66,0.80);
+  box-shadow:0 4px 14px rgba(0,0,0,0.35);
+}
+@media (max-width:640px){
+  .theme-toggle-login{top:14px;right:14px;width:40px;height:40px;}
+}
+
+/* v21.9.1: Dark mode fixes for choice-cards, number input, and other hardcoded light surfaces */
+html[data-theme="dark"] .choice-card{
+  background:rgba(27,33,66,0.72) !important;
+  border-color:var(--border) !important;
+  color:var(--ink);
+}
+html[data-theme="dark"] .choice-card:hover{
+  border-color:#6366F1 !important;
+  background:rgba(79,70,229,0.14) !important;
+}
+html[data-theme="dark"] .choice-card.selected{
+  background:linear-gradient(135deg,rgba(79,70,229,0.28) 0%,rgba(124,58,237,0.22) 100%) !important;
+  border-color:#A5B4FC !important;
+  box-shadow:0 4px 14px rgba(79,70,229,0.30) !important;
+}
+html[data-theme="dark"] .choice-card-icon{color:#A5B4FC !important;}
+html[data-theme="dark"] .choice-card.selected .choice-card-icon{color:#C7D2FE !important;}
+html[data-theme="dark"] .choice-card-name{color:var(--ink) !important;}
+html[data-theme="dark"] .choice-card.selected .choice-card-name{color:#E0E7FF !important;}
+html[data-theme="dark"] .choice-card-sub{color:var(--ink-muted) !important;}
+/* Number input — used for player quantity */
+html[data-theme="dark"] .number-input{
+  background:rgba(27,33,66,0.72) !important;
+  border-color:var(--border-strong) !important;
+}
+html[data-theme="dark"] .number-input button{color:var(--ink-muted) !important;}
+html[data-theme="dark"] .number-input button:hover{background:rgba(99,102,241,0.18) !important;color:#A5B4FC !important;}
+html[data-theme="dark"] .number-input input{color:var(--ink) !important;background:transparent !important;}
+/* Generic card-like surfaces with hardcoded white backgrounds */
+html[data-theme="dark"] select,
+html[data-theme="dark"] input[type="text"],
+html[data-theme="dark"] input[type="email"],
+html[data-theme="dark"] input[type="tel"],
+html[data-theme="dark"] input[type="number"],
+html[data-theme="dark"] input[type="password"],
+html[data-theme="dark"] input[type="date"],
+html[data-theme="dark"] textarea{
+  background:rgba(27,33,66,0.72) !important;
+  color:var(--ink) !important;
+  border-color:var(--border) !important;
+}
+html[data-theme="dark"] select option{
+  background:#141937 !important;
+  color:var(--ink) !important;
+}
+/* Section headers (like "Deployment & budget" with numbered circle) */
+html[data-theme="dark"] .section-title{color:var(--ink) !important;}
+html[data-theme="dark"] .section-label{color:var(--ink-muted) !important;}
+/* Budget slider track + OS pills */
+html[data-theme="dark"] .os-pill{
+  background:rgba(27,33,66,0.72) !important;
+  border-color:var(--border) !important;
+  color:var(--ink) !important;
+}
+html[data-theme="dark"] .os-pill.selected{
+  background:linear-gradient(135deg,rgba(79,70,229,0.28) 0%,rgba(124,58,237,0.22) 100%) !important;
+  border-color:#A5B4FC !important;
+  color:#E0E7FF !important;
+}
+html[data-theme="dark"] .os-pill-name{color:var(--ink) !important;}
+html[data-theme="dark"] .os-pill.selected .os-pill-name{color:#E0E7FF !important;}
+html[data-theme="dark"] .os-pill-note{color:var(--ink-muted) !important;}
+
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{
   font-family:var(--sans);
@@ -1391,6 +1649,125 @@ input:focus,select:focus,textarea:focus{
     radial-gradient(circle at 20% 30%,rgba(5,150,105,0.28),transparent 55%),
     radial-gradient(circle at 80% 70%,rgba(6,95,70,0.22),transparent 60%) !important;
 }
+
+/* v21.7: Pricing & Quotation callout — indigo-violet gradient matching primary hero theme */
+.pricing-callout-card{
+  position:relative;
+}
+.pricing-callout-inner{
+  position:relative;
+  padding:28px 30px 26px;
+  border-radius:14px;
+  background:linear-gradient(135deg,#312E81 0%,#4338CA 50%,#6366F1 100%);
+  color:#F1F5F9;
+  overflow:hidden;
+  isolation:isolate;
+  box-shadow:0 10px 30px rgba(49,46,129,0.25), inset 0 1px 0 rgba(255,255,255,0.15);
+  transition:all 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+/* Soft orbs for depth, matching the hero aesthetic */
+.pricing-callout-inner::before{
+  content:'';position:absolute;inset:0;z-index:-1;
+  background:
+    radial-gradient(circle at 15% 20%,rgba(165,180,252,0.35),transparent 55%),
+    radial-gradient(circle at 85% 80%,rgba(79,70,229,0.25),transparent 55%);
+  pointer-events:none;
+}
+/* Shine sweep on hover — matches glass-card aesthetic */
+.pricing-callout-inner::after{
+  content:'';position:absolute;top:0;left:-100%;width:50%;height:100%;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.12) 50%,transparent 100%);
+  transition:left 0.7s cubic-bezier(0.16,1,0.3,1);
+  pointer-events:none;
+}
+.pricing-callout-card:hover .pricing-callout-inner{
+  transform:translateY(-3px);
+  box-shadow:0 20px 50px rgba(49,46,129,0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.pricing-callout-card:hover .pricing-callout-inner::after{
+  left:150%;
+}
+.pricing-callout-eyebrow{
+  font-family:var(--sans);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:#C7D2FE;
+  margin-bottom:10px;
+}
+.pricing-callout-name{
+  font-family:var(--serif);
+  font-size:28px;
+  font-weight:700;
+  color:#FFFFFF;
+  letter-spacing:-0.015em;
+  line-height:1.15;
+  margin-bottom:6px;
+}
+.pricing-callout-role{
+  font-family:var(--sans);
+  font-size:13px;
+  font-weight:500;
+  color:#E0E7FF;
+  margin-bottom:18px;
+}
+.pricing-callout-pills{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:18px;
+}
+.pricing-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+  padding:11px 16px;
+  background:rgba(255,255,255,0.10);
+  border:1px solid rgba(255,255,255,0.22);
+  border-radius:10px;
+  color:#FFFFFF;
+  font-family:var(--sans);
+  font-size:13px;
+  font-weight:600;
+  text-decoration:none;
+  letter-spacing:-0.005em;
+  transition:all 0.25s cubic-bezier(0.16,1,0.3,1);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+.pricing-pill svg{
+  width:15px;
+  height:15px;
+  opacity:0.85;
+  flex-shrink:0;
+}
+.pricing-pill:hover{
+  background:rgba(255,255,255,0.18);
+  border-color:rgba(255,255,255,0.35);
+  transform:translateY(-1px);
+  box-shadow:0 6px 16px rgba(0,0,0,0.18);
+}
+.pricing-pill:active{
+  transform:translateY(0);
+}
+.pricing-callout-note{
+  font-family:var(--sans);
+  font-size:12.5px;
+  font-weight:400;
+  color:#C7D2FE;
+  line-height:1.55;
+  letter-spacing:-0.005em;
+  padding-top:14px;
+  border-top:1px solid rgba(255,255,255,0.12);
+}
+/* Mobile responsive */
+@media (max-width:640px){
+  .pricing-callout-inner{padding:22px 20px 20px;}
+  .pricing-callout-name{font-size:22px;}
+  .pricing-callout-pills{flex-direction:column;}
+  .pricing-pill{width:100%;justify-content:center;}
+}
 .result-hero-v21::before{
   content:'';
   position:absolute;inset:0;z-index:-1;
@@ -1574,7 +1951,6 @@ input:focus,select:focus,textarea:focus{
 
 /* GLASS MORPHISM CARDS with animated gradient borders */
 .glass-card{
-  position:relative;
   background:linear-gradient(135deg,rgba(255,255,255,0.82) 0%,rgba(248,250,252,0.75) 100%);
   backdrop-filter:blur(20px) saturate(180%);
   -webkit-backdrop-filter:blur(20px) saturate(180%);
@@ -2726,6 +3102,10 @@ input:focus,select:focus,textarea:focus{
   .action-bar button{flex:1;padding:12px 10px;font-size:13px;}
 }
 </style>
+<!-- v21.8: Apply saved theme BEFORE body renders (prevents flash-of-light in dark mode) -->
+<script>
+(function(){try{var t=localStorage.getItem('bs-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+</script>
 </head>
 <body>
 
@@ -2739,6 +3119,11 @@ input:focus,select:focus,textarea:focus{
 
 <!-- LOGIN -->
 <div id="page-login" class="page active">
+  <!-- v21.9: Theme toggle on login page (floating top-right) -->
+  <button class="theme-toggle theme-toggle-login" onclick="toggleTheme()" title="Toggle dark / light theme" aria-label="Toggle theme">
+    <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  </button>
   <div class="login-card">
     <div class="login-logo-hero">
       <img class="login-logo-img" id="login-logo-img" alt="BrightSign">
@@ -2783,6 +3168,10 @@ input:focus,select:focus,textarea:focus{
         <div class="app-user-name" id="user-label-name">—</div>
         <div class="app-user-role" id="user-label-role">—</div>
       </div>
+      <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark / light theme" aria-label="Toggle theme">
+        <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
       <div class="app-user-avatar" id="user-avatar">?</div>
       <button onclick="handleLogout()">Sign out</button>
     </div>
@@ -4036,6 +4425,24 @@ const state = {
 };
 
 /* ===== LOGIN ===== */
+/* v21.8: Theme management — light/dark with localStorage persistence
+   Must run on page load to prevent flash-of-wrong-theme. */
+function applyTheme(theme){
+  document.documentElement.setAttribute('data-theme',theme);
+  try{localStorage.setItem('bs-theme',theme);}catch(e){/* silent — privacy mode */}
+}
+function toggleTheme(){
+  const current=document.documentElement.getAttribute('data-theme')||'light';
+  applyTheme(current==='dark'?'light':'dark');
+}
+// Apply saved theme immediately on script load (before DOM fully paints)
+(function initTheme(){
+  try{
+    const saved=localStorage.getItem('bs-theme');
+    if(saved==='dark'||saved==='light')applyTheme(saved);
+  }catch(e){/* silent */}
+})();
+
 function handleLogin(){
   const name=document.getElementById('login-name').value.trim().toLowerCase();
   const password=document.getElementById('login-password').value;
@@ -4626,6 +5033,9 @@ function renderResult(){
     html+=`<ul class="concerns-list">${concerns.map(c=>`<li>${c}</li>`).join('')}</ul></div>`;
   }
 
+  // v21.7: Pricing callout card — directs partner/SI to contact Dipenkumar for quote
+  html+=buildPricingCallout();
+
   // BOM card, Tender spec card (dual-model aware), Project summary
   html+=buildBOMCard(m,f,cms);
   html+=buildTenderSpecCard(m,om);
@@ -4848,6 +5258,39 @@ function buildConcerns(m,f){
   if(f.ssd==='yes' && m.ssdCapable===false)list.push(`<strong>SSD not supported</strong> on ${m.id}. 64 GB microSD included.`);
   return list;
 }
+/* v21.7: For Pricing & Quotation callout — indigo gradient glass card
+   Directs partners/SI/end-users to contact Dipenkumar for firm quote.
+   Blends with the BrightSign app's primary indigo/violet theme. */
+function buildPricingCallout(){
+  return `<div class="glass-card pricing-callout-card">
+    <div class="glass-card-title">
+      <span class="glass-card-title-icon" style="background:linear-gradient(135deg,#6366F1 0%,#4338CA 100%);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/>
+        </svg>
+      </span>
+      For Pricing &amp; Quotation
+    </div>
+    <div class="glass-card-divider"></div>
+    <div class="pricing-callout-inner">
+      <div class="pricing-callout-eyebrow">Contact for best pricing</div>
+      <div class="pricing-callout-name">Dipenkumar Gajjar</div>
+      <div class="pricing-callout-role">National Product Manager · BrightSign Portfolio</div>
+      <div class="pricing-callout-pills">
+        <a href="mailto:dipen.g@cavitak.com" class="pricing-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>
+          dipen.g@cavitak.com
+        </a>
+        <a href="tel:+918160756906" class="pricing-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          +91 8160 756 906
+        </a>
+      </div>
+      <div class="pricing-callout-note">Download the Excel BOM below and email it along with your enquiry for a swift quote.</div>
+    </div>
+  </div>`;
+}
+
 function buildBOMCard(m,f,cms){
   const r=state.result;
   const isMixed=f.environment==='mixed';
