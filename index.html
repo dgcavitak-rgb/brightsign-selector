@@ -2954,7 +2954,7 @@ input:focus,select:focus,textarea:focus{
       <div class="print-only-footer"><div>Dipenkumar Gajjar · National Product Manager · +91 8160 756 906 · dipen.g@cavitak.com</div><div>This document is for internal reference and customer discussion. Pricing subject to current price list, forex, and landed-cost variations.</div></div>
     </div>
     <div class="action-bar">
-      <button class="btn-secondary" onclick="showTab('form')">← Back</button>
+      <button class="btn-secondary" onclick="backToForm()">← Back</button>
       <button class="btn-action" onclick="confirmSelection()">Confirm ✓</button>
       <button class="btn-print" onclick="downloadQuoteExcel()">Download Excel ↓</button>
     </div>
@@ -4057,13 +4057,43 @@ function handleLogin(){
   document.getElementById('page-login').classList.remove('active');
   document.getElementById('page-app').classList.add('active');
   renderLog();
+  // v21.6: Start 10-minute hard session timer for regular users. Super-users stay logged in indefinitely.
+  startSessionTimer();
 }
 function handleLogout(){
+  stopSessionTimer();  // v21.6: clear any pending session timer
   state.user=null;
   document.getElementById('page-login').classList.add('active');
   document.getElementById('page-app').classList.remove('active');
   ['login-name','login-password'].forEach(id=>document.getElementById(id).value='');
+  resetForm();  // v21.6: clear form state on logout so next sign-in starts fresh
+  state.result=null;
+  document.getElementById('tab-result').style.display='none';
 }
+
+/* v21.6: Hard 10-minute session limit for regular users.
+   Super-users are exempt — stay logged in indefinitely per requirement. */
+function startSessionTimer(){
+  stopSessionTimer();
+  if(state.user && state.user.isSuper)return;  // Super bypass
+  const SESSION_MS=10*60*1000;  // 10 minutes
+  window._sessionTimer=setTimeout(()=>{
+    // Silent logout — just return to login page
+    handleLogout();
+  },SESSION_MS);
+}
+function stopSessionTimer(){
+  if(window._sessionTimer){clearTimeout(window._sessionTimer);window._sessionTimer=null;}
+}
+
+/* v21.6: Auto-logout when user closes tab, closes browser, or navigates away.
+   sessionStorage/localStorage is NOT used — closing tab = killing session by design. */
+window.addEventListener('beforeunload',function(){
+  // Fire-and-forget: clear any in-memory session state.
+  // Since nothing is persisted to localStorage, closing the tab effectively logs out.
+  stopSessionTimer();
+  state.user=null;
+});
 
 function showTab(which){
   // v17: Auto-reset form when user clicks 'New selection' tab after having viewed a result.
@@ -4079,6 +4109,18 @@ function showTab(which){
     if(btn)btn.classList.toggle('active',t===which);
   });
   if(which==='log')renderLog();
+  window.scrollTo(0,0);
+}
+
+/* v21.6: Navigate back to form from result page WITHOUT resetting data.
+   User can tweak inputs and re-click Recommend. Different from New Selection tab
+   which always starts fresh. */
+function backToForm(){
+  ['form','result','log'].forEach(t=>{
+    document.getElementById('section-'+t).style.display=t==='form'?'block':'none';
+    const btn=document.getElementById('tab-'+t);
+    if(btn)btn.classList.toggle('active',t==='form');
+  });
   window.scrollTo(0,0);
 }
 
@@ -4304,6 +4346,8 @@ function resetForm(){
   // v20.1: Clear any lingering lock from prior sessions
   releaseRunSelectorLock();
   window._confirmBusy=false;
+  // v21.6: Clear cached refId so next selection gets a fresh BS- reference
+  window._lastRefIdForEdit=null;
 }
 
 /* ===== ENGINE ===== */
@@ -4436,7 +4480,15 @@ function runSelector(){
   } else {
     state.result=pickModel(f);
   }
-  state.result.refId='BS-'+Date.now().toString().slice(-8);
+  // v21.6: If user came back and re-ran with same project + model, preserve refId so Sheet upserts
+  // Otherwise (new project, or state.previousRefId doesn't exist), generate new refId.
+  const existingRefId=window._lastRefIdForEdit;
+  if(existingRefId && existingRefId.startsWith('BS-')){
+    state.result.refId=existingRefId;
+  } else {
+    state.result.refId='BS-'+Date.now().toString().slice(-8);
+  }
+  window._lastRefIdForEdit=state.result.refId;  // Cache in case user goes Back and re-runs
   state.result.confirmed=false;
   logEntry('viewed',function(){
     // v21: Theatrical overlay → then renderResult with cinematic hero reveal
@@ -4603,7 +4655,9 @@ function buildHeroCard(model,f,cms,deployLabel,deployShown,variant){
   h+=`<div class="result-hero-left">`;
   h+=`<div class="result-hero-eyebrow"><span class="result-hero-eyebrow-dot"></span>${eyebrowText}</div>`;
   // Model ID with deployment badge adjacent (badge now includes grade since Grade pill removed)
-  const gradeSuffix=model.chassis==='plastic'?' · Indoor Grade':' · Outdoor Grade';
+  // v21.5.2 FIX: Only aluminium chassis = Outdoor Grade. Plastic + Metal = Indoor Grade.
+  // (XC metal chassis has active cooling for enterprise indoor — NOT weatherproof outdoor.)
+  const gradeSuffix=model.chassis==='aluminium'?' · Outdoor Grade':' · Indoor Grade';
   h+=`<div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:14px;"><div class="result-hero-model-id" id="${modelIdId}" style="margin-bottom:0;">${model.id}</div>`;
   if(deployShown){
     h+=`<div style="font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:0.12em;background:rgba(255,255,255,0.14);color:#fff;padding:7px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.22);backdrop-filter:blur(10px);margin-top:14px;white-space:nowrap;">${deployShown}${qtyLabel}${gradeSuffix}</div>`;
@@ -5033,9 +5087,18 @@ function confirmSelection(){
   const btn=document.querySelector('#section-result .action-bar .btn-action');
   if(btn){btn.disabled=true;btn.textContent='Confirming…';btn.style.opacity='0.7';btn.style.cursor='not-allowed';}
   logEntry('saved',function(){
-    // Update Confirm button to show success feedback
+    // Update Confirm button to show success feedback briefly
     if(btn){btn.textContent='Confirmed ✓';btn.style.background='var(--emerald)';btn.style.opacity='1';}
     window._confirmBusy=false;
+    // v21.6: After confirmation success → reset form and navigate to blank form tab
+    // Small delay lets user see the "Confirmed ✓" feedback before the reset
+    setTimeout(()=>{
+      resetForm();
+      state.result=null;
+      document.getElementById('tab-result').style.display='none';
+      showTab('form');
+      showSync('Saved. Ready for next selection.','success');
+    },800);
   });
   // Safety net for confirm
   setTimeout(()=>{window._confirmBusy=false;},10000);
