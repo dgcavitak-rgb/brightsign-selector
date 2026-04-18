@@ -1377,6 +1377,20 @@ input:focus,select:focus,textarea:focus{
   --mx:50%;
   --my:50%;
 }
+/* v21.3: Outdoor variant hero — teal-to-emerald gradient (complementary to primary indigo) */
+.result-hero-outdoor-v21{
+  background:linear-gradient(135deg,#042F2E 0%,#134E4A 45%,#047857 100%);
+  animation-delay:0.1s;
+}
+.result-hero-outdoor-v21::after{
+  background:radial-gradient(circle,rgba(16,185,129,0.38) 0%,transparent 70%) !important;
+}
+.result-hero-outdoor-v21::before{
+  background:
+    radial-gradient(circle at var(--mx) var(--my),rgba(110,231,183,0.22) 0%,transparent 35%),
+    radial-gradient(circle at 20% 30%,rgba(5,150,105,0.28),transparent 55%),
+    radial-gradient(circle at 80% 70%,rgba(6,95,70,0.22),transparent 60%) !important;
+}
 .result-hero-v21::before{
   content:'';
   position:absolute;inset:0;z-index:-1;
@@ -2897,9 +2911,9 @@ input:focus,select:focus,textarea:focus{
             <div class="field" style="margin-bottom:0;"><label class="field-label">CMS vendor<span class="req">*</span></label>
               <select id="f-cms-vendor" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;background:#fff;">
                 <option value="BrightSign CMS" selected>BrightSign CMS</option>
-                <option value="Pickcel">Pickcel</option>
-                <option value="Korbyt">Korbyt</option>
-                <option value="Poppulo">Poppulo</option>
+                <option value="Pickcel CMS">Pickcel CMS</option>
+                <option value="Korbyt CMS">Korbyt CMS</option>
+                <option value="Poppulo CMS">Poppulo CMS</option>
               </select>
               <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Recommended: BrightSign CMS (native ecosystem)</div>
             </div>
@@ -4521,60 +4535,38 @@ function renderResult(){
   const cms=computeCMS(f);
   const om=(f.environment==='mixed' && r.outdoorVariant && r.outdoorVariant.id!==m.id)?r.outdoorVariant:null;
 
-  // v21 HERO — dark gradient with product photo
+  // v21.3 HERO — dark gradient with product photo, deployment badge, reordered pills
+  const deployLabel=f.environment==='indoor'?'INDOOR':f.environment==='outdoor'?'OUTDOOR':f.environment==='mixed'?'MIXED':'';
   let html='';
-  html+=`<div class="result-hero-v21" id="result-hero-v21">`;
-  html+=`<div class="result-hero-layout">`;
-  html+=`<div class="result-hero-left">`;
-  html+=`<div class="result-hero-eyebrow"><span class="result-hero-eyebrow-dot"></span>Auto-selected · Best match for your requirements</div>`;
-  html+=`<div class="result-hero-model-id" id="result-hero-model-id">${m.id}</div>`;
-  html+=`<div class="result-hero-tag">${m.tag}</div>`;
-  html+=`<div class="result-hero-notes">${m.notes}</div>`;
-  html+=`<div class="result-hero-badges">`;
-  html+=m.poe?`<span class="hero-pill hero-pill-success"><span class="hero-pill-dot"></span>PoE+ supported</span>`:`<span class="hero-pill hero-pill-warning"><span class="hero-pill-dot"></span>DC power required</span>`;
-  html+=`<span class="hero-pill hero-pill-emerald"><span class="hero-pill-dot"></span>5-year warranty</span>`;
-  html+=`<span class="hero-pill hero-pill-indigo"><span class="hero-pill-dot"></span>${cms.badge}</span>`;
-  html+=m.chassis==='aluminium'?`<span class="hero-pill hero-pill-success"><span class="hero-pill-dot"></span>Aluminium · extended temp</span>`:m.chassis==='metal'?`<span class="hero-pill hero-pill-indigo"><span class="hero-pill-dot"></span>Metal · active cooling</span>`:`<span class="hero-pill hero-pill-warning"><span class="hero-pill-dot"></span>Plastic · indoor only</span>`;
-  if(f.wifi==='yes')html+=`<span class="hero-pill"><span class="hero-pill-dot"></span>Wi-Fi via WD-105</span>`;
-  if(m.hero)html+=`<span class="hero-pill hero-pill-gold"><span class="hero-pill-dot"></span>Hero product</span>`;
-  html+=`</div></div>`;
-  // Product photo right column — gets 3D tilt + float
-  html+=`<div class="result-hero-photo" id="result-hero-photo">`;
-  html+=MODEL_PHOTOS[m.id]?`<img src="${MODEL_PHOTOS[m.id]}" alt="BrightSign ${m.id}" onerror="this.parentElement.innerHTML='<div class=&quot;result-hero-photo-fallback&quot;>Photo unavailable</div>';">`:`<div class="result-hero-photo-fallback">No photo</div>`;
-  html+=`</div></div></div>`;
-
+  // Primary hero — uses main recommended model
+  html+=buildHeroCard(m,f,cms,deployLabel,om?'INDOOR':deployLabel,'primary');
   // Flagship override note
   if(r.flagshipOverride)html+=`<div class="flagship-note-v21"><strong>Flagship tier override:</strong> When Flagship budget is selected, we recommend <strong>XC4055</strong> as the standard — full 8K, 4-screen capable, Intel Gen 11 i5, dual-OS — regardless of the display count needed. This is our highest-tier player for projects where performance headroom matters.</div>`;
   if(r.budgetUpgraded)html+=`<div class="flagship-note-v21" style="background:linear-gradient(135deg,rgba(79,70,229,0.08) 0%,rgba(124,58,237,0.05) 100%);border-color:rgba(79,70,229,0.25);color:#3730A3;"><strong>Series upgrade path:</strong> technical minimum is <strong>${r.minCompliantId}</strong> (${r.climbPath[0]}). Your <strong>${BUDGET_ZONES[f.budget].name}</strong> budget climbs <strong>${r.climbPath.join(' → ')}</strong>, landing on <strong>${m.id}</strong>.</div>`;
 
-  // Outdoor variant for Mixed deployment
-  if(om){
-    html+=`<div class="outdoor-variant-v21">`;
-    html+=`<div class="outdoor-variant-head">`;
-    html+=`<svg viewBox="0 0 24 24" fill="none" stroke="#CA8A04" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>`;
-    html+=`Mixed deployment · outdoor variant</div>`;
-    html+=`<div class="outdoor-variant-body"><div>`;
-    html+=`<div class="outdoor-variant-id">${om.id}</div>`;
-    html+=`<div class="outdoor-variant-tag">${om.tag}</div>`;
-    html+=`<div class="outdoor-variant-notes">${om.notes}</div>`;
-    html+=`<div class="outdoor-variant-meta">${f.qtyOutdoor||0} unit${(f.qtyOutdoor||0)===1?'':'s'} for outdoor slice · aluminium chassis required</div>`;
-    html+=`</div><div class="outdoor-variant-photo">`;
-    html+=MODEL_PHOTOS[om.id]?`<img src="${MODEL_PHOTOS[om.id]}" alt="BrightSign ${om.id}">`:`<div style="font-family:var(--sans);font-size:11px;color:var(--ink-subtle);">No photo</div>`;
-    html+=`</div></div></div>`;
-  }
-
-  // OS selector for XC series
-  if(isXC)html+=`<div class="glass-card"><div class="glass-card-title"><span class="glass-card-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>OS Selection</div><div class="glass-card-divider"></div><div class="os-selector-desc" style="margin-bottom:14px;">Choose based on the project's software requirements.</div><div class="os-pills"><button class="os-pill selected" data-os="brightsignos" onclick="selectOS('brightsignos')"><div class="os-pill-name">BrightSignOS</div><div class="os-pill-note">All ports active · GPIO · IR · RS-232 · USB-C · Full bsn.Control</div></button><button class="os-pill" data-os="windows" onclick="selectOS('windows')"><div class="os-pill-name">Windows 10/11 IoT</div><div class="os-pill-note">GPIO / IR / RS-232 / USB-C disabled · Windows-based CMS only</div></button></div></div>`;
-
-  // Alternates
+  // Alternates for primary model
   if(r.alt_down||r.alt_up){
-    html+=`<div class="glass-card"><div class="glass-card-title"><span class="glass-card-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg></span>Alternative tiers</div><div class="glass-card-divider"></div>`;
+    html+=`<div class="glass-card"><div class="glass-card-title"><span class="glass-card-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg></span>Alternative tiers${om?` · Indoor (${m.id})`:''}</div><div class="glass-card-divider"></div>`;
     html+=`<div class="alternates-row-v21">`;
     html+=r.alt_down?`<div class="alt-card-v21"><div class="alt-label-v21"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Step down</div><div class="alt-model-v21">${r.alt_down.id}</div><div class="alt-tag-v21">${r.alt_down.tag}</div></div>`:`<div class="alt-card-v21"><div class="alt-label-v21">Step down</div><div class="alt-model-v21" style="color:var(--ink-subtle);">—</div><div class="alt-tag-v21">No cheaper option qualifies</div></div>`;
     html+=r.alt_up?`<div class="alt-card-v21"><div class="alt-label-v21"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>Step up</div><div class="alt-model-v21">${r.alt_up.id}</div><div class="alt-tag-v21">${r.alt_up.tag}</div></div>`:`<div class="alt-card-v21"><div class="alt-label-v21">Step up</div><div class="alt-model-v21" style="color:var(--ink-subtle);">—</div><div class="alt-tag-v21">Already at flagship tier</div></div>`;
     html+=`</div></div>`;
   }
 
+  // v21.3: SECOND HERO CARD for outdoor variant in Mixed deployment (equal treatment)
+  if(om){
+    html+=buildHeroCard(om,f,cms,'OUTDOOR','OUTDOOR','outdoor');
+    // Compute outdoor alternates using the same alt logic
+    const outdoorAlts=computeOutdoorAlternatives(om);
+    html+=`<div class="glass-card"><div class="glass-card-title"><span class="glass-card-title-icon" style="background:linear-gradient(135deg,#D97706 0%,#92400E 100%);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg></span>Alternative tiers · Outdoor (${om.id})</div><div class="glass-card-divider"></div>`;
+    html+=`<div class="alternates-row-v21">`;
+    html+=outdoorAlts.down?`<div class="alt-card-v21"><div class="alt-label-v21"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Step down</div><div class="alt-model-v21">${outdoorAlts.down.id}</div><div class="alt-tag-v21">${outdoorAlts.down.tag}</div></div>`:`<div class="alt-card-v21"><div class="alt-label-v21">Step down</div><div class="alt-model-v21" style="color:var(--ink-subtle);">—</div><div class="alt-tag-v21">No cheaper outdoor-capable option</div></div>`;
+    html+=outdoorAlts.up?`<div class="alt-card-v21"><div class="alt-label-v21"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>Step up</div><div class="alt-model-v21">${outdoorAlts.up.id}</div><div class="alt-tag-v21">${outdoorAlts.up.tag}</div></div>`:`<div class="alt-card-v21"><div class="alt-label-v21">Step up</div><div class="alt-model-v21" style="color:var(--ink-subtle);">—</div><div class="alt-tag-v21">Already at outdoor flagship</div></div>`;
+    html+=`</div></div>`;
+  }
+
+  // OS selector for XC series
+  if(isXC)html+=`<div class="glass-card"><div class="glass-card-title"><span class="glass-card-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>OS Selection</div><div class="glass-card-divider"></div><div class="os-selector-desc" style="margin-bottom:14px;">Choose based on the project's software requirements.</div><div class="os-pills"><button class="os-pill selected" data-os="brightsignos" onclick="selectOS('brightsignos')"><div class="os-pill-name">BrightSignOS</div><div class="os-pill-note">All ports active · GPIO · IR · RS-232 · USB-C · Full bsn.Control</div></button><button class="os-pill" data-os="windows" onclick="selectOS('windows')"><div class="os-pill-name">Windows 10/11 IoT</div><div class="os-pill-note">GPIO / IR / RS-232 / USB-C disabled · Windows-based CMS only</div></button></div></div>`;
   // Concerns card
   const concerns=buildConcerns(m,f);
   if(concerns.length){
@@ -4593,27 +4585,82 @@ function renderResult(){
 }
 
 /* v21: Cursor-follow glow + 3D tilt interaction */
+/* v21.3: Reusable hero-card builder — renders the dark gradient banner for a single model
+   Used for both primary model and outdoor variant in Mixed deployments.
+   variant = 'primary' | 'outdoor' — controls colour accents and IDs. */
+function buildHeroCard(model,f,cms,deployLabel,deployShown,variant){
+  const isOutdoor=variant==='outdoor';
+  const heroClass=isOutdoor?'result-hero-v21 result-hero-outdoor-v21':'result-hero-v21';
+  const heroId=isOutdoor?'result-hero-v21-outdoor':'result-hero-v21';
+  const photoId=isOutdoor?'result-hero-photo-outdoor':'result-hero-photo';
+  const modelIdId=isOutdoor?'result-hero-model-id-outdoor':'result-hero-model-id';
+  const qtyForModel=isOutdoor?(f.qtyOutdoor||0):(f.environment==='mixed'?(f.qtyIndoor||0):(f.qty||0));
+  const qtyLabel=qtyForModel?` · ${qtyForModel} unit${qtyForModel===1?'':'s'}`:'';
+  const eyebrowText=isOutdoor?'Outdoor variant · Paired with primary model':'Auto-selected · Best match for your requirements';
+  let h='';
+  h+=`<div class="${heroClass}" id="${heroId}">`;
+  h+=`<div class="result-hero-layout">`;
+  h+=`<div class="result-hero-left">`;
+  h+=`<div class="result-hero-eyebrow"><span class="result-hero-eyebrow-dot"></span>${eyebrowText}</div>`;
+  // Model ID with deployment badge adjacent (badge now includes grade since Grade pill removed)
+  const gradeSuffix=model.chassis==='plastic'?' · Indoor Grade':' · Outdoor Grade';
+  h+=`<div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:14px;"><div class="result-hero-model-id" id="${modelIdId}" style="margin-bottom:0;">${model.id}</div>`;
+  if(deployShown){
+    h+=`<div style="font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:0.12em;background:rgba(255,255,255,0.14);color:#fff;padding:7px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.22);backdrop-filter:blur(10px);margin-top:14px;white-space:nowrap;">${deployShown}${qtyLabel}${gradeSuffix}</div>`;
+  }
+  h+=`</div>`;
+  h+=`<div class="result-hero-tag">${model.tag}</div>`;
+  h+=`<div class="result-hero-notes">${model.notes}</div>`;
+  // Pills: Warranty → Power → Wi-Fi → CMS → Hero (Grade pill removed; deployment badge shows Indoor/Outdoor next to model ID)
+  h+=`<div class="result-hero-badges">`;
+  h+=`<span class="hero-pill hero-pill-emerald"><span class="hero-pill-dot"></span>5-year warranty</span>`;
+  h+=model.poe?`<span class="hero-pill hero-pill-success"><span class="hero-pill-dot"></span>Power: PoE+ / DC</span>`:`<span class="hero-pill hero-pill-warning"><span class="hero-pill-dot"></span>Power: DC only</span>`;
+  if(f.wifi==='yes')h+=`<span class="hero-pill"><span class="hero-pill-dot"></span>Wi-Fi enabled</span>`;
+  h+=`<span class="hero-pill hero-pill-indigo"><span class="hero-pill-dot"></span>${cms.badge}</span>`;
+  if(model.hero)h+=`<span class="hero-pill hero-pill-gold"><span class="hero-pill-dot"></span>Hero product</span>`;
+  h+=`</div></div>`;
+  // Product photo right
+  h+=`<div class="result-hero-photo" id="${photoId}">`;
+  h+=MODEL_PHOTOS[model.id]?`<img src="${MODEL_PHOTOS[model.id]}" alt="BrightSign ${model.id}" onerror="this.parentElement.innerHTML='<div class=&quot;result-hero-photo-fallback&quot;>Photo unavailable</div>';">`:`<div class="result-hero-photo-fallback">No photo</div>`;
+  h+=`</div></div></div>`;
+  return h;
+}
+
+/* v21.3: Compute step-up / step-down for outdoor variant among outdoor-capable models */
+function computeOutdoorAlternatives(outdoorModel){
+  // Outdoor-capable models = aluminium chassis (XD and outdoor XT variants)
+  const outdoorCapable=MODELS.filter(mm=>mm.available && mm.chassis==='aluminium');
+  // Ranks: preserve MODELS array order, which is low-to-high
+  const idx=outdoorCapable.findIndex(mm=>mm.id===outdoorModel.id);
+  if(idx<0)return {down:null,up:null};
+  return {
+    down: idx>0 ? outdoorCapable[idx-1] : null,
+    up: idx<outdoorCapable.length-1 ? outdoorCapable[idx+1] : null
+  };
+}
+
 function wireHeroInteractions(){
-  const hero=document.getElementById('result-hero-v21');
-  const photo=document.getElementById('result-hero-photo');
-  if(!hero)return;
-  hero.addEventListener('mousemove',(e)=>{
-    const rect=hero.getBoundingClientRect();
-    const x=((e.clientX-rect.left)/rect.width)*100;
-    const y=((e.clientY-rect.top)/rect.height)*100;
-    hero.style.setProperty('--mx',x+'%');
-    hero.style.setProperty('--my',y+'%');
-    // 3D tilt on photo
-    if(photo){
-      const px=((e.clientX-rect.left)/rect.width-0.5)*2;
-      const py=((e.clientY-rect.top)/rect.height-0.5)*2;
-      photo.style.transform=`rotateY(${px*6}deg) rotateX(${-py*6}deg) translateZ(12px)`;
-    }
-  });
-  hero.addEventListener('mouseleave',()=>{
-    hero.style.setProperty('--mx','50%');
-    hero.style.setProperty('--my','50%');
-    if(photo)photo.style.transform='rotateY(0) rotateX(0) translateZ(0)';
+  const heroes=document.querySelectorAll('.result-hero-v21');
+  heroes.forEach(hero=>{
+    const photo=hero.querySelector('.result-hero-photo');
+    hero.addEventListener('mousemove',(e)=>{
+      const rect=hero.getBoundingClientRect();
+      const x=((e.clientX-rect.left)/rect.width)*100;
+      const y=((e.clientY-rect.top)/rect.height)*100;
+      hero.style.setProperty('--mx',x+'%');
+      hero.style.setProperty('--my',y+'%');
+      // 3D tilt on photo
+      if(photo){
+        const px=((e.clientX-rect.left)/rect.width-0.5)*2;
+        const py=((e.clientY-rect.top)/rect.height-0.5)*2;
+        photo.style.transform=`rotateY(${px*6}deg) rotateX(${-py*6}deg) translateZ(12px)`;
+      }
+    });
+    hero.addEventListener('mouseleave',()=>{
+      hero.style.setProperty('--mx','50%');
+      hero.style.setProperty('--my','50%');
+      if(photo)photo.style.transform='rotateY(0) rotateX(0) translateZ(0)';
+    });
   });
 }
 
@@ -5204,11 +5251,312 @@ function downloadQuoteExcel(){
   }
 
   const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'Quote');
+  XLSX.utils.book_append_sheet(wb,ws,'Summary');
 
+  // =============================================================
+  // v21.4 PREMIUM QUOTATION SHEET — fill-in pricing with formulas
+  // =============================================================
+  const qAoa=[];
+  const cavBlue='1E1B4B';const cavRed='C8102E';const cavWhite='FFFFFF';
+  const headerBlue='4F46E5';const paleGrey='F1F5F9';const paleBlue='EEF2FF';
+  // Header block
+  qAoa.push(['BRIGHTSIGN OFFICIAL QUOTATION']);
+  qAoa.push(['Cavitak Marketing Pvt. Ltd. · Value Added Tech Distributor · Pro AV']);
+  qAoa.push([]);
+  qAoa.push(['Quote Ref:',refId,'','','Date:',dateStr]);
+  qAoa.push(['Project:',f.project||'—','','','Valid For:','15 days']);
+  qAoa.push(['End-user:',f.enduser||'—','','','Currency:','INR']);
+  qAoa.push(['Partner/SI:',f.partner||'—','','','Prepared by:','Dipenkumar Gajjar']);
+  qAoa.push(['City:',f.city||'—','','','Contact:','+91 8160 756 906']);
+  qAoa.push([]);
+  // BOM table — full pricing
+  qAoa.push(['BILL OF MATERIALS']);
+  qAoa.push(['#','Line Item','HSN Code','Qty','Unit Price (INR)','Line Total (INR)','GST %','GST Amount','Grand Total (INR)']);
+  // Build BOM rows from the same logic
+  const bomRows=[];
+  if(isMixed){
+    bomRows.push({name:`BrightSign ${m.id} — ${m.tag} (Indoor)`,hsn:'85284990',qty:qtyIndoor});
+    if(r.outdoorVariant && r.outdoorVariant.id!==m.id){
+      bomRows.push({name:`BrightSign ${r.outdoorVariant.id} — ${r.outdoorVariant.tag} (Outdoor)`,hsn:'85284990',qty:qtyOutdoor});
+    }
+  } else {
+    bomRows.push({name:`BrightSign ${m.id} — ${m.tag}`,hsn:'85284990',qty:qtyTotal});
+  }
+  if(f.ssd==='yes')bomRows.push({name:`BrightSign SSD ${f.ssdCap==='1024'?'1TB':f.ssdCap+'GB'} M.2 NVMe`,hsn:'84717020',qty:qtyTotal});
+  if(f.wifi==='yes')bomRows.push({name:'WD-105 Wi-Fi / Bluetooth module (M.2 E-Key)',hsn:'85176290',qty:qtyTotal});
+  const excelCmsQ=computeCMS(f);
+  if(excelCmsQ.rows){excelCmsQ.rows.forEach(row=>bomRows.push({name:row.name,hsn:'998434',qty:row.qty}));}
+  // Append BOM with FORMULAS in price columns
+  const bomStartRow=qAoa.length+1;  // 1-indexed Excel row
+  bomRows.forEach((row,i)=>{
+    const rowNum=bomStartRow+i;
+    qAoa.push([
+      i+1,                                          // # column
+      row.name,                                     // Line Item
+      row.hsn,                                      // HSN
+      row.qty,                                      // Qty
+      '',                                           // Unit Price (user fills)
+      {f:`D${rowNum}*E${rowNum}`},                  // Line Total = Qty × Unit
+      18,                                           // GST %
+      {f:`F${rowNum}*G${rowNum}/100`},              // GST Amount
+      {f:`F${rowNum}+H${rowNum}`}                   // Grand Total = Line + GST
+    ]);
+  });
+  // Sub-total and totals rows
+  const subtotalRow=bomStartRow+bomRows.length;
+  qAoa.push(['','SUB-TOTAL (excl. GST)','','',{f:`SUM(E${bomStartRow}:E${subtotalRow-1})`},{f:`SUM(F${bomStartRow}:F${subtotalRow-1})`},'',{f:`SUM(H${bomStartRow}:H${subtotalRow-1})`},{f:`SUM(I${bomStartRow}:I${subtotalRow-1})`}]);
+  qAoa.push([]);
+  qAoa.push(['GRAND TOTAL (incl. GST)','','','','','','','',{f:`I${subtotalRow}`}]);
+  qAoa.push([]);
+  qAoa.push(['TERMS & CONDITIONS']);
+  qAoa.push(['1.','Quote valid for 15 days from date of issue.']);
+  qAoa.push(['2.','Prices subject to current forex rate and landed-cost variations.']);
+  qAoa.push(['3.','GST as applicable (currently 18% on hardware, 18% on CMS services).']);
+  qAoa.push(['4.','Payment: 100% advance against Pro-forma Invoice or as mutually agreed.']);
+  qAoa.push(['5.','Standard lead time: 30 days from receipt of firm Purchase Order (subject to stock).']);
+  qAoa.push(['6.','Warranty: 5-year standard OEM warranty from BrightSign, parts & labour.']);
+  qAoa.push(['7.','This quotation is for budgetary reference; firm pricing on Purchase Order.']);
+  qAoa.push([]);
+  qAoa.push(['For confirmation, please reply with PO referencing quote '+refId]);
+  qAoa.push(['Cavitak Marketing Pvt. Ltd. · Ahmedabad · Gujarat · India']);
+
+  const qWs=XLSX.utils.aoa_to_sheet(qAoa);
+  qWs['!cols']=[{wch:5},{wch:48},{wch:12},{wch:8},{wch:16},{wch:18},{wch:8},{wch:14},{wch:20}];
+  qWs['!merges']=qWs['!merges']||[];
+  // Merge title across all 9 columns
+  qWs['!merges'].push({s:{r:0,c:0},e:{r:0,c:8}});
+  qWs['!merges'].push({s:{r:1,c:0},e:{r:1,c:8}});
+  // Style title row
+  ['A1','A2'].forEach((ref,i)=>{
+    if(!qWs[ref])qWs[ref]={v:qAoa[i][0]||''};
+    qWs[ref].s={
+      fill:{fgColor:{rgb:i===0?cavBlue:cavRed}},
+      font:{bold:true,color:{rgb:cavWhite},sz:i===0?18:11,name:'Calibri'},
+      alignment:{horizontal:'center',vertical:'center'}
+    };
+  });
+  // Style BOM header row (row 11 in 1-indexed)
+  const bomHeaderRow=qAoa.findIndex(r=>r[0]==='#')+1;
+  if(bomHeaderRow>0){
+    'ABCDEFGHI'.split('').forEach((col,ci)=>{
+      const ref=col+bomHeaderRow;
+      if(!qWs[ref])qWs[ref]={v:qAoa[bomHeaderRow-1][ci]||''};
+      qWs[ref].s={
+        fill:{fgColor:{rgb:headerBlue}},
+        font:{bold:true,color:{rgb:cavWhite},sz:11,name:'Calibri'},
+        alignment:{horizontal:'center',vertical:'center',wrapText:true},
+        border:{top:{style:'thin',color:{rgb:cavBlue}},bottom:{style:'thin',color:{rgb:cavBlue}}}
+      };
+    });
+  }
+  // Style BOM data rows with alternating stripe
+  bomRows.forEach((_,i)=>{
+    const rowNum=bomStartRow+i;
+    'ABCDEFGHI'.split('').forEach((col,ci)=>{
+      const ref=col+rowNum;
+      if(!qWs[ref])qWs[ref]={v:qAoa[rowNum-1][ci]||''};
+      qWs[ref].s={
+        fill:{fgColor:{rgb:i%2===0?paleGrey:cavWhite}},
+        font:{sz:10,name:'Calibri'},
+        alignment:{horizontal:ci===1?'left':ci===0?'center':'right',vertical:'center'},
+        border:{bottom:{style:'thin',color:{rgb:'E2E8F0'}}},
+        numFmt:(ci>=4&&ci!==6)?'#,##0':(ci===6?'0"%"':'General')
+      };
+    });
+    // Highlight the "Unit Price" cell to prompt user
+    const unitRef='E'+rowNum;
+    if(!qWs[unitRef])qWs[unitRef]={v:''};
+    qWs[unitRef].s={
+      ...qWs[unitRef].s,
+      fill:{fgColor:{rgb:'FFFBEB'}},
+      border:{top:{style:'thin',color:{rgb:'F59E0B'}},bottom:{style:'thin',color:{rgb:'F59E0B'}},left:{style:'thin',color:{rgb:'F59E0B'}},right:{style:'thin',color:{rgb:'F59E0B'}}}
+    };
+  });
+  // Style Sub-total row
+  if(subtotalRow){
+    'ABCDEFGHI'.split('').forEach((col,ci)=>{
+      const ref=col+subtotalRow;
+      if(!qWs[ref])qWs[ref]={v:qAoa[subtotalRow-1][ci]||''};
+      qWs[ref].s={
+        fill:{fgColor:{rgb:paleBlue}},
+        font:{bold:true,sz:11,color:{rgb:cavBlue}},
+        alignment:{horizontal:ci===1?'left':'right',vertical:'center'},
+        border:{top:{style:'thin',color:{rgb:cavBlue}}},
+        numFmt:(ci>=4&&ci!==6)?'#,##0':(ci===6?'0"%"':'General')
+      };
+    });
+    // Grand total row
+    const grandRow=subtotalRow+2;
+    'ABCDEFGHI'.split('').forEach((col,ci)=>{
+      const ref=col+grandRow;
+      if(!qWs[ref])qWs[ref]={v:qAoa[grandRow-1][ci]||''};
+      qWs[ref].s={
+        fill:{fgColor:{rgb:cavBlue}},
+        font:{bold:true,sz:13,color:{rgb:cavWhite}},
+        alignment:{horizontal:ci===0?'left':'right',vertical:'center'},
+        numFmt:ci===8?'#,##0':'General'
+      };
+    });
+    qWs['!merges'].push({s:{r:grandRow-1,c:0},e:{r:grandRow-1,c:7}});
+  }
+  // Set row heights
+  qWs['!rows']=[{hpt:36},{hpt:22}];
+  for(let i=2;i<qAoa.length;i++)qWs['!rows'].push({hpt:20});
+  qWs['!rows'][bomHeaderRow-1]={hpt:32};
+  qWs['!rows'][subtotalRow-1]={hpt:26};
+  qWs['!rows'][subtotalRow+1]={hpt:34};
+  // v21.5: BOM as a proper Excel table (autofilter + frozen header)
+  qWs['!autofilter']={ref:`A${bomHeaderRow}:I${subtotalRow-1}`};
+  qWs['!freeze']={xSplit:0,ySplit:bomHeaderRow};  // Freeze panes at BOM header row
+  // Print settings
+  qWs['!margins']={left:0.4,right:0.4,top:0.5,bottom:0.5,header:0.3,footer:0.3};
+  qWs['!pageSetup']={orientation:'landscape',paperSize:9,fitToWidth:1,fitToHeight:0,scale:100};
+  qWs['!printHeader']=[bomHeaderRow,bomHeaderRow];  // Repeat BOM header on every printed page
+
+  XLSX.utils.book_append_sheet(wb,qWs,'Quotation');
+
+  // =============================================================
+  // v21.4 TENDER COMPLIANCE SHEET — formal with comply/remarks columns
+  // =============================================================
+  const tAoa=[];
+  tAoa.push(['TENDER COMPLIANCE SHEET']);
+  tAoa.push(['BrightSign Series 5 — Digital Signage Player — Technical Specifications']);
+  tAoa.push([]);
+  tAoa.push(['Project:',f.project||'—','','End-user:',f.enduser||'—']);
+  tAoa.push(['Model:',m.id,'','Deployment:',f.environment||'—']);
+  tAoa.push(['Qty:',qtyTotal,'','Reference:',refId]);
+  tAoa.push([]);
+  tAoa.push(['Clause #','Section','Specification','Comply (Y/N)','Make / Model Offered','Remarks / Deviation']);
+  const omForT=(f.environment==='mixed' && r.outdoorVariant && r.outdoorVariant.id!==m.id)?r.outdoorVariant:null;
+  let tClauseNum=0;
+  const commonClausesT=TENDER_CLAUSES.baseline||{};
+  if(Object.keys(commonClausesT).length){
+    tAoa.push(['','COMMON CLAUSES — APPLY TO ALL MODELS','','','','']);
+    Object.keys(commonClausesT).forEach(sec=>{
+      commonClausesT[sec].forEach(cl=>{
+        tClauseNum++;
+        tAoa.push([String(tClauseNum).padStart(3,'0'),sec,cl,'','','']);
+      });
+    });
+  }
+  const primaryUniqueT=TENDER_CLAUSES[m.group]||{};
+  if(Object.keys(primaryUniqueT).length){
+    tAoa.push(['',omForT?`PRIMARY MODEL (INDOOR) — ${m.id}`:`PRIMARY MODEL — ${m.id}`,'','','','']);
+    Object.keys(primaryUniqueT).forEach(sec=>{
+      primaryUniqueT[sec].forEach(cl=>{
+        tClauseNum++;
+        tAoa.push([String(tClauseNum).padStart(3,'0'),sec,cl,'','','']);
+      });
+    });
+  }
+  if(omForT){
+    const outdoorUniqueT=TENDER_CLAUSES[omForT.group]||{};
+    if(Object.keys(outdoorUniqueT).length){
+      tAoa.push(['',`OUTDOOR VARIANT — ${omForT.id}`,'','','','']);
+      Object.keys(outdoorUniqueT).forEach(sec=>{
+        outdoorUniqueT[sec].forEach(cl=>{
+          tClauseNum++;
+          tAoa.push([String(tClauseNum).padStart(3,'0'),sec,cl,'','','']);
+        });
+      });
+    }
+  }
+  tAoa.push([]);
+  tAoa.push(['Authorised Signatory:','_______________________','','Date:','_______________','']);
+  tAoa.push(['Company Stamp:','','','Place:','','']);
+
+  const tWs=XLSX.utils.aoa_to_sheet(tAoa);
+  tWs['!cols']=[{wch:10},{wch:32},{wch:72},{wch:14},{wch:22},{wch:32}];
+  tWs['!merges']=tWs['!merges']||[];
+  tWs['!merges'].push({s:{r:0,c:0},e:{r:0,c:5}});
+  tWs['!merges'].push({s:{r:1,c:0},e:{r:1,c:5}});
+  // Style title and section bars
+  ['A1','A2'].forEach((ref,i)=>{
+    if(!tWs[ref])tWs[ref]={v:tAoa[i][0]||''};
+    tWs[ref].s={
+      fill:{fgColor:{rgb:i===0?cavBlue:cavRed}},
+      font:{bold:true,color:{rgb:cavWhite},sz:i===0?18:11},
+      alignment:{horizontal:'center',vertical:'center'}
+    };
+  });
+  // Find and style table header (Clause # row)
+  const tHeaderRow=tAoa.findIndex(r=>r[0]==='Clause #')+1;
+  if(tHeaderRow>0){
+    'ABCDEF'.split('').forEach((col,ci)=>{
+      const ref=col+tHeaderRow;
+      if(!tWs[ref])tWs[ref]={v:tAoa[tHeaderRow-1][ci]||''};
+      tWs[ref].s={
+        fill:{fgColor:{rgb:headerBlue}},
+        font:{bold:true,color:{rgb:cavWhite},sz:11},
+        alignment:{horizontal:'center',vertical:'center',wrapText:true},
+        border:{top:{style:'thin',color:{rgb:cavBlue}},bottom:{style:'thin',color:{rgb:cavBlue}}}
+      };
+    });
+  }
+  // Style section separator rows (those whose B cell starts with COMMON/PRIMARY/OUTDOOR)
+  for(let i=tHeaderRow;i<tAoa.length;i++){
+    const rowLabel=(tAoa[i][1]||'').toString();
+    if(rowLabel.startsWith('COMMON CLAUSES')||rowLabel.startsWith('PRIMARY')||rowLabel.startsWith('OUTDOOR')){
+      const rowNum=i+1;
+      // Merge B-F for section header
+      tWs['!merges'].push({s:{r:rowNum-1,c:1},e:{r:rowNum-1,c:5}});
+      'ABCDEF'.split('').forEach((col,ci)=>{
+        const ref=col+rowNum;
+        if(!tWs[ref])tWs[ref]={v:tAoa[rowNum-1][ci]||''};
+        const isOutdoorBar=rowLabel.startsWith('OUTDOOR');
+        tWs[ref].s={
+          fill:{fgColor:{rgb:isOutdoorBar?'B45309':'475569'}},
+          font:{bold:true,color:{rgb:cavWhite},sz:10},
+          alignment:{horizontal:ci===1?'left':'center',vertical:'center'}
+        };
+      });
+    }
+  }
+  // Apply cell borders and alternating rows on clause rows
+  for(let i=tHeaderRow;i<tAoa.length;i++){
+    const clauseNumCell=tAoa[i][0];
+    const isClauseRow=typeof clauseNumCell==='string' && /^\d{3}$/.test(clauseNumCell);
+    if(!isClauseRow)continue;
+    const rowNum=i+1;
+    'ABCDEF'.split('').forEach((col,ci)=>{
+      const ref=col+rowNum;
+      if(!tWs[ref])tWs[ref]={v:tAoa[rowNum-1][ci]||''};
+      tWs[ref].s={
+        fill:{fgColor:{rgb:(rowNum%2===0)?paleGrey:cavWhite}},
+        font:{sz:9,name:'Calibri'},
+        alignment:{horizontal:ci===0?'center':ci===2?'left':'center',vertical:'top',wrapText:true},
+        border:{bottom:{style:'thin',color:{rgb:'E2E8F0'}}}
+      };
+      // Highlight Comply & Remarks columns (user to fill)
+      if(ci===3||ci===4||ci===5){
+        tWs[ref].s.fill={fgColor:{rgb:'FFFBEB'}};
+        tWs[ref].s.border={...tWs[ref].s.border,left:{style:'thin',color:{rgb:'F59E0B'}},right:{style:'thin',color:{rgb:'F59E0B'}}};
+      }
+    });
+  }
+  tWs['!rows']=[{hpt:36},{hpt:22}];
+  for(let i=2;i<tAoa.length;i++)tWs['!rows'].push({hpt:36});
+  // v21.5: Tender Compliance as structured table
+  // Find end of clause rows for autofilter range
+  let tLastRow=tHeaderRow;
+  for(let i=tHeaderRow;i<tAoa.length;i++){
+    const v=(tAoa[i][0]||'').toString();
+    if(/^\d{3}$/.test(v))tLastRow=i+1;
+  }
+  tWs['!autofilter']={ref:`A${tHeaderRow}:F${tLastRow}`};
+  tWs['!freeze']={xSplit:0,ySplit:tHeaderRow};
+  tWs['!margins']={left:0.4,right:0.4,top:0.5,bottom:0.5,header:0.3,footer:0.3};
+  tWs['!pageSetup']={orientation:'landscape',paperSize:9,fitToWidth:1,fitToHeight:0,scale:100};
+  tWs['!printHeader']=[tHeaderRow,tHeaderRow];
+
+  XLSX.utils.book_append_sheet(wb,tWs,'Tender Compliance');
+
+  // =============================================================
+  // End: write workbook
+  // =============================================================
   const fname=`BrightSign-Quote-${m.id}-${(f.project||'Project').replace(/[^a-zA-Z0-9]/g,'_').slice(0,30)}-${new Date().toISOString().slice(0,10)}.xlsx`;
   XLSX.writeFile(wb,fname);
-  showSync('Excel downloaded ✓','success');
+  showSync('Excel downloaded ✓ (3 sheets: Summary · Quotation · Tender)','success');
 }
 
 function clearLog(){if(confirm('Clear LOCAL history? (Central Google Sheet is not affected.)')){saveLocalLog([]);renderLog();}}
