@@ -7,6 +7,45 @@ Versions follow semantic-ish conventions: MAJOR.MINOR[.PATCH].
 
 ---
 
+## [v24.2.14] — 2026-04-19 · Actually fix padding/space issue
+
+### Fixed
+- **Real cause of "space above page titles"** — it wasn't container padding (already 22px since v24.2.2) but the `.page-title` being a 48px display font with 1.1 line-height = 52.8px tall. Combined with eyebrow + subtitle + margins, the header block took ~160px of vertical real estate before any content started.
+- **Root cause of fix not sticking** — there were TWO `.page-title` / `.page-eyebrow` / `.page-subtitle` CSS rules in the file. My v24.2.2 fix touched the first; the second one (defined later) overrode everything due to CSS cascade. Both duplicates now consolidated into one rule set.
+
+### Changed
+- `.container` top padding: 22px → **14px**
+- `.page-header` bottom margin: 22px → **14px**
+- `.page-title` font size: 48px → **32px**, weight 500, line-height 1.15
+- `.page-subtitle` font size: 15px → **14px**
+- `.page-eyebrow` bottom margin: 12px → **8px**
+
+### Net savings
+~80px of vertical space reclaimed above every page title. Dashboard hero, Team list, History search now appear much closer to the nav bar — no more awkward "scroll down to see content" experience.
+
+### Files in release
+- `brightsign-v24-2-14.html` (frontend only)
+
+---
+
+## [v24.2.13] — 2026-04-19 · Audit history display polish
+
+Fixes two issues in the v24.2.12 history panel UI.
+
+### Fixed
+- **Layout collision** — `.log-entry` was defined as 3-column grid at line 2966 and then overridden as flex-column at line 3037. CSS cascade gave grid priority, so the newly-added `.log-history-panel` and `.log-meta-row` rendered as additional grid cells overlapping the model column. Fix: `.log-entry` is now flex-column natively, with `.log-entry-top` holding the 3-column grid for header content. Panel sits cleanly below the row.
+
+### Changed — Audit display formatting
+- **Pretty field names** — `closemonth` → "Close month", `qtyIndoor` → "Qty (indoor)", `cmsVendor` → "CMS vendor" etc. via new `prettifyFieldName()` helper map.
+- **Smart value formatting** — ISO timestamps and JS `Date.toString()` output like `"Sun Nov 01 2026 00:00:00 GMT+0530 (India Standard Time)"` now render as `"Nov 2026"`. Empty values show as `(empty)`. Long strings (>60 chars) truncate with ellipsis.
+- **Visual polish** — each change row now uses a responsive grid layout: field label · old value · arrow · new value. Old values render on red background with strikethrough, new values on green. On mobile (<720px) they stack vertically with the arrow hidden.
+- **Panel entry animation** — history panel slides in smoothly when expanded (6px translate + fade, 240ms).
+
+### Files in release
+- `brightsign-v24-2-13.html` (frontend only)
+
+---
+
 ## [v24.2.12 + Apps Script v24.3] — 2026-04-19 · Audit log + soft delete + export upgrade
 
 Large release with three independent features. Requires both frontend AND backend deploy.
