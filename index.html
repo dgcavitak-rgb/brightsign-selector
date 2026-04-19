@@ -9,6 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
 <style>
 :root{
   --bg:#F6F8FC;--surface:#FFFFFF;--surface-2:#F1F5F9;
@@ -2991,6 +2993,179 @@ input:focus,select:focus,textarea:focus{
 .log-edit-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(79,70,229,0.40);}
 .log-edit-btn:active{transform:translateY(0);}
 html[data-theme="dark"] .log-edit-btn{box-shadow:0 2px 8px rgba(0,0,0,0.35);}
+/* v24.2.12: Export dropdown menu */
+.export-wrap{position:relative;display:inline-block;}
+.export-menu{
+  position:absolute;
+  bottom:calc(100% + 8px);
+  right:0;
+  min-width:210px;
+  background:var(--surface);
+  border:1px solid var(--border-soft);
+  border-radius:10px;
+  box-shadow:0 10px 30px rgba(15,23,42,0.14),0 4px 10px rgba(15,23,42,0.08);
+  padding:6px;
+  z-index:100;
+}
+html[data-theme="dark"] .export-menu{
+  background:#1E293B;
+  border-color:rgba(148,163,184,0.18);
+  box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+.export-menu button{
+  display:block;
+  width:100%;
+  text-align:left;
+  padding:10px 14px;
+  background:transparent;
+  border:none;
+  border-radius:7px;
+  font-family:var(--sans);
+  font-size:13px;
+  font-weight:500;
+  color:var(--ink);
+  cursor:pointer;
+  transition:background 140ms;
+}
+.export-menu button:hover{
+  background:rgba(124,58,237,0.08);
+  color:#7C3AED;
+}
+html[data-theme="dark"] .export-menu button:hover{background:rgba(124,58,237,0.20);}
+
+/* v24.2.12: History change log + soft delete UI */
+.log-entry{flex-direction:column;align-items:stretch;}
+.log-entry-top{display:grid;grid-template-columns:180px 1fr auto;gap:24px;align-items:center;}
+.log-meta-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.log-history-btn,.log-delete-btn{
+  padding:5px 10px;
+  font-family:var(--sans);
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:0.04em;
+  border:1px solid var(--border-soft);
+  border-radius:6px;
+  background:transparent;
+  color:var(--ink-muted);
+  cursor:pointer;
+  transition:all 140ms;
+}
+.log-history-btn:hover{
+  border-color:#7C3AED;
+  color:#7C3AED;
+  background:rgba(124,58,237,0.05);
+}
+.log-delete-btn:hover{
+  border-color:#DC2626;
+  color:#DC2626;
+  background:rgba(220,38,38,0.05);
+}
+.log-history-panel{
+  margin-top:12px;
+  padding:14px 18px;
+  background:rgba(124,58,237,0.04);
+  border:1px solid rgba(124,58,237,0.15);
+  border-radius:10px;
+  font-family:var(--sans);
+  font-size:12px;
+}
+html[data-theme="dark"] .log-history-panel{background:rgba(124,58,237,0.10);border-color:rgba(124,58,237,0.25);}
+.log-history-head{
+  font-weight:700;
+  color:var(--ink);
+  margin-bottom:10px;
+  font-size:11px;
+  letter-spacing:0.02em;
+}
+.log-history-loading,.log-history-empty{
+  color:var(--ink-muted);
+  font-style:italic;
+  text-align:center;
+  padding:10px 0;
+}
+.log-history-session{
+  padding:8px 10px;
+  background:var(--surface);
+  border-radius:6px;
+  margin-bottom:6px;
+  border-left:3px solid #7C3AED;
+}
+.log-history-session:last-child{margin-bottom:0;}
+.log-history-session-head{
+  font-weight:700;
+  color:var(--ink);
+  font-size:11px;
+  margin-bottom:6px;
+}
+.log-history-change{
+  margin:3px 0;
+  font-size:11px;
+  line-height:1.5;
+  color:var(--ink-muted);
+}
+.log-history-field{
+  display:inline-block;
+  min-width:100px;
+  font-family:var(--mono,monospace);
+  font-weight:600;
+  color:var(--ink);
+}
+.log-history-old{color:#DC2626;text-decoration:line-through;}
+.log-history-new{color:#059669;font-weight:600;}
+
+/* Trash section in Team tab */
+.trash-loading,.trash-empty{
+  padding:20px;
+  text-align:center;
+  font-family:var(--sans);
+  font-size:13px;
+  color:var(--ink-muted);
+  font-style:italic;
+}
+.trash-head{
+  font-family:var(--sans);
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  margin-bottom:14px;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--border-soft);
+}
+.trash-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+  padding:14px 16px;
+  background:rgba(148,163,184,0.06);
+  border-radius:10px;
+  margin-bottom:8px;
+  border:1px dashed var(--border-soft);
+}
+html[data-theme="dark"] .trash-row{background:rgba(148,163,184,0.08);border-color:rgba(148,163,184,0.20);}
+.trash-body{flex:1;min-width:0;}
+.trash-project{
+  font-family:var(--sans);
+  font-size:14px;
+  font-weight:700;
+  color:var(--ink);
+  letter-spacing:-0.01em;
+}
+.trash-meta{
+  font-family:var(--sans);
+  font-size:11px;
+  color:var(--ink-muted);
+  margin-top:3px;
+}
+.trash-actions{flex-shrink:0;}
+
+@media (max-width:720px){
+  .log-entry-top{grid-template-columns:1fr;gap:10px;}
+  .trash-row{flex-direction:column;align-items:stretch;}
+  .trash-actions .team-btn{width:100%;}
+}
+
 /* v22.3: Locked basic-info field styling (edit mode) */
 .locked-field{
   background:var(--surface-2)!important;
@@ -4517,7 +4692,14 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
       <button class="btn-secondary" onclick="refreshLog()">↻ Refresh</button>
       <button class="btn-secondary" id="manual-sync-btn" onclick="manualSync()" title="Retry any pending entries that haven't synced to the central sheet">⟳ Sync now</button>
       <button class="btn-secondary" id="super-reset-btn" onclick="superResetUserPassword()" style="display:none;" title="Reset another user's password to the default">🔑 Reset user password</button>
-      <button class="btn-gold" id="export-btn" onclick="exportCSV()" style="display:none;">Export CSV</button>
+      <div class="export-wrap" id="export-wrap" style="display:none;position:relative;">
+        <button class="btn-gold" id="export-btn" onclick="toggleExportMenu()">⤓ Export ▾</button>
+        <div id="export-menu" class="export-menu" style="display:none;">
+          <button onclick="exportCSV();closeExportMenu();">📄 CSV (raw data)</button>
+          <button onclick="exportXLSX();closeExportMenu();">📊 Excel (formatted)</button>
+          <button onclick="exportPDF();closeExportMenu();">📕 PDF report</button>
+        </div>
+      </div>
       <button class="btn-secondary" onclick="clearLog()">Clear</button>
     </div>
   </div>
@@ -6157,9 +6339,11 @@ async function renderSuperTeamView(host){
       <span id="reset-req-badge-wrap" style="display:none;margin-left:auto;"><button class="btn-secondary reset-req-badge-btn" onclick="document.getElementById('reset-requests-host').scrollIntoView({behavior:'smooth',block:'start'});">🔑 <span id="reset-req-count">0</span> pending request<span id="reset-req-s">s</span></button></span>
     </div>
     <div id="reset-requests-host"></div>
-    <div id="team-list-host"><div class="team-loading">Loading team…</div></div>`;
+    <div id="team-list-host"><div class="team-loading">Loading team…</div></div>
+    <div id="trash-host" style="margin-top:32px;"></div>`;
   await loadResetRequests();
   await loadTeamTab();
+  await loadTrashList();  // v24.2.12: Trash at bottom
 }
 
 /* v24.2.1: Password reset requests — super-user view on Team tab */
@@ -6309,6 +6493,163 @@ async function denyResetRequest(requestId,loginName){
   }catch(e){
     console.error(e);
     alert('Deny failed. Check internet.');
+  }
+}
+
+/* v24.2.12: Toggle inline history panel, fetches audit log on first open */
+async function toggleHistoryPanel(refId,idx){
+  const panel=document.getElementById('log-history-panel-'+idx);
+  if(!panel)return;
+  if(panel.style.display==='block'){
+    panel.style.display='none';
+    return;
+  }
+  panel.style.display='block';
+  panel.innerHTML='<div class="log-history-loading">Loading change history…</div>';
+  if(!WEBHOOK_URL){
+    panel.innerHTML='<div class="log-history-empty">No audit log available (offline).</div>';
+    return;
+  }
+  try{
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'audit_log_list',refId:refId})
+    });
+    const data=await resp.json();
+    if(data.status!=='ok'||!data.entries||!data.entries.length){
+      panel.innerHTML='<div class="log-history-empty">No edits recorded for this entry yet.</div>';
+      return;
+    }
+    // Group entries by logId prefix (same edit session = same AUD-timestamp)
+    const sessions={};
+    data.entries.forEach(e=>{
+      const sessionKey=(e.logId||'').split('-').slice(0,2).join('-');
+      if(!sessions[sessionKey])sessions[sessionKey]={editedBy:e.editedBy,editedAt:e.editedAt,changes:[]};
+      sessions[sessionKey].changes.push(e);
+    });
+    const sessionArr=Object.values(sessions).sort((a,b)=>new Date(b.editedAt)-new Date(a.editedAt));
+    panel.innerHTML=`<div class="log-history-head">📋 Change history (${data.entries.length} field changes across ${sessionArr.length} edit${sessionArr.length===1?'':'s'})</div>`+
+      sessionArr.map(s=>{
+        const d=new Date(s.editedAt);
+        const when=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+        const changesList=s.changes.map(c=>{
+          // Don't show unchanged or empty-to-empty
+          return `<div class="log-history-change"><span class="log-history-field">${escapeHtml(c.fieldName)}</span><span class="log-history-old">"${escapeHtml(c.oldValue||'(empty)')}"</span> → <span class="log-history-new">"${escapeHtml(c.newValue||'(empty)')}"</span></div>`;
+        }).join('');
+        return `<div class="log-history-session"><div class="log-history-session-head">${escapeHtml(s.editedBy)} · ${when}</div>${changesList}</div>`;
+      }).join('');
+  }catch(e){
+    console.error('audit log fetch failed:',e);
+    panel.innerHTML='<div class="log-history-empty">Couldn\'t load change history. Try again later.</div>';
+  }
+}
+
+/* v24.2.12: Soft-delete an entry (super only) — flips status in Sheet to "deleted" */
+async function softDeleteEntry(refId,projectName){
+  if(!(await requireAuth()))return;
+  if(!confirm(`Move "${projectName}" (${refId}) to Trash?\n\nIt will be hidden from History but kept in the Sheet with status=deleted. You can restore it from Team → Trash.`))return;
+  try{
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'entry_soft_delete',
+        refId:refId,
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash
+      })
+    });
+    const data=await resp.json();
+    if(data.status==='ok'){
+      showSync(`"${projectName}" moved to trash ✓`,'success');
+      refreshLog();  // reload to remove the entry from view
+    } else {
+      alert(`Delete failed: ${data.message||'Unknown error'}`);
+    }
+  }catch(e){
+    console.error(e);
+    alert('Delete failed. Check internet connection.');
+  }
+}
+
+/* v24.2.12: Load trash entries into the Team tab trash section (super only) */
+async function loadTrashList(){
+  const host=document.getElementById('trash-host');
+  if(!host)return;
+  host.innerHTML='<div class="trash-loading">Loading trash…</div>';
+  try{
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'trash_list',
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash
+      })
+    });
+    const data=await resp.json();
+    if(data.status!=='ok'){
+      host.innerHTML='';
+      return;
+    }
+    const entries=data.entries||[];
+    renderTrashList(host,entries);
+  }catch(e){
+    console.warn('loadTrashList failed:',e);
+    host.innerHTML='';
+  }
+}
+
+function renderTrashList(host,entries){
+  if(!entries.length){
+    host.innerHTML='<div class="trash-empty">Trash is empty. Deleted entries will appear here.</div>';
+    return;
+  }
+  const fmt=(iso)=>{
+    if(!iso)return '—';
+    const d=new Date(iso);
+    return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  };
+  host.innerHTML=`<div class="trash-head">🗑 Trash (${entries.length} deleted entr${entries.length===1?'y':'ies'})</div>`+
+    entries.map(e=>`<div class="trash-row">
+      <div class="trash-body">
+        <div class="trash-project">${escapeHtml(e.project||'(unnamed)')}</div>
+        <div class="trash-meta">${escapeHtml(e.enduser||'—')} · ${escapeHtml(e.venue||'—')} · ${escapeHtml(e.city||'—')}</div>
+        <div class="trash-meta">${e.qty||'—'} × ${escapeHtml(e.model||'—')} · by ${escapeHtml(e.user||'—')} · ${fmt(e.ts)}</div>
+        <div class="trash-meta" style="color:var(--ink-subtle);">${escapeHtml(e.refId||'')}</div>
+      </div>
+      <div class="trash-actions">
+        <button class="team-btn" onclick="restoreTrashEntry('${escapeHtml(e.refId)}','${(e.project||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}');">↻ Restore</button>
+      </div>
+    </div>`).join('');
+}
+
+async function restoreTrashEntry(refId,projectName){
+  if(!(await requireAuth()))return;
+  if(!confirm(`Restore "${projectName}" (${refId}) from trash?\n\nIt will return to History with status=viewed.`))return;
+  try{
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'entry_restore',
+        refId:refId,
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash,
+        restoreToStatus:'viewed'
+      })
+    });
+    const data=await resp.json();
+    if(data.status==='ok'){
+      showSync(`"${projectName}" restored ✓`,'success');
+      loadTrashList();
+      refreshLog();
+    } else {
+      alert(`Restore failed: ${data.message||'Unknown error'}`);
+    }
+  }catch(e){
+    console.error(e);
+    alert('Restore failed. Check internet connection.');
   }
 }
 
@@ -7839,6 +8180,11 @@ function logEntry(status,onDone){
   else entries.unshift(entry);
   if(entries.length>500)entries.length=500;
   saveLocalLog(entries);
+  // v24.2.12: If in edit mode and we have a snapshot, send audit log diff
+  if(window._editMode && window._editSnapshot && WEBHOOK_URL && state.user){
+    sendAuditLogDiff(entry,window._editSnapshot);
+    window._editSnapshot=null;  // one-shot
+  }
   // Central webhook
   if(WEBHOOK_URL){
     const msg=status==='saved'?'Confirming…':'Logging…';
@@ -7861,6 +8207,40 @@ function logEntry(status,onDone){
     showSync(status==='saved'?'Confirmed locally ✓':'Logged locally ✓','success');
     if(onDone)onDone();
   }
+}
+
+/* v24.2.12: Compute diff between snapshot and current entry, send audit log to webhook */
+function sendAuditLogDiff(current,snapshot){
+  if(!current||!snapshot)return;
+  const fieldsToTrack=[
+    'project','enduser','venue','partner','consultant','city',
+    'contactname','contactphone','contactemail','stage','closemonth',
+    'qty','qtyIndoor','qtyOutdoor','model','outdoorModel',
+    'content','resolution','environment','update','budget',
+    'hdmiIn','touch','wifi','gpio','ssd','os',
+    'cmsVendor','cmsTerm','cmsBillingType'
+  ];
+  const changes=[];
+  fieldsToTrack.forEach(f=>{
+    const oldV=(snapshot[f]||'').toString();
+    const newV=(current[f]||'').toString();
+    if(oldV!==newV){
+      changes.push({fieldName:f,oldValue:oldV,newValue:newV});
+    }
+  });
+  if(!changes.length)return;  // nothing changed, don't bother
+  // Fire and forget — audit log failing shouldn't block the save
+  fetch(WEBHOOK_URL,{
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({
+      action:'audit_log_append',
+      refId:current.refId,
+      editedBy:state.user.loginName,
+      changes:changes
+    })
+  }).catch(e=>console.warn('Audit log send failed:',e));
 }
 
 /* ========== v22.4: LOCAL ENTRY RE-SYNC ==========
@@ -8596,21 +8976,50 @@ async function emailQuoteToPartner(){
 
 function clearLog(){if(confirm('Clear LOCAL history? (Central Google Sheet is not affected.)')){saveLocalLog([]);renderLog();}}
 
+/* v24.2.11: Fetch with timeout wrapper — abort after ms to prevent hung requests */
+function fetchWithTimeout(url,options,timeoutMs){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeoutMs||8000);
+  return fetch(url,{...options,signal:controller.signal}).finally(()=>clearTimeout(timer));
+}
+
+/* v24.2.11: Try central fetch up to 3 times with backoff before giving up.
+   Silent between retries (no spammy toasts), only notifies on total failure. */
+async function tryFetchCentralLog(){
+  const delays=[0,800,2000];  // attempt 1 immediate, then 800ms, then 2000ms
+  let lastError=null;
+  for(let i=0;i<delays.length;i++){
+    if(delays[i]>0)await new Promise(res=>setTimeout(res,delays[i]));
+    try{
+      const resp=await fetchWithTimeout(WEBHOOK_URL+'?action=read',{method:'GET'},8000);
+      const data=await resp.json();
+      if(Array.isArray(data))return {ok:true,data,attempts:i+1};
+      lastError='Non-array response';
+    } catch(e){
+      lastError=e.message||String(e);
+      console.warn(`Central fetch attempt ${i+1}/${delays.length} failed:`,lastError);
+    }
+  }
+  return {ok:false,error:lastError,attempts:delays.length};
+}
+
 async function refreshLog(){
   showSync('Refreshing…');
   if(WEBHOOK_URL && state.user){
-    try{
-      const resp=await fetch(WEBHOOK_URL+'?action=read',{method:'GET'});
-      const data=await resp.json();
-      if(Array.isArray(data)){
-        window._centralLog=data;
-        showSync('Central log loaded ✓','success');
-        renderLog();
-        renderDashboard();  // v23.1: refresh charts too
-        return;
-      }
-    } catch(e){console.warn(e);showSync('Central fetch failed (showing local)','error');}
-  } else {showSync('Local refresh ✓','success');}
+    const result=await tryFetchCentralLog();
+    if(result.ok){
+      window._centralLog=result.data;
+      const suffix=result.attempts>1?` (attempt ${result.attempts})`:'';
+      showSync('Central log loaded ✓'+suffix,'success');
+      renderLog();
+      renderDashboard();
+      return;
+    }
+    // All retries exhausted
+    showSync('Central fetch failed · showing local cache','error');
+  } else {
+    showSync('Local refresh ✓','success');
+  }
   renderLog();
   renderDashboard();
 }
@@ -8675,7 +9084,7 @@ function renderLog(){
   const isSuper=state.user.isSuper;
   const host=document.getElementById('log-content');
   const actionBar=document.getElementById('log-action-bar');
-  const exportBtn=document.getElementById('export-btn');
+  const exportBtn=document.getElementById('export-wrap');  // v24.2.12: wrap for dropdown menu
   const pageTitle=document.getElementById('log-page-title');
   const pageSubtitle=document.getElementById('log-page-subtitle');
   const searchWrap=document.getElementById('history-search-wrap');
@@ -8746,7 +9155,13 @@ function renderLog(){
     const statusColor=e.status==='saved'?'var(--emerald)':'var(--ink-subtle)';
     const statusBg=e.status==='saved'?'var(--emerald-light)':'var(--surface-2)';
     const editBtn=canEdit?`<button class="log-edit-btn" onclick="event.stopPropagation();editPastEntry(${idx});" title="Edit technical fields on this entry">Edit ↻</button>`:'';
-    return `<div class="log-entry"${canEdit?` data-entry-idx="${idx}"`:''}><div class="log-date">${dateStr}<br>${timeStr}<br><span style="color:var(--ink-muted);">${e.user}</span>${e.refId?`<br><span style="font-size:10px;opacity:0.7;">${e.refId}</span>`:''}</div><div class="log-main"><div class="log-project">${e.project} <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:${statusBg};color:${statusColor};margin-left:6px;vertical-align:middle;">${statusLabel}</span></div><div class="log-detail">${e.enduser} · ${e.venue} · ${e.city} · ${e.partner}</div><div class="log-detail">${e.qty} × ${e.model} · ${resStr} · ${e.environment} · ${e.update} · ${e.stage} · ${e.budget}${e.os&&e.os!=='—'?' · '+(e.os==='brightsignos'?'BSOS':'Win IoT'):''}</div></div><div class="log-model">${e.model}${editBtn}</div></div>`;
+    // v24.2.12: History expand button + super-only Delete button
+    const isSuperUser=state.user && state.user.isSuper;
+    const historyBtn=`<button class="log-history-btn" onclick="event.stopPropagation();toggleHistoryPanel('${e.refId}',${idx});" title="View change history">↻ History</button>`;
+    const deleteBtn=isSuperUser?`<button class="log-delete-btn" onclick="event.stopPropagation();softDeleteEntry('${e.refId}','${(e.project||'').replace(/'/g,"\\'")}');" title="Move to trash (super only)">🗑 Delete</button>`:'';
+    const metaRow=`<div class="log-meta-row">${historyBtn}${deleteBtn}</div>`;
+    const historyPanel=`<div class="log-history-panel" id="log-history-panel-${idx}" style="display:none;"></div>`;
+    return `<div class="log-entry"${canEdit?` data-entry-idx="${idx}"`:''}><div class="log-entry-top"><div class="log-date">${dateStr}<br>${timeStr}<br><span style="color:var(--ink-muted);">${e.user}</span>${e.refId?`<br><span style="font-size:10px;opacity:0.7;">${e.refId}</span>`:''}</div><div class="log-main"><div class="log-project">${e.project} <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:${statusBg};color:${statusColor};margin-left:6px;vertical-align:middle;">${statusLabel}</span></div><div class="log-detail">${e.enduser} · ${e.venue} · ${e.city} · ${e.partner}</div><div class="log-detail">${e.qty} × ${e.model} · ${resStr} · ${e.environment} · ${e.update} · ${e.stage} · ${e.budget}${e.os&&e.os!=='—'?' · '+(e.os==='brightsignos'?'BSOS':'Win IoT'):''}</div>${metaRow}</div><div class="log-model">${e.model}${editBtn}</div></div>${historyPanel}</div>`;
   }).join('');
   window._currentLogEntries=entries;
 }
@@ -8871,6 +9286,24 @@ function editPastEntry(entryIdx){
   // v22.3: Flag edit mode + cache refId for upsert
   window._editMode=true;
   window._lastRefIdForEdit=entry.refId;
+  // v24.2.12: Snapshot original values for audit log diff on submit
+  window._editSnapshot={
+    project:entry.project||'',enduser:entry.enduser||'',venue:entry.venue||'',
+    partner:entry.partner||'',consultant:entry.consultant||'',city:entry.city||'',
+    contactname:entry.contactname||'',contactphone:entry.contactphone||'',contactemail:entry.contactemail||'',
+    stage:entry.stage||'',closemonth:entry.closemonth||'',
+    qty:(entry.qty||'').toString(),
+    qtyIndoor:(entry.qtyIndoor||'').toString(),
+    qtyOutdoor:(entry.qtyOutdoor||'').toString(),
+    model:entry.model||'',outdoorModel:entry.outdoorModel||'',
+    content:entry.content||'',resolution:entry.resolution||'',
+    environment:entry.environment||'',update:entry.update||'',
+    budget:entry.budget||'',
+    hdmiIn:entry.hdmiIn||'',touch:entry.touch||'',wifi:entry.wifi||'',
+    gpio:entry.gpio||'',ssd:entry.ssd||'',os:entry.os||'',
+    cmsVendor:entry.cmsVendor||'',cmsTerm:(entry.cmsTerm||'').toString(),
+    cmsBillingType:entry.cmsBillingType||''
+  };
 
   prefillFormUI();
   applyEditLocks(true);  // v22.3: lock basic info
@@ -9535,6 +9968,288 @@ function renderCharts(entries){
       ctxModelsTimeline.parentElement.innerHTML=`<div style="padding:40px 20px;text-align:center;color:var(--ink-subtle);font-family:var(--sans);font-size:13px;">No trend data yet — need more entries.</div>`;
     }
   }
+}
+
+/* v24.2.12: Export dropdown menu helpers */
+function toggleExportMenu(){
+  const menu=document.getElementById('export-menu');
+  if(!menu)return;
+  const isOpen=menu.style.display==='block';
+  menu.style.display=isOpen?'none':'block';
+  if(!isOpen){
+    // Close when clicking outside
+    setTimeout(()=>{
+      document.addEventListener('click',closeExportMenuOutside,{once:true});
+    },10);
+  }
+}
+function closeExportMenu(){
+  const menu=document.getElementById('export-menu');
+  if(menu)menu.style.display='none';
+}
+function closeExportMenuOutside(e){
+  const wrap=document.getElementById('export-wrap');
+  if(wrap && !wrap.contains(e.target))closeExportMenu();
+  else document.addEventListener('click',closeExportMenuOutside,{once:true});
+}
+
+/* v24.2.12: Get entries scoped to current user + filters, shared by all export formats */
+function getExportEntries(){
+  let entries=(window._centralLog&&window._centralLog.length)?window._centralLog:loadLocalLog();
+  if(state.user && !state.user.isSuper){
+    const myLogin=(state.user.loginName||'').toLowerCase();
+    const myFullName=(state.user.fullName||'').toLowerCase();
+    entries=entries.filter(e=>{
+      const elogin=(e.loginName||'').toLowerCase();
+      const euser=(e.user||'').toLowerCase();
+      return (elogin && elogin===myLogin) || (euser && euser===myFullName);
+    });
+  }
+  if(state.user&&state.user.isSuper&&hasActiveFilters())entries=applyFiltersToEntries(entries);
+  return entries;
+}
+
+/* v24.2.12: Excel (XLSX) export with formatted headers, freeze row, column widths, status color banding */
+function exportXLSX(){
+  const entries=getExportEntries();
+  if(!entries.length){alert('No data to export.');return;}
+  if(typeof XLSX==='undefined'){alert('Excel library not loaded. Refresh and try again.');return;}
+  const headers=['Ref ID','Status','Timestamp','User','Role','Project','End-user','Venue','Partner','Consultant','City','Contact name','Contact phone','Contact email','Deal stage','Close month','Qty','Indoor Qty','Outdoor Qty','Model','Outdoor Model','Content type','Resolution','Deployment type','Content update','Budget','HDMI in','Touch','Wi-Fi','GPIO','SSD','OS','CMS Vendor','CMS Term','CMS Billing Type'];
+  const rows=entries.map(e=>{
+    const ts=e.ts?new Date(e.ts):null;
+    const tsStr=ts && !isNaN(ts.getTime())?ts.toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):(e.ts||'');
+    return [e.refId||'',e.status||'viewed',tsStr,e.user||'',e.role||'',e.project||'',e.enduser||'',e.venue||'',e.partner||'',e.consultant||'',e.city||'',e.contactname||'',e.contactphone||'',e.contactemail||'',e.stage||'',e.closemonth||'',e.qty||'',e.qtyIndoor||'',e.qtyOutdoor||'',e.model||'',e.outdoorModel||'',e.content||'',e.resolution||'',e.environment||'',e.update||'',e.budget||'',e.hdmiIn||'',e.touch||'',e.wifi||'',e.gpio||'',e.ssd||'',e.os||'',e.cmsVendor||'',e.cmsTerm||'',e.cmsBillingType||''];
+  });
+  const wsData=[headers,...rows];
+  const ws=XLSX.utils.aoa_to_sheet(wsData);
+  // Freeze header row
+  ws['!freeze']={xSplit:0,ySplit:1};
+  ws['!views']=[{state:'frozen',ySplit:1}];
+  // Column widths
+  ws['!cols']=[
+    {wch:14},{wch:11},{wch:22},{wch:22},{wch:12},{wch:28},{wch:24},{wch:22},{wch:22},{wch:22},{wch:14},
+    {wch:22},{wch:16},{wch:24},{wch:14},{wch:14},{wch:8},{wch:10},{wch:11},{wch:14},{wch:14},{wch:18},
+    {wch:14},{wch:16},{wch:14},{wch:14},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:12},{wch:18},{wch:10},{wch:20}
+  ];
+  // Style headers
+  const headerStyle={
+    font:{name:'Calibri',sz:11,bold:true,color:{rgb:'FFFFFFFF'}},
+    fill:{patternType:'solid',fgColor:{rgb:'FF4F46E5'}},
+    alignment:{horizontal:'left',vertical:'center'},
+    border:{bottom:{style:'medium',color:{rgb:'FF312E81'}}}
+  };
+  for(let c=0;c<headers.length;c++){
+    const cell=XLSX.utils.encode_cell({r:0,c:c});
+    if(ws[cell])ws[cell].s=headerStyle;
+  }
+  // Style data rows — status column gets colored based on value
+  const statusCol=1;
+  for(let r=1;r<=rows.length;r++){
+    const statusCellRef=XLSX.utils.encode_cell({r:r,c:statusCol});
+    const statusVal=(rows[r-1][statusCol]||'').toString().toLowerCase();
+    if(ws[statusCellRef]){
+      let bg='FFF1F5F9';let fg='FF475569';
+      if(statusVal==='saved'||statusVal==='confirmed'){bg='FFD1FAE5';fg='FF047857';}
+      else if(statusVal==='viewed'){bg='FFF1F5F9';fg='FF475569';}
+      else if(statusVal==='deleted'){bg='FFFEE2E2';fg='FF991B1B';}
+      ws[statusCellRef].s={
+        font:{name:'Calibri',sz:10,bold:true,color:{rgb:fg}},
+        fill:{patternType:'solid',fgColor:{rgb:bg}},
+        alignment:{horizontal:'center',vertical:'center'}
+      };
+    }
+    // Banded zebra rows for readability
+    if(r%2===0){
+      for(let c=0;c<headers.length;c++){
+        if(c===statusCol)continue;
+        const cellRef=XLSX.utils.encode_cell({r:r,c:c});
+        if(ws[cellRef]){
+          ws[cellRef].s={
+            font:{name:'Calibri',sz:10},
+            fill:{patternType:'solid',fgColor:{rgb:'FFF8FAFC'}},
+            alignment:{vertical:'center'}
+          };
+        }
+      }
+    }
+  }
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Selections');
+  // Metadata sheet
+  const metaData=[
+    ['BrightSign Product Selector — Export Report'],
+    [],
+    ['Generated at',new Date().toLocaleString('en-IN')],
+    ['Generated by',state.user?state.user.fullName:'Unknown'],
+    ['Role',state.user?state.user.role:''],
+    ['Total entries exported',entries.length],
+    [],
+    ['Filters applied:'],
+    ['Date range',(window._filters&&window._filters.dateRange)||'all'],
+    ['City',(window._filters&&window._filters.city)||'—'],
+    ['User',(window._filters&&window._filters.user)||'—'],
+    ['Partner',(window._filters&&window._filters.partner)||'—'],
+    ['Consultant',(window._filters&&window._filters.consultant)||'—']
+  ];
+  const wsMeta=XLSX.utils.aoa_to_sheet(metaData);
+  wsMeta['!cols']=[{wch:26},{wch:40}];
+  if(wsMeta['A1']){
+    wsMeta['A1'].s={font:{name:'Calibri',sz:14,bold:true,color:{rgb:'FF312E81'}}};
+  }
+  XLSX.utils.book_append_sheet(wb,wsMeta,'Metadata');
+  const filename=`brightsign-selections-${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb,filename);
+  showSync(`Excel exported: ${entries.length} entries ✓`,'success');
+}
+
+/* v24.2.12: PDF export — summary report with KPIs + tabular data */
+function exportPDF(){
+  const entries=getExportEntries();
+  if(!entries.length){alert('No data to export.');return;}
+  if(typeof window.jspdf==='undefined' || !window.jspdf.jsPDF){
+    alert('PDF library not loaded. Refresh and try again.');return;
+  }
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
+  const pageWidth=doc.internal.pageSize.getWidth();
+  const pageHeight=doc.internal.pageSize.getHeight();
+
+  // Header branded strip
+  doc.setFillColor(49,46,129);  // indigo
+  doc.rect(0,0,pageWidth,56,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(18);
+  doc.text('BrightSign Product Selector',36,28);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(10);
+  doc.text('Selection History Report',36,46);
+
+  // Report meta
+  doc.setTextColor(15,23,42);
+  doc.setFontSize(9);
+  const generatedAt=new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const generatedBy=state.user?state.user.fullName:'Unknown';
+  doc.text(`Generated: ${generatedAt}`,pageWidth-36,28,{align:'right'});
+  doc.text(`By: ${generatedBy} (${state.user?state.user.role:''})`,pageWidth-36,42,{align:'right'});
+
+  // Cavitak branding strip
+  doc.setFillColor(248,250,252);
+  doc.rect(0,56,pageWidth,20,'F');
+  doc.setTextColor(100,116,139);
+  doc.setFontSize(8);
+  doc.text('CAVITAK MARKETING · AV DISTRIBUTION INDIA',36,69);
+  doc.text(`${entries.length} selection${entries.length===1?'':'s'}`,pageWidth-36,69,{align:'right'});
+
+  // KPI summary
+  const totalEntries=entries.length;
+  const confirmed=entries.filter(e=>e.status==='saved').length;
+  const uniqueProjects=new Set(entries.map(e=>(e.project||'').toLowerCase()).filter(Boolean)).size;
+  const uniqueCities=new Set(entries.map(e=>(e.city||'').toLowerCase()).filter(Boolean)).size;
+  const totalPlayers=entries.reduce((s,e)=>s+(parseInt(e.qty)||0),0);
+
+  let y=98;
+  doc.setTextColor(15,23,42);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.text('Key metrics',36,y);
+  y+=8;
+  doc.setDrawColor(226,232,240);
+  doc.setLineWidth(0.5);
+  doc.line(36,y,pageWidth-36,y);
+  y+=16;
+
+  const kpiWidth=(pageWidth-72-30)/5;  // 5 KPIs with 7.5pt gaps
+  const kpis=[
+    {label:'Total selections',value:totalEntries,color:[79,70,229]},
+    {label:'Confirmed',value:confirmed,color:[5,150,105]},
+    {label:'Unique projects',value:uniqueProjects,color:[124,58,237]},
+    {label:'Cities covered',value:uniqueCities,color:[220,38,38]},
+    {label:'Total players',value:totalPlayers,color:[6,95,70]}
+  ];
+  kpis.forEach((k,i)=>{
+    const x=36+i*(kpiWidth+7.5);
+    doc.setFillColor(248,250,252);
+    doc.rect(x,y,kpiWidth,50,'F');
+    doc.setDrawColor(226,232,240);
+    doc.rect(x,y,kpiWidth,50,'S');
+    doc.setTextColor(100,116,139);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(8);
+    doc.text(k.label,x+10,y+18);
+    doc.setTextColor(k.color[0],k.color[1],k.color[2]);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(18);
+    doc.text(k.value.toString(),x+10,y+40);
+  });
+  y+=62;
+
+  // Table of entries
+  const headers=['Date','Ref ID','Project','End-user','City','Partner','User','Qty','Model','Status'];
+  const body=entries.map(e=>{
+    const ts=e.ts?new Date(e.ts):null;
+    const dStr=ts && !isNaN(ts.getTime())?ts.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'}):'—';
+    return [dStr,e.refId||'',e.project||'—',e.enduser||'—',e.city||'—',e.partner||'—',e.user||'—',(e.qty||'—').toString(),e.model||'—',(e.status||'viewed').toUpperCase()];
+  });
+
+  if(typeof doc.autoTable==='function'){
+    doc.autoTable({
+      head:[headers],
+      body:body,
+      startY:y,
+      margin:{left:36,right:36},
+      theme:'grid',
+      headStyles:{fillColor:[79,70,229],textColor:[255,255,255],fontSize:8,fontStyle:'bold',halign:'left'},
+      bodyStyles:{fontSize:8,textColor:[30,41,59]},
+      alternateRowStyles:{fillColor:[248,250,252]},
+      columnStyles:{
+        0:{cellWidth:52},  // Date
+        1:{cellWidth:62,fontStyle:'bold'},  // Ref ID
+        2:{cellWidth:90},  // Project
+        3:{cellWidth:70},  // End-user
+        4:{cellWidth:52},  // City
+        5:{cellWidth:72},  // Partner
+        6:{cellWidth:74},  // User
+        7:{cellWidth:30,halign:'center'},  // Qty
+        8:{cellWidth:56},  // Model
+        9:{cellWidth:46,halign:'center',fontStyle:'bold'}  // Status
+      },
+      didParseCell:(data)=>{
+        if(data.section==='body' && data.column.index===9){
+          const v=(data.cell.raw||'').toString().toLowerCase();
+          if(v==='confirmed'||v==='saved'){
+            data.cell.styles.textColor=[5,150,105];
+            data.cell.styles.fillColor=[209,250,229];
+          } else if(v==='deleted'){
+            data.cell.styles.textColor=[153,27,27];
+            data.cell.styles.fillColor=[254,226,226];
+          } else {
+            data.cell.styles.textColor=[100,116,139];
+          }
+        }
+      },
+      didDrawPage:(data)=>{
+        // Footer on each page
+        const str=`Page ${doc.getCurrentPageInfo().pageNumber} · Confidential · BrightSign Product Selector`;
+        doc.setFontSize(7);
+        doc.setTextColor(148,163,184);
+        doc.text(str,pageWidth/2,pageHeight-12,{align:'center'});
+      }
+    });
+  } else {
+    // Fallback without autotable: simple text dump
+    doc.setFontSize(8);
+    let line=y;
+    entries.slice(0,30).forEach(e=>{
+      if(line>pageHeight-20){doc.addPage();line=36;}
+      doc.text(`${e.refId||''} · ${e.project||''} · ${e.city||''} · ${e.qty||''}x${e.model||''}`,36,line);
+      line+=12;
+    });
+  }
+
+  const filename=`brightsign-report-${new Date().toISOString().slice(0,10)}.pdf`;
+  doc.save(filename);
+  showSync(`PDF exported: ${entries.length} entries ✓`,'success');
 }
 
 function exportCSV(){

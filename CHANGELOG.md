@@ -7,6 +7,132 @@ Versions follow semantic-ish conventions: MAJOR.MINOR[.PATCH].
 
 ---
 
+## [v24.2.12 + Apps Script v24.3] — 2026-04-19 · Audit log + soft delete + export upgrade
+
+Large release with three independent features. Requires both frontend AND backend deploy.
+
+### Added — Audit log (change history)
+
+- Every edit to a past entry now records a diff (field name, old value, new value, who edited, when).
+- New Google Sheet tab **AuditLog** auto-creates on first edit with 7-column schema: `logId, refId, editedBy, editedAt, fieldName, oldValue, newValue`.
+- On each history row, a new **↻ History** button expands an inline panel below the row showing full change history for that entry.
+- Changes are grouped by edit session (same timestamp = same save operation). Old values shown in red strikethrough, new values in green.
+- Deletes and restores also logged (`status: viewed → deleted` and `status: deleted → viewed`).
+- Apps Script actions: `audit_log_append` (write), `audit_log_list` (read for one refId).
+
+### Added — Soft delete + Trash
+
+- Super-user sees **🗑 Delete** button on every history row.
+- Clicking delete flips the entry's status to `deleted` in Sheet1 (row stays, just hidden from normal views).
+- Deleted entries appear in new **Trash section** at bottom of Team tab, showing project, end-user, city, model, qty, original user, timestamp.
+- Each trash row has **↻ Restore** button — sets status back to `viewed` and entry returns to history.
+- Never auto-purges — deleted entries remain in Sheet forever (per user preference).
+- Apps Script actions: `entry_soft_delete`, `entry_restore`, `trash_list`.
+- Read action modified to filter out `status=deleted` entries from normal history responses.
+
+### Added — Export upgrade (3 formats)
+
+- CSV button replaced with dropdown **⤓ Export ▾** offering three formats. All respect current filters (date range, user, partner, etc.).
+  - **📄 CSV (raw data)** — unchanged from previous behavior.
+  - **📊 Excel (formatted)** — uses xlsx-js-style. Features: purple header row with white text, frozen top row, column widths optimized per field, status column color-coded (green for confirmed, gray for viewed, red for deleted), zebra-striped alternating rows. Separate Metadata sheet showing export date, generated-by, total count, and filter summary.
+  - **📕 PDF report** — uses jsPDF + autotable. Landscape A4 format. Indigo header strip with "BrightSign Product Selector · Selection History Report" branding. Generated date and user stamp on right side. Below: 5 KPI tiles (total selections, confirmed, unique projects, cities, total players) each in their own colored card. Main table with rows for every entry, status column color-coded. Footer pagination on every page.
+
+### Dependencies added
+- `jspdf@2.5.1` (~120KB) via cdnjs
+- `jspdf-autotable@3.8.0` (~30KB) via cdnjs
+
+### Apps Script v24.3 schema additions
+- New tab: `AuditLog` (auto-creates) — 7 columns
+- Sheet1 schema unchanged (still 37 columns), but `status` column (B) can now hold `deleted` value
+
+### Files in release
+- `brightsign-v24-2-12.html` — frontend (513KB)
+- `apps-script-v24-3.gs` — backend (37KB)
+
+### Deploy order
+1. Apps Script first — paste v24.3, Deploy → Manage → New version → Deploy
+2. Then frontend HTML to GitHub
+
+---
+
+## [v24.2.11] — 2026-04-19 · Silent retry for central fetch
+
+### Added
+- **Silent retry with exponential backoff** — every central log fetch now tries up to 3 times before falling back to local cache. Attempts fire at 0ms, 800ms, and 2000ms. Each attempt has an 8-second timeout via AbortController.
+- **Fixes "sometimes showing local only"** — most cases were Apps Script cold-start delay (~2-3s). The retry layer absorbs that without user awareness.
+- Silent between retries — no spammy "Retrying..." toasts. Only shows "Central fetch failed · showing local cache" after all 3 attempts fail.
+- On success, shows "(attempt 2)" suffix in the success toast if retry was needed — useful for debugging without being alarming.
+- New helper functions: `fetchWithTimeout(url, options, timeoutMs)` and `tryFetchCentralLog()`.
+
+### Files in release
+- `brightsign-v24-2-11.html` (frontend only)
+
+---
+
+## [v24.2.10] — 2026-04-19 · Never lose an entry (form-owner identity + tab auto-refresh)
+
+Four improvements addressing the "orphan entries with — for user" bug discovered in v24.2.9 and tab staleness.
+
+### Added
+- **Form-owner identity persistence** — when user clicks "New selection" tab, their identity (loginName, fullName, role) is snapshotted to `window._formOwner`. If session expires between form-open and submit, the entry still saves with correct user attribution using this snapshot. Captured both at login time and at form-tab-open time.
+- **Graceful session-dead handling** — `buildEntryPayload` now prefers live `state.user` but falls back to `_formOwner` snapshot. Only if BOTH are missing does it bounce user to login. No more silent "—" entries in the Sheet.
+- **Auto-refresh on tab switch** — clicking History or Dashboard tab now re-fetches central log from Sheet via `refreshLog()`. No more stale data.
+- **Recovery toast** — after login, if pending-queue entries for this user existed and got synced during the post-login retry, shows small toast "Synced N entries from earlier session ✓".
+
+### Fixed
+- **Orphan entries bug** — rows 29-31 in Sheet1 from earlier testing show "—" for user/login/role because session was gone at save time. v24.2.10 prevents this going forward. Existing orphans need manual correction.
+
+### Files in release
+- `brightsign-v24-2-10.html` (frontend only)
+
+---
+
+## [v24.2.9] — 2026-04-19 · Session guard on submit (superseded by v24.2.10)
+
+### Added
+- Strict guard blocking submission if `state.user` was null — alert user and bounce to login.
+
+### Superseded
+This was the right instinct but wrong implementation. v24.2.10 replaces the blocking behavior with graceful fallback to `_formOwner` snapshot, preserving the user's work instead of interrupting.
+
+### Files in release
+- `brightsign-v24-2-9.html` (deprecated, use v24.2.10+)
+
+---
+
+## [v24.2.8] — 2026-04-19 · Smart edit lock (backfill support)
+
+### Added
+- **Smart basic-info locks** — when editing a past entry, fields that are EMPTY stay editable so users can backfill data for entries created before that field existed. Fields with values remain locked as before.
+- Empty unlocked fields show a yellow **✎ backfill** hint next to their label, making it clear they can be filled.
+- Edit mode banner text updated: "Basic info locked where filled · Empty fields can be backfilled" (was: "Basic info locked, only technical fields editable").
+
+### Context
+Users with entries created before "Expected closure month" was added couldn't add that field later — it was locked-and-empty. This fix allows incremental backfilling without compromising the lock's primary purpose (preventing accidental overwrite of original project metadata).
+
+### Files in release
+- `brightsign-v24-2-8.html` (frontend only)
+
+---
+
+## [v24.2.7] — 2026-04-19 · Critical login fix (user object missing)
+
+### Fixed
+- **One-line bug that broke ALL logins** — `authCheckAgainstSheet()` was stripping the `user` object from server responses. Frontend then saw `userRecord = undefined` and showed "Incorrect password or user not set up" even when server returned `status: ok`.
+- Bug had been present since v23 but was masked by the offline super fallback. When Apps Script started returning proper `user` objects in v24 and frontend was forced to depend on them, logins broke everywhere.
+- Fix: added `user: data.user` to the returned object in the `ok` branch.
+
+### Root cause
+Classic case of frontend contract drift. Apps Script `handleAuthCheck` returned `{ status, mustChange, user, lastChanged }`. Frontend helper returned `{ ok, mustChange, lastChanged }` — missing `user`. Login flow then tried to read `authResult.user` which was `undefined`.
+
+### Files in release
+- `brightsign-v24-2-7.html` (frontend only)
+
+### Important context for tvONE / Green Hippo ports
+If those apps have similar auth flow, port this fix too. Check for `authResult.user` usage — it must be preserved through any auth helper layer.
+
+---
+
 ## [v24.2.6] — 2026-04-19 · Mobile responsive polish pass
 
 ### Added
