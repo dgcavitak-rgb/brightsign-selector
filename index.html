@@ -4042,6 +4042,156 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   .action-bar{width:calc(100% - 24px);left:12px;right:12px;transform:none;justify-content:space-between;}
   .action-bar button{flex:1;padding:12px 10px;font-size:13px;}
 }
+
+/* ============================================================
+   v24.2.6: Comprehensive mobile polish — covers <720px and <480px
+============================================================ */
+@media (max-width:720px){
+  /* Page titles and subtitles tighter */
+  .page-header{margin-bottom:16px;}
+  .page-eyebrow{font-size:10px;}
+  .page-subtitle{font-size:13px;}
+
+  /* History tab search bar */
+  .history-search-wrap{margin-bottom:14px;}
+  .history-search input{font-size:13px;padding:11px 6px;}
+  .history-search-icon{width:16px;height:16px;}
+
+  /* Dashboard filter bar — stack vertically on phones */
+  .filter-bar.filter-bar-v18{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+    padding:14px !important;
+  }
+  .filter-bar .filter-field{width:100%;}
+  .filter-bar .filter-select{width:100%;}
+  .filter-bar .filter-clear{width:100%;margin-top:4px;}
+
+  /* KPI strip — 2 columns instead of 4 on phones */
+  .kpi-strip{grid-template-columns:repeat(2,1fr) !important;gap:12px !important;}
+  .kpi-tile{padding:14px !important;}
+  .kpi-value{font-size:22px !important;}
+  .kpi-label{font-size:10px !important;}
+
+  /* Dashboard charts — full width, stack */
+  .charts-row{grid-template-columns:1fr !important;gap:14px !important;}
+  .chart-card-v18{padding:16px 14px !important;}
+  .chart-v18-title{font-size:14px !important;}
+  .chart-v18-subtitle{font-size:11px !important;}
+  .chart-v18-body{height:240px !important;}
+
+  /* Dashboard hero — smaller */
+  .dash-hero{padding:20px !important;}
+  .dash-hero-title{font-size:22px !important;}
+  .dash-hero-sub{font-size:12px !important;}
+  .dash-hero-meta{flex-direction:column;gap:4px !important;align-items:flex-start !important;}
+
+  /* Password/Add-user/Edit-user modals — nearly full-screen on phones, full-screen on tiny phones */
+  .pwd-modal-overlay{padding:12px !important;}
+  .pwd-modal{
+    max-width:100% !important;
+    padding:22px 20px 18px !important;
+    max-height:90vh;
+    overflow-y:auto;
+  }
+  .pwd-modal-title{font-size:17px !important;}
+  .pwd-modal-subtitle{font-size:12px !important;margin-bottom:16px !important;}
+  .pwd-modal-actions{flex-direction:column-reverse !important;gap:8px !important;}
+  .pwd-modal-actions button{width:100% !important;}
+
+  /* Team tab rows — already stacked, tighten buttons */
+  .team-row{padding:14px 16px !important;}
+  .team-row-right{gap:6px !important;}
+  .team-btn{padding:8px 10px !important;font-size:11px !important;flex:1;}
+  .team-avatar{width:38px !important;height:38px !important;font-size:12px !important;}
+  .team-name{font-size:13px !important;}
+  .team-contact{font-size:10px !important;}
+
+  /* Reset request rows — stack actions */
+  .reset-req-row{padding:14px !important;}
+  .reset-req-section{padding:16px !important;}
+  .reset-req-actions{width:100%;}
+  .reset-req-actions .team-btn{flex:1;}
+
+  /* Profile card — smaller */
+  .profile-card{padding:28px 20px 18px !important;margin-bottom:16px !important;}
+  .profile-avatar-large{width:64px !important;height:64px !important;font-size:22px !important;}
+  .profile-name{font-size:18px !important;}
+  .profile-edit-card{padding:18px 16px 14px !important;}
+  .profile-actions{flex-direction:column;gap:8px !important;}
+  .profile-actions button{width:100%;}
+
+  /* Splash screen — smaller logo/text */
+  .splash-logo{gap:12px !important;margin-bottom:24px !important;}
+  .splash-logo-mark{width:52px !important;height:52px !important;}
+  .splash-logo-mark svg{width:28px !important;height:28px !important;}
+  .splash-brand-name{font-size:22px !important;}
+  .splash-brand-sub{font-size:11px !important;}
+  .splash-step{font-size:13px !important;}
+  .splash-progress{max-width:240px !important;}
+
+  /* Webhook banner — smaller */
+  .webhook-banner{padding:8px 14px !important;font-size:12px !important;}
+
+  /* Duplicate warning banner */
+  .dup-banner{padding:12px 14px !important;gap:10px !important;}
+  .dup-banner-body{font-size:12px !important;}
+
+  /* Login page */
+  .login-forgot{font-size:12px;}
+
+  /* Better touch targets — minimum 40px height on key controls */
+  .btn-primary,.btn-action{min-height:44px;padding-top:12px;padding-bottom:12px;}
+  .btn-secondary{min-height:40px;}
+  input,select,textarea{min-height:42px;}
+
+  /* Theme toggle — smaller on mobile */
+  .theme-toggle{width:36px !important;height:36px !important;}
+
+  /* Result page charts/tables */
+  .result-actions{flex-direction:column !important;gap:8px !important;}
+  .result-actions button{width:100%;}
+}
+
+@media (max-width:480px){
+  /* Tiny phones — even tighter */
+  .app-header{padding:10px 14px;}
+  .app-header-logo{height:22px !important;}
+  .app-header-logo-divider{display:none;}
+  .app-header-badge{display:none;}
+  .app-user{gap:8px !important;}
+  .btn-password{padding:6px 10px !important;font-size:11px !important;}
+  .btn-password span,.btn-password::before{display:inline;}
+
+  .container{padding:16px 14px 100px;}
+  .page-title{font-size:24px !important;}
+
+  /* Nav buttons smaller */
+  .app-nav button{padding:10px 12px !important;font-size:11px !important;}
+  .app-nav svg{width:12px !important;height:12px !important;}
+
+  /* Form choice cards — single column */
+  .choice-grid{grid-template-columns:1fr !important;}
+
+  /* Modals take full viewport */
+  .pwd-modal-overlay{padding:0 !important;align-items:stretch !important;}
+  .pwd-modal{
+    max-height:100vh !important;
+    height:100vh;
+    border-radius:0 !important;
+    padding:20px 18px 16px !important;
+  }
+
+  /* Splash takes smaller */
+  .splash-brand{text-align:center;}
+  .splash-logo{flex-direction:column;gap:10px !important;}
+
+  /* Team super reset button in toolbar */
+  .team-toolbar{flex-direction:column;align-items:stretch;gap:8px;}
+  .team-toolbar button{width:100%;}
+  #reset-req-badge-wrap{margin-left:0 !important;width:100%;}
+  #reset-req-badge-wrap button{width:100%;}
+}
 </style>
 <!-- v21.8: Apply saved theme BEFORE body renders (prevents flash-of-light in dark mode) -->
 <script>
@@ -5499,7 +5649,7 @@ async function authCheckAgainstSheet(loginName,password){
     body:JSON.stringify({action:'auth_check',loginName:loginName,passwordHash:passwordHash})
   });
   const data=await resp.json();
-  if(data.status==='ok')return {ok:true,mustChange:data.mustChange===true,lastChanged:data.lastChanged};
+  if(data.status==='ok')return {ok:true,mustChange:data.mustChange===true,lastChanged:data.lastChanged,user:data.user};
   if(data.status==='not_found')throw new Error('User not set up. Ask admin to run auth_init.');
   if(data.status==='bad')throw new Error('Incorrect password.');
   throw new Error(data.message||'Authentication failed');
