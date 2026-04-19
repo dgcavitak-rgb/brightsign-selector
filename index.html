@@ -764,6 +764,22 @@ button{font-family:var(--sans);}
   cursor:pointer;transition:all 140ms;
 }
 .btn-print:hover{background:#047857;}
+/* v22.5: Email-to-partner button — indigo-violet to stand out from green Download */
+.btn-email{
+  background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%);
+  color:#fff;border:none;
+  padding:12px 22px;border-radius:10px;
+  font-family:var(--sans);
+  font-size:14px;line-height:1.3;font-weight:600;letter-spacing:-0.005em;
+  cursor:pointer;transition:all 180ms cubic-bezier(0.16,1,0.3,1);
+  box-shadow:0 2px 8px rgba(79,70,229,0.30);
+}
+.btn-email:hover{
+  transform:translateY(-1px);
+  box-shadow:0 6px 16px rgba(79,70,229,0.45);
+}
+.btn-email:active{transform:translateY(0);}
+.btn-email:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
 .btn-gold{
   background:var(--gold);color:#fff;border:none;
   padding:12px 22px;border-radius:10px;
@@ -2559,6 +2575,7 @@ input:focus,select:focus,textarea:focus{
 }
 .chart-v18-title-icon svg{width:13px;height:13px;}
 .ci-indigo{background:var(--grad-indigo);}
+.ci-violet{background:linear-gradient(135deg,#7C3AED 0%,#4338CA 100%);}
 .ci-emerald{background:var(--grad-emerald);}
 .ci-gold{background:var(--grad-gold);}
 .ci-rose{background:var(--grad-rose);}
@@ -2955,6 +2972,916 @@ input:focus,select:focus,textarea:focus{
   transition:all 140ms;
 }
 .log-entry:hover{border-color:rgba(99,102,241,0.2);box-shadow:var(--shadow-float);transform:translateY(-1px);}
+/* v22.2: Edit button for past entries (super-user only) */
+.log-edit-btn{
+  margin-top:8px;
+  padding:6px 12px;
+  font-family:var(--sans);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.04em;
+  background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%);
+  color:#FFFFFF;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  transition:all 0.22s cubic-bezier(0.16,1,0.3,1);
+  box-shadow:0 2px 6px rgba(79,70,229,0.25);
+  white-space:nowrap;
+}
+.log-edit-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(79,70,229,0.40);}
+.log-edit-btn:active{transform:translateY(0);}
+html[data-theme="dark"] .log-edit-btn{box-shadow:0 2px 8px rgba(0,0,0,0.35);}
+/* v22.3: Locked basic-info field styling (edit mode) */
+.locked-field{
+  background:var(--surface-2)!important;
+  color:var(--ink-muted)!important;
+  cursor:not-allowed!important;
+  border-color:var(--border-soft)!important;
+  opacity:0.75;
+  pointer-events:none;
+}
+.lock-icon{
+  display:inline-block;
+  margin-left:6px;
+  font-size:11px;
+  opacity:0.6;
+  vertical-align:middle;
+  filter:grayscale(0.3);
+}
+html[data-theme="dark"] .locked-field{
+  background:rgba(30,41,59,0.5)!important;
+  color:rgba(148,163,184,0.7)!important;
+}
+/* v22.3: Edit mode banner at top of form */
+.edit-banner{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 18px;
+  margin-bottom:20px;
+  background:linear-gradient(135deg,rgba(124,58,237,0.10) 0%,rgba(67,56,202,0.08) 100%);
+  border:1px solid rgba(124,58,237,0.25);
+  border-left:4px solid #7C3AED;
+  border-radius:10px;
+  font-family:var(--sans);
+  font-size:13px;
+  color:var(--ink);
+  animation:edit-banner-in 0.45s cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes edit-banner-in{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+.edit-banner-icon{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,#7C3AED 0%,#4338CA 100%);
+  color:#FFFFFF;font-weight:700;font-size:14px;flex-shrink:0;
+}
+.edit-banner strong{color:#7C3AED;font-family:var(--mono,monospace);font-weight:700;}
+.edit-banner button{
+  margin-left:auto;
+  padding:6px 14px;
+  font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:0.04em;
+  background:transparent;color:var(--ink-muted);
+  border:1px solid var(--border-soft);border-radius:6px;
+  cursor:pointer;transition:all 0.2s;
+}
+.edit-banner button:hover{background:var(--surface-2);color:var(--ink);}
+html[data-theme="dark"] .edit-banner{
+  background:linear-gradient(135deg,rgba(124,58,237,0.15) 0%,rgba(67,56,202,0.10) 100%);
+  border-color:rgba(124,58,237,0.35);
+}
+/* v22.6: Password management UI */
+.btn-password{
+  background:transparent;
+  color:var(--ink-muted);
+  border:1px solid var(--border-soft);
+  padding:8px 14px;
+  border-radius:8px;
+  font-family:var(--sans);
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 180ms;
+  margin-right:6px;
+}
+.btn-password:hover{
+  background:var(--surface-2);
+  color:var(--ink);
+  border-color:rgba(99,102,241,0.35);
+}
+html[data-theme="dark"] .btn-password{border-color:rgba(148,163,184,0.25);}
+html[data-theme="dark"] .btn-password:hover{background:rgba(99,102,241,0.12);}
+
+/* Password change modal overlay */
+.pwd-modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,0.70);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+  z-index:10000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  animation:pwd-fade-in 0.25s ease-out;
+}
+@keyframes pwd-fade-in{from{opacity:0;}to{opacity:1;}}
+.pwd-modal{
+  background:var(--surface-card);
+  border-radius:16px;
+  padding:28px 28px 22px;
+  max-width:440px;
+  width:100%;
+  box-shadow:0 20px 60px rgba(15,23,42,0.40);
+  animation:pwd-slide-in 0.35s cubic-bezier(0.16,1,0.3,1);
+  border:1px solid var(--border-soft);
+}
+@keyframes pwd-slide-in{
+  from{opacity:0;transform:translateY(20px) scale(0.96);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+html[data-theme="dark"] .pwd-modal{
+  background:#1E293B;
+  border-color:rgba(148,163,184,0.15);
+}
+.pwd-modal-title{
+  font-family:var(--sans);
+  font-size:20px;
+  font-weight:700;
+  color:var(--ink);
+  letter-spacing:-0.015em;
+  margin-bottom:6px;
+}
+.pwd-modal-subtitle{
+  font-family:var(--sans);
+  font-size:13px;
+  color:var(--ink-muted);
+  margin-bottom:22px;
+  line-height:1.5;
+}
+.pwd-field{margin-bottom:14px;}
+.pwd-field label{
+  display:block;
+  font-family:var(--sans);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  color:var(--ink-muted);
+  margin-bottom:6px;
+}
+.pwd-field input{
+  width:100%;
+  padding:10px 14px;
+  border:1px solid var(--border-soft);
+  border-radius:8px;
+  font-family:var(--sans);
+  font-size:14px;
+  color:var(--ink);
+  background:var(--surface);
+  transition:border-color 180ms,box-shadow 180ms;
+  box-sizing:border-box;
+}
+.pwd-field input:focus{
+  outline:none;
+  border-color:#7C3AED;
+  box-shadow:0 0 0 3px rgba(124,58,237,0.12);
+}
+html[data-theme="dark"] .pwd-field input{
+  background:rgba(15,23,42,0.7);
+  border-color:rgba(148,163,184,0.20);
+}
+.pwd-modal-error{
+  min-height:18px;
+  font-family:var(--sans);
+  font-size:12px;
+  font-weight:600;
+  color:#DC2626;
+  margin-bottom:10px;
+  padding:0 2px;
+}
+.pwd-modal-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:6px;
+}
+.pwd-modal-actions .btn-action,
+.pwd-modal-actions .btn-secondary{
+  padding:10px 18px;
+  font-size:13px;
+}
+
+/* v23: Profile & Team tab styling */
+.profile-card{
+  background:var(--surface-card);
+  border:1px solid var(--border-soft);
+  border-radius:16px;
+  padding:36px 28px 24px;
+  text-align:center;
+  max-width:460px;
+  margin:0 auto 20px;
+  box-shadow:var(--shadow-card);
+}
+html[data-theme="dark"] .profile-card{background:#1E293B;border-color:rgba(148,163,184,0.15);}
+.profile-avatar-large{
+  width:80px;height:80px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%);
+  color:#FFFFFF;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--sans);font-size:28px;font-weight:700;letter-spacing:-0.02em;
+  margin:0 auto 16px;
+  box-shadow:0 8px 24px rgba(79,70,229,0.35);
+}
+.profile-name{
+  font-family:var(--sans);font-size:22px;font-weight:700;color:var(--ink);
+  letter-spacing:-0.015em;margin-bottom:4px;
+}
+.profile-role{
+  font-family:var(--sans);font-size:13px;color:var(--ink-muted);margin-bottom:10px;
+}
+.profile-login-chip{
+  display:inline-block;
+  padding:4px 12px;
+  background:var(--surface-2);
+  color:var(--ink-subtle);
+  border-radius:12px;
+  font-family:var(--mono,monospace);
+  font-size:11px;
+  font-weight:600;
+}
+html[data-theme="dark"] .profile-login-chip{background:rgba(99,102,241,0.15);color:#C7D2FE;}
+
+.profile-edit-card{
+  background:var(--surface-card);
+  border:1px solid var(--border-soft);
+  border-radius:16px;
+  padding:24px 24px 20px;
+  max-width:560px;
+  margin:0 auto;
+  box-shadow:var(--shadow-card);
+}
+html[data-theme="dark"] .profile-edit-card{background:#1E293B;border-color:rgba(148,163,184,0.15);}
+.profile-section-title{
+  font-family:var(--sans);font-size:16px;font-weight:700;color:var(--ink);
+  letter-spacing:-0.01em;margin-bottom:4px;
+}
+.profile-section-subtitle{
+  font-family:var(--sans);font-size:12px;color:var(--ink-muted);margin-bottom:18px;
+}
+.profile-field{margin-bottom:14px;}
+.profile-field label{
+  display:block;
+  font-family:var(--sans);
+  font-size:11px;font-weight:700;letter-spacing:0.04em;
+  text-transform:uppercase;color:var(--ink-muted);
+  margin-bottom:6px;
+}
+.profile-field-lock{margin-left:4px;font-size:11px;opacity:0.6;}
+.profile-field input{
+  width:100%;
+  padding:10px 14px;
+  border:1px solid var(--border-soft);
+  border-radius:8px;
+  font-family:var(--sans);font-size:14px;color:var(--ink);
+  background:var(--surface);
+  transition:border-color 180ms,box-shadow 180ms;
+  box-sizing:border-box;
+}
+.profile-field input:focus{
+  outline:none;border-color:#7C3AED;
+  box-shadow:0 0 0 3px rgba(124,58,237,0.12);
+}
+html[data-theme="dark"] .profile-field input{
+  background:rgba(15,23,42,0.7);
+  border-color:rgba(148,163,184,0.20);
+}
+.profile-actions{
+  display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;
+}
+.profile-status{margin-top:12px;min-height:18px;}
+.profile-status .profile-ok{color:#10B981;font-size:13px;font-weight:600;}
+.profile-status .profile-err{color:#DC2626;font-size:13px;font-weight:600;}
+.profile-status .profile-info{color:var(--ink-muted);font-size:13px;}
+
+/* Team list (super-user) */
+.team-toolbar{
+  display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap;
+}
+.team-list{
+  background:var(--surface-card);
+  border:1px solid var(--border-soft);
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:var(--shadow-card);
+}
+html[data-theme="dark"] .team-list{background:#1E293B;border-color:rgba(148,163,184,0.15);}
+.team-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:16px 20px;
+  border-bottom:1px solid var(--border-soft);
+  flex-wrap:wrap;
+}
+.team-row:last-child{border-bottom:none;}
+.team-row:hover{background:var(--surface-2);}
+html[data-theme="dark"] .team-row:hover{background:rgba(99,102,241,0.06);}
+.team-row-left{display:flex;align-items:center;gap:14px;flex:1;min-width:260px;}
+.team-row-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.team-avatar{
+  width:44px;height:44px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%);
+  color:#FFFFFF;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--sans);font-size:14px;font-weight:700;
+  flex-shrink:0;
+}
+.team-ident{min-width:0;flex:1;}
+.team-name{
+  font-family:var(--sans);font-size:14px;font-weight:700;color:var(--ink);
+  letter-spacing:-0.01em;
+}
+.team-login{
+  font-family:var(--mono,monospace);font-size:11px;color:var(--ink-muted);
+  margin-top:2px;
+}
+.team-contact{
+  font-family:var(--sans);font-size:11px;color:var(--ink-subtle);
+  margin-top:4px;
+}
+.team-status{
+  display:inline-block;
+  padding:3px 10px;
+  border-radius:10px;
+  font-family:var(--sans);font-size:10px;font-weight:700;letter-spacing:0.05em;
+}
+.team-status.active{background:rgba(16,185,129,0.12);color:#047857;}
+.team-status.inactive{background:rgba(148,163,184,0.15);color:#64748B;}
+html[data-theme="dark"] .team-status.active{background:rgba(16,185,129,0.18);color:#6EE7B7;}
+html[data-theme="dark"] .team-status.inactive{background:rgba(100,116,139,0.25);color:#94A3B8;}
+.team-super-chip{
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:8px;
+  background:linear-gradient(135deg,#F59E0B 0%,#D97706 100%);
+  color:#FFFFFF;
+  font-family:var(--sans);font-size:9px;font-weight:700;letter-spacing:0.05em;
+  margin-left:6px;
+  vertical-align:middle;
+}
+.team-btn{
+  padding:6px 12px;
+  background:transparent;
+  color:var(--ink-muted);
+  border:1px solid var(--border-soft);
+  border-radius:8px;
+  font-family:var(--sans);font-size:12px;font-weight:600;
+  cursor:pointer;
+  transition:all 180ms;
+}
+.team-btn:hover{
+  background:var(--surface-2);
+  color:var(--ink);
+  border-color:rgba(99,102,241,0.35);
+}
+.team-btn.danger:hover{
+  background:rgba(220,38,38,0.08);
+  color:#DC2626;
+  border-color:rgba(220,38,38,0.35);
+}
+html[data-theme="dark"] .team-btn{border-color:rgba(148,163,184,0.22);}
+html[data-theme="dark"] .team-btn:hover{background:rgba(99,102,241,0.12);}
+
+.team-loading,
+.team-empty,
+.team-err{
+  padding:40px 20px;
+  text-align:center;
+  color:var(--ink-subtle);
+  font-family:var(--sans);
+  font-size:13px;
+}
+.team-err{color:#DC2626;}
+
+/* Small screen: team rows stack */
+@media (max-width:640px){
+  .team-row{flex-direction:column;align-items:stretch;}
+  .team-row-right{justify-content:flex-start;}
+}
+
+/* v24: Edit modal uses same pwd-modal classes but allow wider for more fields */
+#team-modal .pwd-modal select{
+  width:100%;
+  padding:10px 14px;
+  border:1px solid var(--border-soft);
+  border-radius:8px;
+  font-family:var(--sans);font-size:14px;color:var(--ink);
+  background:var(--surface);
+  box-sizing:border-box;
+}
+html[data-theme="dark"] #team-modal .pwd-modal select{
+  background:rgba(15,23,42,0.7);
+  border-color:rgba(148,163,184,0.20);
+}
+
+/* v24: Last-login line on Team row */
+.team-lastlogin{
+  font-family:var(--sans);font-size:10px;color:var(--ink-subtle);
+  margin-top:4px;opacity:0.85;
+}
+.team-lastlogin strong{color:var(--ink-muted);font-weight:600;}
+
+/* v24: Webhook health banner (fixed at top of page) */
+.webhook-banner{
+  position:fixed;
+  top:0;left:0;right:0;
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 20px;
+  font-family:var(--sans);
+  font-size:13px;
+  font-weight:500;
+  box-shadow:0 2px 10px rgba(0,0,0,0.08);
+  animation:webhook-slide-in 0.3s ease-out;
+}
+@keyframes webhook-slide-in{
+  from{transform:translateY(-100%);}
+  to{transform:translateY(0);}
+}
+.webhook-banner.webhook-err{
+  background:linear-gradient(90deg,#FEE2E2 0%,#FECACA 100%);
+  color:#991B1B;
+  border-bottom:2px solid #DC2626;
+}
+.webhook-banner.webhook-warn{
+  background:linear-gradient(90deg,#FEF3C7 0%,#FDE68A 100%);
+  color:#92400E;
+  border-bottom:2px solid #D97706;
+}
+html[data-theme="dark"] .webhook-banner.webhook-err{
+  background:linear-gradient(90deg,rgba(220,38,38,0.18) 0%,rgba(220,38,38,0.10) 100%);
+  color:#FCA5A5;
+}
+html[data-theme="dark"] .webhook-banner.webhook-warn{
+  background:linear-gradient(90deg,rgba(217,119,6,0.18) 0%,rgba(217,119,6,0.10) 100%);
+  color:#FCD34D;
+}
+.webhook-banner-icon{
+  font-size:18px;
+  line-height:1;
+  flex-shrink:0;
+}
+.webhook-banner-close{
+  background:transparent;
+  border:none;
+  font-size:22px;
+  line-height:1;
+  cursor:pointer;
+  color:inherit;
+  opacity:0.7;
+  margin-left:auto;
+  padding:0 6px;
+  border-radius:4px;
+}
+.webhook-banner-close:hover{opacity:1;background:rgba(0,0,0,0.08);}
+
+/* v24.2.1: Password reset request section */
+.reset-req-badge-btn{
+  background:linear-gradient(135deg,#DC2626 0%,#B91C1C 100%) !important;
+  color:#FFFFFF !important;
+  border:none !important;
+  font-weight:700 !important;
+  box-shadow:0 2px 8px rgba(220,38,38,0.30);
+  animation:reset-badge-pulse 2.2s ease-in-out infinite;
+}
+.reset-req-badge-btn:hover{
+  background:linear-gradient(135deg,#B91C1C 0%,#991B1B 100%) !important;
+  transform:translateY(-1px);
+}
+@keyframes reset-badge-pulse{
+  0%,100%{box-shadow:0 2px 8px rgba(220,38,38,0.30);}
+  50%{box-shadow:0 4px 14px rgba(220,38,38,0.55);}
+}
+
+.reset-req-section{
+  background:linear-gradient(135deg,#FEF2F2 0%,#FEE2E2 100%);
+  border:1px solid #FCA5A5;
+  border-left:4px solid #DC2626;
+  border-radius:12px;
+  padding:18px 20px;
+  margin-bottom:20px;
+}
+html[data-theme="dark"] .reset-req-section{
+  background:linear-gradient(135deg,rgba(220,38,38,0.12) 0%,rgba(220,38,38,0.06) 100%);
+  border-color:rgba(220,38,38,0.45);
+}
+.reset-req-head{
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+  margin-bottom:14px;
+  padding-bottom:14px;
+  border-bottom:1px solid rgba(220,38,38,0.25);
+}
+.reset-req-head-icon{
+  font-size:22px;
+  line-height:1;
+  flex-shrink:0;
+}
+.reset-req-head-title{
+  font-family:var(--sans);
+  font-size:15px;
+  font-weight:700;
+  color:#991B1B;
+  letter-spacing:-0.01em;
+}
+html[data-theme="dark"] .reset-req-head-title{color:#FCA5A5;}
+.reset-req-head-sub{
+  font-family:var(--sans);
+  font-size:12px;
+  color:#991B1B;
+  opacity:0.85;
+  margin-top:3px;
+}
+html[data-theme="dark"] .reset-req-head-sub{color:#FECACA;}
+
+.reset-req-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:12px 14px;
+  background:#FFFFFF;
+  border-radius:10px;
+  margin-bottom:8px;
+  flex-wrap:wrap;
+}
+.reset-req-row:last-child{margin-bottom:0;}
+html[data-theme="dark"] .reset-req-row{background:rgba(15,23,42,0.50);}
+
+.reset-req-row.resolved{
+  background:transparent;
+  border:1px dashed var(--border-soft);
+  padding:10px 14px;
+}
+html[data-theme="dark"] .reset-req-row.resolved{border-color:rgba(148,163,184,0.20);}
+
+.reset-req-body{flex:1;min-width:200px;}
+.reset-req-name{
+  font-family:var(--sans);
+  font-size:14px;
+  font-weight:700;
+  color:var(--ink);
+  letter-spacing:-0.01em;
+}
+.reset-req-login{
+  font-family:var(--mono,monospace);
+  font-size:11px;
+  font-weight:600;
+  color:var(--ink-muted);
+  margin-left:6px;
+}
+.reset-req-meta{
+  font-family:var(--sans);
+  font-size:11px;
+  color:var(--ink-muted);
+  margin-top:3px;
+}
+.reset-req-meta strong{color:var(--ink);font-weight:600;}
+.reset-req-reason{
+  font-family:var(--sans);
+  font-size:12px;
+  color:var(--ink-muted);
+  font-style:italic;
+  margin-top:6px;
+  padding-left:8px;
+  border-left:2px solid var(--border-soft);
+}
+.reset-req-actions{
+  display:flex;
+  gap:8px;
+  flex-shrink:0;
+}
+
+.reset-req-status{
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:8px;
+  font-family:var(--sans);
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:0.05em;
+  margin-left:8px;
+  vertical-align:middle;
+}
+.reset-req-status.approved{background:rgba(16,185,129,0.15);color:#047857;}
+.reset-req-status.denied{background:rgba(148,163,184,0.18);color:#475569;}
+html[data-theme="dark"] .reset-req-status.approved{background:rgba(16,185,129,0.20);color:#6EE7B7;}
+html[data-theme="dark"] .reset-req-status.denied{background:rgba(100,116,139,0.25);color:#94A3B8;}
+
+.reset-req-resolved-wrap{margin-top:18px;}
+.reset-req-resolved-head{
+  cursor:pointer;
+  padding:10px 0;
+  font-family:var(--sans);
+  font-size:12px;
+  font-weight:600;
+  color:var(--ink-muted);
+  letter-spacing:0.02em;
+  user-select:none;
+}
+.reset-req-resolved-head:hover{color:var(--ink);}
+
+@media (max-width:640px){
+  .reset-req-row{flex-direction:column;align-items:stretch;}
+  .reset-req-actions{justify-content:stretch;}
+  .reset-req-actions .team-btn{flex:1;}
+}
+
+/* v24.2: Login "Forgot password?" link */
+.login-forgot{
+  text-align:center;
+  margin-top:14px;
+  font-family:var(--sans);
+  font-size:13px;
+}
+.login-forgot a{
+  color:var(--ink-muted);
+  text-decoration:none;
+  font-weight:500;
+  border-bottom:1px dashed transparent;
+  transition:border-color 180ms,color 180ms;
+}
+.login-forgot a:hover{
+  color:#7C3AED;
+  border-bottom-color:rgba(124,58,237,0.45);
+}
+
+/* v24.2: Branded login splash screen */
+.login-splash{
+  position:fixed;
+  inset:0;
+  z-index:9998;
+  background:linear-gradient(135deg,#1E1B4B 0%,#312E81 45%,#4338CA 100%);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:40px 20px;
+  animation:splash-fade-in 0.25s ease-out;
+}
+.login-splash.show{display:flex;}
+@keyframes splash-fade-in{from{opacity:0;}to{opacity:1;}}
+.splash-inner{
+  max-width:420px;
+  width:100%;
+  text-align:center;
+  color:#FFFFFF;
+}
+.splash-logo{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  margin-bottom:36px;
+  animation:splash-logo-in 0.5s cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes splash-logo-in{
+  from{opacity:0;transform:translateY(-8px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.splash-logo-mark{
+  width:64px;height:64px;
+  border-radius:14px;
+  background:rgba(255,255,255,0.10);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,0.20);
+  display:flex;align-items:center;justify-content:center;
+  color:#C7D2FE;
+  flex-shrink:0;
+}
+.splash-logo-mark svg{width:36px;height:36px;}
+.splash-brand{text-align:left;}
+.splash-brand-name{
+  font-family:var(--sans);
+  font-size:28px;
+  font-weight:800;
+  letter-spacing:-0.02em;
+  line-height:1;
+}
+.splash-brand-sub{
+  font-family:var(--sans);
+  font-size:13px;
+  font-weight:500;
+  color:#C7D2FE;
+  letter-spacing:0.01em;
+  margin-top:6px;
+}
+.splash-step{
+  font-family:var(--sans);
+  font-size:15px;
+  font-weight:500;
+  color:#C7D2FE;
+  margin-bottom:18px;
+  min-height:22px;
+  transition:opacity 0.3s;
+}
+.splash-progress{
+  width:100%;
+  max-width:280px;
+  height:4px;
+  margin:0 auto 32px;
+  background:rgba(255,255,255,0.12);
+  border-radius:999px;
+  overflow:hidden;
+}
+.splash-progress-bar{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#7C3AED 0%,#A78BFA 50%,#C7D2FE 100%);
+  border-radius:999px;
+  transition:width 0.45s cubic-bezier(0.4,0,0.2,1);
+  box-shadow:0 0 12px rgba(167,139,250,0.5);
+}
+.splash-tagline{
+  font-family:var(--sans);
+  font-size:12px;
+  font-style:italic;
+  color:rgba(199,210,254,0.75);
+  letter-spacing:0.02em;
+}
+
+/* v24.2: History tab search bar */
+.history-search-wrap{
+  margin-bottom:18px;
+}
+.history-search{
+  position:relative;
+  display:flex;
+  align-items:center;
+  background:var(--surface-card);
+  border:1px solid var(--border-soft);
+  border-radius:12px;
+  padding:2px 2px 2px 14px;
+  transition:border-color 180ms,box-shadow 180ms;
+  box-shadow:var(--shadow-card);
+}
+.history-search:focus-within{
+  border-color:#7C3AED;
+  box-shadow:0 0 0 3px rgba(124,58,237,0.12);
+}
+html[data-theme="dark"] .history-search{
+  background:#1E293B;
+  border-color:rgba(148,163,184,0.18);
+}
+.history-search-icon{
+  width:18px;height:18px;
+  color:var(--ink-muted);
+  flex-shrink:0;
+  margin-right:10px;
+}
+.history-search input{
+  flex:1;
+  background:transparent;
+  border:none;
+  outline:none;
+  padding:12px 8px;
+  font-family:var(--sans);
+  font-size:14px;
+  color:var(--ink);
+}
+.history-search input::placeholder{
+  color:var(--ink-subtle);
+  opacity:0.8;
+}
+.history-search-clear{
+  background:var(--surface-2);
+  border:none;
+  color:var(--ink-muted);
+  width:32px;height:32px;
+  border-radius:8px;
+  font-size:22px;
+  line-height:1;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:background 180ms,color 180ms;
+  flex-shrink:0;
+  margin-right:4px;
+}
+.history-search-clear:hover{
+  background:rgba(124,58,237,0.12);
+  color:#7C3AED;
+}
+html[data-theme="dark"] .history-search-clear{
+  background:rgba(148,163,184,0.12);
+}
+.history-search-count{
+  margin-top:8px;
+  padding-left:14px;
+  font-family:var(--sans);
+  font-size:12px;
+  font-weight:600;
+  color:var(--ink-muted);
+}
+
+/* v24: Duplicate project inline banner */
+.dup-banner{
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+  padding:14px 18px;
+  margin-bottom:18px;
+  background:linear-gradient(135deg,#FEF3C7 0%,#FDE68A 100%);
+  border:1px solid #F59E0B;
+  border-left:4px solid #D97706;
+  border-radius:10px;
+  font-family:var(--sans);
+  animation:dup-fade-in 0.3s ease-out;
+}
+@keyframes dup-fade-in{
+  from{opacity:0;transform:translateY(-4px);}
+  to{opacity:1;transform:translateY(0);}
+}
+html[data-theme="dark"] .dup-banner{
+  background:linear-gradient(135deg,rgba(217,119,6,0.18) 0%,rgba(217,119,6,0.08) 100%);
+  border-color:rgba(217,119,6,0.50);
+}
+.dup-banner-icon{
+  font-size:22px;
+  line-height:1;
+  flex-shrink:0;
+  color:#D97706;
+}
+html[data-theme="dark"] .dup-banner-icon{color:#FCD34D;}
+.dup-banner-body{
+  flex:1;
+  font-size:13px;
+  color:#92400E;
+  line-height:1.5;
+}
+html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
+.dup-banner-body strong{font-weight:700;}
+.dup-banner-hint{
+  margin-top:6px;
+  font-size:11px;
+  opacity:0.85;
+  font-weight:500;
+}
+.dup-banner-action{flex-shrink:0;}
+.dup-banner-link{
+  padding:8px 14px;
+  background:#D97706;
+  color:#FFFFFF;
+  border:none;
+  border-radius:8px;
+  font-family:var(--sans);
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  transition:background 180ms,transform 180ms;
+  white-space:nowrap;
+}
+.dup-banner-link:hover{background:#B45309;transform:translateY(-1px);}
+.dup-banner-link:active{transform:translateY(0);}
+
+@media (max-width:640px){
+  .dup-banner{flex-direction:column;}
+  .dup-banner-action{align-self:stretch;}
+  .dup-banner-link{width:100%;}
+}
+/* v22.4: Pending sync badge on History tab */
+.pending-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-left:6px;
+  min-width:18px;
+  height:18px;
+  padding:0 5px;
+  background:linear-gradient(135deg,#DC2626 0%,#B91C1C 100%);
+  color:#FFFFFF;
+  font-family:var(--sans);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:0;
+  border-radius:9px;
+  box-shadow:0 2px 6px rgba(220,38,38,0.35);
+  animation:pending-pulse 2s ease-in-out infinite;
+  vertical-align:middle;
+}
+@keyframes pending-pulse{
+  0%,100%{box-shadow:0 2px 6px rgba(220,38,38,0.35),0 0 0 0 rgba(220,38,38,0.4);}
+  50%{box-shadow:0 2px 6px rgba(220,38,38,0.5),0 0 0 4px rgba(220,38,38,0);}
+}
 .log-date{
   font-family:var(--mono);
   font-size:var(--fs-meta);
@@ -3146,12 +4073,38 @@ input:focus,select:focus,textarea:focus{
     </div>
     <button class="btn-primary" onclick="handleLogin()">Sign in →</button>
     <div id="login-error" class="error-msg"></div>
+    <div class="login-forgot"><a href="#" onclick="event.preventDefault();showForgotPasswordModal();">Forgot password?</a></div>
   </div>
   <div class="login-footer">Dipenkumar Gajjar · National Product Manager · +91 8160 756 906 · dipen.g@cavitak.com</div>
 </div>
 
 <!-- APP -->
 <div id="page-app" class="page">
+<!-- v24.2: Branded loading splash shown during login transition -->
+<div id="login-splash" class="login-splash">
+  <div class="splash-inner">
+    <div class="splash-logo">
+      <div class="splash-logo-mark">
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="6" y="10" width="36" height="28" rx="3"/>
+          <path d="M6 18h36"/>
+          <circle cx="11" cy="14" r="1" fill="currentColor"/>
+          <circle cx="15" cy="14" r="1" fill="currentColor"/>
+          <path d="M14 26h20M14 30h14"/>
+        </svg>
+      </div>
+      <div class="splash-brand">
+        <div class="splash-brand-name">BrightSign</div>
+        <div class="splash-brand-sub">Product Selector</div>
+      </div>
+    </div>
+    <div class="splash-step" id="splash-step">Signing in…</div>
+    <div class="splash-progress">
+      <div class="splash-progress-bar" id="splash-progress-bar"></div>
+    </div>
+    <div class="splash-tagline">Signage that performs, effortlessly.</div>
+  </div>
+</div>
   <div class="app-header">
     <div class="app-logo">
       <div class="app-header-logo-wrap">
@@ -3173,6 +4126,7 @@ input:focus,select:focus,textarea:focus{
         <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       </button>
       <div class="app-user-avatar" id="user-avatar">?</div>
+      <button class="btn-password" onclick="showChangePasswordModal(false)" title="Change your password">🔑 Password</button>
       <button onclick="handleLogout()">Sign out</button>
     </div>
   </div>
@@ -3188,6 +4142,14 @@ input:focus,select:focus,textarea:focus{
     <button id="tab-log" onclick="showTab('log')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       <span id="log-tab-label">History</span>
+    </button>
+    <button id="tab-dashboard" onclick="showTab('dashboard')" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+      <span id="dashboard-tab-label">Dashboard</span>
+    </button>
+    <button id="tab-team" onclick="showTab('team')" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span id="team-tab-label">Profile</span>
     </button>
   </div>
 
@@ -3207,8 +4169,9 @@ input:focus,select:focus,textarea:focus{
 
       <div class="form-section">
         <div class="section-head"><div class="section-num">01</div><div><div class="section-title">Project context</div></div></div>
+        <div id="dup-project-banner" class="dup-banner" style="display:none;"></div>
         <div class="spec-grid two-col">
-          <div class="form-group" style="margin:0;"><label>Project name<span class="req">*</span></label><input type="text" id="f-project" placeholder="e.g. Retail flagship — Chennai"></div>
+          <div class="form-group" style="margin:0;"><label>Project name<span class="req">*</span></label><input type="text" id="f-project" placeholder="e.g. Retail flagship — Chennai" oninput="checkDuplicateProject()"></div>
           <div class="form-group" style="margin:0;"><label>End-user / Client<span class="req">*</span></label><input type="text" id="f-enduser" placeholder="e.g. Reliance Retail"></div>
           <div class="form-group" style="margin:0;"><label>Venue / Location<span class="req">*</span></label><input type="text" id="f-venue" placeholder="e.g. Phoenix Marketcity"></div>
           <div class="form-group" style="margin:0;"><label>Partner / SI<span class="req">*</span></label><input type="text" id="f-partner" placeholder="e.g. Inviot AV Solutions"></div>
@@ -3226,7 +4189,7 @@ input:focus,select:focus,textarea:focus{
         <div class="section-head"><div class="section-num">02</div><div><div class="section-title">Deployment & budget</div></div></div>
         <div class="spec-grid three-col" style="margin-bottom:24px;">
           <div class="field"><label class="field-label">Number of players<span class="req">*</span></label><div class="number-input"><button onclick="adjustQty(-1)">−</button><input type="number" id="f-qty" value="1" min="1" max="10000"><button onclick="adjustQty(1)">+</button></div><div id="mixed-qty-wrap" style="display:none;margin-top:10px;padding:12px 14px;background:var(--surface-2);border-radius:10px;border:1px dashed var(--border-strong);"><div style="font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:8px;">Split for mixed deployment</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px;">Indoor qty</div><input type="number" id="f-qty-indoor" value="0" min="0" max="10000" style="width:100%;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;"></div><div><div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px;">Outdoor qty</div><input type="number" id="f-qty-outdoor" value="0" min="0" max="10000" style="width:100%;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;"></div></div><div style="font-size:11px;color:var(--ink-subtle);margin-top:6px;">Total above auto-updates to Indoor + Outdoor</div></div></div>
-          <div class="field"><label class="field-label">Environment<span class="req">*</span></label>
+          <div class="field"><label class="field-label">Deployment type<span class="req">*</span></label>
             <div class="choice-grid" data-input="environment">
               <button class="choice-card" data-v="indoor"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="choice-card-name">Indoor</span><span class="choice-card-sub">Standard signage</span></button>
               <button class="choice-card" data-v="outdoor"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg><span class="choice-card-name">Outdoor</span><span class="choice-card-sub">Enclosure required</span></button>
@@ -3346,6 +4309,7 @@ input:focus,select:focus,textarea:focus{
       <button class="btn-secondary" onclick="backToForm()">← Back</button>
       <button class="btn-action" onclick="confirmSelection()">Confirm ✓</button>
       <button class="btn-print" onclick="downloadQuoteExcel()">Download Excel ↓</button>
+      <button class="btn-email" onclick="emailQuoteToPartner()" title="Email Excel quote to partner with CC to Cavitak">✉ Email to partner</button>
     </div>
   </div>
 
@@ -3353,6 +4317,38 @@ input:focus,select:focus,textarea:focus{
     <div class="container">
       <div class="page-header"><div class="page-eyebrow">History</div><div class="page-title" id="log-page-title">Selection history</div><div class="page-subtitle" id="log-page-subtitle">All past recommendations.</div></div>
 
+      <!-- v24.2: Search bar — filters visible entries as you type -->
+      <div id="history-search-wrap" class="history-search-wrap" style="display:none;">
+        <div class="history-search">
+          <svg class="history-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="history-search-input" placeholder="Search projects, end-users, venues, partners, cities, models, users…" oninput="applyHistorySearch()" autocomplete="off">
+          <button class="history-search-clear" id="history-search-clear" onclick="clearHistorySearch()" style="display:none;" title="Clear search">×</button>
+        </div>
+        <div class="history-search-count" id="history-search-count"></div>
+      </div>
+
+      <div id="super-dashboard" style="display:none;"></div>
+      <div id="log-content"></div>
+    </div>
+    <div class="action-bar" id="log-action-bar" style="display:none;">
+      <button class="btn-secondary" onclick="refreshLog()">↻ Refresh</button>
+      <button class="btn-secondary" id="manual-sync-btn" onclick="manualSync()" title="Retry any pending entries that haven't synced to the central sheet">⟳ Sync now</button>
+      <button class="btn-secondary" id="super-reset-btn" onclick="superResetUserPassword()" style="display:none;" title="Reset another user's password to the default">🔑 Reset user password</button>
+      <button class="btn-gold" id="export-btn" onclick="exportCSV()" style="display:none;">Export CSV</button>
+      <button class="btn-secondary" onclick="clearLog()">Clear</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- v23.1: Dashboard section (split out from History) — super-user sees all-team, regular users see own -->
+<div id="section-dashboard" style="display:none;">
+  <div class="container">
+    <div class="page-header">
+      <div class="page-eyebrow" id="dashboard-page-eyebrow">Dashboard</div>
+      <div class="page-title" id="dashboard-page-title">Analytics</div>
+      <div class="page-subtitle" id="dashboard-page-subtitle">Live view of your recommendations, conversion funnel, and product demand.</div>
+    </div>
       <!-- v18 Premium Dashboard: hero + KPI strip + filter + 7 charts -->
       <div id="super-charts" class="dashboard-v18" style="display:none;">
         <!-- Hero header with live pulse and gradient mesh -->
@@ -3400,6 +4396,15 @@ input:focus,select:focus,textarea:focus{
 
       <!-- v18: Premium filter bar -->
       <div id="filter-bar" class="filter-bar filter-bar-v18" style="display:none;">
+        <div class="filter-field">
+          <div class="filter-label">Date range</div>
+          <select id="flt-daterange" class="filter-select" onchange="applyFilters()">
+            <option value="all">All time</option>
+            <option value="30d">Last 30 days</option>
+            <option value="quarter">Last quarter (90d)</option>
+            <option value="year">Last year</option>
+          </select>
+        </div>
         <div class="filter-field">
           <div class="filter-label">State / Region</div>
           <select id="flt-city" class="filter-select" onchange="applyFilters()"><option value="">All</option></select>
@@ -3489,16 +4494,39 @@ input:focus,select:focus,textarea:focus{
             <div class="chart-v18-body"><canvas id="chart-activity"></canvas></div>
           </div>
         </div>
+
+        <!-- Row 4: Product Demand (v22.1) -->
+        <div class="dash-section-head"><div class="dash-section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3h18v18H3z"/><path d="M9 17V7"/><path d="M13 17v-5"/><path d="M17 17V9"/></svg></div><div class="dash-section-title">Product Demand</div><div class="dash-section-line"></div></div>
+        <div class="charts-row-2">
+          <div class="chart-card-v18">
+            <div class="chart-v18-head">
+              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-indigo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>Model Demand</div>
+            </div>
+            <div class="chart-v18-subtitle">Most-recommended models · ranked by selections</div>
+            <div class="chart-v18-body" style="height:320px;"><canvas id="chart-models"></canvas></div>
+          </div>
+          <div class="chart-card-v18">
+            <div class="chart-v18-head">
+              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>Top Models · Monthly</div>
+            </div>
+            <div class="chart-v18-subtitle">Demand pattern for top 3 models · last 6 months</div>
+            <div class="chart-v18-body" style="height:320px;"><canvas id="chart-models-timeline"></canvas></div>
+          </div>
+        </div>
       </div>
 
-      <div id="super-dashboard" style="display:none;"></div>
-      <div id="log-content"></div>
+  </div>
+</div>
+
+<!-- v23: Profile (regular users) / Team (super-user) section -->
+<div id="section-team" style="display:none;">
+  <div class="container">
+    <div class="page-header">
+      <div class="page-eyebrow" id="team-page-eyebrow">Profile</div>
+      <div class="page-title" id="team-page-title">Your profile</div>
+      <div class="page-subtitle" id="team-page-subtitle">Manage your contact details and password.</div>
     </div>
-    <div class="action-bar" id="log-action-bar" style="display:none;">
-      <button class="btn-secondary" onclick="refreshLog()">↻ Refresh</button>
-      <button class="btn-gold" id="export-btn" onclick="exportCSV()" style="display:none;">Export CSV</button>
-      <button class="btn-secondary" onclick="clearLog()">Clear</button>
-    </div>
+    <div id="team-content"><!-- Rendered by renderTeamTab() --></div>
   </div>
 </div>
 
@@ -3520,21 +4548,17 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
    USER ALLOWLIST (first-name login, case-insensitive)
    Change passwords here if needed.
 ================================================================ */
+/* v23: USERS config is now a MINIMAL offline fallback for super-user only.
+   Full user roster (names, roles, emails, phones, passwords) lives in the Sheet's Users tab.
+   handleLogin fetches user record from Sheet on each login. If webhook is unreachable,
+   only the super-user can fall back to this hardcoded entry. */
 const USERS = {
-  'dipenkumar': {fullName:'Dipenkumar Gajjar', role:'National Product Manager', password:'cavitak@27052142', isSuper:true},
-  'mohit':      {fullName:'Mohit Chaturvedi',  role:'Presales',                  password:'cavitak@123', isSuper:false},
-  'vipul':      {fullName:'Vipul Parihar',     role:'Presales (dvLED)',          password:'cavitak@123', isSuper:false},
-  'hritika':    {fullName:'Hritika Shinde',    role:'Sales',                     password:'cavitak@123', isSuper:false},
-  'ranjith':    {fullName:'Ranjith Sr',        role:'Presales',                  password:'cavitak@123', isSuper:false},
-  'rahuljain':  {fullName:'Rahul Jain',         role:'Presales',                  password:'cavitak@123', isSuper:false},
-  'sachchi':    {fullName:'Sachchi Kaushik',   role:'Sales',                     password:'cavitak@123', isSuper:false},
-  'ashish':     {fullName:'Ashish Malshe',     role:'Sales',                     password:'cavitak@123', isSuper:false},
-  'rahul':      {fullName:'Rahul Soyanter',    role:'Support',                   password:'cavitak@123', isSuper:false},
-  'nikul':      {fullName:'Nikul Suthar',      role:'Support',                   password:'cavitak@123', isSuper:false},
-  'jenish':     {fullName:'Jenish Patel',      role:'Support',                   password:'cavitak@123', isSuper:false},
-  'rushang':    {fullName:'Rushang Mahale',    role:'Support',                   password:'cavitak@123', isSuper:false},
-  'hardik':     {fullName:'Hardik Barot',      role:'Support',                   password:'cavitak@123', isSuper:false}
+  'dipenkumar': {fullName:'Dipenkumar Gajjar', role:'National Product Manager', password:'cavitak@27052142', isSuper:true}
 };
+// v23: In-memory cache of all users, populated after super-user login (used for Team tab)
+window._allUsers = [];
+// v23: Current session's full user record from Sheet (includes email, phone, etc.)
+window._sessionUser = null;
 
 /* ================================================================
    CATALOGUE — strict 12-point price rank (low → high)
@@ -4443,32 +5467,936 @@ function toggleTheme(){
   }catch(e){/* silent */}
 })();
 
-function handleLogin(){
+/* v22.6: Client-side SHA-256 using Web Crypto API */
+async function sha256Hex(str){
+  const buf=new TextEncoder().encode(str);
+  const digest=await crypto.subtle.digest('SHA-256',buf);
+  return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+/* v22.6: Sheet-backed auth check. Returns { ok, mustChange } or throws. */
+async function authCheckAgainstSheet(loginName,password){
+  if(!WEBHOOK_URL)throw new Error('Webhook not configured');
+  const passwordHash=await sha256Hex(password);
+  const resp=await fetch(WEBHOOK_URL,{
+    method:'POST',
+    mode:'cors',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'auth_check',loginName:loginName,passwordHash:passwordHash})
+  });
+  const data=await resp.json();
+  if(data.status==='ok')return {ok:true,mustChange:data.mustChange===true,lastChanged:data.lastChanged};
+  if(data.status==='not_found')throw new Error('User not set up. Ask admin to run auth_init.');
+  if(data.status==='bad')throw new Error('Incorrect password.');
+  throw new Error(data.message||'Authentication failed');
+}
+
+/* v22.6: Offline fallback for super-user only — if Sheet unreachable, super can still use hardcoded password */
+async function authCheckOfflineSuper(loginName,password){
+  const user=USERS[loginName];
+  if(!user||!user.isSuper)return null;
+  if(user.password && user.password===password){
+    return {ok:true,mustChange:false,offline:true};
+  }
+  return null;
+}
+
+async function handleLogin(){
   const name=document.getElementById('login-name').value.trim().toLowerCase();
   const password=document.getElementById('login-password').value;
   const err=document.getElementById('login-error');
   if(!name||!password){err.textContent='Please enter both name and password.';err.classList.add('show');return;}
-  const user=USERS[name];
-  if(!user){err.textContent='Access denied. This name is not on the allowlist.';err.classList.add('show');return;}
-  if(user.password!==password){err.textContent='Incorrect password.';err.classList.add('show');return;}
+
+  // v23: Allow any login that Sheet accepts. We no longer pre-validate against HTML USERS config
+  // (except for super-user offline fallback below).
+
+  // Show loading state
   err.classList.remove('show');
-  state.user={loginName:name,fullName:user.fullName,role:user.role,isSuper:user.isSuper,loginAt:new Date().toISOString()};
-  const nameEl=document.getElementById('user-label-name');
-  nameEl.innerHTML=user.fullName+(user.isSuper?' <span class="super-pill">Super</span>':'');
-  document.getElementById('user-label-role').textContent=user.role;
-  const initials=user.fullName.split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase();
-  const avatar=document.getElementById('user-avatar');
-  avatar.textContent=initials;
-  avatar.classList.toggle('super',user.isSuper);
-  document.getElementById('log-tab-label').textContent=user.isSuper?'All team':'My history';
-  document.getElementById('page-login').classList.remove('active');
-  document.getElementById('page-app').classList.add('active');
-  renderLog();
-  // v21.6: Start 10-minute hard session timer for regular users. Super-users stay logged in indefinitely.
-  startSessionTimer();
+  const submitBtn=document.querySelector('#page-login .btn-primary');
+  if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='Signing in…';}
+
+  try{
+    let authResult=null;
+    let userRecord=null;
+    try{
+      authResult=await authCheckAgainstSheet(name,password);
+      userRecord=authResult.user;  // v23: Sheet returns full user record
+    }catch(netErr){
+      console.warn('Auth webhook failed, trying offline super fallback:',netErr.message);
+      authResult=await authCheckOfflineSuper(name,password);
+      if(!authResult){
+        err.textContent=netErr.message||'Auth failed. Check internet.';
+        err.classList.add('show');
+        if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Sign in →';}
+        return;
+      }
+      // Build minimal user record from USERS fallback
+      const fallback=USERS[name];
+      userRecord=fallback?{loginName:name,fullName:fallback.fullName,role:fallback.role,isSuper:fallback.isSuper,email:'',phone:'',isActive:true}:null;
+    }
+
+    if(!authResult||!authResult.ok||!userRecord){
+      err.textContent='Incorrect password or user not set up.';
+      err.classList.add('show');
+      if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Sign in →';}
+      return;
+    }
+
+    // v23: Build session from Sheet record (source of truth)
+    state.user={
+      loginName:userRecord.loginName||name,
+      fullName:userRecord.fullName||name,
+      role:userRecord.role||'',
+      isSuper:userRecord.isSuper===true,
+      email:userRecord.email||'',
+      phone:userRecord.phone||'',
+      loginAt:new Date().toISOString(),
+      offlineAuth:authResult.offline===true
+    };
+    window._sessionUser=userRecord;
+    window._sessionPassword=password;
+
+    const nameEl=document.getElementById('user-label-name');
+    nameEl.innerHTML=state.user.fullName+(state.user.isSuper?' <span class="super-pill">Super</span>':'');
+    document.getElementById('user-label-role').textContent=state.user.role;
+    const initials=(state.user.fullName||name).split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase();
+    const avatar=document.getElementById('user-avatar');
+    avatar.textContent=initials;
+    avatar.classList.toggle('super',state.user.isSuper);
+    document.getElementById('log-tab-label').textContent=state.user.isSuper?'All team':'My history';
+    // v23: Show Profile/Team tab label
+    const teamTab=document.getElementById('tab-team');
+    const teamTabLabel=document.getElementById('team-tab-label');
+    if(teamTab){teamTab.style.display='inline-flex';}
+    if(teamTabLabel){teamTabLabel.textContent=state.user.isSuper?'Team':'Profile';}
+    // v23.1: Show Dashboard tab for all users (content differs by role)
+    const dashTab=document.getElementById('tab-dashboard');
+    if(dashTab){dashTab.style.display='inline-flex';}
+
+    document.getElementById('page-login').classList.remove('active');
+    document.getElementById('page-app').classList.add('active');
+    if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Sign in →';}
+
+    // v24.2: Branded splash screen — show immediately, progress through steps
+    showLoginSplash();
+    updateLoginSplash(20,'Signing in ✓');
+
+    if(authResult.mustChange){
+      setTimeout(()=>{hideLoginSplash();showChangePasswordModal(true);},600);
+    }
+
+    renderLog();
+    startSessionTimer();
+    updatePendingBadge();
+    startAutoSync();
+    updateLoginSplash(50,'Loading your data…');
+
+    // v24: Webhook health check — warn if stale URL or Apps Script misconfigured
+    setTimeout(()=>{
+      updateLoginSplash(70,'Checking connection…');
+      checkWebhookHealth();
+    },1500);
+    setTimeout(()=>{
+      updateLoginSplash(90,'Syncing entries…');
+      const queue=loadPendingQueue();
+      if(queue.length>0)retryPendingSync(false);
+      else verifyPendingSync(true);
+    },3000);
+    // Dismiss splash once everything kicked off (unless mustChange modal is open)
+    setTimeout(()=>{
+      if(!authResult.mustChange){
+        updateLoginSplash(100,'Ready');
+        setTimeout(()=>hideLoginSplash(),400);
+      }
+    },3500);
+  }catch(e){
+    console.error('Login error:',e);
+    err.textContent=e.message||'Login failed. Please try again.';
+    err.classList.add('show');
+    if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Sign in →';}
+  }
 }
+
+/* v22.6: Show change-password modal.
+   forced=true when user must change (first login or after reset) — no cancel button. */
+/* v24.2: Login splash screen helpers */
+function showLoginSplash(){
+  const el=document.getElementById('login-splash');
+  if(!el)return;
+  el.classList.add('show');
+  // Reset bar
+  const bar=document.getElementById('splash-progress-bar');
+  if(bar)bar.style.width='0%';
+  updateLoginSplash(10,'Signing in…');
+}
+
+function updateLoginSplash(percent,text){
+  const bar=document.getElementById('splash-progress-bar');
+  const step=document.getElementById('splash-step');
+  if(bar)bar.style.width=Math.max(0,Math.min(100,percent))+'%';
+  if(step && text)step.textContent=text;
+}
+
+function hideLoginSplash(){
+  const el=document.getElementById('login-splash');
+  if(!el)return;
+  // Fade out via inline style so the class can stay if retriggered
+  el.style.transition='opacity 0.35s';
+  el.style.opacity='0';
+  setTimeout(()=>{
+    el.classList.remove('show');
+    el.style.opacity='';
+    el.style.transition='';
+  },380);
+}
+
+/* v24.2: Forgot password — user submits request; super approves via Team tab */
+function showForgotPasswordModal(){
+  const existing=document.getElementById('forgot-modal');
+  if(existing)existing.remove();
+  const loginGuess=(document.getElementById('login-name')||{}).value||'';
+  const modal=document.createElement('div');
+  modal.id='forgot-modal';
+  modal.className='pwd-modal-overlay';
+  modal.innerHTML=`
+    <div class="pwd-modal" style="max-width:440px;">
+      <div class="pwd-modal-title">🔑 Forgot password</div>
+      <div class="pwd-modal-subtitle">Submit a request and the admin will reset your password to the default. You'll then be forced to set a new one on your next login.</div>
+      <div class="pwd-field"><label>Your login name</label><input type="text" id="forgot-loginname" value="${escapeHtml(loginGuess)}" placeholder="e.g. mohit, rahul"></div>
+      <div class="pwd-field"><label>Reason (optional)</label><textarea id="forgot-reason" placeholder="e.g. 'Forgot my password from last month'" rows="2" style="width:100%;padding:10px 14px;border:1px solid var(--border-soft);border-radius:8px;font-family:var(--sans);font-size:14px;color:var(--ink);background:var(--surface);resize:vertical;box-sizing:border-box;"></textarea></div>
+      <div class="pwd-modal-error" id="forgot-error"></div>
+      <div class="pwd-modal-actions">
+        <button class="btn-secondary" onclick="closeForgotPasswordModal()">Cancel</button>
+        <button class="btn-action" id="forgot-submit-btn" onclick="submitForgotPassword()">Submit request</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  setTimeout(()=>{const f=document.getElementById('forgot-loginname');if(f)f.focus();},150);
+}
+
+function closeForgotPasswordModal(){
+  const m=document.getElementById('forgot-modal');
+  if(m)m.remove();
+}
+
+async function submitForgotPassword(){
+  const errEl=document.getElementById('forgot-error');
+  const btn=document.getElementById('forgot-submit-btn');
+  const login=(document.getElementById('forgot-loginname').value||'').trim().toLowerCase();
+  const reason=(document.getElementById('forgot-reason').value||'').trim();
+  errEl.textContent='';
+  if(!login){errEl.textContent='Enter your login name.';return;}
+  if(!/^[a-z0-9_]+$/.test(login)){errEl.textContent='Login must be lowercase letters/numbers/underscore only.';return;}
+  btn.disabled=true;btn.textContent='Submitting…';
+  try{
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'reset_request_create',
+        loginName:login,
+        reason:reason
+      })
+    });
+    const data=await resp.json();
+    if(data.status==='ok'){
+      closeForgotPasswordModal();
+      alert(data.message||'Request submitted. The admin will reset your password shortly.');
+    } else {
+      errEl.textContent=data.message||'Submit failed. Please try again or contact the admin directly.';
+      btn.disabled=false;btn.textContent='Submit request';
+    }
+  }catch(e){
+    console.error(e);
+    errEl.textContent='Network error. Try again.';
+    btn.disabled=false;btn.textContent='Submit request';
+  }
+}
+
+function showChangePasswordModal(forced){
+  // Remove existing modal if any
+  const existing=document.getElementById('pwd-change-modal');
+  if(existing)existing.remove();
+
+  const modal=document.createElement('div');
+  modal.id='pwd-change-modal';
+  modal.className='pwd-modal-overlay';
+  modal.innerHTML=`
+    <div class="pwd-modal">
+      <div class="pwd-modal-title">${forced?'🔒 Set a new password':'Change your password'}</div>
+      <div class="pwd-modal-subtitle">${forced?'For security, you must change your password before continuing.':'Choose a new password for your account.'}</div>
+      ${forced?'':'<div class="pwd-field"><label>Current password</label><input type="password" id="pwd-current" autocomplete="current-password"></div>'}
+      <div class="pwd-field"><label>New password</label><input type="password" id="pwd-new" autocomplete="new-password" placeholder="Min 8 characters"></div>
+      <div class="pwd-field"><label>Confirm new password</label><input type="password" id="pwd-confirm" autocomplete="new-password"></div>
+      <div class="pwd-modal-error" id="pwd-modal-error"></div>
+      <div class="pwd-modal-actions">
+        ${forced?'':'<button class="btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>'}
+        <button class="btn-action" id="pwd-submit-btn" onclick="submitPasswordChange(${forced})">Update password</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  setTimeout(()=>{
+    const firstInput=modal.querySelector('input');
+    if(firstInput)firstInput.focus();
+  },150);
+}
+
+function closeChangePasswordModal(){
+  const m=document.getElementById('pwd-change-modal');
+  if(m)m.remove();
+}
+
+async function submitPasswordChange(forced){
+  const errEl=document.getElementById('pwd-modal-error');
+  const btn=document.getElementById('pwd-submit-btn');
+  errEl.textContent='';
+  const currentPwd=forced ? window._sessionPassword : (document.getElementById('pwd-current')||{}).value;
+  const newPwd=document.getElementById('pwd-new').value;
+  const confirmPwd=document.getElementById('pwd-confirm').value;
+  if(!forced && !currentPwd){errEl.textContent='Enter your current password.';return;}
+  if(!newPwd||newPwd.length<8){errEl.textContent='New password must be at least 8 characters.';return;}
+  if(newPwd===currentPwd){errEl.textContent='New password must be different from current.';return;}
+  if(newPwd!==confirmPwd){errEl.textContent='Passwords do not match.';return;}
+  if(newPwd==='cavitak@123'){errEl.textContent='Cannot use the default password. Pick something unique.';return;}
+
+  btn.disabled=true;btn.textContent='Updating…';
+  try{
+    const oldHash=await sha256Hex(currentPwd);
+    const newHash=await sha256Hex(newPwd);
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',
+      mode:'cors',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'auth_change',
+        loginName:state.user.loginName,
+        oldPasswordHash:oldHash,
+        newPasswordHash:newHash
+      })
+    });
+    const data=await resp.json();
+    if(data.status!=='ok'){
+      errEl.textContent=data.message||'Update failed. Check current password.';
+      btn.disabled=false;btn.textContent='Update password';
+      return;
+    }
+    // Success — update cached password
+    window._sessionPassword=newPwd;
+    closeChangePasswordModal();
+    showSync('Password updated ✓','success');
+  }catch(e){
+    console.error(e);
+    errEl.textContent='Network error. Try again.';
+    btn.disabled=false;btn.textContent='Update password';
+  }
+}
+
+/* v22.6/v23: Super-user reset flow — prompts for target user + uses requester's own password */
+async function superResetUserPassword(){
+  if(!state.user||!state.user.isSuper){alert('Super-user only.');return;}
+  if(!(await requireAuth()))return;
+  const target=prompt('Enter login name of user to reset (e.g. mohit, rahul):');
+  if(!target)return;
+  const targetLower=target.trim().toLowerCase();
+  if(targetLower===state.user.loginName.toLowerCase()){alert('Cannot reset your own password this way. Use Change Password instead.');return;}
+
+  // v23: Look up target in _allUsers (cached from users_list) or fetch if missing
+  let targetUser=(window._allUsers||[]).find(u=>u.loginName.toLowerCase()===targetLower);
+  if(!targetUser){
+    try{
+      const resp=await fetch(WEBHOOK_URL,{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'users_get',targetLoginName:targetLower})});
+      const data=await resp.json();
+      if(data.status==='ok')targetUser=data.user;
+    }catch(e){console.warn(e);}
+  }
+  if(!targetUser){alert(`Unknown user: ${targetLower}\n\n(User not in Sheet. Check the Team tab for exact login names.)`);return;}
+  if(!confirm(`Reset password for ${targetUser.fullName} back to the default "cavitak@123"?\n\nThey will be forced to change it on next login.`))return;
+
+  try{
+    const requesterHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'auth_reset',
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:requesterHash,
+        targetLoginName:targetLower
+      })
+    });
+    const data=await resp.json();
+    if(data.status==='ok'){
+      alert(`Password reset successful.\n\n${targetUser.fullName} can now sign in with "cavitak@123" and will be forced to change it immediately.`);
+      showSync(`Reset ${targetLower} ✓`,'success');
+      // Refresh Team tab if open
+      if(typeof loadTeamTab==='function')loadTeamTab();
+    } else {
+      alert(`Reset failed: ${data.message||'Unknown error'}`);
+    }
+  }catch(e){
+    console.error(e);
+    alert('Reset failed. Check internet connection.');
+  }
+}
+
+/* ============================================================
+   v23: PROFILE / TEAM TAB
+   Regular users → see own profile + edit phone/email + change password
+   Super-user    → see list of all users + add/edit/delete + reset password
+============================================================ */
+function renderTeamTab(){
+  const host=document.getElementById('team-content');
+  if(!host||!state.user)return;
+  const eyebrow=document.getElementById('team-page-eyebrow');
+  const title=document.getElementById('team-page-title');
+  const subtitle=document.getElementById('team-page-subtitle');
+  if(state.user.isSuper){
+    eyebrow.textContent='Team';
+    title.textContent='Team members';
+    subtitle.textContent='Manage user accounts, contact details, and permissions.';
+    renderSuperTeamView(host);
+  } else {
+    eyebrow.textContent='Profile';
+    title.textContent='Your profile';
+    subtitle.textContent='View and update your contact details.';
+    renderUserProfileView(host);
+  }
+}
+
+/* Regular user's own profile */
+function renderUserProfileView(host){
+  const u=state.user;
+  host.innerHTML=`
+    <div class="profile-card">
+      <div class="profile-avatar-large">${(u.fullName||'?').split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase()}</div>
+      <div class="profile-name">${u.fullName||'—'}</div>
+      <div class="profile-role">${u.role||'—'}</div>
+      <div class="profile-login-chip">${u.loginName}</div>
+    </div>
+    <div class="profile-edit-card">
+      <div class="profile-section-title">Contact details</div>
+      <div class="profile-section-subtitle">These details help the team reach you. Only you and the super-user can edit them.</div>
+      <div class="profile-field">
+        <label>Full name <span class="profile-field-lock" title="Only super-user can change your name">🔒</span></label>
+        <input type="text" id="profile-fullname" value="${u.fullName||''}" readonly disabled class="locked-field">
+      </div>
+      <div class="profile-field">
+        <label>Role <span class="profile-field-lock" title="Only super-user can change your role">🔒</span></label>
+        <input type="text" id="profile-role" value="${u.role||''}" readonly disabled class="locked-field">
+      </div>
+      <div class="profile-field">
+        <label>Email</label>
+        <input type="email" id="profile-email" value="${u.email||''}" placeholder="name@example.com">
+      </div>
+      <div class="profile-field">
+        <label>Phone</label>
+        <input type="tel" id="profile-phone" value="${u.phone||''}" placeholder="+91 98765 43210">
+      </div>
+      <div class="profile-actions">
+        <button class="btn-action" onclick="saveOwnProfile()">Save contact details</button>
+        <button class="btn-secondary" onclick="showChangePasswordModal(false)">🔑 Change password</button>
+      </div>
+      <div class="profile-status" id="profile-status"></div>
+    </div>`;
+}
+
+async function saveOwnProfile(){
+  if(!(await requireAuth()))return;
+  const statusEl=document.getElementById('profile-status');
+  const email=document.getElementById('profile-email').value.trim();
+  const phone=document.getElementById('profile-phone').value.trim();
+  // Basic email validation
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    statusEl.innerHTML='<span class="profile-err">Email does not look valid.</span>';
+    return;
+  }
+  statusEl.innerHTML='<span class="profile-info">Saving…</span>';
+  try{
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'users_update',
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash,
+        targetLoginName:state.user.loginName,
+        email:email,
+        phone:phone
+      })
+    });
+    const data=await resp.json();
+    if(data.status==='ok'){
+      state.user.email=email;
+      state.user.phone=phone;
+      if(window._sessionUser){window._sessionUser.email=email;window._sessionUser.phone=phone;}
+      statusEl.innerHTML='<span class="profile-ok">Saved ✓</span>';
+      setTimeout(()=>{statusEl.innerHTML='';},2500);
+    } else {
+      statusEl.innerHTML=`<span class="profile-err">${data.message||'Save failed'}</span>`;
+    }
+  }catch(e){
+    console.error(e);
+    statusEl.innerHTML='<span class="profile-err">Network error. Try again.</span>';
+  }
+}
+
+/* Super-user team management view */
+async function renderSuperTeamView(host){
+  host.innerHTML=`
+    <div class="team-toolbar">
+      <button class="btn-action" onclick="showAddUserModal()">➕ Add user</button>
+      <button class="btn-secondary" onclick="renderTeamTab()">↻ Refresh</button>
+      <span id="reset-req-badge-wrap" style="display:none;margin-left:auto;"><button class="btn-secondary reset-req-badge-btn" onclick="document.getElementById('reset-requests-host').scrollIntoView({behavior:'smooth',block:'start'});">🔑 <span id="reset-req-count">0</span> pending request<span id="reset-req-s">s</span></button></span>
+    </div>
+    <div id="reset-requests-host"></div>
+    <div id="team-list-host"><div class="team-loading">Loading team…</div></div>`;
+  await loadResetRequests();
+  await loadTeamTab();
+}
+
+/* v24.2.1: Password reset requests — super-user view on Team tab */
+async function loadResetRequests(){
+  const host=document.getElementById('reset-requests-host');
+  if(!host)return;
+  try{
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'reset_request_list',
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash
+      })
+    });
+    const data=await resp.json();
+    if(data.status!=='ok'){
+      host.innerHTML='';
+      return;
+    }
+    window._resetRequests=data.requests||[];
+    renderResetRequests(host,window._resetRequests);
+    updateResetReqBadge(window._resetRequests);
+  }catch(e){
+    console.warn('loadResetRequests failed:',e);
+    host.innerHTML='';
+  }
+}
+
+function updateResetReqBadge(requests){
+  const wrap=document.getElementById('reset-req-badge-wrap');
+  const count=document.getElementById('reset-req-count');
+  const sEl=document.getElementById('reset-req-s');
+  if(!wrap||!count)return;
+  const pending=(requests||[]).filter(r=>r.status==='pending');
+  if(pending.length>0){
+    wrap.style.display='inline-flex';
+    count.textContent=pending.length;
+    if(sEl)sEl.textContent=pending.length===1?'':'s';
+  } else {
+    wrap.style.display='none';
+  }
+}
+
+function renderResetRequests(host,requests){
+  if(!requests||!requests.length){host.innerHTML='';return;}
+  const pending=requests.filter(r=>r.status==='pending');
+  const resolved=requests.filter(r=>r.status!=='pending').slice(0,5);
+  if(!pending.length && !resolved.length){host.innerHTML='';return;}
+
+  const fmt=(iso)=>{
+    if(!iso)return '—';
+    const d=new Date(iso);
+    if(isNaN(d.getTime()))return '—';
+    return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  };
+
+  let html='';
+  if(pending.length){
+    html+=`<div class="reset-req-section"><div class="reset-req-head"><span class="reset-req-head-icon">🔑</span><div><div class="reset-req-head-title">Password reset requests</div><div class="reset-req-head-sub">${pending.length} pending · approve to reset the user's password to default (cavitak@123) with forced change.</div></div></div>`;
+    html+=pending.map(r=>{
+      const user=(window._allUsers||[]).find(u=>u.loginName===r.loginName);
+      const fullName=user?user.fullName:r.loginName;
+      return `<div class="reset-req-row pending">
+        <div class="reset-req-body">
+          <div class="reset-req-name">${escapeHtml(fullName)} <span class="reset-req-login">@${escapeHtml(r.loginName)}</span></div>
+          <div class="reset-req-meta">Requested: <strong>${fmt(r.requestedAt)}</strong></div>
+          ${r.reason?`<div class="reset-req-reason">"${escapeHtml(r.reason)}"</div>`:'<div class="reset-req-reason" style="opacity:0.5;">No reason given</div>'}
+        </div>
+        <div class="reset-req-actions">
+          <button class="team-btn" onclick="approveResetRequest('${escapeHtml(r.requestId)}','${escapeHtml(r.loginName)}')" title="Approve — resets password to cavitak@123 with forced change">✓ Approve</button>
+          <button class="team-btn danger" onclick="denyResetRequest('${escapeHtml(r.requestId)}','${escapeHtml(r.loginName)}')" title="Deny request">× Deny</button>
+        </div>
+      </div>`;
+    }).join('');
+    html+='</div>';
+  }
+  if(resolved.length){
+    html+=`<details class="reset-req-resolved-wrap"><summary class="reset-req-resolved-head">Recent resolved requests (${resolved.length})</summary>`;
+    html+=resolved.map(r=>{
+      const user=(window._allUsers||[]).find(u=>u.loginName===r.loginName);
+      const fullName=user?user.fullName:r.loginName;
+      const statusChip=r.status==='approved'
+        ?'<span class="reset-req-status approved">APPROVED</span>'
+        :'<span class="reset-req-status denied">DENIED</span>';
+      return `<div class="reset-req-row resolved">
+        <div class="reset-req-body">
+          <div class="reset-req-name">${escapeHtml(fullName)} <span class="reset-req-login">@${escapeHtml(r.loginName)}</span> ${statusChip}</div>
+          <div class="reset-req-meta">${fmt(r.resolvedAt)}${r.resolvedBy?' · by '+escapeHtml(r.resolvedBy):''}</div>
+        </div>
+      </div>`;
+    }).join('');
+    html+='</details>';
+  }
+  host.innerHTML=html;
+}
+
+async function approveResetRequest(requestId,loginName){
+  if(!(await requireAuth()))return;
+  if(!confirm(`Approve password reset for @${loginName}?\n\nTheir password will be reset to "cavitak@123" and they'll be forced to change it on next login.`))return;
+  try{
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'reset_request_approve',
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash,
+        requestId:requestId
+      })
+    });
+    const data=await resp.json();
+    if(data.status==='ok'){
+      showSync(`Approved ${loginName} ✓`,'success');
+      loadResetRequests();
+    } else {
+      alert(`Approve failed: ${data.message||'Unknown error'}`);
+    }
+  }catch(e){
+    console.error(e);
+    alert('Approve failed. Check internet.');
+  }
+}
+
+async function denyResetRequest(requestId,loginName){
+  if(!(await requireAuth()))return;
+  if(!confirm(`Deny password reset request from @${loginName}?`))return;
+  try{
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'reset_request_deny',
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash,
+        requestId:requestId
+      })
+    });
+    const data=await resp.json();
+    if(data.status==='ok'){
+      showSync(`Denied ${loginName} ✓`,'success');
+      loadResetRequests();
+    } else {
+      alert(`Deny failed: ${data.message||'Unknown error'}`);
+    }
+  }catch(e){
+    console.error(e);
+    alert('Deny failed. Check internet.');
+  }
+}
+
+async function loadTeamTab(){
+  const listHost=document.getElementById('team-list-host');
+  if(!listHost)return;
+  try{
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'users_list',
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash
+      })
+    });
+    const data=await resp.json();
+    if(data.status!=='ok'){
+      listHost.innerHTML=`<div class="team-err">Failed to load: ${data.message||'Unknown error'}</div>`;
+      return;
+    }
+    window._allUsers=data.users||[];
+    renderTeamList(listHost,window._allUsers);
+  }catch(e){
+    console.error(e);
+    listHost.innerHTML='<div class="team-err">Network error. Check connection and Refresh.</div>';
+  }
+}
+
+function renderTeamList(host,users){
+  if(!users||!users.length){
+    host.innerHTML='<div class="team-empty">No users in the system yet.</div>';
+    return;
+  }
+  const rows=users.map(u=>{
+    const initials=(u.fullName||'?').split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase();
+    const statusChip=u.isActive===false
+      ?'<span class="team-status inactive">INACTIVE</span>'
+      :'<span class="team-status active">ACTIVE</span>';
+    const superBadge=u.isSuper?'<span class="team-super-chip">SUPER</span>':'';
+    // v24: Last login display as relative time
+    const lastLoginStr=formatRelativeTime(u.lastLogin);
+    return `<div class="team-row">
+      <div class="team-row-left">
+        <div class="team-avatar">${initials}</div>
+        <div class="team-ident">
+          <div class="team-name">${u.fullName||'—'} ${superBadge}</div>
+          <div class="team-login">@${u.loginName} · ${u.role||'—'}</div>
+          <div class="team-contact">${u.email?`✉ ${u.email}`:'<span style="opacity:.5;">no email</span>'} · ${u.phone?`☎ ${u.phone}`:'<span style="opacity:.5;">no phone</span>'}</div>
+          <div class="team-lastlogin">Last seen: <strong>${lastLoginStr}</strong></div>
+        </div>
+      </div>
+      <div class="team-row-right">
+        ${statusChip}
+        <button class="team-btn" onclick="editUserInTeam('${u.loginName}')" title="Edit details">✎ Edit</button>
+        ${u.isSuper?'':`<button class="team-btn" onclick="resetUserFromTeam('${u.loginName}')" title="Reset password to default">🔑 Reset</button>`}
+        ${u.isSuper?'':`<button class="team-btn danger" onclick="deleteUserFromTeam('${u.loginName}')" title="Delete this user">🗑 Delete</button>`}
+      </div>
+    </div>`;
+  }).join('');
+  host.innerHTML=`<div class="team-list">${rows}</div>`;
+}
+
+/* v24: Format ISO timestamp as relative time (e.g. "3h ago", "2 days ago", "—") */
+function formatRelativeTime(iso){
+  if(!iso)return '<span style="opacity:.5;">never</span>';
+  const d=new Date(iso);
+  if(isNaN(d.getTime()))return '<span style="opacity:.5;">never</span>';
+  const now=new Date();
+  const diffMs=now-d;
+  const diffMin=Math.floor(diffMs/60000);
+  const diffHour=Math.floor(diffMs/3600000);
+  const diffDay=Math.floor(diffMs/86400000);
+  if(diffMin<1)return 'just now';
+  if(diffMin<60)return diffMin+' min ago';
+  if(diffHour<24)return diffHour+'h ago';
+  if(diffDay<7)return diffDay+' day'+(diffDay===1?'':'s')+' ago';
+  if(diffDay<30)return Math.floor(diffDay/7)+' week'+(Math.floor(diffDay/7)===1?'':'s')+' ago';
+  // Beyond 30 days: absolute date
+  return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+/* v24: Allowed roles — must match Apps Script ALLOWED_ROLES */
+const ALLOWED_ROLES=['OEM','Presales','Sales','Support'];
+// Note: 'Super' is deliberately not in the Add/Edit dropdown —
+// super status is hardcoded in Apps Script SUPER_LOGIN_NAMES and cannot be assigned via UI.
+
+/* Add user modal */
+function showAddUserModal(){
+  const existing=document.getElementById('team-modal');
+  if(existing)existing.remove();
+  const modal=document.createElement('div');
+  modal.id='team-modal';
+  modal.className='pwd-modal-overlay';
+  const roleOptions=ALLOWED_ROLES.map(r=>`<option value="${r}">${r}</option>`).join('');
+  modal.innerHTML=`
+    <div class="pwd-modal" style="max-width:460px;">
+      <div class="pwd-modal-title">➕ Add new user</div>
+      <div class="pwd-modal-subtitle">User will get default password "cavitak@123" and must change on first login.</div>
+      <div class="pwd-field"><label>Login name · lowercase, no spaces</label><input type="text" id="add-loginName" placeholder="e.g. priya, amit2" pattern="[a-z0-9_]+"></div>
+      <div class="pwd-field"><label>Full name</label><input type="text" id="add-fullName" placeholder="e.g. Priya Sharma"></div>
+      <div class="pwd-field"><label>Role</label><select id="add-role"><option value="">— Choose role —</option>${roleOptions}</select></div>
+      <div class="pwd-field"><label>Email (optional)</label><input type="email" id="add-email" placeholder="priya@cavitak.com"></div>
+      <div class="pwd-field"><label>Phone (optional)</label><input type="tel" id="add-phone" placeholder="+91 98765 43210"></div>
+      <div class="pwd-modal-error" id="add-user-error"></div>
+      <div class="pwd-modal-actions">
+        <button class="btn-secondary" onclick="closeTeamModal()">Cancel</button>
+        <button class="btn-action" onclick="submitAddUser()">Create user</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  setTimeout(()=>{const f=modal.querySelector('input');if(f)f.focus();},150);
+}
+
+function closeTeamModal(){
+  const m=document.getElementById('team-modal');
+  if(m)m.remove();
+}
+
+async function submitAddUser(){
+  if(!(await requireAuth()))return;
+  const errEl=document.getElementById('add-user-error');
+  const login=document.getElementById('add-loginName').value.trim().toLowerCase();
+  const fullName=document.getElementById('add-fullName').value.trim();
+  const role=document.getElementById('add-role').value.trim();
+  const email=document.getElementById('add-email').value.trim();
+  const phone=document.getElementById('add-phone').value.trim();
+  errEl.textContent='';
+  if(!login)   {errEl.textContent='Login name is required.';return;}
+  if(!/^[a-z0-9_]+$/.test(login)){errEl.textContent='Login must be lowercase letters/numbers/underscore only.';return;}
+  if(!fullName){errEl.textContent='Full name is required.';return;}
+  if(!role)    {errEl.textContent='Please choose a role from the dropdown.';return;}
+  if(ALLOWED_ROLES.indexOf(role)===-1){errEl.textContent='Role must be one of: '+ALLOWED_ROLES.join(', ');return;}
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){errEl.textContent='Email does not look valid.';return;}
+
+  try{
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'users_add',
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash,
+        loginName:login,fullName:fullName,role:role,email:email,phone:phone
+      })
+    });
+    const data=await resp.json();
+    if(data.status==='ok'){
+      closeTeamModal();
+      showSync(`Added ${login} ✓ · Default password: cavitak@123`,'success');
+      loadTeamTab();
+    } else {
+      errEl.textContent=data.message||'Add failed';
+    }
+  }catch(e){
+    console.error(e);
+    errEl.textContent='Network error. Try again.';
+  }
+}
+
+/* Edit user (super only) */
+function editUserInTeam(loginName){
+  const u=(window._allUsers||[]).find(x=>x.loginName===loginName);
+  if(!u){alert('User not found in cache. Click Refresh.');return;}
+  const existing=document.getElementById('team-modal');
+  if(existing)existing.remove();
+  const modal=document.createElement('div');
+  modal.id='team-modal';
+  modal.className='pwd-modal-overlay';
+  const isSuperUser=u.isSuper;
+  // v24: Role dropdown. If user is super, show as locked "Super" text. Otherwise allow choice from ALLOWED_ROLES.
+  const roleFieldHtml=isSuperUser
+    ? `<input type="text" id="edit-role" value="Super" readonly disabled class="locked-field">`
+    : `<select id="edit-role">${ALLOWED_ROLES.map(r=>`<option value="${r}" ${u.role===r?'selected':''}>${r}</option>`).join('')}</select>`;
+  modal.innerHTML=`
+    <div class="pwd-modal" style="max-width:460px;">
+      <div class="pwd-modal-title">✎ Edit ${u.fullName}</div>
+      <div class="pwd-modal-subtitle">@${u.loginName} · Login name cannot be changed.</div>
+      <div class="pwd-field"><label>Full name</label><input type="text" id="edit-fullName" value="${u.fullName||''}"></div>
+      <div class="pwd-field"><label>Role ${isSuperUser?'<span class="profile-field-lock" title="Super role is hardcoded, cannot change via UI">🔒</span>':''}</label>${roleFieldHtml}</div>
+      <div class="pwd-field"><label>Email</label><input type="email" id="edit-email" value="${u.email||''}"></div>
+      <div class="pwd-field"><label>Phone</label><input type="tel" id="edit-phone" value="${u.phone||''}"></div>
+      ${isSuperUser?'':`<div class="pwd-field"><label>Active</label>
+        <select id="edit-isActive">
+          <option value="true" ${u.isActive!==false?'selected':''}>Active (can log in)</option>
+          <option value="false" ${u.isActive===false?'selected':''}>Inactive (blocked)</option>
+        </select></div>`}
+      <div class="pwd-modal-error" id="edit-user-error"></div>
+      <div class="pwd-modal-actions">
+        <button class="btn-secondary" onclick="closeTeamModal()">Cancel</button>
+        <button class="btn-action" onclick="submitEditUser('${u.loginName}')">Save changes</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  setTimeout(()=>{const f=modal.querySelector('input');if(f)f.focus();},150);
+}
+
+async function submitEditUser(targetLogin){
+  if(!(await requireAuth()))return;
+  const errEl=document.getElementById('edit-user-error');
+  const fullName=document.getElementById('edit-fullName').value.trim();
+  const roleEl=document.getElementById('edit-role');
+  const role=(roleEl&&!roleEl.disabled)?roleEl.value.trim():'';  // skip if locked (super user)
+  const email=document.getElementById('edit-email').value.trim();
+  const phone=document.getElementById('edit-phone').value.trim();
+  const isActiveEl=document.getElementById('edit-isActive');
+  errEl.textContent='';
+  if(!fullName){errEl.textContent='Full name is required.';return;}
+  if(role && ALLOWED_ROLES.indexOf(role)===-1){errEl.textContent='Role must be one of: '+ALLOWED_ROLES.join(', ');return;}
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){errEl.textContent='Email does not look valid.';return;}
+
+  try{
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const payload={
+      action:'users_update',
+      requesterLoginName:state.user.loginName,
+      requesterPasswordHash:pwHash,
+      targetLoginName:targetLogin,
+      fullName:fullName,
+      email:email,
+      phone:phone
+    };
+    if(role)payload.role=role;  // only send role if we have a valid one
+    if(isActiveEl){payload.isActive=isActiveEl.value==='true';}
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)
+    });
+    const data=await resp.json();
+    if(data.status==='ok'){
+      closeTeamModal();
+      showSync(`Updated ${targetLogin} ✓`,'success');
+      loadTeamTab();
+    } else {
+      errEl.textContent=data.message||'Update failed';
+    }
+  }catch(e){
+    console.error(e);
+    errEl.textContent='Network error. Try again.';
+  }
+}
+
+async function resetUserFromTeam(loginName){
+  if(!(await requireAuth()))return;
+  if(!confirm(`Reset password for @${loginName} to the default "cavitak@123"?\n\nThey will be forced to change it on next login.`))return;
+  try{
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'auth_reset',
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash,
+        targetLoginName:loginName
+      })
+    });
+    const data=await resp.json();
+    if(data.status==='ok'){
+      showSync(`Reset ${loginName} ✓`,'success');
+    } else {
+      alert(`Reset failed: ${data.message||'Unknown error'}`);
+    }
+  }catch(e){
+    console.error(e);
+    alert('Reset failed. Check internet.');
+  }
+}
+
+async function deleteUserFromTeam(loginName){
+  if(!(await requireAuth()))return;
+  if(!confirm(`DELETE user @${loginName}?\n\nThis cannot be undone. Their past selections in the History tab are preserved (attributed to their login name).\n\nProceed?`))return;
+  try{
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'users_delete',
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash,
+        targetLoginName:loginName
+      })
+    });
+    const data=await resp.json();
+    if(data.status==='ok'){
+      showSync(`Deleted ${loginName} ✓`,'success');
+      loadTeamTab();
+    } else {
+      alert(`Delete failed: ${data.message||'Unknown error'}`);
+    }
+  }catch(e){
+    console.error(e);
+    alert('Delete failed. Check internet.');
+  }
+}
+
 function handleLogout(){
   stopSessionTimer();  // v21.6: clear any pending session timer
+  stopAutoSync();  // v22.4: stop background sync
+  window._sessionPassword=null;  // v22.6: clear cached password
   state.user=null;
   document.getElementById('page-login').classList.add('active');
   document.getElementById('page-app').classList.remove('active');
@@ -4483,14 +6411,120 @@ function handleLogout(){
 function startSessionTimer(){
   stopSessionTimer();
   if(state.user && state.user.isSuper)return;  // Super bypass
-  const SESSION_MS=10*60*1000;  // 10 minutes
+  const SESSION_MS=10*60*1000;       // 10 minutes total
+  const WARN_BEFORE=60*1000;         // 60 seconds warning
+  // Schedule warning first, then final logout
+  window._sessionWarnTimer=setTimeout(()=>{
+    showSessionWarningModal();
+  },SESSION_MS-WARN_BEFORE);
   window._sessionTimer=setTimeout(()=>{
-    // Silent logout — just return to login page
+    closeSessionWarningModal();
+    showSync('Session expired. Please sign in again.','error');
     handleLogout();
   },SESSION_MS);
 }
 function stopSessionTimer(){
   if(window._sessionTimer){clearTimeout(window._sessionTimer);window._sessionTimer=null;}
+  if(window._sessionWarnTimer){clearTimeout(window._sessionWarnTimer);window._sessionWarnTimer=null;}
+  if(window._sessionCountdown){clearInterval(window._sessionCountdown);window._sessionCountdown=null;}
+}
+
+/* v24: 60-second pre-logout warning modal with countdown and "Stay signed in" button */
+function showSessionWarningModal(){
+  closeSessionWarningModal();  // Ensure no stacking
+  const modal=document.createElement('div');
+  modal.id='session-warn-modal';
+  modal.className='pwd-modal-overlay';
+  modal.innerHTML=`
+    <div class="pwd-modal" style="max-width:420px;">
+      <div class="pwd-modal-title">⚠ Session about to expire</div>
+      <div class="pwd-modal-subtitle">You'll be signed out for inactivity in <strong id="session-countdown">60</strong> seconds. Any unsaved form input will be lost.</div>
+      <div class="pwd-modal-actions" style="justify-content:space-between;">
+        <button class="btn-secondary" onclick="sessionEndNow()">Sign out now</button>
+        <button class="btn-action" onclick="sessionExtend()">↻ Stay signed in</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  // Start live countdown
+  let remaining=60;
+  window._sessionCountdown=setInterval(()=>{
+    remaining--;
+    const el=document.getElementById('session-countdown');
+    if(el)el.textContent=Math.max(0,remaining);
+    if(remaining<=0){
+      clearInterval(window._sessionCountdown);
+      window._sessionCountdown=null;
+    }
+  },1000);
+}
+
+function closeSessionWarningModal(){
+  const m=document.getElementById('session-warn-modal');
+  if(m)m.remove();
+  if(window._sessionCountdown){clearInterval(window._sessionCountdown);window._sessionCountdown=null;}
+}
+
+/* User clicked "Stay signed in" — restart the timer */
+function sessionExtend(){
+  closeSessionWarningModal();
+  showSync('Session extended ✓','success');
+  startSessionTimer();
+}
+
+/* User clicked "Sign out now" */
+function sessionEndNow(){
+  closeSessionWarningModal();
+  handleLogout();
+}
+
+/* v24: Guard critical actions — prompts re-auth if session was silently invalidated.
+   Returns true if session is valid (password cached), false if not.
+   Callers should `if(!(await requireAuth()))return;` before sensitive ops. */
+async function requireAuth(){
+  if(state.user && window._sessionPassword){
+    return true;  // Happy path
+  }
+  // Session went stale. Prompt the user to re-enter their password.
+  return new Promise((resolve)=>{
+    const modal=document.createElement('div');
+    modal.id='reauth-modal';
+    modal.className='pwd-modal-overlay';
+    modal.innerHTML=`
+      <div class="pwd-modal" style="max-width:400px;">
+        <div class="pwd-modal-title">🔐 Re-enter your password</div>
+        <div class="pwd-modal-subtitle">Your session was cleared. Please confirm your identity to continue.</div>
+        <div class="pwd-field"><label>Password</label><input type="password" id="reauth-input" autocomplete="current-password"></div>
+        <div class="pwd-modal-error" id="reauth-error"></div>
+        <div class="pwd-modal-actions">
+          <button class="btn-secondary" id="reauth-cancel">Cancel</button>
+          <button class="btn-action" id="reauth-ok">Confirm</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    setTimeout(()=>{const i=document.getElementById('reauth-input');if(i)i.focus();},100);
+
+    const finish=(ok)=>{
+      modal.remove();
+      resolve(ok);
+    };
+    document.getElementById('reauth-cancel').onclick=()=>finish(false);
+    document.getElementById('reauth-ok').onclick=async()=>{
+      const errEl=document.getElementById('reauth-error');
+      const pwd=document.getElementById('reauth-input').value;
+      if(!pwd){errEl.textContent='Enter your password.';return;}
+      if(!state.user){errEl.textContent='Session is gone. Please sign in again.';setTimeout(()=>finish(false),1500);return;}
+      try{
+        await authCheckAgainstSheet(state.user.loginName,pwd);
+        window._sessionPassword=pwd;
+        finish(true);
+      }catch(e){
+        errEl.textContent=e.message||'Incorrect password';
+      }
+    };
+    document.getElementById('reauth-input').addEventListener('keydown',(ev)=>{
+      if(ev.key==='Enter'){document.getElementById('reauth-ok').click();}
+    });
+  });
 }
 
 /* v21.6: Auto-logout when user closes tab, closes browser, or navigates away.
@@ -4510,12 +6544,16 @@ function showTab(which){
     state.result=null;
     document.getElementById('tab-result').style.display='none';
   }
-  ['form','result','log'].forEach(t=>{
-    document.getElementById('section-'+t).style.display=t===which?'block':'none';
+  // v23.1: includes 'team' and 'dashboard' tabs
+  ['form','result','log','team','dashboard'].forEach(t=>{
+    const sec=document.getElementById('section-'+t);
+    if(sec)sec.style.display=t===which?'block':'none';
     const btn=document.getElementById('tab-'+t);
     if(btn)btn.classList.toggle('active',t===which);
   });
   if(which==='log')renderLog();
+  if(which==='dashboard')renderDashboard();
+  if(which==='team')renderTeamTab();
   window.scrollTo(0,0);
 }
 
@@ -4727,6 +6765,51 @@ function updateProgress(){
   document.getElementById(id).addEventListener('change',updateProgress);
 });
 
+/* v24: Duplicate project name warning — soft banner (user can still proceed).
+   Triggered on input event for the project field. Matches case-insensitive
+   against window._centralLog (which is the aggregated team log when loaded).
+   If window._lastRefIdForEdit is set (edit mode), skip — they're updating an existing entry. */
+function checkDuplicateProject(){
+  const banner=document.getElementById('dup-project-banner');
+  if(!banner)return;
+  if(window._lastRefIdForEdit){banner.style.display='none';return;}
+  const projectEl=document.getElementById('f-project');
+  const typed=(projectEl.value||'').trim();
+  if(typed.length<3){banner.style.display='none';banner.innerHTML='';return;}
+  const entries=(window._centralLog&&window._centralLog.length)?window._centralLog:loadLocalLog();
+  if(!entries||!entries.length){banner.style.display='none';return;}
+  const typedLower=typed.toLowerCase();
+  const matches=entries.filter(e=>((e.project||'').toLowerCase().trim()===typedLower));
+  if(!matches.length){banner.style.display='none';banner.innerHTML='';return;}
+  matches.sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  const first=matches[0];
+  const firstDate=new Date(first.ts);
+  const dateStr=isNaN(firstDate.getTime())?'':firstDate.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  const visible=getVisibleEntries();
+  const idx=visible.findIndex(e=>e.refId===first.refId);
+  const editLink=(idx!==-1)
+    ? `<button class="dup-banner-link" onclick="goEditDuplicate(${idx})">Open existing entry to edit →</button>`
+    : '';
+  const extra=matches.length>1?` · <em>${matches.length-1} more entr${matches.length-1===1?'y':'ies'} with this project name</em>`:'';
+  banner.innerHTML=`<div class="dup-banner-icon">⚠</div><div class="dup-banner-body"><strong>Similar project already exists:</strong> "${escapeHtml(first.project)}" by ${escapeHtml(first.user||'—')} · ${dateStr} · ${escapeHtml(first.model||'—')}${extra}<div class="dup-banner-hint">You can still proceed to create a new entry, or edit the existing one.</div></div>${editLink?`<div class="dup-banner-action">${editLink}</div>`:''}`;
+  banner.style.display='flex';
+}
+
+/* v24: Jump to history tab and open the matching past entry for edit */
+function goEditDuplicate(idx){
+  showTab('log');
+  setTimeout(()=>{
+    if(typeof editPastEntry==='function')editPastEntry(idx);
+  },150);
+}
+
+/* v24: HTML escape for banner safety */
+function escapeHtml(str){
+  return (str||'').toString()
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function resetForm(){
   ['f-project','f-enduser','f-venue','f-partner','f-consultant','f-contactname','f-contactphone','f-contactemail','f-closemonth'].forEach(id=>document.getElementById(id).value='');
   ['f-city','f-stage','f-ssd-cap'].forEach(id=>document.getElementById(id).value='');
@@ -4739,6 +6822,8 @@ function resetForm(){
   document.getElementById('section-video-specs').style.display='block';
   document.getElementById('ssd-cap-wrap').classList.remove('show');
   document.getElementById('form-error').classList.remove('show');
+  // v24: hide duplicate banner on reset
+  const dup=document.getElementById('dup-project-banner');if(dup){dup.style.display='none';dup.innerHTML='';}
   // v20: reset CMS section — default vendor to BrightSign CMS, term to 1 yr, hide section
   document.getElementById('f-cms-vendor').value='BrightSign CMS';
   const cmsTermPills=document.querySelectorAll('[data-input="cms-term"] .pill');
@@ -4836,7 +6921,7 @@ function runSelector(){
     {key:'stage',test:()=>!!f.stage,id:'f-stage',label:'Deal stage'},
     {key:'closemonth',test:()=>!!f.closemonth,id:'f-closemonth',label:'Close month'},
     {key:'qty',test:()=>f.qty>=1,id:'f-qty',label:'Quantity'},
-    {key:'environment',test:()=>!!f.environment,id:'data-input:environment',label:'Environment'},
+    {key:'environment',test:()=>!!f.environment,id:'data-input:environment',label:'Deployment type'},
     {key:'update',test:()=>!!f.update,id:'data-input:update',label:'Content update'},
     {key:'content',test:()=>!!f.content,id:'data-input:content',label:'Content type'}
   ];
@@ -5429,7 +7514,7 @@ function buildProjectCardV21(){
     ['Partner / SI',f.partner||'—'],['Consultant',f.consultant||'—'],['City',f.city||'—'],
     ['Contact person',f.contactname||'—'],['Contact phone',f.contactphone||'—'],['Contact email',f.contactemail||'—'],
     ['Deal stage',f.stage||'—'],['Expected close',closeLabel],['Quantity',`${f.qty||'—'} players`],
-    ['Environment',envLabel],['Content type',contentLabel],['GPIO required',gpioLabel],
+    ['Deployment type',envLabel],['Content type',contentLabel],['GPIO required',gpioLabel],
     ['CMS',cmsLabel],['Warranty','5 years'],['Budget tier',BUDGET_ZONES[f.budget]?BUDGET_ZONES[f.budget].name:'—'],
     ['Generated by',state.user?state.user.fullName:'—']
   ];
@@ -5510,14 +7595,209 @@ function logEntry(status,onDone){
   if(WEBHOOK_URL){
     const msg=status==='saved'?'Confirming…':'Logging…';
     showSync(msg);
+    // v22.4: Push to pending queue BEFORE attempting. If fetch resolves, sync verifier will confirm + remove. If not, retry.
+    queuePendingEntry(entry);
     fetch(WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(entry)})
-      .then(()=>{showSync(status==='saved'?'Confirmed ✓':'Logged ✓','success');if(onDone)onDone();})
-      .catch(err=>{console.warn('Webhook failed:',err);showSync('Saved locally (central offline)','error');if(onDone)onDone();});
+      .then(()=>{
+        showSync(status==='saved'?'Confirmed ✓':'Logged ✓','success');
+        // v22.4: Schedule a verification sweep in 4 seconds to confirm server received it
+        setTimeout(()=>verifyPendingSync(),4000);
+        if(onDone)onDone();
+      })
+      .catch(err=>{
+        console.warn('Webhook failed:',err);
+        showSync('Saved locally · will retry','error');
+        if(onDone)onDone();
+      });
   } else {
     showSync(status==='saved'?'Confirmed locally ✓':'Logged locally ✓','success');
     if(onDone)onDone();
   }
 }
+
+/* ========== v22.4: LOCAL ENTRY RE-SYNC ==========
+   Every save attempts the webhook. If it fails or can't be verified (no-cors masks errors),
+   the entry stays in pending queue and retries until present in central sheet.
+   Retry triggers: app launch (3s delay), every 60s while app open, manual Sync button.
+*/
+const PENDING_KEY='bs-pending-sync';
+const MAX_ATTEMPTS=100;  // Effectively unlimited — user can manually clear if needed
+
+function loadPendingQueue(){
+  try{const raw=localStorage.getItem(PENDING_KEY);return raw?JSON.parse(raw):[];}catch(e){return [];}
+}
+function savePendingQueue(queue){
+  try{localStorage.setItem(PENDING_KEY,JSON.stringify(queue));}catch(e){console.warn('Pending queue save failed',e);}
+  updatePendingBadge();
+}
+function queuePendingEntry(entry){
+  const queue=loadPendingQueue();
+  const existingIdx=queue.findIndex(q=>q.refId===entry.refId);
+  const now=Date.now();
+  if(existingIdx>=0){
+    // Update existing queued item (e.g. viewed→saved upgrade)
+    queue[existingIdx].payload=entry;
+    queue[existingIdx].lastAttempt=now;
+    queue[existingIdx].attempts=(queue[existingIdx].attempts||0)+1;
+  } else {
+    queue.push({refId:entry.refId,payload:entry,attempts:1,queuedAt:now,lastAttempt:now,lastError:null});
+  }
+  savePendingQueue(queue);
+}
+
+function removeFromQueue(refId){
+  const queue=loadPendingQueue();
+  const filtered=queue.filter(q=>q.refId!==refId);
+  if(filtered.length!==queue.length)savePendingQueue(filtered);
+}
+
+/* Verifier: fetches central log via action=read, removes from queue any refId that appears there */
+async function verifyPendingSync(silent){
+  if(!WEBHOOK_URL)return;
+  const queue=loadPendingQueue();
+  if(!queue.length)return;
+  try{
+    const resp=await fetch(WEBHOOK_URL+'?action=read',{method:'GET'});
+    const data=await resp.json();
+    if(!Array.isArray(data))return;
+    window._centralLog=data;  // Freshen cache
+    const centralRefIds=new Set(data.map(e=>e.refId).filter(Boolean));
+    let removed=0;
+    queue.forEach(q=>{
+      if(centralRefIds.has(q.refId)){removed++;}
+    });
+    if(removed>0){
+      const remaining=queue.filter(q=>!centralRefIds.has(q.refId));
+      savePendingQueue(remaining);
+      if(!silent)showSync(`Synced ${removed} ${removed===1?'entry':'entries'} ✓`,'success');
+    }
+  }catch(e){
+    console.warn('verify sync failed:',e);
+    // Silent on verification failure — not critical
+  }
+}
+
+/* Retry: actually re-POSTs any queued entry. Called periodically + manually. */
+async function retryPendingSync(manualTrigger){
+  if(!WEBHOOK_URL)return;
+  let queue=loadPendingQueue();
+  if(!queue.length){
+    if(manualTrigger)showSync('Nothing to sync · all caught up ✓','success');
+    return;
+  }
+  if(manualTrigger)showSync(`Syncing ${queue.length} pending…`);
+  // First verify what's already synced (saves retries)
+  await verifyPendingSync(true);
+  queue=loadPendingQueue();
+  if(!queue.length){
+    if(manualTrigger)showSync('All entries synced ✓','success');
+    return;
+  }
+  // Retry each still-pending entry
+  let successCount=0,failCount=0;
+  for(const item of queue){
+    if(item.attempts>=MAX_ATTEMPTS){failCount++;continue;}
+    try{
+      await fetch(WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(item.payload)});
+      // Update attempt count
+      item.attempts=(item.attempts||0)+1;
+      item.lastAttempt=Date.now();
+      successCount++;
+    }catch(e){
+      item.attempts=(item.attempts||0)+1;
+      item.lastAttempt=Date.now();
+      item.lastError=(e&&e.message)||'Unknown error';
+      failCount++;
+    }
+  }
+  savePendingQueue(queue);
+  // Verify again 4s later to confirm which got through
+  setTimeout(()=>{
+    verifyPendingSync(manualTrigger?false:true);
+    if(manualTrigger){
+      const remaining=loadPendingQueue().length;
+      if(remaining===0)showSync('All entries synced ✓','success');
+      else showSync(`${remaining} still pending · will retry`,'error');
+    }
+  },4000);
+}
+
+/* Badge showing pending count next to History tab */
+/* v24: Webhook health check — verifies the Apps Script URL is reachable and v23+ compatible.
+   Called once after login. If broken, shows a persistent banner at top of app. */
+async function checkWebhookHealth(){
+  if(!WEBHOOK_URL){showWebhookBanner('No webhook URL configured. Central logging is disabled.','warn');return;}
+  try{
+    const resp=await fetch(WEBHOOK_URL+'?action=read',{method:'GET'});
+    if(!resp.ok){
+      showWebhookBanner(`Webhook responded with HTTP ${resp.status}. Central logging may be broken — contact admin.`,'err');
+      return;
+    }
+    const data=await resp.json();
+    if(!Array.isArray(data)){
+      showWebhookBanner('Webhook is reachable but returned invalid data. Apps Script may be stale — check deployment.','err');
+      return;
+    }
+    // All good — hide any stale banner
+    hideWebhookBanner();
+  }catch(e){
+    showWebhookBanner(`Webhook unreachable: ${e.message||'Network error'}. Check internet, or webhook URL may be stale (Apps Script re-deployed elsewhere).`,'err');
+  }
+}
+
+function showWebhookBanner(msg,level){
+  let banner=document.getElementById('webhook-health-banner');
+  if(!banner){
+    banner=document.createElement('div');
+    banner.id='webhook-health-banner';
+    banner.className='webhook-banner '+(level==='err'?'webhook-err':'webhook-warn');
+    document.body.insertBefore(banner,document.body.firstChild);
+  }
+  banner.className='webhook-banner '+(level==='err'?'webhook-err':'webhook-warn');
+  banner.innerHTML=`<span class="webhook-banner-icon">${level==='err'?'⚠':'ℹ'}</span><span>${msg}</span><button onclick="hideWebhookBanner()" class="webhook-banner-close" title="Dismiss">×</button>`;
+}
+
+function hideWebhookBanner(){
+  const b=document.getElementById('webhook-health-banner');
+  if(b)b.remove();
+}
+
+function updatePendingBadge(){
+  const queue=loadPendingQueue();
+  const tab=document.getElementById('tab-log');
+  if(!tab)return;
+  let badge=tab.querySelector('.pending-badge');
+  if(queue.length>0){
+    if(!badge){
+      badge=document.createElement('span');
+      badge.className='pending-badge';
+      tab.appendChild(badge);
+    }
+    badge.textContent=queue.length>9?'9+':queue.length.toString();
+    badge.title=`${queue.length} ${queue.length===1?'entry':'entries'} pending sync`;
+  } else {
+    if(badge)badge.remove();
+  }
+}
+
+/* Manual "Sync now" button handler */
+function manualSync(){
+  retryPendingSync(true);
+}
+
+/* Auto-retry every 60s while app open */
+let _syncInterval=null;
+function startAutoSync(){
+  if(_syncInterval)clearInterval(_syncInterval);
+  _syncInterval=setInterval(()=>{
+    const queue=loadPendingQueue();
+    if(queue.length>0)retryPendingSync(false);
+  },60000);
+}
+function stopAutoSync(){
+  if(_syncInterval){clearInterval(_syncInterval);_syncInterval=null;}
+}
+/* ========== END v22.4 sync ========== */
 
 /* Confirm button — upgrades row status from 'viewed' to 'saved' */
 function confirmSelection(){
@@ -5536,6 +7816,8 @@ function confirmSelection(){
     // v21.6: After confirmation success → reset form and navigate to blank form tab
     // Small delay lets user see the "Confirmed ✓" feedback before the reset
     setTimeout(()=>{
+      // v22.3: Exit edit mode if we were editing (clears locks + banner)
+      if(window._editMode){window._editMode=false;applyEditLocks(false);}
       resetForm();
       state.result=null;
       document.getElementById('tab-result').style.display='none';
@@ -5548,9 +7830,15 @@ function confirmSelection(){
 }
 
 /* Download quote as single-sheet .xlsx — contains contact header, project details, all inputs, recommendation, tender spec */
-function downloadQuoteExcel(){
-  if(!state.result||state.result.noRec){alert('No recommendation available to export.');return;}
-  if(typeof XLSX==='undefined'){alert('Excel library not loaded. Check internet connection and reload.');return;}
+function downloadQuoteExcel(returnWorkbook){
+  if(!state.result||state.result.noRec){
+    if(returnWorkbook===true)return null;
+    alert('No recommendation available to export.');return;
+  }
+  if(typeof XLSX==='undefined'){
+    if(returnWorkbook===true)return null;
+    alert('Excel library not loaded. Check internet connection and reload.');return;
+  }
   const f=state.form;const r=state.result;const m=r.model;
   const refId=r.refId||'BS-'+Date.now().toString().slice(-8);
   const dateStr=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
@@ -5612,7 +7900,7 @@ function downloadQuoteExcel(){
   }
   sAoa.push([]);
   sAoa.push(['REQUIREMENTS MATCHED']);
-  sAoa.push(['Deployment',f.environment||'—']);
+  sAoa.push(['Deployment type',f.environment||'—']);
   sAoa.push(['Total Quantity',qtyTotal]);
   if(isMixed){sAoa.push(['Indoor Qty',qtyIndoor]);sAoa.push(['Outdoor Qty',qtyOutdoor]);}
   sAoa.push(['Content Type',f.content||'—']);
@@ -5845,7 +8133,7 @@ function downloadQuoteExcel(){
   tAoa.push(['Project',f.project||'—']);
   tAoa.push(['End-user',f.enduser||'—']);
   tAoa.push(['Model Offered',m.id]);
-  tAoa.push(['Deployment',f.environment||'—']);
+  tAoa.push(['Deployment type',f.environment||'—']);
   tAoa.push(['Quantity',qtyTotal]);
   tAoa.push(['Quote Reference',refId]);
   tAoa.push([]);
@@ -5963,15 +8251,106 @@ function downloadQuoteExcel(){
   XLSX.utils.book_append_sheet(wb,tWs,'Tender Compliance');
 
   const fname=`BrightSign-Quote-${m.id}-${(f.project||'Project').replace(/[^a-zA-Z0-9]/g,'_').slice(0,30)}-${new Date().toISOString().slice(0,10)}.xlsx`;
+  // v22.5: If returnWorkbook is set, don't write file — return { wb, fname } so email function can reuse
+  if(returnWorkbook===true){return {wb:wb,fname:fname};}
   XLSX.writeFile(wb,fname);
   showSync('Excel downloaded ✓ (Summary · Quotation · Tender)','success');
+}
+
+/* v22.5.1: Email the Excel quote via the USER's OWN mail app.
+   - Excel auto-downloads
+   - mailto: link opens user's default mail app with To/CC/Subject/Body pre-filled
+   - User attaches the just-downloaded file and clicks Send
+   - Email sends from the USER's real email address (not dg.cavitak@gmail.com)
+   - Dipen.g@cavitak.com is always on CC */
+async function emailQuoteToPartner(){
+  if(!state.result||state.result.noRec){alert('No recommendation available to email.');return;}
+  if(typeof XLSX==='undefined'){alert('Excel library not loaded. Check internet and reload.');return;}
+  const f=state.form;const r=state.result;const m=r.model;
+
+  // Validate partner contact email
+  const toEmail=(f.contactemail||'').trim();
+  if(!toEmail){
+    alert('Cannot email quote — no partner contact email on file.\n\nPlease add it in the form and try again.');
+    return;
+  }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail)){
+    alert(`The contact email does not look valid: "${toEmail}"\n\nPlease correct it in the form and try again.`);
+    return;
+  }
+
+  // Step 1: Download Excel so the user can attach it
+  const wbResult=downloadQuoteExcel(true);
+  if(!wbResult||!wbResult.wb){alert('Excel generation failed. Try Download Excel button first.');return;}
+  XLSX.writeFile(wbResult.wb,wbResult.fname);
+
+  // Step 2: Compose email content
+  const subject=`Quote · ${f.project||'Project'} · ${m.id} · ${f.qty} unit${f.qty==1?'':'s'}`;
+  const greeting=(f.contactname||'').trim()?`Dear ${f.contactname},`:'Dear Partner,';
+  const userName=state.user?state.user.fullName:'Cavitak Team';
+  const userRole=state.user?state.user.role:'';
+  const envStr=f.environment==='mixed'?`Mixed (${f.qtyIndoor} indoor + ${f.qtyOutdoor} outdoor)`:(f.environment||'—');
+  const resStr=(f.resolution||'—').toUpperCase();
+
+  const bodyLines=[
+    greeting,
+    '',
+    `Please find attached the BrightSign product recommendation and quotation for your project "${f.project||'Project'}"${f.enduser?` at ${f.enduser}`:''}${f.venue?` (${f.venue})`:''}.`,
+    '',
+    `Recommended model: ${m.id} — ${m.tag||''}`,
+    `Quantity: ${f.qty} unit${f.qty==1?'':'s'}`,
+    `Deployment type: ${envStr}`,
+    `Resolution: ${resStr}`,
+    '',
+    `The attached Excel has three sheets: Summary, Quotation (with unit-price cells for you to fill), and Tender Compliance (for consultant/RFP response).`,
+    '',
+    `For commercial terms, pricing, stock position, or any clarifications, please contact:`,
+    `Dipenkumar Gajjar — National Product Manager, BrightSign`,
+    `Cavitak Marketing Pvt Ltd · dipen.g@cavitak.com`,
+    '',
+    '-- IMPORTANT: Please attach the Excel file that just downloaded before sending --',
+    '',
+    'Regards,',
+    userName,
+    userRole,
+    'Cavitak Marketing Pvt Ltd'
+  ];
+  const bodyText=bodyLines.join('\n');
+
+  // Step 3: Open user's mail app with pre-filled mailto:
+  // CC always includes dipen.g@cavitak.com
+  const ccEmail='dipen.g@cavitak.com';
+  const mailto=`mailto:${encodeURIComponent(toEmail)}?cc=${encodeURIComponent(ccEmail)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+
+  // Show instructions to user BEFORE opening mail app
+  const btn=document.querySelector('.btn-email');
+  if(btn){btn.disabled=true;btn.textContent='Opening mail app…';}
+
+  showSync(`Excel downloaded · Mail app opening…`,'success');
+
+  // Small delay so user sees the Excel download notification first
+  setTimeout(()=>{
+    // Open the mail app — this will either:
+    //   - Launch a new message window in Outlook/Apple Mail/Thunderbird
+    //   - Open Gmail compose in a new tab (if Gmail is default handler)
+    window.location.href=mailto;
+
+    // After trigger, show helper message with attachment reminder
+    setTimeout(()=>{
+      if(btn){btn.textContent='Email opened ✓ · Attach file & send';btn.style.background='var(--emerald)';}
+      showSync(`Your mail app is open. Attach "${wbResult.fname}" and click Send.`,'success');
+      setTimeout(()=>{
+        if(btn){btn.disabled=false;btn.textContent='✉ Email to partner';btn.style.background='';}
+      },5000);
+    },600);
+  },400);
 }
 
 function clearLog(){if(confirm('Clear LOCAL history? (Central Google Sheet is not affected.)')){saveLocalLog([]);renderLog();}}
 
 async function refreshLog(){
   showSync('Refreshing…');
-  if(WEBHOOK_URL && state.user && state.user.isSuper){
+  if(WEBHOOK_URL && state.user){
     try{
       const resp=await fetch(WEBHOOK_URL+'?action=read',{method:'GET'});
       const data=await resp.json();
@@ -5979,72 +8358,138 @@ async function refreshLog(){
         window._centralLog=data;
         showSync('Central log loaded ✓','success');
         renderLog();
+        renderDashboard();  // v23.1: refresh charts too
         return;
       }
     } catch(e){console.warn(e);showSync('Central fetch failed (showing local)','error');}
   } else {showSync('Local refresh ✓','success');}
   renderLog();
+  renderDashboard();
 }
 
 /* v13: global chart instances — keep references so we can destroy before re-rendering */
 window._charts={conversion:null,groups:null,partners:null,activity:null};
-/* v13: current filter state */
-window._filters={city:'',user:'',project:'',partner:'',consultant:''};
+/* v13: current filter state + v24: date range */
+window._filters={city:'',user:'',project:'',partner:'',consultant:'',dateRange:'all'};
+
+/* v23.1/v24: Helper — returns entries visible to current user.
+   Super sees all. OEM also sees all (read access across team).
+   Presales/Sales/Support see own only (matched by loginName or fullName fallback). */
+function getVisibleEntries(){
+  if(!state.user)return [];
+  const isSuper=state.user.isSuper;
+  const role=(state.user.role||'').trim();
+  const seesAll=isSuper || role==='OEM';  // v24: OEM gets team-wide read
+  const allEntries=(window._centralLog&&window._centralLog.length)?window._centralLog:loadLocalLog();
+  if(seesAll)return allEntries;
+  const myLogin=(state.user.loginName||'').toLowerCase();
+  const myFullName=(state.user.fullName||'').toLowerCase();
+  return allEntries.filter(e=>{
+    const elogin=(e.loginName||'').toLowerCase();
+    const euser=(e.user||'').toLowerCase();
+    return (elogin && elogin===myLogin) || (euser && euser===myFullName);
+  });
+}
+
+/* v23.1: renderLog — ONLY the log list + action bar. Dashboard lives on its own tab now. */
+/* v24.2: History search state + helper */
+window._historySearch='';
+
+function applyHistorySearch(){
+  const input=document.getElementById('history-search-input');
+  window._historySearch=input?input.value:'';
+  renderLog();
+}
+
+function clearHistorySearch(){
+  const input=document.getElementById('history-search-input');
+  if(input)input.value='';
+  window._historySearch='';
+  renderLog();
+  if(input)input.focus();
+}
+
+function filterEntriesBySearch(entries,query){
+  const q=(query||'').trim().toLowerCase();
+  if(!q)return entries;
+  return entries.filter(e=>{
+    const haystack=[
+      e.project,e.enduser,e.venue,e.partner,e.city,
+      e.model,e.outdoorModel,e.user,e.loginName,
+      e.consultant,e.contactname
+    ].map(s=>(s||'').toString().toLowerCase()).join(' ');
+    return haystack.includes(q);
+  });
+}
 
 function renderLog(){
   if(!state.user)return;
   const isSuper=state.user.isSuper;
   const host=document.getElementById('log-content');
-  const superDash=document.getElementById('super-dashboard');
-  const superCharts=document.getElementById('super-charts');
-  const filterBar=document.getElementById('filter-bar');
-  const filterCount=document.getElementById('filter-count');
   const actionBar=document.getElementById('log-action-bar');
   const exportBtn=document.getElementById('export-btn');
   const pageTitle=document.getElementById('log-page-title');
   const pageSubtitle=document.getElementById('log-page-subtitle');
+  const searchWrap=document.getElementById('history-search-wrap');
+  const searchCount=document.getElementById('history-search-count');
+  const searchClear=document.getElementById('history-search-clear');
 
-  let entries=[];
+  const allVisible=getVisibleEntries();
+
+  // Title text
+  const role=(state.user.role||'').trim();
+  const seesAll=isSuper || role==='OEM';
   if(isSuper){
-    entries=(window._centralLog&&window._centralLog.length)?window._centralLog:loadLocalLog();
     pageTitle.textContent='All-team selection history';
     pageSubtitle.textContent=WEBHOOK_URL?'Aggregated from the central Google Sheet. Click Refresh to sync.':'Aggregated from local browser storage.';
     exportBtn.style.display='inline-flex';
+    const sr=document.getElementById('super-reset-btn');if(sr)sr.style.display='inline-flex';
+  } else if(seesAll){
+    pageTitle.textContent='Team selection history';
+    pageSubtitle.textContent=WEBHOOK_URL?'All team entries. Read-only access.':'All team entries (local).';
+    exportBtn.style.display='inline-flex';
+    const sr=document.getElementById('super-reset-btn');if(sr)sr.style.display='none';
   } else {
-    const all=loadLocalLog();
-    entries=all.filter(e=>e.loginName===state.user.loginName||e.user===state.user.fullName);
     pageTitle.textContent='My selection history';
-    pageSubtitle.textContent='Your past recommendations.';
+    pageSubtitle.textContent=WEBHOOK_URL?'Your past recommendations from central log. Click Refresh to sync.':'Your past recommendations.';
     exportBtn.style.display='none';
+    const sr=document.getElementById('super-reset-btn');if(sr)sr.style.display='none';
   }
 
-  // v18: Super-user premium dashboard — hero+KPI strip, filter, then charts body
-  if(isSuper && entries.length){
-    filterBar.style.display='grid';
-    superCharts.style.display='block';
-    document.getElementById('super-charts-body').style.display='block';
-    populateFilterOptions(entries);
-    const filtered=applyFiltersToEntries(entries);
-    renderKPIs(filtered,entries);
-    renderCharts(filtered);
-    renderFilterCount(filtered.length,entries.length,filterCount);
-    superDash.style.display='none';  // v18: replaced by KPI strip in hero
-    entries=filtered;
-  } else {
-    filterBar.style.display='none';
-    superCharts.style.display='none';
-    const scb=document.getElementById('super-charts-body');
-    if(scb)scb.style.display='none';
-    filterCount.style.display='none';
-    superDash.style.display='none';
-  }
-
-  if(!entries.length){
-    host.innerHTML=`<div class="log-empty"><svg class="log-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div class="log-empty-title">${isSuper&&hasActiveFilters()?'No matches':'No selections yet'}</div><div>${isSuper&&hasActiveFilters()?'Try different filter values or clear all filters.':'Run your first selection on the "New selection" tab.'}</div></div>`;
-    actionBar.style.display='flex';return;
-  }
   actionBar.style.display='flex';
-  host.innerHTML=entries.map(e=>{
+
+  if(!allVisible.length){
+    if(searchWrap)searchWrap.style.display='none';
+    host.innerHTML=`<div class="log-empty"><svg class="log-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div class="log-empty-title">No selections yet</div><div>Run your first selection on the "New selection" tab.</div></div>`;
+    return;
+  }
+
+  // v24.2: Show search bar when there are entries
+  if(searchWrap)searchWrap.style.display='block';
+
+  // Apply search filter
+  const q=window._historySearch||'';
+  const entries=filterEntriesBySearch(allVisible,q);
+
+  // Update count + clear-button visibility
+  if(searchCount){
+    if(q){
+      searchCount.textContent=`${entries.length} of ${allVisible.length} entries match`;
+      searchCount.style.display='block';
+    } else {
+      searchCount.style.display='none';
+    }
+  }
+  if(searchClear)searchClear.style.display=q?'flex':'none';
+
+  // No matches case
+  if(!entries.length){
+    host.innerHTML=`<div class="log-empty"><svg class="log-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><div class="log-empty-title">No matches for "${escapeHtml(q)}"</div><div>Try a different keyword or <a href="#" onclick="event.preventDefault();clearHistorySearch();" style="color:var(--blue);">clear the search</a>.</div></div>`;
+    return;
+  }
+
+  const canEdit=!!state.user;
+  host.innerHTML=entries.map((e,idx)=>{
     const d=new Date(e.ts);
     const dateStr=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
     const timeStr=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
@@ -6052,8 +8497,241 @@ function renderLog(){
     const statusLabel=e.status==='saved'?'CONFIRMED':'VIEWED';
     const statusColor=e.status==='saved'?'var(--emerald)':'var(--ink-subtle)';
     const statusBg=e.status==='saved'?'var(--emerald-light)':'var(--surface-2)';
-    return `<div class="log-entry"><div class="log-date">${dateStr}<br>${timeStr}<br><span style="color:var(--ink-muted);">${e.user}</span>${e.refId?`<br><span style="font-size:10px;opacity:0.7;">${e.refId}</span>`:''}</div><div class="log-main"><div class="log-project">${e.project} <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:${statusBg};color:${statusColor};margin-left:6px;vertical-align:middle;">${statusLabel}</span></div><div class="log-detail">${e.enduser} · ${e.venue} · ${e.city} · ${e.partner}</div><div class="log-detail">${e.qty} × ${e.model} · ${resStr} · ${e.environment} · ${e.update} · ${e.stage} · ${e.budget}${e.os&&e.os!=='—'?' · '+(e.os==='brightsignos'?'BSOS':'Win IoT'):''}</div></div><div class="log-model">${e.model}</div></div>`;
+    const editBtn=canEdit?`<button class="log-edit-btn" onclick="event.stopPropagation();editPastEntry(${idx});" title="Edit technical fields on this entry">Edit ↻</button>`:'';
+    return `<div class="log-entry"${canEdit?` data-entry-idx="${idx}"`:''}><div class="log-date">${dateStr}<br>${timeStr}<br><span style="color:var(--ink-muted);">${e.user}</span>${e.refId?`<br><span style="font-size:10px;opacity:0.7;">${e.refId}</span>`:''}</div><div class="log-main"><div class="log-project">${e.project} <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:${statusBg};color:${statusColor};margin-left:6px;vertical-align:middle;">${statusLabel}</span></div><div class="log-detail">${e.enduser} · ${e.venue} · ${e.city} · ${e.partner}</div><div class="log-detail">${e.qty} × ${e.model} · ${resStr} · ${e.environment} · ${e.update} · ${e.stage} · ${e.budget}${e.os&&e.os!=='—'?' · '+(e.os==='brightsignos'?'BSOS':'Win IoT'):''}</div></div><div class="log-model">${e.model}${editBtn}</div></div>`;
   }).join('');
+  window._currentLogEntries=entries;
+}
+
+/* v23.1: renderDashboard — ALL charts and KPIs. Super sees team data + filter bar; regular sees own data only. */
+function renderDashboard(){
+  if(!state.user)return;
+  const isSuper=state.user.isSuper;
+  const role=(state.user.role||'').trim();
+  const seesAll=isSuper || role==='OEM';  // v24: OEM also sees team-wide
+  const superCharts=document.getElementById('super-charts');
+  const superChartsBody=document.getElementById('super-charts-body');
+  const filterBar=document.getElementById('filter-bar');
+  const filterCount=document.getElementById('filter-count');
+  const pageTitle=document.getElementById('dashboard-page-title');
+  const pageSubtitle=document.getElementById('dashboard-page-subtitle');
+  const pageEyebrow=document.getElementById('dashboard-page-eyebrow');
+
+  const entries=getVisibleEntries();
+
+  if(pageEyebrow)pageEyebrow.textContent=seesAll?'Team analytics':'My analytics';
+  if(pageTitle)pageTitle.textContent=isSuper?'All-team dashboard':(seesAll?'Team dashboard':'My dashboard');
+  if(pageSubtitle)pageSubtitle.textContent=seesAll
+    ?'Team-wide selection analytics, pipeline funnel, model demand, and partner engagement.'
+    :'Your own selection analytics — funnel progress, models chosen, cities and partners engaged.';
+
+  if(!entries.length){
+    if(superCharts)superCharts.style.display='none';
+    if(superChartsBody)superChartsBody.style.display='none';
+    if(filterBar)filterBar.style.display='none';
+    if(filterCount)filterCount.style.display='none';
+    // Show an empty-state inline
+    let empty=document.getElementById('dashboard-empty');
+    if(!empty){
+      empty=document.createElement('div');
+      empty.id='dashboard-empty';
+      empty.className='log-empty';
+      empty.innerHTML=`<svg class="log-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9v6M15 9v6"/></svg><div class="log-empty-title">No data to visualize yet</div><div>${isSuper?'Once your team logs some selections, charts will appear here.':'Run a few selections on "New selection" and your personal dashboard will populate.'}</div>`;
+      const container=document.querySelector('#section-dashboard .container');
+      if(container)container.appendChild(empty);
+    }
+    empty.style.display='block';
+    return;
+  }
+
+  // Hide empty state if it was shown before
+  const empty=document.getElementById('dashboard-empty');
+  if(empty)empty.style.display='none';
+
+  if(seesAll){
+    if(filterBar)filterBar.style.display='grid';
+    populateFilterOptions(entries);
+  } else {
+    if(filterBar)filterBar.style.display='none';
+  }
+  if(superCharts)superCharts.style.display='block';
+  if(superChartsBody)superChartsBody.style.display='block';
+
+  const filtered=seesAll?applyFiltersToEntries(entries):entries;
+  renderKPIs(filtered,entries);
+  renderCharts(filtered);
+  if(seesAll){
+    renderFilterCount(filtered.length,entries.length,filterCount);
+  } else if(filterCount){
+    filterCount.style.display='none';
+  }
+}
+
+/* v22.2–v22.3: Edit a past entry — all users can edit entries visible to them.
+   Basic info (project/enduser/partner/etc.) is LOCKED.
+   Only technical fields (qty, resolution, environment, HDMI, touch, wifi, gpio, ssd, budget, CMS) are editable.
+   Saving upserts the same RefId — no duplicate row. */
+function editPastEntry(entryIdx){
+  const entries=window._currentLogEntries||[];
+  const entry=entries[entryIdx];
+  if(!entry){alert('Entry not found.');return;}
+  if(!state.user){alert('Please sign in to edit entries.');return;}
+  if(!confirm(`Edit technical fields on "${entry.project}" (${entry.refId})?\n\nProject & contact info will be LOCKED.\nOnly qty, resolution, environment, and other technical choices can be changed.\n\nClick OK to load this entry for editing.`))return;
+
+  // Reset result state
+  state.result=null;
+  document.getElementById('tab-result').style.display='none';
+
+  // Pre-fill state.form with every field from the entry
+  state.form={
+    project:entry.project||'',
+    enduser:entry.enduser||'',
+    venue:entry.venue||'',
+    partner:entry.partner||'',
+    consultant:entry.consultant||'',
+    city:entry.city||'',
+    contactname:entry.contactname||'',
+    contactphone:entry.contactphone||'',
+    contactemail:entry.contactemail||'',
+    stage:entry.stage||'',
+    closemonth:entry.closemonth||'',
+    qty:parseInt(entry.qty)||1,
+    qtyIndoor:parseInt(entry.qtyIndoor)||0,
+    qtyOutdoor:parseInt(entry.qtyOutdoor)||0,
+    environment:entry.environment||null,
+    update:entry.update||null,
+    budget:2,
+    content:entry.content||null,
+    resolution:entry.resolution||null,
+    outputs:null,
+    hdmiIn:entry.hdmiIn||null,
+    touch:entry.touch||null,
+    wifi:entry.wifi||null,
+    gpio:entry.gpio||null,
+    ssd:entry.ssd==='yes'?'yes':(entry.ssd==='no'?'no':null),
+    ssdCap:'',
+    cmsVendor:entry.cmsVendor||'BrightSign CMS',
+    cmsTerm:(entry.cmsTerm||'1').toString(),
+    cmsInclude:null
+  };
+  // Restore budget tier index from the name stored in sheet
+  if(entry.budget){
+    const budgetKey=Object.keys(BUDGET_ZONES).find(k=>BUDGET_ZONES[k].name===entry.budget);
+    if(budgetKey)state.form.budget=parseInt(budgetKey);
+  }
+
+  // v22.3: Flag edit mode + cache refId for upsert
+  window._editMode=true;
+  window._lastRefIdForEdit=entry.refId;
+
+  prefillFormUI();
+  applyEditLocks(true);  // v22.3: lock basic info
+
+  showTab('form');
+  showSync(`Editing ${entry.refId} · basic info locked`,'success');
+}
+
+/* v22.3: Lock / unlock the basic info form fields when in edit mode.
+   Basic info = project, enduser, venue, partner, consultant, city,
+                contact name/phone/email, stage, expected close month.
+   Technical = everything else (qty, environment, content, resolution, I/O, CMS, budget). */
+function applyEditLocks(locked){
+  const basicInfoIds=[
+    'f-project','f-enduser','f-venue','f-partner','f-consultant','f-city',
+    'f-contactname','f-contactphone','f-contactemail','f-stage','f-closemonth'
+  ];
+  basicInfoIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    if(locked){
+      el.setAttribute('readonly','readonly');
+      el.setAttribute('disabled','disabled');
+      el.classList.add('locked-field');
+      el.setAttribute('title','Locked in edit mode · Cannot change basic project info');
+      // Also lock the label visual
+      const label=el.closest('.form-group')?.querySelector('label');
+      if(label && !label.querySelector('.lock-icon')){
+        label.insertAdjacentHTML('beforeend',' <span class="lock-icon" title="Locked in edit mode">🔒</span>');
+      }
+    } else {
+      el.removeAttribute('readonly');
+      el.removeAttribute('disabled');
+      el.classList.remove('locked-field');
+      el.removeAttribute('title');
+      const label=el.closest('.form-group')?.querySelector('label');
+      if(label){
+        const lockIcon=label.querySelector('.lock-icon');
+        if(lockIcon)lockIcon.remove();
+      }
+    }
+  });
+  // Display a banner at top of form indicating edit mode
+  const existingBanner=document.getElementById('edit-mode-banner');
+  if(locked){
+    if(!existingBanner){
+      const formSection=document.getElementById('section-form');
+      if(formSection){
+        const banner=document.createElement('div');
+        banner.id='edit-mode-banner';
+        banner.className='edit-banner';
+        banner.innerHTML=`<span class="edit-banner-icon">↻</span><span>Edit mode · Editing <strong>${window._lastRefIdForEdit||'entry'}</strong> · Basic info locked, only technical fields editable</span><button onclick="cancelEditMode()">Cancel</button>`;
+        formSection.insertBefore(banner,formSection.firstChild);
+      }
+    }
+  } else {
+    if(existingBanner)existingBanner.remove();
+  }
+}
+
+/* v22.3: Exit edit mode explicitly — user changes mind, wants to start over */
+function cancelEditMode(){
+  window._editMode=false;
+  window._lastRefIdForEdit=null;
+  applyEditLocks(false);
+  resetForm();
+  showSync('Edit cancelled · Fresh form ready','success');
+}
+
+/* v22.2: Apply state.form values back onto form UI (inputs + pills + number widgets) */
+function prefillFormUI(){
+  const f=state.form;
+  // Text inputs
+  const textFields=['project','enduser','venue','partner','consultant','city','contactname','contactphone','contactemail','closemonth'];
+  textFields.forEach(id=>{
+    const el=document.getElementById('f-'+id);
+    if(el)el.value=f[id]||'';
+  });
+  // Quantity inputs
+  const qEl=document.getElementById('f-qty');
+  if(qEl)qEl.value=f.qty||1;
+  const qiEl=document.getElementById('f-qty-indoor');
+  if(qiEl)qiEl.value=f.qtyIndoor||0;
+  const qoEl=document.getElementById('f-qty-outdoor');
+  if(qoEl)qoEl.value=f.qtyOutdoor||0;
+  // Dropdowns
+  const dropdowns=['stage','cmsVendor','cmsTerm'];
+  dropdowns.forEach(id=>{
+    const el=document.getElementById('f-'+id);
+    if(el && f[id]!=null)el.value=f[id];
+  });
+  // Pill groups + choice cards
+  const pillInputs=['environment','update','content','resolution','hdmiIn','touch','wifi','gpio','ssd','cmsInclude'];
+  pillInputs.forEach(input=>{
+    const group=document.querySelector(`.pill-group[data-input="${input}"]`);
+    if(group){
+      group.querySelectorAll('.pill').forEach(p=>p.classList.remove('selected'));
+      const target=group.querySelector(`.pill[data-v="${f[input]}"]`);
+      if(target)target.classList.add('selected');
+    }
+    const cardGroup=document.querySelector(`[data-input="${input}"]`);
+    if(cardGroup){
+      cardGroup.querySelectorAll('.choice-card').forEach(c=>c.classList.remove('selected'));
+      const targetCard=cardGroup.querySelector(`.choice-card[data-v="${f[input]}"]`);
+      if(targetCard)targetCard.classList.add('selected');
+    }
+  });
+  if(typeof setBudget==='function')setBudget(f.budget||2);
+  if(typeof clearFieldErrors==='function')clearFieldErrors();
 }
 
 /* v13: populate filter dropdowns from unique values in entries */
@@ -6073,30 +8751,43 @@ function applyFilters(){
   window._filters.project=document.getElementById('flt-project').value;
   window._filters.partner=document.getElementById('flt-partner').value;
   window._filters.consultant=document.getElementById('flt-consultant').value;
-  renderLog();
+  // v24: date range
+  const dr=document.getElementById('flt-daterange');
+  window._filters.dateRange=dr?dr.value:'all';
+  renderDashboard();  // v23.1: filters live on dashboard tab now
 }
 
 function applyFiltersToEntries(entries){
   const f=window._filters;
+  // v24: Compute date cutoff once
+  let cutoff=null;
+  if(f.dateRange==='30d')cutoff=new Date(Date.now()-30*86400000);
+  else if(f.dateRange==='quarter')cutoff=new Date(Date.now()-90*86400000);
+  else if(f.dateRange==='year')cutoff=new Date(Date.now()-365*86400000);
   return entries.filter(e=>{
     if(f.city && e.city!==f.city)return false;
     if(f.user && e.user!==f.user)return false;
     if(f.project && e.project!==f.project)return false;
     if(f.partner && e.partner!==f.partner)return false;
     if(f.consultant && e.consultant!==f.consultant)return false;
+    if(cutoff){
+      const ts=new Date(e.ts);
+      if(isNaN(ts.getTime())||ts<cutoff)return false;
+    }
     return true;
   });
 }
 
 function hasActiveFilters(){
   const f=window._filters;
-  return !!(f.city||f.user||f.project||f.partner||f.consultant);
+  return !!(f.city||f.user||f.project||f.partner||f.consultant||(f.dateRange&&f.dateRange!=='all'));
 }
 
 function clearFilters(){
-  window._filters={city:'',user:'',project:'',partner:'',consultant:''};
+  window._filters={city:'',user:'',project:'',partner:'',consultant:'',dateRange:'all'};
   ['city','user','project','partner','consultant'].forEach(f=>{document.getElementById('flt-'+f).value='';});
-  renderLog();
+  const dr=document.getElementById('flt-daterange');if(dr)dr.value='all';
+  renderDashboard();  // v23.1: filters on dashboard
 }
 
 function renderFilterCount(shown,total,el){
@@ -6446,13 +9137,153 @@ function renderCharts(entries){
       }
     });
   }
+
+  // ===== v22.1 Chart 8: Model Demand (horizontal bar, all models sorted by count) =====
+  const modelMap={};
+  entries.forEach(e=>{
+    // Primary model
+    const pm=(e.model||'').toString().trim();
+    if(pm && pm!=='—')modelMap[pm]=(modelMap[pm]||0)+(parseInt(e.qty)||1);
+    // Outdoor variant (Mixed deployments)
+    const om=(e.outdoorModel||'').toString().trim();
+    if(om && om!=='—' && om!==pm)modelMap[om]=(modelMap[om]||0)+(parseInt(e.qtyOutdoor)||1);
+  });
+  const sortedModels=Object.keys(modelMap).sort((a,b)=>modelMap[b]-modelMap[a]).slice(0,10);
+  const modelCounts=sortedModels.map(mid=>modelMap[mid]);
+  const ctxModels=document.getElementById('chart-models');
+  if(ctxModels){
+    if(sortedModels.length){
+      // Gradient fills that shade bars by rank (top = deep indigo, bottom = softer violet)
+      const modelColors=sortedModels.map((_,i)=>{
+        const alpha=1-(i*0.07);
+        return `rgba(79,70,229,${Math.max(alpha,0.35)})`;
+      });
+      window._charts.models=new Chart(ctxModels,{
+        type:'bar',
+        data:{
+          labels:sortedModels,
+          datasets:[{data:modelCounts,backgroundColor:modelColors,borderRadius:6,barThickness:20,hoverBackgroundColor:'rgba(124,58,237,1)'}]
+        },
+        options:{
+          indexAxis:'y',
+          responsive:true,maintainAspectRatio:false,
+          animation:{duration:900,delay:(c)=>c.dataIndex*50,easing:'easeOutCubic'},
+          plugins:{legend:{display:false},tooltip:{
+            titleFont:{family:fontSans,weight:'700'},
+            bodyFont:{family:fontSans},
+            backgroundColor:'rgba(15,23,42,0.95)',
+            padding:10,cornerRadius:8,
+            callbacks:{
+              label:function(ctx){return `${ctx.parsed.x} unit${ctx.parsed.x===1?'':'s'} recommended`;}
+            }
+          }},
+          scales:{
+            x:{beginAtZero:true,grid:{color:colorBorder,drawBorder:false},ticks:{font:{family:fontSans,size:10},color:colorMuted,precision:0}},
+            y:{grid:{display:false},ticks:{font:{family:fontSans,size:11,weight:'700'},color:colorInk}}
+          }
+        }
+      });
+    } else {
+      ctxModels.parentElement.innerHTML=`<div style="padding:40px 20px;text-align:center;color:var(--ink-subtle);font-family:var(--sans);font-size:13px;">No model demand data yet.</div>`;
+    }
+  }
+
+  // ===== v22.1 Chart 9: Top Models Monthly Trend (multi-line, last 6 months) =====
+  // For each of top-3 models, count selections per month
+  const top3Models=sortedModels.slice(0,3);
+  const months=[];
+  const monthLabels=[];
+  const nowDate=new Date();
+  for(let i=5;i>=0;i--){
+    const d=new Date(nowDate.getFullYear(),nowDate.getMonth()-i,1);
+    const key=d.toISOString().slice(0,7);  // YYYY-MM
+    const label=d.toLocaleString('en-IN',{month:'short',year:'2-digit'});
+    months.push(key);
+    monthLabels.push(label);
+  }
+  const modelTimeSeries=top3Models.map(mid=>{
+    const counts=months.map(monthKey=>0);
+    entries.forEach(e=>{
+      const pm=(e.model||'').toString().trim();
+      const om=(e.outdoorModel||'').toString().trim();
+      const matches=pm===mid || om===mid;
+      if(!matches)return;
+      const ts=e.ts;
+      if(!ts)return;
+      const entryMonth=ts.toString().slice(0,7);
+      const idx=months.indexOf(entryMonth);
+      if(idx>=0){
+        const addQty=(pm===mid?(parseInt(e.qty)||1):0)+(om===mid?(parseInt(e.qtyOutdoor)||1):0);
+        counts[idx]+=addQty;
+      }
+    });
+    return counts;
+  });
+  const ctxModelsTimeline=document.getElementById('chart-models-timeline');
+  if(ctxModelsTimeline){
+    if(top3Models.length){
+      const lineColors=['rgba(79,70,229,1)','rgba(124,58,237,1)','rgba(16,185,129,1)'];
+      const lineFills=['rgba(79,70,229,0.12)','rgba(124,58,237,0.12)','rgba(16,185,129,0.12)'];
+      const datasets=top3Models.map((mid,idx)=>({
+        label:mid,
+        data:modelTimeSeries[idx],
+        borderColor:lineColors[idx],
+        backgroundColor:lineFills[idx],
+        borderWidth:2.5,
+        fill:true,
+        tension:0.4,
+        pointRadius:4,
+        pointHoverRadius:6,
+        pointBackgroundColor:lineColors[idx],
+        pointBorderColor:'#FFFFFF',
+        pointBorderWidth:2
+      }));
+      window._charts.modelsTimeline=new Chart(ctxModelsTimeline,{
+        type:'line',
+        data:{labels:monthLabels,datasets:datasets},
+        options:{
+          responsive:true,maintainAspectRatio:false,
+          interaction:{mode:'index',intersect:false},
+          animation:{duration:1100,easing:'easeOutCubic'},
+          plugins:{
+            legend:{
+              display:true,position:'top',align:'end',
+              labels:{font:{family:fontSans,size:11,weight:'600'},color:colorInk,usePointStyle:true,pointStyle:'circle',padding:12,boxWidth:8,boxHeight:8}
+            },
+            tooltip:{
+              titleFont:{family:fontSans,weight:'700',size:12},
+              bodyFont:{family:fontSans,size:12},
+              backgroundColor:'rgba(15,23,42,0.95)',
+              padding:10,cornerRadius:8
+            }
+          },
+          scales:{
+            x:{grid:{display:false},ticks:{font:{family:fontSans,size:10,weight:'600'},color:colorMuted}},
+            y:{beginAtZero:true,grid:{color:colorBorder,drawBorder:false},ticks:{font:{family:fontSans,size:10},color:colorMuted,precision:0}}
+          }
+        }
+      });
+    } else {
+      ctxModelsTimeline.parentElement.innerHTML=`<div style="padding:40px 20px;text-align:center;color:var(--ink-subtle);font-family:var(--sans);font-size:13px;">No trend data yet — need more entries.</div>`;
+    }
+  }
 }
 
 function exportCSV(){
   let entries=(window._centralLog&&window._centralLog.length)?window._centralLog:loadLocalLog();
+  // v22.3: Defensive filter — regular users only export their own entries
+  if(state.user && !state.user.isSuper){
+    const myLogin=(state.user.loginName||'').toLowerCase();
+    const myFullName=(state.user.fullName||'').toLowerCase();
+    entries=entries.filter(e=>{
+      const elogin=(e.loginName||'').toLowerCase();
+      const euser=(e.user||'').toLowerCase();
+      return (elogin && elogin===myLogin) || (euser && euser===myFullName);
+    });
+  }
   if(state.user&&state.user.isSuper&&hasActiveFilters())entries=applyFiltersToEntries(entries);
   if(!entries.length){alert('No data to export.');return;}
-  const headers=['Ref ID','Status','Timestamp','User','Role','Project','End-user','Venue','Partner','Consultant','City','Contact name','Contact phone','Contact email','Deal stage','Close month','Qty','Indoor Qty','Outdoor Qty','Model','Outdoor Model','Content type','Resolution','Environment','Content update','Budget','HDMI in','Touch','Wi-Fi','GPIO','SSD','OS','CMS Vendor','CMS Term','CMS Billing Type'];
+  const headers=['Ref ID','Status','Timestamp','User','Role','Project','End-user','Venue','Partner','Consultant','City','Contact name','Contact phone','Contact email','Deal stage','Close month','Qty','Indoor Qty','Outdoor Qty','Model','Outdoor Model','Content type','Resolution','Deployment type','Content update','Budget','HDMI in','Touch','Wi-Fi','GPIO','SSD','OS','CMS Vendor','CMS Term','CMS Billing Type'];
   const rows=entries.map(e=>[e.refId||'',e.status||'viewed',e.ts,e.user,e.role,e.project,e.enduser,e.venue,e.partner,e.consultant,e.city,e.contactname,e.contactphone,e.contactemail,e.stage,e.closemonth,e.qty,e.qtyIndoor||'',e.qtyOutdoor||'',e.model,e.outdoorModel||'',e.content,e.resolution,e.environment,e.update,e.budget,e.hdmiIn,e.touch,e.wifi,e.gpio||'—',e.ssd,e.os,e.cmsVendor||'',e.cmsTerm||'',e.cmsBillingType||'']);
   const csv=[headers,...rows].map(r=>r.map(c=>`"${(c||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
