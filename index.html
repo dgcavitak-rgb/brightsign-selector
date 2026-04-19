@@ -3008,6 +3008,25 @@ html[data-theme="dark"] .log-edit-btn{box-shadow:0 2px 8px rgba(0,0,0,0.35);}
   vertical-align:middle;
   filter:grayscale(0.3);
 }
+/* v24.2.8: Backfill hint — shows on basic-info fields that are empty and editable in edit mode */
+.backfill-hint{
+  display:inline-block;
+  margin-left:8px;
+  padding:2px 8px;
+  border-radius:6px;
+  background:rgba(251,191,36,0.15);
+  color:#D97706;
+  font-family:var(--sans);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:0.04em;
+  text-transform:none;
+  vertical-align:middle;
+}
+html[data-theme="dark"] .backfill-hint{
+  background:rgba(251,191,36,0.20);
+  color:#FCD34D;
+}
 html[data-theme="dark"] .locked-field{
   background:rgba(30,41,59,0.5)!important;
   color:rgba(148,163,184,0.7)!important;
@@ -5719,6 +5738,13 @@ async function handleLogin(){
     };
     window._sessionUser=userRecord;
     window._sessionPassword=password;
+    // v24.2.10: Baseline form-owner snapshot right at login — ensures any submit has identity.
+    window._formOwner={
+      loginName:state.user.loginName,
+      fullName:state.user.fullName,
+      role:state.user.role,
+      capturedAt:Date.now()
+    };
 
     const nameEl=document.getElementById('user-label-name');
     nameEl.innerHTML=state.user.fullName+(state.user.isSuper?' <span class="super-pill">Super</span>':'');
@@ -5762,9 +5788,29 @@ async function handleLogin(){
     },1500);
     setTimeout(()=>{
       updateLoginSplash(90,'Syncing entries…');
-      const queue=loadPendingQueue();
-      if(queue.length>0)retryPendingSync(false);
-      else verifyPendingSync(true);
+      // v24.2.10: Check queue BEFORE sync — count only entries that belong to this user
+      const queueBefore=loadPendingQueue();
+      const myLogin=(state.user.loginName||'').toLowerCase();
+      const mine=queueBefore.filter(q=>{
+        const qLogin=(q.payload && q.payload.loginName||'').toLowerCase();
+        return qLogin===myLogin;
+      });
+      if(queueBefore.length>0){
+        retryPendingSync(false);
+        // After sync attempt, show recovery toast if user had pending entries
+        if(mine.length>0){
+          setTimeout(()=>{
+            const queueAfter=loadPendingQueue();
+            const stillMine=queueAfter.filter(q=>(q.payload && q.payload.loginName||'').toLowerCase()===myLogin);
+            const synced=mine.length-stillMine.length;
+            if(synced>0){
+              showSync(`Synced ${synced} entr${synced===1?'y':'ies'} from earlier session ✓`,'success');
+            }
+          },1800);  // Let the sync complete before checking
+        }
+      } else {
+        verifyPendingSync(true);
+      }
     },3000);
     // Dismiss splash once everything kicked off (unless mustChange modal is open)
     setTimeout(()=>{
@@ -6708,6 +6754,16 @@ function showTab(which){
     state.result=null;
     document.getElementById('tab-result').style.display='none';
   }
+  // v24.2.10: Snapshot current user identity when form opens — persists even if session dies later.
+  // This ensures entries saved after session timeout still get correct user attribution.
+  if(which==='form' && state.user && state.user.loginName){
+    window._formOwner={
+      loginName:state.user.loginName,
+      fullName:state.user.fullName,
+      role:state.user.role,
+      capturedAt:Date.now()
+    };
+  }
   // v23.1: includes 'team' and 'dashboard' tabs
   ['form','result','log','team','dashboard'].forEach(t=>{
     const sec=document.getElementById('section-'+t);
@@ -6715,8 +6771,24 @@ function showTab(which){
     const btn=document.getElementById('tab-'+t);
     if(btn)btn.classList.toggle('active',t===which);
   });
-  if(which==='log')renderLog();
-  if(which==='dashboard')renderDashboard();
+  if(which==='log'){
+    renderLog();
+    // v24.2.10: Auto-refresh central log when History tab is opened (fire and forget)
+    if(WEBHOOK_URL && state.user){
+      refreshLog();  // re-fetches from Sheet, updates charts
+    }
+    // Also nudge the pending queue in case stuff is waiting
+    if(typeof retryPendingSync==='function'){
+      setTimeout(()=>retryPendingSync(false),200);
+    }
+  }
+  if(which==='dashboard'){
+    renderDashboard();
+    // v24.2.10: Auto-refresh central log when Dashboard is opened
+    if(WEBHOOK_URL && state.user){
+      refreshLog();  // refreshLog also calls renderDashboard internally after fetching
+    }
+  }
   if(which==='team')renderTeamTab();
   window.scrollTo(0,0);
 }
@@ -7705,6 +7777,18 @@ function saveLocalLog(entries){try{localStorage.setItem('bs-selector-log',JSON.s
 function buildEntryPayload(status){
   const f=state.form;const r=state.result;
   if(!r||r.noRec)return null;
+  // v24.2.10: Resolve user identity — prefer live session, fall back to form-owner snapshot.
+  // This ensures entries get real attribution even if session timed out between form open and submit.
+  const u=(state.user && state.user.loginName) ? state.user : (window._formOwner||null);
+  if(!u||!u.loginName){
+    // No identity available AT ALL (no session, no snapshot) — safest to block silently and prompt login.
+    console.error('buildEntryPayload: no user identity available (no state.user, no _formOwner). Entry NOT saved.');
+    alert('Please sign in to save this entry.');
+    state.user=null;
+    document.getElementById('page-app').classList.remove('active');
+    document.getElementById('page-login').classList.add('active');
+    return null;
+  }
   // v21.2: Compute CMS billing type based on update + qty + user's Yes/No choice
   const qtyForCms=parseInt(f.qty)||1;
   let cmsBillingType='—';
@@ -7717,9 +7801,9 @@ function buildEntryPayload(status){
     refId:r.refId,
     ts:new Date().toISOString(),
     status:status||'viewed',
-    user:state.user?state.user.fullName:'—',
-    loginName:state.user?state.user.loginName:'—',
-    role:state.user?state.user.role:'—',
+    user:u.fullName||'—',
+    loginName:u.loginName||'—',
+    role:u.role||'—',
     project:f.project||'(unnamed)',enduser:f.enduser||'—',venue:f.venue||'—',
     partner:f.partner||'—',consultant:f.consultant||'—',city:f.city||'—',
     contactname:f.contactname||'—',contactphone:f.contactphone||'—',contactemail:f.contactemail||'—',
@@ -8798,16 +8882,24 @@ function editPastEntry(entryIdx){
 /* v22.3: Lock / unlock the basic info form fields when in edit mode.
    Basic info = project, enduser, venue, partner, consultant, city,
                 contact name/phone/email, stage, expected close month.
-   Technical = everything else (qty, environment, content, resolution, I/O, CMS, budget). */
+   Technical = everything else (qty, environment, content, resolution, I/O, CMS, budget).
+   v24.2.8: SMART LOCK — if a basic-info field is empty (entry predates that field),
+            leave it editable so user can backfill. Filled fields remain locked. */
 function applyEditLocks(locked){
   const basicInfoIds=[
     'f-project','f-enduser','f-venue','f-partner','f-consultant','f-city',
     'f-contactname','f-contactphone','f-contactemail','f-stage','f-closemonth'
   ];
+  let unlockedCount=0;
   basicInfoIds.forEach(id=>{
     const el=document.getElementById(id);
     if(!el)return;
-    if(locked){
+    // v24.2.8: Check if the field has a real value (not empty, not placeholder "—")
+    const currentValue=(el.value||'').toString().trim();
+    const isEmpty=!currentValue || currentValue==='—' || currentValue==='--';
+    const shouldLock=locked && !isEmpty;  // Only lock fields that have data
+
+    if(shouldLock){
       el.setAttribute('readonly','readonly');
       el.setAttribute('disabled','disabled');
       el.classList.add('locked-field');
@@ -8826,6 +8918,14 @@ function applyEditLocks(locked){
       if(label){
         const lockIcon=label.querySelector('.lock-icon');
         if(lockIcon)lockIcon.remove();
+        // v24.2.8: Mark unlocked-but-expected-locked fields with a subtle hint
+        if(locked && isEmpty && !label.querySelector('.backfill-hint')){
+          label.insertAdjacentHTML('beforeend',' <span class="backfill-hint" title="This field was empty — you can fill it now">✎ backfill</span>');
+          unlockedCount++;
+        } else if(!locked){
+          const hint=label.querySelector('.backfill-hint');
+          if(hint)hint.remove();
+        }
       }
     }
   });
@@ -8838,7 +8938,7 @@ function applyEditLocks(locked){
         const banner=document.createElement('div');
         banner.id='edit-mode-banner';
         banner.className='edit-banner';
-        banner.innerHTML=`<span class="edit-banner-icon">↻</span><span>Edit mode · Editing <strong>${window._lastRefIdForEdit||'entry'}</strong> · Basic info locked, only technical fields editable</span><button onclick="cancelEditMode()">Cancel</button>`;
+        banner.innerHTML=`<span class="edit-banner-icon">↻</span><span>Edit mode · Editing <strong>${window._lastRefIdForEdit||'entry'}</strong> · Basic info locked where filled · Empty fields can be backfilled</span><button onclick="cancelEditMode()">Cancel</button>`;
         formSection.insertBefore(banner,formSection.firstChild);
       }
     }
