@@ -7,6 +7,27 @@ Versions follow semantic-ish conventions: MAJOR.MINOR[.PATCH].
 
 ---
 
+## [v24.2.3] — 2026-04-19 · Tab label consistency
+
+### Changed
+- **Tab label always reads "History"** — was role-dependent before ("All team" for super, "My history" for regular users). Now consistent for everyone. Data scoping logic is unchanged (super still sees team-wide, regular still sees own).
+
+### Files in release
+- `brightsign-v24-2-3.html` (frontend only)
+
+---
+
+## [v24.2.2] — 2026-04-19 · UI polish fixes
+
+### Fixed
+- **Excess whitespace above page titles.** Dashboard and Team tabs were showing a large empty area between the nav bar and the content. Reduced container top padding from 40px to 22px and page-header bottom margin from 40px to 22px.
+- **Invisible form labels in Add/Edit user modal and Profile tab.** Labels like "LOGIN NAME", "FULL NAME", "ROLE" were using `var(--ink-muted)` at 11px uppercase which rendered nearly invisible against white modal backgrounds. Fixed by switching to `var(--ink)` with opacity 0.85 at 12px — now clearly readable in both light and dark modes.
+
+### Files in release
+- `brightsign-v24-2-2.html` (frontend only — Apps Script v24.2 unchanged)
+
+---
+
 ## [v24.2.1] — 2026-04-19 · Forgot password + branded login splash
 
 ### Added

@@ -448,8 +448,8 @@ button{font-family:var(--sans);}
 .app-nav button.active{color:var(--blue);border-bottom-color:var(--blue);}
 .app-nav button:hover:not(.active){color:var(--ink);}
 .app-nav svg{width:14px;height:14px;}
-.container{max-width:1180px;margin:0 auto;padding:40px 36px 120px;}
-.page-header{margin-bottom:40px;}
+.container{max-width:1180px;margin:0 auto;padding:22px 36px 120px;}
+.page-header{margin-bottom:22px;}
 .page-eyebrow{
   font-family:var(--sans);
   font-size:var(--fs-label);
@@ -3124,12 +3124,17 @@ html[data-theme="dark"] .pwd-modal{
 .pwd-field label{
   display:block;
   font-family:var(--sans);
-  font-size:11px;
+  font-size:12px;
   font-weight:700;
-  letter-spacing:0.04em;
+  letter-spacing:0.05em;
   text-transform:uppercase;
-  color:var(--ink-muted);
-  margin-bottom:6px;
+  color:var(--ink);
+  margin-bottom:7px;
+  opacity:0.85;
+}
+html[data-theme="dark"] .pwd-field label{
+  color:var(--ink);
+  opacity:0.92;
 }
 .pwd-field input{
   width:100%;
@@ -3235,9 +3240,14 @@ html[data-theme="dark"] .profile-edit-card{background:#1E293B;border-color:rgba(
 .profile-field label{
   display:block;
   font-family:var(--sans);
-  font-size:11px;font-weight:700;letter-spacing:0.04em;
-  text-transform:uppercase;color:var(--ink-muted);
-  margin-bottom:6px;
+  font-size:12px;font-weight:700;letter-spacing:0.05em;
+  text-transform:uppercase;color:var(--ink);
+  margin-bottom:7px;
+  opacity:0.85;
+}
+html[data-theme="dark"] .profile-field label{
+  color:var(--ink);
+  opacity:0.92;
 }
 .profile-field-lock{margin-left:4px;font-size:11px;opacity:0.6;}
 .profile-field input{
@@ -5563,7 +5573,7 @@ async function handleLogin(){
     const avatar=document.getElementById('user-avatar');
     avatar.textContent=initials;
     avatar.classList.toggle('super',state.user.isSuper);
-    document.getElementById('log-tab-label').textContent=state.user.isSuper?'All team':'My history';
+    document.getElementById('log-tab-label').textContent='History';  // v24.2.3: consistent label regardless of role
     // v23: Show Profile/Team tab label
     const teamTab=document.getElementById('tab-team');
     const teamTabLabel=document.getElementById('team-tab-label');
