@@ -485,7 +485,7 @@ button{font-family:var(--sans);}
   radial-gradient(ellipse 60% 50% at 20% 20%, rgba(199,210,254,0.6) 0%, transparent 60%),
   radial-gradient(ellipse 60% 50% at 80% 80%, rgba(147,197,253,0.5) 0%, transparent 60%),
   linear-gradient(135deg,#F6F8FC 0%,#E0E7FF 100%);}
-#page-login.active{display:flex;align-items:center;justify-content:center;padding:24px;}
+#page-login.active{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px 24px;gap:24px;}
 .login-card{
   background:var(--glass-bg-strong);
   backdrop-filter:var(--glass-blur);
@@ -568,11 +568,11 @@ button{font-family:var(--sans);}
 }
 .error-msg.show{display:block;}
 .login-footer{
-  text-align:center;padding:20px;
+  text-align:center;padding:4px 20px;
   font-family:var(--sans);
   font-size:12px;line-height:1.4;
   color:var(--ink-subtle);
-  position:absolute;bottom:0;left:0;right:0;
+  max-width:560px;
 }
 .form-section{
   background:var(--glass-bg-strong);
@@ -2972,9 +2972,8 @@ input:focus,select:focus,textarea:focus{
   transition:all 140ms;
 }
 .log-entry:hover{border-color:rgba(99,102,241,0.2);box-shadow:var(--shadow-float);transform:translateY(-1px);}
-/* v22.2: Edit button for past entries (super-user only) */
+/* v22.2: Edit button for past entries — placed below model name via log-model flex column */
 .log-edit-btn{
-  margin-top:8px;
   padding:6px 12px;
   font-family:var(--sans);
   font-size:11px;
@@ -3921,6 +3920,11 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   letter-spacing:-0.02em;
   font-weight:400;
   color:var(--indigo);
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:10px;
+  min-width:90px;
 }
 .super-banner{
   background:linear-gradient(135deg,var(--gold-light) 0%,#FEF08A 100%);
@@ -4453,9 +4457,9 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           </div>
           <div class="chart-card-v18">
             <div class="chart-v18-head">
-              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-indigo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="2" x2="12" y2="12"/><line x1="12" y1="12" x2="20" y2="8"/></svg></span>Model Group Mix</div>
+              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-indigo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="2" x2="12" y2="12"/><line x1="12" y1="12" x2="20" y2="8"/></svg></span>Model Distribution</div>
             </div>
-            <div class="chart-v18-subtitle">Share by series</div>
+            <div class="chart-v18-subtitle">Share by individual model</div>
             <div class="chart-v18-body"><canvas id="chart-groups"></canvas></div>
           </div>
           <div class="chart-card-v18">
@@ -8968,22 +8972,26 @@ function renderCharts(entries){
     });
   }
 
-  // ===== Chart 2: Model Group Distribution (doughnut) =====
+  // ===== Chart 2: Model Distribution (doughnut) — v24.2.5: by individual model, not series =====
   const groupMap={};
   entries.forEach(e=>{
-    const grp=(e.model||'').match(/^[A-Z]+/);
-    const key=grp?grp[0]:'Other';
+    const key=(e.model||'Other').trim()||'Other';
     groupMap[key]=(groupMap[key]||0)+1;
   });
-  const groupLabels=Object.keys(groupMap).sort();
+  // Sort by count descending so the busiest model appears first in legend
+  const groupLabels=Object.keys(groupMap).sort((a,b)=>groupMap[b]-groupMap[a]);
   const groupData=groupLabels.map(g=>groupMap[g]);
-  const groupColors={'AU':'#94A3B8','LS':'#60A5FA','HD':'#3B82F6','XD':'#4F46E5','XT':'#7C3AED','XC':'#1E1B4B'};
-  const palette=groupLabels.map(g=>groupColors[g]||'#64748B');
+  // v24.2.5: Color each model by its series prefix for visual cohesion (LS425 gets LS color, XD235 gets XD color etc.)
+  const seriesColors={'AU':'#94A3B8','LS':'#60A5FA','HD':'#3B82F6','XD':'#4F46E5','XT':'#7C3AED','XC':'#1E1B4B'};
+  const palette=groupLabels.map(m=>{
+    const prefix=(m.match(/^[A-Z]+/)||['Other'])[0];
+    return seriesColors[prefix]||'#64748B';
+  });
   const ctxGroups=document.getElementById('chart-groups');
   if(ctxGroups){
     window._charts.groups=new Chart(ctxGroups,{
       type:'doughnut',
-      data:{labels:groupLabels.map(g=>g+' series'),datasets:[{data:groupData,backgroundColor:palette,borderWidth:3,borderColor:'#fff',hoverOffset:8}]},
+      data:{labels:groupLabels,datasets:[{data:groupData,backgroundColor:palette,borderWidth:3,borderColor:'#fff',hoverOffset:8}]},
       options:{
         responsive:true,maintainAspectRatio:false,
         cutout:'62%',

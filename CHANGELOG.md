@@ -7,6 +7,55 @@ Versions follow semantic-ish conventions: MAJOR.MINOR[.PATCH].
 
 ---
 
+## [v24.2.6] — 2026-04-19 · Mobile responsive polish pass
+
+### Added
+Comprehensive mobile polish covering two breakpoints (720px for tablets/small laptops, 480px for phones). This is a best-guess baseline pass — real issues from phone testing will be patched separately.
+
+- **Modals full-screen on phones** — Add User, Edit User, Password Change, Forgot Password, Reset Request modals expand to fit viewport with scrollable content and full-width stacked action buttons (Cancel/Submit). Previously they were fixed-width and could overflow.
+- **Dashboard filter bar stacks vertically** — the 5-column filter grid (Date range · State · User · Project · Partner) collapses to a single-column stack on phones. Each filter gets full width, easier to tap.
+- **KPI strip becomes 2 columns on phones** — the 4-tile KPI row (Total · Confirmed · Cities · End-users) was getting cramped. Now renders as 2x2 grid on narrow screens.
+- **Dashboard charts full-width, stacked** — the 3-column chart grid becomes single-column on phones. Each chart gets full horizontal space, height reduced to 240px for better fit.
+- **Team tab polish** — user rows tighten action button spacing, avatar shrinks to 38px, team name sizes down. Team toolbar controls stack vertically on tiny phones.
+- **Reset request section** — pending request rows stack their Approve/Deny buttons side-by-side with equal width. Works for tablet and phone.
+- **Splash screen scales** — logo card shrinks to 52px, brand name drops to 22px, progress bar narrower. On tiny phones (<480px), logo and brand text stack vertically instead of side-by-side.
+- **Touch targets increased** — minimum 44px height on primary/action buttons, 42px on input fields. Meets iOS guidelines for tap targets.
+- **App header slims on phones** — user info block hidden, logo shrinks, theme toggle compacts to 36px. Header no longer dominates the viewport.
+- **Tab bar horizontal scroll affordance** — already had overflow-x:auto from prior versions, verified still works after polish.
+
+### Files in release
+- `brightsign-v24-2-6.html` (frontend only — Apps Script v24.2 unchanged)
+
+### Known limitations
+- Dashboard charts on phones are functional but chart titles may truncate. This is expected — Chart.js legend behavior on 320px-wide screens has inherent limits.
+- Result page (after running a selection) wasn't specifically optimized yet. Defer to next release if real issues surface.
+
+---
+
+## [v24.2.5] — 2026-04-19 · Chart by model + login footer fix
+
+### Changed
+- **Model Distribution chart** (previously "Model Group Mix") now shows individual model numbers instead of series groupings. Before: "HD series / LS series / XD series / XT series". After: "LS425 / XD235 / XT1145 / XC4055" etc., sorted by count descending. Each slice is colored by its series for visual continuity (all LS models blue, all XT models violet, etc.).
+- **Login page footer** is no longer absolute-positioned. Previously pinned to `bottom:0` which caused it to clip on shorter viewports. Now flows naturally below the login card using flexbox column layout with 24px gap, ensuring the "Dipenkumar Gajjar · National Product Manager..." contact line is always fully visible regardless of screen size.
+
+### Fixed (reminder)
+- **Dashboard/Team blank space above titles** — padding fix from v24.2.2 confirmed in v24.2.5. If still seeing excessive whitespace, it means an older version is cached in GitHub; deploy v24.2.5 to resolve.
+
+### Files in release
+- `brightsign-v24-2-5.html` (frontend only)
+
+---
+
+## [v24.2.4] — 2026-04-19 · Edit button layout fix
+
+### Fixed
+- **Edit button overlapping model name in History rows.** The right column of each history entry showed the model SKU (e.g. LS425, XD235) with the Edit button rendered inline next to it, causing visual collision. Fixed by making `.log-model` a flex column — model name on top, Edit button directly below with a 10px gap. Right-aligned, proper breathing room.
+
+### Files in release
+- `brightsign-v24-2-4.html` (frontend only)
+
+---
+
 ## [v24.2.3] — 2026-04-19 · Tab label consistency
 
 ### Changed
