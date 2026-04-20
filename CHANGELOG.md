@@ -7,6 +7,345 @@ Versions follow semantic-ish conventions: MAJOR.MINOR[.PATCH].
 
 ---
 
+## [v24.4.2] — 2026-04-19 · Unified theme pill (Light / Auto / Dark)
+
+Frontend-only patch release. Theme control consolidated into a single 3-state pill.
+
+### Changed
+- **Replaced 2-state sun/moon toggle** (Light ↔ Dark only) with **3-state pill**: Light / Auto / Dark.
+- **"Auto" mode** follows the device's OS preference via `prefers-color-scheme` media query.
+- If the OS switches day-to-night mode while the user is on "Auto", the app theme updates live without requiring a refresh.
+- Both locations of the control updated:
+  - **Login page** — top-right floating pill
+  - **App header** — inline next to the user avatar
+
+### Added
+- New `setThemeMode(mode)` JS function — explicit setter for a specific mode
+- Visual "active" state on the currently-selected pill segment (indigo highlight + subtle shadow)
+- OS-preference listener for live updates when in Auto mode
+
+### Migration
+- Previous storage key `bs-theme` (values: `light`/`dark`) is automatically migrated to new key `bs-theme-mode` (values: `light`/`auto`/`dark`) on first load after deploy.
+- Users who had previously chosen an explicit light or dark theme will keep that choice.
+- New users default to **Auto**.
+
+### Fixed
+- Mobile viewport had a stale `.theme-toggle` rule that tried to size the old button. Replaced with `.theme-pill` sizing for touch targets.
+
+### Files in release
+- `brightsign-v24-4-2.html` — frontend only (Apps Script v24.5 unchanged)
+
+### Deploy
+- Frontend-only patch. Replace `index.html` on GitHub. Hard refresh to see new pill.
+
+---
+
+## [v24.4.2] — 2026-04-19 · Theme control — 3-state pill (Light / Auto / Dark)
+
+Frontend-only patch release. UX improvement.
+
+### Changed — Theme control
+- **Old:** Single toggle button (sun ↔ moon) cycling between light and dark. Shown twice (header + login page).
+- **New:** 3-state pill with Light / Auto / Dark options, shown twice (header + login page floating top-right).
+- **"Auto" mode** follows the device's OS-level `prefers-color-scheme` setting and live-updates if the user changes their OS theme while the app is open.
+- Active state is visually indicated (highlighted pill segment).
+- All 3 modes persist to `localStorage`.
+
+### Added — OS theme sync
+- Media query listener for `prefers-color-scheme` — when in Auto mode, theme updates instantly if the device switches (e.g., iOS Auto Appearance sunset/sunrise transitions, Windows light↔dark schedule).
+
+### Migration
+- Legacy `bs-theme` localStorage key (values: `light` / `dark`) is auto-migrated to new `bs-theme-mode` key on first load after deploy. Old explicit choice is preserved.
+- New users default to `auto`.
+
+### Kept
+- `toggleTheme()` function kept as a legacy shim — cycles through light → auto → dark. Any old code still calling it continues to work.
+
+### Files in release
+- `brightsign-v24-4-2.html` — frontend only (Apps Script v24.5 unchanged)
+
+### Deploy
+- Frontend-only patch. Replace `index.html` on GitHub. Hard refresh.
+
+---
+
+## [v24.4.2] — 2026-04-19 · Theme pill (light / auto / dark)
+
+Frontend-only patch. Replaces the 2-state dark/light toggle with a 3-state pill selector that includes an "Auto" mode following the user's OS preference.
+
+### Changed — Theme control UI
+
+- **Old:** Two separate sun/moon toggle buttons (one in header, one on login page) cycling between light and dark on click.
+- **New:** A single pill-shaped radio group with three icons: sun (Light), monitor (Auto), moon (Dark). Active mode has a raised card background. Same pill appears in both the header and top-right of the login page.
+
+### Added — Auto mode
+
+- **"Auto"** is now the default for new users. It reads `prefers-color-scheme` from the OS and picks light or dark accordingly.
+- **Live-responsive:** if the user has Auto selected and changes their OS theme (e.g., toggles dark mode in system settings), the app switches instantly without needing a refresh. Implemented via `matchMedia().addEventListener('change')`.
+
+### Changed — Storage
+
+- Storage key renamed from `bs-theme` to `bs-theme-mode`.
+- Values changed from `dark`/`light` to `light`/`auto`/`dark`.
+- **Migration:** on first load after deploy, old `bs-theme` values (dark/light) are copied to `bs-theme-mode` and the old key is removed. Users who explicitly chose dark or light retain that preference. Users who never chose anything default to Auto.
+
+### Changed — Early-paint script
+
+- Inline script in `<head>` (runs before body renders to prevent flash-of-light) now understands the 3-state system. If Auto is active, it reads OS preference immediately.
+
+### Preserved
+
+- Legacy `toggleTheme()` function kept for backward compat, but rewritten to cycle Light → Auto → Dark instead of just Light ⇄ Dark. Not used by any current UI but preserved in case external code calls it.
+
+### Files in release
+
+- `brightsign-v24-4-2.html` — frontend only (Apps Script v24.5 unchanged)
+
+### Deploy
+
+- Single-file swap. Replace `index.html` on GitHub. Hard refresh.
+
+---
+
+## [v24.4.1] — 2026-04-19 · User-facing text sanitization
+
+Frontend-only patch release. No feature changes. No backend changes. All visible strings reviewed and rewritten to speak in user-centric terms — no references to sync, webhook, Sheet1, backup tabs, central log, "uploading", or backend infrastructure.
+
+### Rationale
+We don't want users thinking about where their data lives. A user clicks Save — they expect "Saved ✓", not "Logging… Confirming… Uploaded ✓". The previous language leaked implementation: "Central fetch failed · showing local cache", "1 entry pending sync to Google Sheet", "Restore from Backup_2026-04-19 will overwrite Sheet1 contents". Every such phrase replaced.
+
+### Changed — Toasts and notifications
+- `logEntry` save toast: "Confirming… / Logging…" → "Saving…"
+- `logEntry` offline fallback: "Saved · will upload when connection returns" → "Saved offline · will update when online"
+- `refreshLog` success: stripped "(attempt 2)" retry suffix (leaked that retries happen)
+- `refreshLog` failure: "Central fetch failed · showing local cache" → "Unable to refresh · showing last known data"
+- `clearLog` confirm dialog: "Clear LOCAL history? (Central Google Sheet is not affected.)" → "Clear this device's history view? Your actual entries are safe — this only clears what's shown on this device."
+- Pending queue tooltip on History tab badge: "pending sync" → "saved while offline"
+- Retry button label: "⟳ Sync now" → "⟳ Retry offline saves" (and auto-hides when queue is empty)
+- Post-login toast after pending upload: "N saved entr(y/ies) uploaded ✓" → "N offline entr(y/ies) now saved ✓"
+
+### Changed — Splash screen progress labels
+- "Checking connection…" → "Getting things ready…"
+- "Syncing entries…" → "Almost there…"
+- Removed all progress stages that mentioned sync
+
+### Changed — Health banner
+- All four webhook-offline / webhook-error variants rewritten to user-speak:
+  - "No webhook URL configured…" → "The app can't reach its service. Some features may be unavailable."
+  - "Webhook responded with HTTP X…" → "Connection problem — please refresh or contact your admin."
+  - "Webhook is reachable but returned invalid data…" → "The app needs updating — please contact your admin."
+  - "Webhook unreachable: Network error…" → "You appear to be offline. Your work is saved here and will update when you're back online."
+
+### Changed — Version indicators
+- Footer: "v24.4.0 · Backend v24.5" → "v24.4.1" (backend version stripped)
+- Mismatch banner: "A newer version is available (v24.4.1). You are on v24.4.0. Please hard-refresh…" → "An update is available. Please hard-refresh (Ctrl+Shift+R) to get the latest version."
+
+### Changed — Super-admin dialogs (still internal but cleaner)
+- Wipe section description: "Deletes every entry in Sheet1 (keeps users, backups, audit log, errors)" → "Deletes all entries from the history. User accounts, backups, audit trail, and error logs are preserved."
+- Backup create confirm: "Create a backup of Sheet1 right now? This snapshots the current log into a new Backup_ tab." → "Create a safety backup of all entries right now? Backups older than 30 days are auto-pruned."
+- Backup create success: "Backup created: Backup_2026-04-19" → "Backup saved ✓"
+- Restore confirm: shows human date ("19 Apr 2026") instead of raw tab name
+- Restore confirm: "THIS WILL OVERWRITE current Sheet1 contents" → "THIS WILL OVERWRITE your current history"
+- Restore success: removed `restoredFrom` and `safetyBackup` technical names, just says "Your previous state was saved as a safety backup"
+- Wipe confirm: removed Sheet1 + Backup_pre_wipe_... references
+- Wipe success: "Rows deleted: N · Backup created: Backup_pre_wipe_..." → "All clear ✓ — N entries removed. A safety backup was saved automatically."
+- Delete backup: friendly date label + "backup from 19 Apr 2026" phrasing
+
+### Changed — Backup list display
+- Row now shows "Mon, 19 Apr 2026" instead of raw "Backup_2026-04-19" tab name
+- Special backups get descriptive labels: "Safety backup (before a restore)" / "Safety backup (before clearing data)" instead of exposing `pre_restore_` and `pre_wipe_` prefixes
+- Row count shows "3 entries" not "3 rows"
+
+### Unchanged (intentional)
+- Console logs (`console.warn`, `console.error`) — only visible in DevTools, not user-facing. Keeping for debugging.
+- Apps Script backend code comments — internal to developers.
+- CHANGELOG prior entries — history is history.
+- Network tab evidence — technically visible if user opens DevTools, but out of scope for UI text review.
+
+### Files in release
+- `brightsign-v24-4-1.html` — frontend only (Apps Script v24.5 unchanged)
+
+### Deploy
+- Frontend-only patch. Replace `index.html` on GitHub. Hard refresh.
+
+---
+
+## [v24.4.0 + Apps Script v24.5] — 2026-04-19 · Review tab + channel review fields
+
+**Written BEFORE implementation per discipline.**
+
+Adds 3 new fields and a dedicated Review tab focused on channel/principal review reporting (OEM vs Cavitak attribution, ecosystem reach, funnel, YoY/QoQ/YTD growth).
+
+### Added — Form fields
+
+- **`leadSource`** — required dropdown: `OEM-referred` / `Cavitak-generated`. Tracks who originated each opportunity. Directly answers "What % of BrightSign business did Cavitak generate?"
+- **`dealValue`** — required number input, Indian rupees. Free-form amount (not a tier). Enables real ₹-denominated pipeline, won-value, growth metrics. Input accepts `125000` or `1.25 L` or `1,25,000` — normalizes on save.
+- **`outcome`** — required dropdown: `open` / `won` / `lost` / `on-hold`. Default `open`. Separates active pipeline from closed outcomes. Essential for win-rate calculation.
+
+### Added — Review tab
+
+New top-nav tab visible to all users. Super/OEM see team-wide data; regular users see their own entries only.
+
+- **Period selector** — Indian fiscal year aware:
+  - Current quarter (auto-detected)
+  - Q1 / Q2 / Q3 / Q4 for FY 25-26 and FY 24-25
+  - YTD FY 25-26
+  - Full FY 25-26 / FY 24-25
+  - Custom date range picker
+- **Compare-to selector** — previous period, same period last year, or no comparison
+- **Executive summary card** — 5 KPIs: Pipeline ₹, Won ₹, Win rate, Active deals, Entries. Each shows delta vs compare period with colored ↑/↓ indicators
+- **Business source card** — OEM vs Cavitak split with ₹ value and %, plus QoQ/YoY delta on each
+- **Funnel card** — 5-stage funnel (Lead → Opportunity → Proposal → Negotiation → Order) with deal count, ₹ value, and stage-to-stage retention %. Shows Lost + On-hold counts separately. Total Lead → Order conversion % at bottom
+- **Ecosystem reach card** — unique counts of partners, consultants, end-clients in period + "new this period" + YoY comparison for full-year totals
+- **Quarterly breakdown table** — Q1/Q2/Q3/Q4 + YTD columns, rows for entries, pipeline ₹, won ₹, win rate
+- **YoY growth table** — side-by-side FY 24-25 vs FY 25-26 with growth % for all key metrics
+- **Funnel by user table** — per-user stage counts so you can see who's stuck where
+- **Data quality banner** — shows count of entries with missing `dealValue` if any (all required going forward, so this should stay at 0)
+
+### Added — Super utility
+
+- **"🗑 Clear all test data"** button in Team tab for super-user. Confirms twice, requires typing "WIPE". Useful for transitioning from test data to production data. Safety net: creates an auto-backup first (`Backup_pre_wipe_YYYY-MM-DD_HH-mm`).
+
+### Added — Apps Script v24.5
+
+- **Sheet1 schema migration** — idempotent `migrateSchemaV245()` function adds 3 new columns: AL (leadSource), AM (dealValue), AN (outcome). Auto-called on first `handleLogPost` after deploy, or manually runnable.
+- **New action `review_data`** — returns aggregated metrics for a given period: executive KPIs, business source split, funnel, ecosystem reach, quarterly breakdown, YoY. Heavy compute done server-side so frontend stays snappy.
+- **New action `clear_test_data`** — super-only, nukes all Sheet1 data rows (keeps header). Creates pre-wipe backup automatically.
+- **Indian FY logic baked in** — `getFYQuarter(date)` helper returns `{fy:'25-26', quarter:'Q3', fyStartMonth:4}`. Used throughout period filtering.
+
+### Changed — Schema
+
+- Sheet1 columns: 37 → **40** (A through AN). Backward compatible: existing 37-column reads still work.
+- Entry payload to webhook now includes `leadSource`, `dealValue`, `outcome`.
+
+### Required policy
+
+- All 3 new fields are **required for all entries** (option 3). Since the app hasn't gone live yet and all current data is test data, forcing clean data from day one is correct.
+- Super-user has "Clear all test data" button to reset Sheet before go-live.
+
+### Deferred
+
+- PDF/Excel review export → Session 3
+- At-risk / aging deals, forecast → Session 2
+- Drill-down from summary to filtered entry list → Session 2
+
+### Files in release
+
+- `brightsign-v24-4-0.html` — frontend
+- `apps-script-v24-5.gs` — backend
+- Updated `CHANGELOG.md`
+
+### Deploy order
+
+1. Apps Script v24.5 first (new actions, schema migration runs automatically)
+2. Frontend v24.4.0 to GitHub as `index.html`
+3. (Optional) Super-user clicks "Clear all test data" in Team tab before production use
+4. Super-user creates new entries with all 3 fields populated
+
+---
+
+## [v24.3.0 + Apps Script v24.4] — 2026-04-19 · Observability & safety foundation
+
+**Written BEFORE implementation per new discipline (issue #6 from architecture review).**
+
+Major stability release. No visible UX changes for regular users — all additions are infrastructure for long-term maintainability, debugging, and data safety. Addresses P0 items from senior-dev architecture review (issues #1, #2, #5, #6).
+
+### Added — Error logging & observability (issue #1)
+
+- **Errors tab** auto-creates in Google Sheet with 9-column schema: `logId, timestamp, user, action, errorCode, errorMessage, stackTrace, userAgent, appVersion`.
+- **Frontend global error capture** — `window.onerror` and `unhandledrejection` handlers catch all JavaScript errors (except intentionally thrown validation errors). Each sends a structured error payload to the webhook with context.
+- **Apps Script try/catch wrapper** — every handler in `doPost` and `doGet` is now wrapped in try/catch that logs the error to the Errors tab with full stack trace before returning the error response.
+- **"⚠ N errors" badge** appears on Team tab for super-user when errors logged in last 24h. Click expands panel showing timestamp, user, action, error message, and truncated stack trace.
+- **Filter by severity** — only WARN and ERROR level entries surface in badge count; INFO logs (for debugging) don't trigger alerts but are queryable.
+- **New Apps Script actions:** `error_log_append`, `error_log_list`.
+
+### Added — Automated backup & restore (issue #2)
+
+- **Nightly backup** — Apps Script time-trigger runs at 2:00am IST daily. Copies Sheet1 contents to a new tab named `Backup_YYYY-MM-DD`. Self-prunes: keeps last 30 days, auto-deletes older backups.
+- **Manual backup trigger** — super-user button "⬇ Backup now" in Team tab for on-demand snapshots before risky operations.
+- **Restore UI** — super-only "Backups" section in Team tab lists all available backup tabs with timestamp, row count, and "↻ Restore this backup" button. Confirmation modal warns that restore OVERWRITES current Sheet1 contents (with automatic pre-restore backup as safety net).
+- **New Apps Script actions:** `backup_run`, `backup_restore`, `backup_list`, `backup_delete`.
+- **Setup function** `setupBackupTrigger()` runs once to install the time trigger. Idempotent.
+
+### Added — Version tracking (issue #5)
+
+- **Frontend version constant:** `FRONTEND_VERSION = '24.3.0'` exposed as `window.FRONTEND_VERSION`.
+- **Apps Script version constant:** `APPS_SCRIPT_VERSION = '24.4'` + `MIN_FRONTEND_VERSION = '24.3.0'`.
+- **New `ping` action** — returns `{status:'ok', appsScriptVersion, minFrontendVersion, serverTime, sheetId, totalEntries}`. Called by frontend on boot.
+- **Version mismatch banner** — if frontend version < min-frontend-version returned by ping, user sees dismissible yellow banner: "A newer version is available. Please hard-refresh (Ctrl+Shift+R) to update."
+- **Version display** — muted text in app footer shows "BrightSign Selector v24.3.0 · Backend v24.4". Useful for bug reports.
+- **Health check** — ping also verifies that AuditLog, Users, ResetRequests, Errors tabs exist. If any missing, returns `{status:'warn', missing:[...]}` and super-user sees health indicator.
+
+### Process change — CHANGELOG discipline (issue #6)
+
+- **NEW RULE:** CHANGELOG entry is written FIRST, before implementation. This is that entry.
+- **NEW RULE:** I reference CHANGELOG before starting work to confirm previous state.
+- **NEW RULE:** Every output file gets a version-stamped filename.
+- Applied retroactively: all v24.2.x entries through v24.2.15 are now accurate and complete in this CHANGELOG.
+
+### Changed — Version bump 24.2.15 → 24.3.0
+
+- **Minor version bump** (not patch) because this release adds new backend tabs, new frontend UI elements, and new user-facing behaviors (version banner, error badge). Per semver-ish discipline, that's a minor.
+
+### Files in release
+
+- `brightsign-v24-3-0.html` — frontend
+- `apps-script-v24-4.gs` — backend
+- `CHANGELOG.md` — updated with this entry
+
+### Deploy order
+
+1. Apps Script v24.4 first (backward compatible — existing tabs untouched, new tabs auto-create on first use)
+2. Run `setupBackupTrigger()` once from Apps Script editor to install nightly backup
+3. Then frontend v24.3.0 to GitHub as `index.html`
+4. Hard refresh to pick up new FRONTEND_VERSION
+
+### Known limitations
+
+- Error logging uses no-cors POST (same as main logging). We assume it worked. If error logging itself fails, we'll never know. This is acceptable for v1.
+- Backup restore OVERWRITES Sheet1. A partial-restore feature (restore specific rows) is not in scope.
+- Errors tab grows forever. Not auto-pruned. Super-user can manually clear or we add retention later.
+
+---
+
+
+
+### Fixed
+- **The REAL cause of blank space above Dashboard/Team titles** — `#section-dashboard` and `#section-team` were rendered OUTSIDE the `#page-app` wrapper. `#page-app` has `min-height:100vh`. When user clicked Dashboard, `#page-app` was still visible as a 100vh-tall empty container ABOVE the dashboard section — creating ~800px of phantom vertical space before dashboard content could start.
+- v24.2.14's font-size and padding tweaks couldn't fix this because the space wasn't from padding at all — it was from an entire empty viewport-height element being sibling to (not parent of) the visible section.
+
+### Changed
+- Moved `</div>` closing tag for `#page-app` from after `#section-log` to after `#section-team`, so all 5 sections (form, result, log, dashboard, team) are now properly nested inside `#page-app`.
+- No CSS or JS changes required — just HTML structure.
+
+### Verification
+- Counted 220 `<div>` opens and 220 `</div>` closes in the page-app scope (lines 4498-4955). Balanced.
+- History tab was never affected by this bug because section-log was already inside page-app.
+
+### Files in release
+- `brightsign-v24-2-15.html` (frontend only)
+
+---
+
+## [v24.2.15] — 2026-04-19 · Dashboard/Team page-app wrapper fix
+
+### Fixed
+- **The REAL cause of blank space above Dashboard/Team titles** — `#section-dashboard` and `#section-team` were rendered OUTSIDE the `#page-app` wrapper. `#page-app` has `min-height:100vh`. When user clicked Dashboard, `#page-app` was still visible as a 100vh-tall empty container ABOVE the dashboard section — creating ~800px of phantom vertical space before dashboard content could start.
+- v24.2.14's font-size and padding tweaks couldn't fix this because the space wasn't from padding at all — it was from an entire empty viewport-height element being sibling to (not parent of) the visible section.
+
+### Changed
+- Moved `</div>` closing tag for `#page-app` from after `#section-log` to after `#section-team`, so all 5 sections (form, result, log, dashboard, team) are now properly nested inside `#page-app`.
+- No CSS or JS changes required — just HTML structure.
+
+### Verification
+- Counted 220 `<div>` opens and 220 `</div>` closes in the page-app scope (lines 4498-4955). Balanced.
+- History tab was never affected by this bug because section-log was already inside page-app.
+
+### Files in release
+- `brightsign-v24-2-15.html` (frontend only)
+
+---
+
 ## [v24.2.14] — 2026-04-19 · Actually fix padding/space issue
 
 ### Fixed

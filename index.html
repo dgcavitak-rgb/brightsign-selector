@@ -204,60 +204,61 @@ input,select,textarea,
   transition:background-color 0.35s cubic-bezier(0.16,1,0.3,1), color 0.3s ease, border-color 0.3s ease !important;
 }
 
-/* v21.8: Theme toggle button (sun/moon) in top header */
-.theme-toggle{
+/* v24.4.2: Theme pill — 3-state light/auto/dark selector */
+.theme-pill-group{
   display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  width:38px;
-  height:38px;
-  border-radius:10px;
-  background:transparent;
-  border:1px solid var(--border);
-  color:var(--ink-muted);
-  cursor:pointer;
-  transition:all 0.25s cubic-bezier(0.16,1,0.3,1);
-  padding:0;
+  padding:3px;
+  background:rgba(148,163,184,0.12);
+  border:1px solid rgba(148,163,184,0.20);
+  border-radius:999px;
+  gap:2px;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
   margin-right:8px;
-  position:relative;
-  overflow:hidden;
 }
-.theme-toggle:hover{
-  background:var(--surface-2);
-  color:var(--ink);
-  border-color:var(--border-strong);
-  transform:translateY(-1px);
+html[data-theme="dark"] .theme-pill-group{
+  background:rgba(15,23,42,0.55);
+  border-color:rgba(148,163,184,0.22);
 }
-.theme-toggle:active{transform:translateY(0);}
-.theme-toggle svg{
-  width:18px;
-  height:18px;
-  transition:transform 0.4s cubic-bezier(0.68,-0.55,0.27,1.55),opacity 0.25s ease;
+.theme-pill{
+  display:flex;align-items:center;justify-content:center;
+  width:30px;height:30px;
+  padding:0;border:none;background:transparent;
+  border-radius:999px;
+  cursor:pointer;color:var(--ink-muted);
+  transition:all 180ms cubic-bezier(0.16,1,0.3,1);
 }
-.theme-toggle .theme-icon-sun{display:block;}
-.theme-toggle .theme-icon-moon{display:none;}
-html[data-theme="dark"] .theme-toggle .theme-icon-sun{display:none;}
-html[data-theme="dark"] .theme-toggle .theme-icon-moon{display:block;}
-.theme-toggle:hover svg{transform:rotate(15deg);}
-/* v21.9: Login page toggle floats top-right with subtle backdrop */
-.theme-toggle-login{
-  position:fixed;
-  top:20px;
-  right:20px;
+.theme-pill svg{width:14px;height:14px;stroke-width:2;}
+.theme-pill:hover:not(.active){color:var(--ink);background:rgba(148,163,184,0.10);}
+.theme-pill.active{
+  background:var(--surface);
+  color:var(--indigo);
+  box-shadow:0 1px 3px rgba(15,23,42,0.12),0 0 0 1px rgba(99,102,241,0.18);
+}
+html[data-theme="dark"] .theme-pill.active{
+  background:rgba(79,70,229,0.25);
+  color:#C7D2FE;
+  box-shadow:0 1px 3px rgba(0,0,0,0.30),inset 0 0 0 1px rgba(199,210,254,0.24);
+}
+/* Floating variant for login page */
+.theme-pill-login{
+  position:fixed;top:20px;right:20px;
   z-index:100;
-  width:44px;
-  height:44px;
-  background:rgba(255,255,255,0.80);
-  backdrop-filter:blur(12px) saturate(180%);
-  -webkit-backdrop-filter:blur(12px) saturate(180%);
-  box-shadow:0 4px 14px rgba(30,27,75,0.08);
+  background:rgba(255,255,255,0.82);
+  box-shadow:0 4px 14px rgba(15,23,42,0.10);
+  margin-right:0;
 }
-html[data-theme="dark"] .theme-toggle-login{
-  background:rgba(27,33,66,0.80);
+html[data-theme="dark"] .theme-pill-login{
+  background:rgba(15,23,42,0.78);
   box-shadow:0 4px 14px rgba(0,0,0,0.35);
 }
+/* Header variant — matches header scale */
+.theme-pill-header{margin-right:10px;}
+
 @media (max-width:640px){
-  .theme-toggle-login{top:14px;right:14px;width:40px;height:40px;}
+  .theme-pill-login{top:14px;right:14px;}
+  .theme-pill{width:28px;height:28px;}
+  .theme-pill svg{width:13px;height:13px;}
 }
 
 /* v21.9.1: Dark mode fixes for choice-cards, number input, and other hardcoded light surfaces */
@@ -2993,6 +2994,358 @@ input:focus,select:focus,textarea:focus{
 .log-edit-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(79,70,229,0.40);}
 .log-edit-btn:active{transform:translateY(0);}
 html[data-theme="dark"] .log-edit-btn{box-shadow:0 2px 8px rgba(0,0,0,0.35);}
+/* v24.4.0: Review tab */
+.review-period-bar{
+  display:flex;gap:16px;align-items:flex-end;
+  padding:16px 20px;margin-bottom:20px;
+  background:var(--glass-bg-strong);
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-border);
+  border-radius:12px;
+  box-shadow:var(--shadow-glass);
+}
+.review-period-group{display:flex;flex-direction:column;gap:4px;}
+.review-period-group label{
+  font-family:var(--sans);font-size:10px;font-weight:700;
+  letter-spacing:0.06em;text-transform:uppercase;
+  color:var(--ink-muted);
+}
+.review-period-group select{
+  padding:8px 12px;
+  background:var(--surface);
+  border:1px solid var(--border-strong);border-radius:8px;
+  font-family:var(--sans);font-size:13px;font-weight:500;
+  color:var(--ink);cursor:pointer;min-width:180px;
+}
+.review-loading{padding:60px 20px;text-align:center;color:var(--ink-muted);font-style:italic;}
+.review-empty{padding:40px 20px;text-align:center;color:var(--ink-muted);}
+
+.review-card{
+  margin-bottom:18px;padding:22px 24px;
+  background:var(--glass-bg-strong);
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-border);
+  border-radius:14px;
+  box-shadow:var(--shadow-glass);
+}
+.review-card-head{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:16px;padding-bottom:12px;
+  border-bottom:1px solid var(--border-soft);
+}
+.review-card-icon{
+  width:28px;height:28px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;
+}
+.ri-exec{background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;}
+.ri-src{background:linear-gradient(135deg,#F59E0B,#D97706);color:#fff;}
+.ri-funnel{background:linear-gradient(135deg,#0EA5E9,#0284C7);color:#fff;}
+.ri-eco{background:linear-gradient(135deg,#059669,#047857);color:#fff;}
+.ri-q{background:linear-gradient(135deg,#DC2626,#B91C1C);color:#fff;}
+.ri-yoy{background:linear-gradient(135deg,#7C3AED,#5B21B6);color:#fff;}
+.ri-user{background:linear-gradient(135deg,#64748B,#475569);color:#fff;}
+.review-card-title{
+  font-family:var(--serif);font-size:18px;font-weight:500;
+  color:var(--ink);letter-spacing:-0.01em;
+}
+.review-card-sub{
+  margin-left:auto;font-family:var(--sans);font-size:11px;color:var(--ink-muted);
+}
+
+/* Exec summary KPI strip */
+.exec-kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+.exec-kpi{
+  padding:14px 16px;background:var(--surface-2);border-radius:10px;
+  border:1px solid var(--border-soft);
+}
+.exec-kpi-label{
+  font-family:var(--sans);font-size:10px;font-weight:700;
+  letter-spacing:0.06em;text-transform:uppercase;
+  color:var(--ink-muted);margin-bottom:6px;
+}
+.exec-kpi-value{
+  font-family:var(--serif);font-size:24px;font-weight:500;
+  color:var(--ink);letter-spacing:-0.02em;line-height:1.1;
+}
+.exec-kpi-delta{
+  display:inline-flex;align-items:center;gap:3px;
+  margin-top:6px;font-family:var(--sans);font-size:11px;font-weight:600;
+}
+.delta-up{color:#059669;}
+.delta-down{color:#DC2626;}
+.delta-flat{color:var(--ink-subtle);}
+
+/* Source split */
+.source-row{
+  display:grid;grid-template-columns:200px 1fr 120px;gap:14px;align-items:center;
+  padding:12px 0;
+}
+.source-label{font-family:var(--sans);font-size:13px;font-weight:600;color:var(--ink);}
+.source-bar-wrap{height:20px;background:var(--surface-2);border-radius:10px;overflow:hidden;position:relative;}
+.source-bar{height:100%;border-radius:10px;transition:width 240ms;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;}
+.source-bar-oem{background:linear-gradient(90deg,#F59E0B,#D97706);}
+.source-bar-cavitak{background:linear-gradient(90deg,#4F46E5,#7C3AED);}
+.source-bar-pct{color:#fff;font-family:var(--sans);font-size:11px;font-weight:700;}
+.source-value{font-family:var(--mono,monospace);font-size:13px;font-weight:600;color:var(--ink);text-align:right;}
+.source-delta{font-family:var(--sans);font-size:10px;color:var(--ink-muted);margin-top:4px;}
+
+/* Funnel */
+.funnel-row{
+  display:grid;grid-template-columns:130px 60px 100px 1fr 70px;gap:12px;align-items:center;
+  padding:10px 0;border-bottom:1px dashed var(--border-soft);
+}
+.funnel-row:last-child{border-bottom:none;}
+.funnel-stage{font-family:var(--sans);font-size:12px;font-weight:600;color:var(--ink);}
+.funnel-count{font-family:var(--mono,monospace);font-size:13px;font-weight:600;color:var(--ink);text-align:right;}
+.funnel-value{font-family:var(--mono,monospace);font-size:12px;color:var(--ink-muted);text-align:right;}
+.funnel-bar-wrap{height:16px;background:var(--surface-2);border-radius:8px;overflow:hidden;}
+.funnel-bar{height:100%;background:linear-gradient(90deg,#0EA5E9,#3B82F6);border-radius:8px;transition:width 240ms;}
+.funnel-retention{font-family:var(--sans);font-size:11px;font-weight:600;color:#059669;text-align:right;}
+.funnel-total{
+  margin-top:14px;padding-top:14px;border-top:2px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--sans);font-size:13px;font-weight:700;color:var(--ink);
+}
+.funnel-total-rate{
+  font-size:18px;color:#059669;
+  font-family:var(--serif);font-weight:500;
+}
+.funnel-dropped{
+  margin-top:12px;display:flex;gap:18px;flex-wrap:wrap;
+  font-family:var(--sans);font-size:11px;color:var(--ink-muted);
+}
+.funnel-dropped-pill{
+  padding:3px 10px;background:var(--surface-2);border-radius:10px;
+  display:inline-flex;gap:6px;align-items:center;
+}
+
+/* Ecosystem */
+.eco-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.eco-tile{
+  padding:16px;background:var(--surface-2);border-radius:10px;
+  border:1px solid var(--border-soft);text-align:center;
+}
+.eco-tile-label{
+  font-family:var(--sans);font-size:10px;font-weight:700;
+  letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-muted);
+  margin-bottom:8px;
+}
+.eco-tile-value{
+  font-family:var(--serif);font-size:32px;font-weight:500;
+  color:var(--ink);line-height:1;
+}
+.eco-tile-sub{
+  margin-top:6px;font-family:var(--sans);font-size:11px;color:var(--ink-muted);
+}
+
+/* Generic table */
+.review-table{width:100%;border-collapse:collapse;font-family:var(--sans);font-size:12px;}
+.review-table th{
+  text-align:left;padding:10px 12px;
+  font-weight:700;letter-spacing:0.04em;text-transform:uppercase;font-size:10px;
+  color:var(--ink-muted);border-bottom:1px solid var(--border);
+  background:var(--surface-2);
+}
+.review-table th.num,.review-table td.num{text-align:right;font-family:var(--mono,monospace);}
+.review-table td{padding:10px 12px;border-bottom:1px solid var(--border-soft);color:var(--ink);}
+.review-table tr:last-child td{border-bottom:none;}
+.review-table tr.total-row td{
+  font-weight:700;background:var(--surface-2);
+  border-top:2px solid var(--border);
+}
+
+/* Data quality banner */
+.data-quality-banner{
+  margin-top:16px;padding:10px 14px;
+  background:rgba(245,158,11,0.08);
+  border:1px solid rgba(245,158,11,0.25);
+  border-radius:8px;
+  font-family:var(--sans);font-size:12px;color:#92400E;
+  display:flex;align-items:center;gap:8px;
+}
+html[data-theme="dark"] .data-quality-banner{background:rgba(245,158,11,0.15);color:#FCD34D;}
+
+/* Wipe section */
+.wipe-section{
+  margin-top:24px;padding:16px 20px;
+  background:rgba(220,38,38,0.04);
+  border:1px dashed rgba(220,38,38,0.30);
+  border-radius:10px;
+}
+html[data-theme="dark"] .wipe-section{background:rgba(220,38,38,0.10);}
+.wipe-head{
+  font-family:var(--sans);font-size:12px;font-weight:700;
+  color:#991B1B;margin-bottom:8px;letter-spacing:0.02em;
+}
+html[data-theme="dark"] .wipe-head{color:#FCA5A5;}
+.wipe-desc{font-family:var(--sans);font-size:11px;color:var(--ink-muted);margin-bottom:10px;}
+.wipe-btn{
+  background:#DC2626;color:#fff;border:none;
+  padding:8px 16px;border-radius:8px;
+  font-family:var(--sans);font-size:12px;font-weight:600;
+  cursor:pointer;transition:background 140ms;
+}
+.wipe-btn:hover{background:#B91C1C;}
+
+@media (max-width:900px){
+  .exec-kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .eco-grid{grid-template-columns:1fr;}
+  .source-row{grid-template-columns:120px 1fr 80px;gap:8px;}
+  .funnel-row{grid-template-columns:100px 50px 1fr 60px;gap:8px;}
+  .funnel-value{display:none;}
+  .review-period-bar{flex-direction:column;align-items:stretch;}
+  .review-period-group select{min-width:0;width:100%;}
+}
+
+/* v24.3.0: Version mismatch banner (shown when frontend behind backend) */
+.version-mismatch-banner{
+  position:fixed;top:0;left:0;right:0;z-index:10000;
+  padding:10px 16px;
+  background:linear-gradient(135deg,#FDE68A 0%,#FBBF24 100%);
+  color:#78350F;
+  display:flex;align-items:center;gap:12px;
+  font-family:var(--sans);font-size:13px;font-weight:500;
+  box-shadow:0 2px 12px rgba(251,191,36,0.30);
+}
+.vmb-icon{font-size:18px;flex-shrink:0;}
+.vmb-text{flex:1;}
+.vmb-close{
+  width:26px;height:26px;border-radius:13px;
+  background:rgba(120,53,15,0.12);color:#78350F;
+  border:none;cursor:pointer;font-size:18px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  transition:background 140ms;
+}
+.vmb-close:hover{background:rgba(120,53,15,0.22);}
+
+/* v24.3.0: Version footer */
+.app-version-footer{
+  position:fixed;bottom:6px;right:10px;z-index:5;
+  font-family:var(--sans);font-size:10px;
+  color:var(--ink-subtle);opacity:0.55;
+  pointer-events:none;
+  letter-spacing:0.02em;
+}
+html[data-theme="dark"] .app-version-footer{opacity:0.45;}
+
+/* v24.3.0: Error log panel (super-only, inside Team tab) */
+.errors-section{
+  margin-top:32px;
+  padding:18px 20px;
+  background:rgba(220,38,38,0.03);
+  border:1px solid rgba(220,38,38,0.18);
+  border-radius:12px;
+}
+html[data-theme="dark"] .errors-section{background:rgba(220,38,38,0.08);border-color:rgba(220,38,38,0.30);}
+.errors-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-bottom:14px;padding-bottom:10px;
+  border-bottom:1px solid rgba(220,38,38,0.20);
+}
+.errors-title{
+  font-family:var(--sans);font-size:13px;font-weight:700;
+  letter-spacing:0.02em;color:#991B1B;
+}
+html[data-theme="dark"] .errors-title{color:#FCA5A5;}
+.errors-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 8px;border-radius:10px;
+  background:#DC2626;color:#fff;
+  font-size:10px;font-weight:700;letter-spacing:0.04em;
+}
+.errors-empty,.errors-loading{
+  padding:16px;text-align:center;
+  color:var(--ink-muted);font-style:italic;font-size:12px;
+}
+.error-row{
+  display:grid;
+  grid-template-columns:140px 100px 1fr auto;
+  gap:12px;align-items:start;
+  padding:10px 12px;
+  background:rgba(255,255,255,0.55);
+  border-radius:8px;margin-bottom:6px;
+  border-left:3px solid #DC2626;
+  font-family:var(--sans);font-size:11px;
+}
+html[data-theme="dark"] .error-row{background:rgba(15,23,42,0.45);}
+.error-time{color:var(--ink-muted);font-size:10px;}
+.error-user{font-weight:600;color:var(--ink);}
+.error-body{color:var(--ink);word-break:break-word;}
+.error-code{
+  font-family:var(--mono,monospace);font-size:9px;
+  padding:2px 6px;background:rgba(220,38,38,0.12);
+  color:#991B1B;border-radius:4px;
+  font-weight:700;letter-spacing:0.03em;text-transform:uppercase;
+}
+html[data-theme="dark"] .error-code{background:rgba(220,38,38,0.22);color:#FCA5A5;}
+.error-details{
+  margin-top:4px;font-size:10px;color:var(--ink-muted);
+  font-family:var(--mono,monospace);
+}
+.error-stack{
+  display:none;margin-top:6px;padding:6px 8px;
+  background:rgba(15,23,42,0.05);border-radius:4px;
+  font-family:var(--mono,monospace);font-size:10px;
+  color:var(--ink-muted);white-space:pre-wrap;word-break:break-all;
+  max-height:200px;overflow:auto;
+}
+.error-row.expanded .error-stack{display:block;}
+.error-toggle{
+  background:transparent;border:1px solid var(--border-soft);
+  border-radius:5px;padding:3px 7px;font-size:10px;
+  color:var(--ink-muted);cursor:pointer;
+}
+
+/* v24.3.0: Backup panel (super-only) */
+.backup-section{
+  margin-top:24px;
+  padding:18px 20px;
+  background:rgba(5,150,105,0.04);
+  border:1px solid rgba(5,150,105,0.18);
+  border-radius:12px;
+}
+html[data-theme="dark"] .backup-section{background:rgba(5,150,105,0.08);border-color:rgba(5,150,105,0.30);}
+.backup-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-bottom:14px;padding-bottom:10px;
+  border-bottom:1px solid rgba(5,150,105,0.20);
+}
+.backup-title{
+  font-family:var(--sans);font-size:13px;font-weight:700;
+  letter-spacing:0.02em;color:#065F46;
+}
+html[data-theme="dark"] .backup-title{color:#6EE7B7;}
+.backup-loading,.backup-empty{
+  padding:16px;text-align:center;
+  color:var(--ink-muted);font-style:italic;font-size:12px;
+}
+.backup-row{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:10px 12px;
+  background:rgba(255,255,255,0.55);
+  border-radius:8px;margin-bottom:6px;
+  border-left:3px solid #059669;
+}
+html[data-theme="dark"] .backup-row{background:rgba(15,23,42,0.45);}
+.backup-name{
+  font-family:var(--mono,monospace);font-size:12px;font-weight:600;
+  color:var(--ink);
+}
+.backup-meta{
+  font-family:var(--sans);font-size:10px;color:var(--ink-muted);margin-top:2px;
+}
+.backup-actions{display:flex;gap:6px;flex-shrink:0;}
+
+@media (max-width:720px){
+  .error-row{grid-template-columns:1fr;gap:4px;}
+  .backup-row{flex-direction:column;align-items:stretch;}
+  .backup-actions{width:100%;}
+  .backup-actions button{flex:1;}
+}
+
 /* v24.2.12: Export dropdown menu */
 .export-wrap{position:relative;display:inline-block;}
 .export-menu{
@@ -4398,7 +4751,8 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   input,select,textarea{min-height:42px;}
 
   /* Theme toggle — smaller on mobile */
-  .theme-toggle{width:36px !important;height:36px !important;}
+  .theme-pill-group{padding:2px;}
+  .theme-pill{width:28px !important;height:28px !important;}
 
   /* Result page charts/tables */
   .result-actions{flex-direction:column !important;gap:8px !important;}
@@ -4445,9 +4799,16 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   #reset-req-badge-wrap button{width:100%;}
 }
 </style>
-<!-- v21.8: Apply saved theme BEFORE body renders (prevents flash-of-light in dark mode) -->
+<!-- v24.4.2: Apply saved theme BEFORE body renders (prevents flash-of-light) — 3-state light/auto/dark -->
 <script>
-(function(){try{var t=localStorage.getItem('bs-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+(function(){try{
+  var m=localStorage.getItem('bs-theme-mode')||localStorage.getItem('bs-theme')||'auto';
+  var effective=m;
+  if(m==='auto'){
+    effective=(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
+  }
+  if(effective==='dark'||effective==='light')document.documentElement.setAttribute('data-theme',effective);
+}catch(e){}})();
 </script>
 </head>
 <body>
@@ -4462,11 +4823,18 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
 
 <!-- LOGIN -->
 <div id="page-login" class="page active">
-  <!-- v21.9: Theme toggle on login page (floating top-right) -->
-  <button class="theme-toggle theme-toggle-login" onclick="toggleTheme()" title="Toggle dark / light theme" aria-label="Toggle theme">
-    <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-    <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-  </button>
+  <!-- v24.4.2: Theme pill on login page (floating top-right) -->
+  <div class="theme-pill-group theme-pill-login" role="radiogroup" aria-label="Theme">
+    <button class="theme-pill" data-mode="light" onclick="setThemeMode('light')" title="Light" aria-label="Light mode">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>
+    </button>
+    <button class="theme-pill" data-mode="auto" onclick="setThemeMode('auto')" title="Auto (follow device)" aria-label="Auto theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    </button>
+    <button class="theme-pill" data-mode="dark" onclick="setThemeMode('dark')" title="Dark" aria-label="Dark mode">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
   <div class="login-card">
     <div class="login-logo-hero">
       <img class="login-logo-img" id="login-logo-img" alt="BrightSign">
@@ -4537,10 +4905,17 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         <div class="app-user-name" id="user-label-name">—</div>
         <div class="app-user-role" id="user-label-role">—</div>
       </div>
-      <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark / light theme" aria-label="Toggle theme">
-        <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      </button>
+      <div class="theme-pill-group theme-pill-header" role="radiogroup" aria-label="Theme">
+        <button class="theme-pill" data-mode="light" onclick="setThemeMode('light')" title="Light" aria-label="Light mode">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>
+        </button>
+        <button class="theme-pill" data-mode="auto" onclick="setThemeMode('auto')" title="Auto (follow device)" aria-label="Auto theme">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </button>
+        <button class="theme-pill" data-mode="dark" onclick="setThemeMode('dark')" title="Dark" aria-label="Dark mode">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </div>
       <div class="app-user-avatar" id="user-avatar">?</div>
       <button class="btn-password" onclick="showChangePasswordModal(false)" title="Change your password">🔑 Password</button>
       <button onclick="handleLogout()">Sign out</button>
@@ -4562,6 +4937,10 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
     <button id="tab-dashboard" onclick="showTab('dashboard')" style="display:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
       <span id="dashboard-tab-label">Dashboard</span>
+    </button>
+    <button id="tab-review" onclick="showTab('review')" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+      <span>Review</span>
     </button>
     <button id="tab-team" onclick="showTab('team')" style="display:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -4594,6 +4973,9 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           <div class="form-group" style="margin:0;"><label>Consultant<span class="req">*</span></label><input type="text" id="f-consultant" placeholder="e.g. AV-Technik / Direct"></div>
           <div class="form-group" style="margin:0;"><label>City<span class="req">*</span></label><select id="f-city"><option value="">Select city…</option><option>Ahmedabad</option><option>Bangalore</option><option>Chennai</option><option>Delhi / NCR</option><option>Hyderabad</option><option>Kolkata</option><option>Mumbai</option><option>Pune</option><option>Jaipur</option><option>Kochi</option><option>Chandigarh</option><option>Lucknow</option><option>Indore</option><option>Bhubaneswar</option><option>Nagpur</option><option>Surat</option><option>Vadodara</option><option>Goa</option><option>Other</option></select></div>
           <div class="form-group" style="margin:0;"><label>Deal stage<span class="req">*</span></label><select id="f-stage"><option value="">Select stage…</option><option>Lead</option><option>Opportunity</option><option>Proposal</option><option>Negotiation</option><option>Order</option></select></div>
+          <div class="form-group" style="margin:0;"><label>Lead source<span class="req">*</span></label><select id="f-leadsource"><option value="">Select source…</option><option value="OEM-referred">OEM-referred (BrightSign gave lead)</option><option value="Cavitak-generated">Cavitak-generated (we found it)</option></select></div>
+          <div class="form-group" style="margin:0;"><label>Deal value (₹)<span class="req">*</span></label><input type="text" id="f-dealvalue" placeholder="e.g. 12,50,000 or 12.5 L or 1.25 Cr"><div style="font-size:10px;color:var(--ink-subtle);margin-top:4px;">Accepts rupees, lakh (L), or crore (Cr). Normalized to full ₹ on save.</div></div>
+          <div class="form-group" style="margin:0;"><label>Outcome<span class="req">*</span></label><select id="f-outcome"><option value="open">Open (active)</option><option value="won">Won</option><option value="lost">Lost</option><option value="on-hold">On hold</option></select></div>
           <div class="form-group" style="margin:0;"><label>Expected close month<span class="req">*</span></label><input type="month" id="f-closemonth"></div>
           <div class="form-group" style="margin:0;"><label>Contact person<span class="req">*</span></label><input type="text" id="f-contactname" placeholder="End-user contact name"></div>
           <div class="form-group" style="margin:0;"><label>Contact phone<span class="req">*</span></label><input type="tel" id="f-contactphone" placeholder="+91 …"></div>
@@ -4748,7 +5130,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
     </div>
     <div class="action-bar" id="log-action-bar" style="display:none;">
       <button class="btn-secondary" onclick="refreshLog()">↻ Refresh</button>
-      <button class="btn-secondary" id="manual-sync-btn" onclick="manualSync()" title="Retry any pending entries that haven't synced to the central sheet">⟳ Sync now</button>
+      <button class="btn-secondary" id="manual-sync-btn" onclick="manualSync()" title="Try to upload any entries that saved while offline" style="display:none;">⟳ Retry offline saves</button>
       <button class="btn-secondary" id="super-reset-btn" onclick="superResetUserPassword()" style="display:none;" title="Reset another user's password to the default">🔑 Reset user password</button>
       <div class="export-wrap" id="export-wrap" style="display:none;position:relative;">
         <button class="btn-gold" id="export-btn" onclick="toggleExportMenu()">⤓ Export ▾</button>
@@ -4761,7 +5143,6 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
       <button class="btn-secondary" onclick="clearLog()">Clear</button>
     </div>
   </div>
-</div>
 
 
 <!-- v23.1: Dashboard section (split out from History) — super-user sees all-team, regular users see own -->
@@ -4953,6 +5334,29 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   </div>
 </div>
 
+<div id="section-review" style="display:none;">
+  <div class="container">
+    <div class="page-header">
+      <div class="page-eyebrow">Review</div>
+      <div class="page-title" id="review-page-title">Channel review</div>
+      <div class="page-subtitle" id="review-page-subtitle">OEM vs Cavitak-generated business, ecosystem reach, funnel, and growth analysis — filtered by period.</div>
+    </div>
+    <div id="review-period-bar" class="review-period-bar">
+      <div class="review-period-group">
+        <label>Period</label>
+        <select id="review-period" onchange="renderReview()"></select>
+      </div>
+      <div class="review-period-group">
+        <label>Compare to</label>
+        <select id="review-compare" onchange="renderReview()"></select>
+      </div>
+      <button class="btn-secondary" onclick="renderReview()" style="margin-left:auto;">↻ Refresh</button>
+    </div>
+    <div id="review-content"><div class="review-loading">Loading review data…</div></div>
+  </div>
+</div>
+</div>
+
 <div class="sync-status" id="sync-status"><span class="sync-dot"></span><span id="sync-msg">Saving…</span></div>
 
 <script>
@@ -4966,6 +5370,109 @@ const BRIGHTSIGN_LOGO = 'data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYS
    If blank, data saves to browser localStorage only.
 ================================================================ */
 const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl70gHWF4fehCMYe_L7B8vtf28AjqK8tUKL-FAP--iW995AMMeJ/exec';  // Live Apps Script webhook (v16 schema)
+
+/* ================================================================
+   v24.3.0: VERSION + OBSERVABILITY
+================================================================ */
+const FRONTEND_VERSION = '24.4.2';
+window.FRONTEND_VERSION = FRONTEND_VERSION;
+window._backendVersion = null;  // populated by ping
+window._versionMismatch = false;
+
+/* v24.3.0: Log a frontend error to the Errors tab via webhook. Fire-and-forget. */
+function logFrontendError(errorCode, errorMessage, stackTrace, action){
+  if(!WEBHOOK_URL)return;
+  try{
+    fetch(WEBHOOK_URL, {
+      method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        action:'error_log_append',
+        user: (window.state && window.state.user) ? window.state.user.loginName : 'anonymous',
+        action_context: action || 'unknown',
+        errorCode: errorCode || 'FRONTEND_ERROR',
+        errorMessage: (errorMessage || '').toString().substring(0, 1800),
+        stackTrace: (stackTrace || '').toString().substring(0, 1800),
+        userAgent: navigator.userAgent || '',
+        appVersion: FRONTEND_VERSION
+      })
+    }).catch(()=>{/* swallow — can't log the logger */});
+  }catch(e){ /* swallow */ }
+}
+
+/* v24.3.0: Global error handlers — catch uncaught JS errors + unhandled promise rejections */
+window.addEventListener('error', function(event){
+  // Skip errors from browser extensions / script errors without info
+  if(!event || !event.message || event.message === 'Script error.')return;
+  logFrontendError(
+    'UNCAUGHT_ERROR',
+    event.message,
+    (event.error && event.error.stack) ? event.error.stack : (event.filename + ':' + event.lineno),
+    'window.onerror'
+  );
+});
+window.addEventListener('unhandledrejection', function(event){
+  const reason = event.reason;
+  const msg = reason ? (reason.message || reason.toString()) : 'Unknown rejection';
+  const stack = (reason && reason.stack) ? reason.stack : '';
+  logFrontendError('UNHANDLED_PROMISE', msg, stack, 'unhandledrejection');
+});
+
+/* v24.3.0: Ping the backend on boot for version check + health status */
+async function pingBackend(){
+  if(!WEBHOOK_URL)return null;
+  try{
+    const resp = await fetch(WEBHOOK_URL, {
+      method:'POST', mode:'cors', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({action:'ping'})
+    });
+    const data = await resp.json();
+    window._backendVersion = data.appsScriptVersion || null;
+    window._backendHealth = data;
+    // Version comparison: check if our frontend < min required
+    if(data.minFrontendVersion && compareVersions(FRONTEND_VERSION, data.minFrontendVersion) < 0){
+      window._versionMismatch = true;
+      showVersionMismatchBanner(data.minFrontendVersion);
+    }
+    // Update footer version display
+    updateVersionFooter();
+    return data;
+  }catch(err){
+    console.warn('Ping failed (backend may be offline):', err);
+    return null;
+  }
+}
+
+/* v24.3.0: Semver-ish comparison. Returns -1 if a<b, 0 if equal, 1 if a>b. */
+function compareVersions(a, b){
+  const pa = a.split('.').map(n => parseInt(n) || 0);
+  const pb = b.split('.').map(n => parseInt(n) || 0);
+  for(let i = 0; i < Math.max(pa.length, pb.length); i++){
+    const da = pa[i] || 0, db = pb[i] || 0;
+    if(da < db)return -1;
+    if(da > db)return 1;
+  }
+  return 0;
+}
+
+/* v24.3.0: Banner shown when frontend is behind backend's minimum */
+function showVersionMismatchBanner(requiredVersion){
+  if(document.getElementById('version-mismatch-banner'))return;  // already shown
+  const banner = document.createElement('div');
+  banner.id = 'version-mismatch-banner';
+  banner.className = 'version-mismatch-banner';
+  banner.innerHTML = `
+    <span class="vmb-icon">⚠️</span>
+    <span class="vmb-text">An update is available. Please hard-refresh (Ctrl+Shift+R) to get the latest version.</span>
+    <button class="vmb-close" onclick="this.parentElement.remove()" title="Dismiss">×</button>`;
+  document.body.appendChild(banner);
+}
+
+/* v24.3.0: Update version display in footer */
+function updateVersionFooter(){
+  const el = document.getElementById('app-version-footer');
+  if(!el)return;
+  el.textContent = `v${FRONTEND_VERSION}`;
+}
 
 /* ================================================================
    USER ALLOWLIST (first-name login, case-insensitive)
@@ -5866,7 +6373,7 @@ const TENDER_CLAUSES = {
 
 const state = {
   user:null,
-  form:{project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null},
+  form:{project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',dealValue:'',outcome:'open'},
   result:null,
   osChoice:'brightsignos'
 };
@@ -5874,19 +6381,60 @@ const state = {
 /* ===== LOGIN ===== */
 /* v21.8: Theme management — light/dark with localStorage persistence
    Must run on page load to prevent flash-of-wrong-theme. */
-function applyTheme(theme){
-  document.documentElement.setAttribute('data-theme',theme);
-  try{localStorage.setItem('bs-theme',theme);}catch(e){/* silent — privacy mode */}
+/* v24.4.2: 3-state theme system — light / auto / dark
+   - 'auto' follows OS prefers-color-scheme and updates live if OS setting changes
+   - 'light' and 'dark' are explicit overrides
+   - Persisted in localStorage key 'bs-theme-mode'
+*/
+function applyTheme(mode){
+  // Resolve what actual theme to render
+  let effective=mode;
+  if(mode==='auto'){
+    const osPrefersDark=window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    effective=osPrefersDark?'dark':'light';
+  }
+  document.documentElement.setAttribute('data-theme',effective);
+  try{localStorage.setItem('bs-theme-mode',mode);}catch(e){/* silent — privacy mode */}
+  // Reflect selection in any active pill groups
+  document.querySelectorAll('.theme-pill-group').forEach(group=>{
+    group.querySelectorAll('.theme-pill').forEach(p=>{
+      p.classList.toggle('active',p.dataset.mode===mode);
+    });
+  });
 }
+
+function setThemeMode(mode){
+  if(mode!=='light'&&mode!=='dark'&&mode!=='auto')mode='auto';
+  applyTheme(mode);
+}
+
+// Legacy: keep toggleTheme for any old callers — cycles through light → auto → dark
 function toggleTheme(){
-  const current=document.documentElement.getAttribute('data-theme')||'light';
-  applyTheme(current==='dark'?'light':'dark');
+  const saved=(function(){try{return localStorage.getItem('bs-theme-mode')||'auto';}catch(e){return 'auto';}})();
+  const next=saved==='light'?'auto':saved==='auto'?'dark':'light';
+  setThemeMode(next);
 }
-// Apply saved theme immediately on script load (before DOM fully paints)
+
+// Apply saved theme immediately on script load
 (function initTheme(){
   try{
-    const saved=localStorage.getItem('bs-theme');
-    if(saved==='dark'||saved==='light')applyTheme(saved);
+    // v24.4.2: migrate from old 'bs-theme' (dark/light) to new 'bs-theme-mode' (light/auto/dark)
+    const legacyTheme=localStorage.getItem('bs-theme');
+    let saved=localStorage.getItem('bs-theme-mode');
+    if(!saved && legacyTheme){
+      saved=legacyTheme;  // honor previous explicit choice
+      localStorage.setItem('bs-theme-mode',saved);
+      localStorage.removeItem('bs-theme');
+    }
+    if(!saved)saved='auto';  // default for new users
+    applyTheme(saved);
+    // If in auto mode, listen for OS changes
+    if(saved==='auto' && window.matchMedia){
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{
+        const current=localStorage.getItem('bs-theme-mode')||'auto';
+        if(current==='auto')applyTheme('auto');
+      });
+    }
   }catch(e){/* silent */}
 })();
 
@@ -6002,6 +6550,9 @@ async function handleLogin(){
     // v23.1: Show Dashboard tab for all users (content differs by role)
     const dashTab=document.getElementById('tab-dashboard');
     if(dashTab){dashTab.style.display='inline-flex';}
+    // v24.4.0: Show Review tab for all users (scoped by role in backend)
+    const reviewTab=document.getElementById('tab-review');
+    if(reviewTab){reviewTab.style.display='inline-flex';}
 
     document.getElementById('page-login').classList.remove('active');
     document.getElementById('page-app').classList.add('active');
@@ -6021,14 +6572,13 @@ async function handleLogin(){
     startAutoSync();
     updateLoginSplash(50,'Loading your data…');
 
-    // v24: Webhook health check — warn if stale URL or Apps Script misconfigured
+    // v24: health check
     setTimeout(()=>{
-      updateLoginSplash(70,'Checking connection…');
+      updateLoginSplash(70,'Getting things ready…');
       checkWebhookHealth();
     },1500);
     setTimeout(()=>{
-      updateLoginSplash(90,'Syncing entries…');
-      // v24.2.10: Check queue BEFORE sync — count only entries that belong to this user
+      updateLoginSplash(90,'Almost there…');
       const queueBefore=loadPendingQueue();
       const myLogin=(state.user.loginName||'').toLowerCase();
       const mine=queueBefore.filter(q=>{
@@ -6037,16 +6587,15 @@ async function handleLogin(){
       });
       if(queueBefore.length>0){
         retryPendingSync(false);
-        // After sync attempt, show recovery toast if user had pending entries
         if(mine.length>0){
           setTimeout(()=>{
             const queueAfter=loadPendingQueue();
             const stillMine=queueAfter.filter(q=>(q.payload && q.payload.loginName||'').toLowerCase()===myLogin);
             const synced=mine.length-stillMine.length;
             if(synced>0){
-              showSync(`Synced ${synced} entr${synced===1?'y':'ies'} from earlier session ✓`,'success');
+              showSync(`${synced} offline entr${synced===1?'y':'ies'} now saved ✓`,'success');
             }
-          },1800);  // Let the sync complete before checking
+          },1800);
         }
       } else {
         verifyPendingSync(true);
@@ -6395,13 +6944,23 @@ async function renderSuperTeamView(host){
       <button class="btn-action" onclick="showAddUserModal()">➕ Add user</button>
       <button class="btn-secondary" onclick="renderTeamTab()">↻ Refresh</button>
       <span id="reset-req-badge-wrap" style="display:none;margin-left:auto;"><button class="btn-secondary reset-req-badge-btn" onclick="document.getElementById('reset-requests-host').scrollIntoView({behavior:'smooth',block:'start'});">🔑 <span id="reset-req-count">0</span> pending request<span id="reset-req-s">s</span></button></span>
+      <span id="errors-badge-wrap" style="display:none;"><button class="btn-secondary errors-badge-btn" onclick="document.getElementById('errors-host').scrollIntoView({behavior:'smooth',block:'start'});" style="background:rgba(220,38,38,0.08);border-color:rgba(220,38,38,0.25);color:#991B1B;">⚠️ <span id="errors-badge-count">0</span> error<span id="errors-badge-s">s</span> (24h)</button></span>
     </div>
     <div id="reset-requests-host"></div>
     <div id="team-list-host"><div class="team-loading">Loading team…</div></div>
-    <div id="trash-host" style="margin-top:32px;"></div>`;
+    <div id="trash-host" style="margin-top:32px;"></div>
+    <div id="errors-host" style="margin-top:24px;"></div>
+    <div id="backup-host" style="margin-top:24px;"></div>
+    <div class="wipe-section" style="margin-top:24px;">
+      <div class="wipe-head">⚠️ Danger zone — Clear all test data</div>
+      <div class="wipe-desc">Deletes all entries from the history. User accounts, backups, audit trail, and error logs are preserved. Use this once before going live with real production data. A safety backup is created automatically first.</div>
+      <button class="wipe-btn" onclick="clearTestData()">🗑 Clear all test data</button>
+    </div>`;
   await loadResetRequests();
   await loadTeamTab();
-  await loadTrashList();  // v24.2.12: Trash at bottom
+  await loadTrashList();
+  loadErrorLogList();
+  loadBackupList();
 }
 
 /* v24.2.1: Password reset requests — super-user view on Team tab */
@@ -6743,6 +7302,243 @@ async function restoreTrashEntry(refId,projectName){
   }catch(e){
     console.error(e);
     alert('Restore failed. Check internet connection.');
+  }
+}
+
+/* v24.3.0: Load error log — super only, shown in Team tab */
+async function loadErrorLogList(){
+  const host=document.getElementById('errors-host');
+  if(!host)return;
+  host.innerHTML='<div class="errors-section"><div class="errors-head"><div class="errors-title">⚠️ Error log</div></div><div class="errors-loading">Loading recent errors…</div></div>';
+  try{
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'error_log_list',
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash,
+        limit:50, hoursBack:168
+      })
+    });
+    const data=await resp.json();
+    if(data.status!=='ok'){
+      host.innerHTML='<div class="errors-section"><div class="errors-head"><div class="errors-title">⚠️ Error log</div></div><div class="errors-empty">Could not load error log.</div></div>';
+      return;
+    }
+    renderErrorLogList(host,data.entries||[],data.last24hCount||0);
+  }catch(e){
+    console.warn('loadErrorLogList failed:',e);
+    host.innerHTML='';
+  }
+}
+
+function renderErrorLogList(host,entries,last24hCount){
+  // Update badge
+  const badgeWrap=document.getElementById('errors-badge-wrap');
+  const badgeCount=document.getElementById('errors-badge-count');
+  const badgeS=document.getElementById('errors-badge-s');
+  if(badgeWrap && badgeCount){
+    if(last24hCount>0){
+      badgeWrap.style.display='inline-flex';
+      badgeCount.textContent=last24hCount;
+      if(badgeS)badgeS.textContent=last24hCount===1?'':'s';
+    } else {
+      badgeWrap.style.display='none';
+    }
+  }
+  if(!entries.length){
+    host.innerHTML=`<div class="errors-section">
+      <div class="errors-head"><div class="errors-title">⚠️ Error log</div><button class="btn-secondary" onclick="loadErrorLogList()" style="font-size:11px;padding:4px 10px;">↻ Refresh</button></div>
+      <div class="errors-empty">No errors in the last 7 days. 🎉</div>
+    </div>`;
+    return;
+  }
+  const fmt=(iso)=>{
+    if(!iso)return '—';
+    const d=new Date(iso);
+    if(isNaN(d.getTime()))return iso;
+    return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  };
+  const badge=last24hCount>0?`<span class="errors-badge">${last24hCount} in 24h</span>`:'';
+  host.innerHTML=`<div class="errors-section">
+    <div class="errors-head">
+      <div style="display:flex;align-items:center;gap:10px;"><div class="errors-title">⚠️ Error log · ${entries.length} in 7 days</div>${badge}</div>
+      <button class="btn-secondary" onclick="loadErrorLogList()" style="font-size:11px;padding:4px 10px;">↻ Refresh</button>
+    </div>
+    ${entries.map((e,idx)=>`<div class="error-row" id="err-row-${idx}">
+      <div>
+        <div class="error-time">${fmt(e.timestamp)}</div>
+        <div class="error-user">${escapeHtml(e.user||'anonymous')}</div>
+      </div>
+      <div><span class="error-code">${escapeHtml(e.errorCode||'UNKNOWN')}</span></div>
+      <div>
+        <div class="error-body">${escapeHtml(e.errorMessage||'(no message)')}</div>
+        <div class="error-details">action: ${escapeHtml(e.action||'—')} · v${escapeHtml(e.appVersion||'?')}</div>
+        ${e.stackTrace?`<div class="error-stack">${escapeHtml(e.stackTrace)}</div>`:''}
+      </div>
+      <div>${e.stackTrace?`<button class="error-toggle" onclick="document.getElementById('err-row-${idx}').classList.toggle('expanded');">Stack</button>`:''}</div>
+    </div>`).join('')}
+  </div>`;
+}
+
+/* v24.3.0: Load backup list — super only, shown in Team tab */
+async function loadBackupList(){
+  const host=document.getElementById('backup-host');
+  if(!host)return;
+  host.innerHTML='<div class="backup-section"><div class="backup-head"><div class="backup-title">💾 Backups</div></div><div class="backup-loading">Loading backups…</div></div>';
+  try{
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'backup_list',
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash
+      })
+    });
+    const data=await resp.json();
+    if(data.status!=='ok'){
+      host.innerHTML='<div class="backup-section"><div class="backup-head"><div class="backup-title">💾 Backups</div></div><div class="backup-empty">Could not load backup list.</div></div>';
+      return;
+    }
+    renderBackupList(host,data.backups||[]);
+  }catch(e){
+    console.warn('loadBackupList failed:',e);
+    host.innerHTML='';
+  }
+}
+
+function renderBackupList(host,backups){
+  const header=`<div class="backup-head">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="backup-title">💾 Backups · ${backups.length} available</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-action" onclick="runManualBackup()" style="font-size:11px;padding:4px 12px;">⬇ Backup now</button>
+      <button class="btn-secondary" onclick="loadBackupList()" style="font-size:11px;padding:4px 10px;">↻ Refresh</button>
+    </div>
+  </div>`;
+  if(!backups.length){
+    host.innerHTML=`<div class="backup-section">${header}
+      <div class="backup-empty">No backups yet. Click "Backup now" to create one. Nightly auto-backups run at 2 AM.</div>
+    </div>`;
+    return;
+  }
+  // v24.4.1: display nice date labels, not raw backup tab names
+  const prettyLabel=(b)=>{
+    if(b.dateStr){
+      const d=new Date(b.dateStr);
+      if(!isNaN(d.getTime()))return d.toLocaleDateString('en-IN',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+    }
+    // Special-label types (pre-restore, pre-wipe)
+    if(b.name && b.name.indexOf('pre_restore')>=0)return 'Safety backup (before a restore)';
+    if(b.name && b.name.indexOf('pre_wipe')>=0)return 'Safety backup (before clearing data)';
+    return b.dateStr||b.name||'Backup';
+  };
+  host.innerHTML=`<div class="backup-section">${header}
+    ${backups.map(b=>`<div class="backup-row">
+      <div>
+        <div class="backup-name">${escapeHtml(prettyLabel(b))}</div>
+        <div class="backup-meta">${b.rowCount} ${b.rowCount===1?'entry':'entries'}</div>
+      </div>
+      <div class="backup-actions">
+        <button class="btn-secondary" onclick="restoreBackup('${escapeHtml(b.name)}',${b.rowCount})" style="font-size:11px;padding:4px 10px;">↻ Restore</button>
+        <button class="btn-secondary" onclick="deleteBackup('${escapeHtml(b.name)}')" style="font-size:11px;padding:4px 10px;color:#DC2626;">🗑</button>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+async function runManualBackup(){
+  if(!(await requireAuth()))return;
+  if(!confirm('Create a safety backup of all entries right now?\n\nBackups older than 30 days are auto-pruned. A nightly auto-backup already runs at 2 AM.'))return;
+  try{
+    showSync('Creating backup…');
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'backup_run',
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash
+      })
+    });
+    const data=await resp.json();
+    if(data.status==='ok'){
+      showSync(`Backup saved ✓`,'success');
+      loadBackupList();
+    } else {
+      alert(`Backup failed: ${data.message||'Unknown error'}`);
+    }
+  }catch(e){
+    console.error(e);
+    alert('Backup failed. Check internet connection.');
+  }
+}
+
+async function restoreBackup(backupName,rowCount){
+  if(!(await requireAuth()))return;
+  const d=new Date(backupName.replace(/^[^_]+_/,''));
+  const dateLabel=isNaN(d.getTime())?backupName:d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  const msg=`Restore the backup from ${dateLabel}? (${rowCount} entries)\n\nTHIS WILL OVERWRITE your current history. A safety snapshot of the current state will be saved first, so you can recover if needed.\n\nType RESTORE to confirm:`;
+  const confirmation=prompt(msg);
+  if(confirmation!=='RESTORE'){
+    if(confirmation!==null)alert('Restore cancelled. You must type RESTORE exactly (uppercase).');
+    return;
+  }
+  try{
+    showSync('Restoring backup…');
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'backup_restore',
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash,
+        backupName:backupName
+      })
+    });
+    const data=await resp.json();
+    if(data.status==='ok'){
+      alert('Restore complete ✓\n\nYour previous state was saved as a safety backup — you can undo this if needed.\n\nRefreshing…');
+      refreshLog();
+      loadBackupList();
+    } else {
+      alert(`Restore failed: ${data.message||'Unknown error'}`);
+    }
+  }catch(e){
+    console.error(e);
+    alert('Restore failed. Please check your internet connection and try again.');
+  }
+}
+
+async function deleteBackup(backupName){
+  if(!(await requireAuth()))return;
+  const d=new Date(backupName.replace(/^[^_]+_/,''));
+  const dateLabel=isNaN(d.getTime())?backupName:d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  if(!confirm(`Delete the backup from ${dateLabel}?\n\nThis cannot be undone. Other backups are not affected.`))return;
+  try{
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'backup_delete',
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash,
+        backupName:backupName
+      })
+    });
+    const data=await resp.json();
+    if(data.status==='ok'){
+      showSync('Backup deleted ✓','success');
+      loadBackupList();
+    } else {
+      alert(`Delete failed: ${data.message||'Unknown error'}`);
+    }
+  }catch(e){
+    console.error(e);
+    alert('Delete failed. Check internet connection.');
   }
 }
 
@@ -7198,8 +7994,8 @@ function showTab(which){
       capturedAt:Date.now()
     };
   }
-  // v23.1: includes 'team' and 'dashboard' tabs
-  ['form','result','log','team','dashboard'].forEach(t=>{
+  // v23.1: includes 'team' and 'dashboard' tabs; v24.4.0 adds 'review'
+  ['form','result','log','team','dashboard','review'].forEach(t=>{
     const sec=document.getElementById('section-'+t);
     if(sec)sec.style.display=t===which?'block':'none';
     const btn=document.getElementById('tab-'+t);
@@ -7207,23 +8003,21 @@ function showTab(which){
   });
   if(which==='log'){
     renderLog();
-    // v24.2.10: Auto-refresh central log when History tab is opened (fire and forget)
     if(WEBHOOK_URL && state.user){
-      refreshLog();  // re-fetches from Sheet, updates charts
+      refreshLog();
     }
-    // Also nudge the pending queue in case stuff is waiting
     if(typeof retryPendingSync==='function'){
       setTimeout(()=>retryPendingSync(false),200);
     }
   }
   if(which==='dashboard'){
     renderDashboard();
-    // v24.2.10: Auto-refresh central log when Dashboard is opened
     if(WEBHOOK_URL && state.user){
-      refreshLog();  // refreshLog also calls renderDashboard internally after fetching
+      refreshLog();
     }
   }
   if(which==='team')renderTeamTab();
+  if(which==='review')renderReview();
   window.scrollTo(0,0);
 }
 
@@ -7502,7 +8296,7 @@ function resetForm(){
   if(oneYrPill)oneYrPill.classList.add('selected');
   document.getElementById('section-cms').style.display='none';
   clearFieldErrors();
-  state.form={project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null};
+  state.form={project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',dealValue:'',outcome:'open'};
   setBudget(2);
   document.querySelectorAll('.progress-step').forEach(s=>s.classList.remove('done'));
   // v20.1: Clear any lingering lock from prior sessions
@@ -7568,6 +8362,10 @@ function runSelector(){
   state.form.contactemail=document.getElementById('f-contactemail').value.trim();
   state.form.stage=document.getElementById('f-stage').value;
   state.form.closemonth=document.getElementById('f-closemonth').value;
+  // v24.4.0: channel review fields
+  state.form.leadSource=document.getElementById('f-leadsource').value;
+  state.form.dealValue=document.getElementById('f-dealvalue').value.trim();
+  state.form.outcome=document.getElementById('f-outcome').value||'open';
   state.form.ssdCap=document.getElementById('f-ssd-cap').value;
   // v15: capture indoor/outdoor split for mixed deployment
   state.form.qtyIndoor=parseInt(document.getElementById('f-qty-indoor').value)||0;
@@ -7589,6 +8387,9 @@ function runSelector(){
     {key:'contactphone',test:()=>!!f.contactphone,id:'f-contactphone',label:'Contact phone'},
     {key:'contactemail',test:()=>!!f.contactemail,id:'f-contactemail',label:'Contact email'},
     {key:'stage',test:()=>!!f.stage,id:'f-stage',label:'Deal stage'},
+    {key:'leadSource',test:()=>!!f.leadSource,id:'f-leadsource',label:'Lead source'},
+    {key:'dealValue',test:()=>parseDealValueClient(f.dealValue)>0,id:'f-dealvalue',label:'Deal value (₹)'},
+    {key:'outcome',test:()=>!!f.outcome,id:'f-outcome',label:'Outcome'},
     {key:'closemonth',test:()=>!!f.closemonth,id:'f-closemonth',label:'Close month'},
     {key:'qty',test:()=>f.qty>=1,id:'f-qty',label:'Quantity'},
     {key:'environment',test:()=>!!f.environment,id:'data-input:environment',label:'Deployment type'},
@@ -8256,8 +9057,424 @@ function buildEntryPayload(status){
     os:r.model.xc?state.osChoice:'—',
     cmsVendor:cmsBillingType==='Standalone (no CMS)'?'':f.cmsVendor||'BrightSign CMS',
     cmsTerm:cmsBillingType==='Standalone (no CMS)'?'':(f.cmsTerm||'1'),
-    cmsBillingType:cmsBillingType
+    cmsBillingType:cmsBillingType,
+    // v24.4.0: channel review fields
+    leadSource:f.leadSource||'',
+    dealValue:parseDealValueClient(f.dealValue),
+    outcome:f.outcome||'open'
   };
+}
+
+/* v24.4.0: Client-side deal value normalizer. Matches server logic.
+   Accepts 125000, "1,25,000", "1.25 L", "1.25 Cr", "50k" — returns integer rupees. */
+function parseDealValueClient(v){
+  if(v==null||v==='')return 0;
+  if(typeof v==='number')return Math.max(0,Math.round(v));
+  const s=v.toString().trim().toLowerCase().replace(/,/g,'').replace(/₹/g,'').trim();
+  if(!s)return 0;
+  const m=s.match(/^(-?\d+(?:\.\d+)?)\s*(cr|crore|crores|l|lakh|lakhs|k|thousand|th)?$/);
+  if(!m){const n=parseFloat(s);return isNaN(n)?0:Math.max(0,Math.round(n));}
+  let n=parseFloat(m[1]);
+  const unit=m[2]||'';
+  if(unit==='cr'||unit==='crore'||unit==='crores')n*=10000000;
+  else if(unit==='l'||unit==='lakh'||unit==='lakhs')n*=100000;
+  else if(unit==='k'||unit==='thousand'||unit==='th')n*=1000;
+  return isNaN(n)?0:Math.max(0,Math.round(n));
+}
+
+/* v24.4.0: Format rupees nicely for display: 12500000 → "₹1.25 Cr" */
+function formatINR(n){
+  n=parseFloat(n)||0;
+  if(n===0)return '—';
+  if(n>=10000000)return '₹'+(n/10000000).toFixed(n%10000000===0?0:2)+' Cr';
+  if(n>=100000)return '₹'+(n/100000).toFixed(n%100000===0?0:2)+' L';
+  if(n>=1000)return '₹'+(n/1000).toFixed(0)+' K';
+  return '₹'+n;
+}
+
+/* ============================================================
+   v24.4.0: REVIEW TAB
+   ============================================================ */
+
+/* Get current FY + quarter based on today. Indian FY = April-March. */
+function getClientFYQuarter(date){
+  const d=date||new Date();
+  const m=d.getMonth()+1;
+  const y=d.getFullYear();
+  const fyStartYear=m>=4?y:y-1;
+  const fyEndYear=fyStartYear+1;
+  const fy=('0'+(fyStartYear%100)).slice(-2)+'-'+('0'+(fyEndYear%100)).slice(-2);
+  let quarter;
+  if(m>=4&&m<=6)quarter='Q1';
+  else if(m>=7&&m<=9)quarter='Q2';
+  else if(m>=10&&m<=12)quarter='Q3';
+  else quarter='Q4';
+  return {fy:fy,quarter:quarter,fyStartYear:fyStartYear};
+}
+
+/* Populate the period selector dropdowns */
+function populateReviewPeriodSelects(){
+  const now=getClientFYQuarter();
+  const curFY=now.fy;
+  const prevFYStartYear=now.fyStartYear-1;
+  const prevFY=('0'+(prevFYStartYear%100)).slice(-2)+'-'+('0'+((prevFYStartYear+1)%100)).slice(-2);
+
+  const options=[
+    {value:'FY'+curFY+'-'+now.quarter,label:'Current: '+now.quarter+' FY '+curFY+' (active)'},
+    {value:'FY'+curFY+'-Q1',label:'Q1 FY '+curFY+' (Apr–Jun)'},
+    {value:'FY'+curFY+'-Q2',label:'Q2 FY '+curFY+' (Jul–Sep)'},
+    {value:'FY'+curFY+'-Q3',label:'Q3 FY '+curFY+' (Oct–Dec)'},
+    {value:'FY'+curFY+'-Q4',label:'Q4 FY '+curFY+' (Jan–Mar)'},
+    {value:'YTD-'+curFY,label:'YTD FY '+curFY},
+    {value:'FY'+curFY,label:'Full FY '+curFY},
+    {value:'FY'+prevFY+'-Q1',label:'Q1 FY '+prevFY},
+    {value:'FY'+prevFY+'-Q2',label:'Q2 FY '+prevFY},
+    {value:'FY'+prevFY+'-Q3',label:'Q3 FY '+prevFY},
+    {value:'FY'+prevFY+'-Q4',label:'Q4 FY '+prevFY},
+    {value:'FY'+prevFY,label:'Full FY '+prevFY},
+    {value:'ALL',label:'All time'}
+  ];
+  const periodEl=document.getElementById('review-period');
+  const compareEl=document.getElementById('review-compare');
+  if(!periodEl||!compareEl)return;
+  if(periodEl.options.length>0)return; // already populated
+  options.forEach(o=>{
+    const opt1=new Option(o.label,o.value);
+    const opt2=new Option(o.label,o.value);
+    periodEl.appendChild(opt1);
+    compareEl.appendChild(opt2);
+  });
+  // Add "none" for compare
+  const none=new Option('(no comparison)','NONE');
+  compareEl.insertBefore(none,compareEl.firstChild);
+  // Defaults: current quarter + same quarter prev FY
+  periodEl.value='FY'+curFY+'-'+now.quarter;
+  compareEl.value='FY'+prevFY+'-'+now.quarter;
+}
+
+/* Compute delta + arrow class + formatted label */
+function computeDelta(current,previous,isPercent){
+  if(previous==null||previous===0){
+    if(current>0)return {cls:'delta-up',label:'new'};
+    return {cls:'delta-flat',label:'—'};
+  }
+  const diff=current-previous;
+  if(isPercent){
+    const pp=Math.round(diff*10)/10;
+    if(Math.abs(pp)<0.1)return {cls:'delta-flat',label:'flat'};
+    return {cls:pp>0?'delta-up':'delta-down',label:(pp>0?'↑':'↓')+' '+Math.abs(pp)+'pp'};
+  }
+  if(previous===0)return {cls:current>0?'delta-up':'delta-flat',label:current>0?'new':'—'};
+  const pct=(diff/previous)*100;
+  if(Math.abs(pct)<1)return {cls:'delta-flat',label:'flat'};
+  return {cls:pct>0?'delta-up':'delta-down',label:(pct>0?'↑':'↓')+' '+Math.abs(Math.round(pct))+'%'};
+}
+
+/* Main render function — fetches review_data + draws 6 cards */
+async function renderReview(){
+  if(!state.user)return;
+  populateReviewPeriodSelects();
+  const periodEl=document.getElementById('review-period');
+  const compareEl=document.getElementById('review-compare');
+  const host=document.getElementById('review-content');
+  if(!host||!periodEl)return;
+  const period=periodEl.value;
+  const comparePeriod=compareEl.value==='NONE'?null:compareEl.value;
+  host.innerHTML='<div class="review-loading">Loading review data…</div>';
+
+  if(!WEBHOOK_URL){
+    host.innerHTML='<div class="review-empty">Review data is currently unavailable. Please try again shortly.</div>';
+    return;
+  }
+  try{
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'review_data',
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash,
+        period:period,
+        comparePeriod:comparePeriod
+      })
+    });
+    const data=await resp.json();
+    if(data.status!=='ok'){
+      host.innerHTML='<div class="review-empty">Could not load review data: '+(data.message||'unknown error')+'</div>';
+      return;
+    }
+    renderReviewCards(host,data,period,comparePeriod);
+  }catch(err){
+    console.error('renderReview failed:',err);
+    logFrontendError('REVIEW_FETCH_FAILED',err.message||err.toString(),err.stack||'','renderReview');
+    host.innerHTML='<div class="review-empty">Could not load review data. Check internet connection.</div>';
+  }
+}
+
+function renderReviewCards(host,data,period,comparePeriod){
+  const primary=data.primary||{};
+  const compare=data.compare||null;
+  const parts=[];
+
+  // Card 1: Executive summary
+  const kpi=(label,value,cur,prev,isPct)=>{
+    const delta=compare?computeDelta(cur,prev,isPct):null;
+    const deltaStr=delta?`<div class="exec-kpi-delta ${delta.cls}">${delta.label} vs compare</div>`:'';
+    return `<div class="exec-kpi"><div class="exec-kpi-label">${label}</div><div class="exec-kpi-value">${value}</div>${deltaStr}</div>`;
+  };
+  parts.push(`<div class="review-card">
+    <div class="review-card-head">
+      <div class="review-card-icon ri-exec">★</div>
+      <div class="review-card-title">Executive summary</div>
+      <div class="review-card-sub">${escapeHtml(period)}${compare?' vs '+escapeHtml(comparePeriod):''}</div>
+    </div>
+    <div class="exec-kpi-grid">
+      ${kpi('Pipeline (₹)',formatINR(primary.pipelineValue),primary.pipelineValue,compare?compare.pipelineValue:null,false)}
+      ${kpi('Won (₹)',formatINR(primary.wonValue),primary.wonValue,compare?compare.wonValue:null,false)}
+      ${kpi('Win rate',primary.winRate+'%',primary.winRate,compare?compare.winRate:null,true)}
+      ${kpi('Active deals',primary.activeCount,primary.activeCount,compare?compare.activeCount:null,false)}
+      ${kpi('Total entries',primary.entryCount,primary.entryCount,compare?compare.entryCount:null,false)}
+    </div>
+  </div>`);
+
+  // Card 2: Business source split
+  const bySource=primary.bySource||{OEM:{count:0,value:0},Cavitak:{count:0,value:0}};
+  const totalSrc=bySource.OEM.value+bySource.Cavitak.value;
+  const oemPct=totalSrc>0?Math.round((bySource.OEM.value/totalSrc)*100):0;
+  const cavPct=totalSrc>0?Math.round((bySource.Cavitak.value/totalSrc)*100):0;
+  const compSrc=compare?compare.bySource:null;
+  const oemDelta=compSrc?computeDelta(bySource.OEM.value,compSrc.OEM.value,false):null;
+  const cavDelta=compSrc?computeDelta(bySource.Cavitak.value,compSrc.Cavitak.value,false):null;
+  const compOemPct=compSrc&&(compSrc.OEM.value+compSrc.Cavitak.value)>0?Math.round((compSrc.OEM.value/(compSrc.OEM.value+compSrc.Cavitak.value))*100):0;
+  const compCavPct=compSrc&&(compSrc.OEM.value+compSrc.Cavitak.value)>0?Math.round((compSrc.Cavitak.value/(compSrc.OEM.value+compSrc.Cavitak.value))*100):0;
+  const shareDelta=compSrc?computeDelta(cavPct,compCavPct,true):null;
+  parts.push(`<div class="review-card">
+    <div class="review-card-head">
+      <div class="review-card-icon ri-src">◐</div>
+      <div class="review-card-title">Business source split</div>
+      <div class="review-card-sub">${totalSrc>0?'₹'+formatINR(totalSrc).replace('₹',''):'no data'}</div>
+    </div>
+    <div class="source-row">
+      <div><div class="source-label">OEM-referred</div>${oemDelta?`<div class="source-delta ${oemDelta.cls}">${oemDelta.label}</div>`:''}</div>
+      <div class="source-bar-wrap"><div class="source-bar source-bar-oem" style="width:${Math.max(oemPct,4)}%"><span class="source-bar-pct">${oemPct}%</span></div></div>
+      <div class="source-value">${formatINR(bySource.OEM.value)}</div>
+    </div>
+    <div class="source-row">
+      <div><div class="source-label">Cavitak-generated</div>${cavDelta?`<div class="source-delta ${cavDelta.cls}">${cavDelta.label}</div>`:''}</div>
+      <div class="source-bar-wrap"><div class="source-bar source-bar-cavitak" style="width:${Math.max(cavPct,4)}%"><span class="source-bar-pct">${cavPct}%</span></div></div>
+      <div class="source-value">${formatINR(bySource.Cavitak.value)}</div>
+    </div>
+    ${shareDelta?`<div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border-soft);font-family:var(--sans);font-size:12px;color:var(--ink-muted);">Cavitak share: ${cavPct}% <span class="${shareDelta.cls}">(${shareDelta.label} vs compare)</span></div>`:''}
+  </div>`);
+
+  // Card 3: Funnel
+  const funnel=primary.funnel||[];
+  const maxCount=Math.max(1,...funnel.map(f=>f.count));
+  let funRows='';
+  for(let i=0;i<funnel.length;i++){
+    const f=funnel[i];
+    const barW=Math.round((f.count/maxCount)*100);
+    let retention='';
+    if(i>0&&funnel[i-1].count>0){
+      const r=Math.round((f.count/funnel[i-1].count)*100);
+      retention=r+'%';
+    } else if(i===0){
+      retention='—';
+    }
+    funRows+=`<div class="funnel-row">
+      <div class="funnel-stage">${escapeHtml(f.stage)}</div>
+      <div class="funnel-count">${f.count}</div>
+      <div class="funnel-value">${formatINR(f.value)}</div>
+      <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${Math.max(barW,2)}%"></div></div>
+      <div class="funnel-retention">${retention}</div>
+    </div>`;
+  }
+  const leadCount=funnel[0]?funnel[0].count:0;
+  const orderCount=funnel[4]?funnel[4].count:0;
+  const overallConv=leadCount>0?Math.round((orderCount/leadCount)*100):0;
+  const lost=primary.lost||{count:0,value:0};
+  const onHold=primary.onHold||{count:0,value:0};
+  parts.push(`<div class="review-card">
+    <div class="review-card-head">
+      <div class="review-card-icon ri-funnel">▽</div>
+      <div class="review-card-title">Funnel</div>
+      <div class="review-card-sub">${primary.entryCount} active entries</div>
+    </div>
+    ${funRows}
+    <div class="funnel-total">
+      <span>Lead → Order conversion</span>
+      <span class="funnel-total-rate">${overallConv}%</span>
+    </div>
+    <div class="funnel-dropped">
+      <span class="funnel-dropped-pill" style="color:#991B1B;">✖ Lost: ${lost.count} (${formatINR(lost.value)})</span>
+      <span class="funnel-dropped-pill" style="color:#92400E;">⏸ On hold: ${onHold.count} (${formatINR(onHold.value)})</span>
+    </div>
+  </div>`);
+
+  // Card 4: Ecosystem reach
+  const eco=primary.ecosystem||{partners:0,consultants:0,endClients:0};
+  const compEco=compare?compare.ecosystem:null;
+  const ecoTile=(label,cur,prev)=>{
+    const d=compEco?computeDelta(cur,prev,false):null;
+    const sub=d?`<div class="eco-tile-sub ${d.cls}">${d.label} vs compare</div>`:'<div class="eco-tile-sub">unique in period</div>';
+    return `<div class="eco-tile"><div class="eco-tile-label">${label}</div><div class="eco-tile-value">${cur}</div>${sub}</div>`;
+  };
+  parts.push(`<div class="review-card">
+    <div class="review-card-head">
+      <div class="review-card-icon ri-eco">◆</div>
+      <div class="review-card-title">Ecosystem reach</div>
+      <div class="review-card-sub">unique relationships</div>
+    </div>
+    <div class="eco-grid">
+      ${ecoTile('Partners / SIs',eco.partners,compEco?compEco.partners:null)}
+      ${ecoTile('Consultants',eco.consultants,compEco?compEco.consultants:null)}
+      ${ecoTile('End clients',eco.endClients,compEco?compEco.endClients:null)}
+    </div>
+  </div>`);
+
+  // Card 5: Quarterly breakdown (current FY)
+  const quarters=data.quartersThisFY||[];
+  const ytd=data.ytdThisFY||{entryCount:0,pipelineValue:0,wonValue:0,winRate:0};
+  const qRow=(label,getter)=>{
+    let row=`<td>${label}</td>`;
+    quarters.forEach(q=>{row+=`<td class="num">${getter(q)}</td>`;});
+    row+=`<td class="num"><strong>${getter(ytd)}</strong></td>`;
+    return `<tr>${row}</tr>`;
+  };
+  parts.push(`<div class="review-card">
+    <div class="review-card-head">
+      <div class="review-card-icon ri-q">◧</div>
+      <div class="review-card-title">Quarterly breakdown — ${escapeHtml(data.currentFY||'')}</div>
+      <div class="review-card-sub">FY Apr–Mar</div>
+    </div>
+    <table class="review-table">
+      <thead>
+        <tr>
+          <th>Metric</th>
+          ${quarters.map(q=>`<th class="num">${q.quarter}</th>`).join('')}
+          <th class="num">YTD</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${qRow('Entries',b=>b.entryCount||0)}
+        ${qRow('Pipeline',b=>formatINR(b.pipelineValue||0))}
+        ${qRow('Won',b=>formatINR(b.wonValue||0))}
+        ${qRow('Win rate',b=>(b.winRate||0)+'%')}
+      </tbody>
+    </table>
+  </div>`);
+
+  // Card 6: YoY growth
+  const prevFY=data.prevFYData||{entryCount:0,pipelineValue:0,wonValue:0,ecosystem:{partners:0,consultants:0,endClients:0}};
+  const ytdPrim=data.ytdThisFY||{entryCount:0,pipelineValue:0,wonValue:0,ecosystem:{partners:0,consultants:0,endClients:0}};
+  const yoyRow=(label,cur,prev,fmt)=>{
+    const d=computeDelta(cur,prev,false);
+    const f=fmt||(v=>v);
+    return `<tr><td>${label}</td><td class="num">${f(prev)}</td><td class="num">${f(cur)}</td><td class="num ${d.cls}">${d.label}</td></tr>`;
+  };
+  parts.push(`<div class="review-card">
+    <div class="review-card-head">
+      <div class="review-card-icon ri-yoy">⇡</div>
+      <div class="review-card-title">YoY growth — ${escapeHtml(data.prevFY||'')} vs ${escapeHtml(data.currentFY||'')}</div>
+      <div class="review-card-sub">year-to-date</div>
+    </div>
+    <table class="review-table">
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th class="num">${escapeHtml(data.prevFY||'prev')}</th>
+          <th class="num">${escapeHtml(data.currentFY||'current')} YTD</th>
+          <th class="num">Growth</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${yoyRow('Total pipeline',ytdPrim.pipelineValue,prevFY.pipelineValue,formatINR)}
+        ${yoyRow('Won value',ytdPrim.wonValue,prevFY.wonValue,formatINR)}
+        ${yoyRow('Entries',ytdPrim.entryCount,prevFY.entryCount)}
+        ${yoyRow('Unique partners',(ytdPrim.ecosystem||{}).partners||0,(prevFY.ecosystem||{}).partners||0)}
+        ${yoyRow('Unique consultants',(ytdPrim.ecosystem||{}).consultants||0,(prevFY.ecosystem||{}).consultants||0)}
+        ${yoyRow('Unique end-clients',(ytdPrim.ecosystem||{}).endClients||0,(prevFY.ecosystem||{}).endClients||0)}
+      </tbody>
+    </table>
+  </div>`);
+
+  // Card 7: Funnel by user
+  const byUser=primary.byUser||[];
+  if(byUser.length){
+    parts.push(`<div class="review-card">
+      <div class="review-card-head">
+        <div class="review-card-icon ri-user">☰</div>
+        <div class="review-card-title">Funnel by user</div>
+        <div class="review-card-sub">${byUser.length} active user${byUser.length===1?'':'s'}</div>
+      </div>
+      <table class="review-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th class="num">Lead</th><th class="num">Oppt</th><th class="num">Prop</th><th class="num">Neg</th><th class="num">Order</th>
+            <th class="num">Pipeline</th><th class="num">Won</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${byUser.map(u=>`<tr>
+            <td>${escapeHtml(u.user)}</td>
+            <td class="num">${u.funnel[0].count}</td>
+            <td class="num">${u.funnel[1].count}</td>
+            <td class="num">${u.funnel[2].count}</td>
+            <td class="num">${u.funnel[3].count}</td>
+            <td class="num">${u.funnel[4].count}</td>
+            <td class="num">${formatINR(u.pipelineValue)}</td>
+            <td class="num">${formatINR(u.wonValue)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`);
+  }
+
+  // Data quality banner
+  const missing=(data.meta&&data.meta.missingDealValue)||0;
+  if(missing>0){
+    parts.push(`<div class="data-quality-banner">⚠️ ${missing} entr${missing===1?'y has':'ies have'} missing deal value — totals above may be understated. Edit those entries to fix.</div>`);
+  }
+
+  host.innerHTML=parts.join('');
+}
+
+/* v24.4.0: Clear all test data — super-only, double confirm */
+async function clearTestData(){
+  if(!(await requireAuth()))return;
+  const msg='⚠️ DANGER: This will DELETE ALL entries from the history.\n\nA safety backup is created automatically first, so you can recover if needed.\n\nType WIPE to confirm:';
+  const c=prompt(msg);
+  if(c!=='WIPE'){
+    if(c!==null)alert('Wipe cancelled. You must type WIPE exactly (uppercase).');
+    return;
+  }
+  try{
+    showSync('Clearing…');
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'clear_test_data',
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash,
+        confirmText:'WIPE'
+      })
+    });
+    const data=await resp.json();
+    if(data.status==='ok'){
+      alert(`All clear ✓\n\n${data.rowsWiped} ${data.rowsWiped===1?'entry':'entries'} removed. A safety backup was saved automatically.\n\nRefreshing…`);
+      // Clear local cache too
+      try{localStorage.removeItem('bs-central-log');localStorage.removeItem('bs-log-v2');}catch(e){}
+      refreshLog();
+      if(typeof loadBackupList==='function')loadBackupList();
+    } else {
+      alert(`Wipe failed: ${data.message||'Unknown error'}`);
+    }
+  }catch(e){
+    console.error(e);
+    alert('Wipe failed. Check internet connection.');
+  }
 }
 
 /* Log entry with status — called automatically on Recommend and on Confirm.
@@ -8280,24 +9497,24 @@ function logEntry(status,onDone){
   }
   // Central webhook
   if(WEBHOOK_URL){
-    const msg=status==='saved'?'Confirming…':'Logging…';
+    const msg=status==='saved'?'Saving…':'Saving…';
     showSync(msg);
     // v22.4: Push to pending queue BEFORE attempting. If fetch resolves, sync verifier will confirm + remove. If not, retry.
     queuePendingEntry(entry);
     fetch(WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(entry)})
       .then(()=>{
-        showSync(status==='saved'?'Confirmed ✓':'Logged ✓','success');
+        showSync(status==='saved'?'Saved ✓':'Saved ✓','success');
         // v22.4: Schedule a verification sweep in 4 seconds to confirm server received it
         setTimeout(()=>verifyPendingSync(),4000);
         if(onDone)onDone();
       })
       .catch(err=>{
         console.warn('Webhook failed:',err);
-        showSync('Saved locally · will retry','error');
+        showSync('Saved · will upload when connection returns','error');
         if(onDone)onDone();
       });
   } else {
-    showSync(status==='saved'?'Confirmed locally ✓':'Logged locally ✓','success');
+    showSync(status==='saved'?'Saved ✓':'Saved ✓','success');
     if(onDone)onDone();
   }
 }
@@ -8390,7 +9607,7 @@ async function verifyPendingSync(silent){
     if(removed>0){
       const remaining=queue.filter(q=>!centralRefIds.has(q.refId));
       savePendingQueue(remaining);
-      if(!silent)showSync(`Synced ${removed} ${removed===1?'entry':'entries'} ✓`,'success');
+      if(!silent)showSync(`${removed} ${removed===1?'entry':'entries'} uploaded ✓`,'success');
     }
   }catch(e){
     console.warn('verify sync failed:',e);
@@ -8403,15 +9620,15 @@ async function retryPendingSync(manualTrigger){
   if(!WEBHOOK_URL)return;
   let queue=loadPendingQueue();
   if(!queue.length){
-    if(manualTrigger)showSync('Nothing to sync · all caught up ✓','success');
+    if(manualTrigger)showSync('Up to date ✓','success');
     return;
   }
-  if(manualTrigger)showSync(`Syncing ${queue.length} pending…`);
+  if(manualTrigger)showSync(`Uploading ${queue.length} saved entr${queue.length===1?'y':'ies'}…`);
   // First verify what's already synced (saves retries)
   await verifyPendingSync(true);
   queue=loadPendingQueue();
   if(!queue.length){
-    if(manualTrigger)showSync('All entries synced ✓','success');
+    if(manualTrigger)showSync('All entries uploaded ✓','success');
     return;
   }
   // Retry each still-pending entry
@@ -8437,8 +9654,8 @@ async function retryPendingSync(manualTrigger){
     verifyPendingSync(manualTrigger?false:true);
     if(manualTrigger){
       const remaining=loadPendingQueue().length;
-      if(remaining===0)showSync('All entries synced ✓','success');
-      else showSync(`${remaining} still pending · will retry`,'error');
+      if(remaining===0)showSync('All entries uploaded ✓','success');
+      else showSync(`${remaining} entr${remaining===1?'y':'ies'} will upload when connection returns`,'error');
     }
   },4000);
 }
@@ -8447,22 +9664,21 @@ async function retryPendingSync(manualTrigger){
 /* v24: Webhook health check — verifies the Apps Script URL is reachable and v23+ compatible.
    Called once after login. If broken, shows a persistent banner at top of app. */
 async function checkWebhookHealth(){
-  if(!WEBHOOK_URL){showWebhookBanner('No webhook URL configured. Central logging is disabled.','warn');return;}
+  if(!WEBHOOK_URL){showWebhookBanner('The app can\'t reach its service. Some features may be unavailable.','warn');return;}
   try{
     const resp=await fetch(WEBHOOK_URL+'?action=read',{method:'GET'});
     if(!resp.ok){
-      showWebhookBanner(`Webhook responded with HTTP ${resp.status}. Central logging may be broken — contact admin.`,'err');
+      showWebhookBanner('Connection problem — please refresh the page or contact your admin if this persists.','err');
       return;
     }
     const data=await resp.json();
     if(!Array.isArray(data)){
-      showWebhookBanner('Webhook is reachable but returned invalid data. Apps Script may be stale — check deployment.','err');
+      showWebhookBanner('The app needs updating — please contact your admin.','err');
       return;
     }
-    // All good — hide any stale banner
     hideWebhookBanner();
   }catch(e){
-    showWebhookBanner(`Webhook unreachable: ${e.message||'Network error'}. Check internet, or webhook URL may be stale (Apps Script re-deployed elsewhere).`,'err');
+    showWebhookBanner('You appear to be offline. Your work is saved here and will update when you\'re back online.','err');
   }
 }
 
@@ -8486,6 +9702,8 @@ function hideWebhookBanner(){
 function updatePendingBadge(){
   const queue=loadPendingQueue();
   const tab=document.getElementById('tab-log');
+  const syncBtn=document.getElementById('manual-sync-btn');
+  if(syncBtn)syncBtn.style.display=queue.length>0?'inline-flex':'none';
   if(!tab)return;
   let badge=tab.querySelector('.pending-badge');
   if(queue.length>0){
@@ -8495,7 +9713,7 @@ function updatePendingBadge(){
       tab.appendChild(badge);
     }
     badge.textContent=queue.length>9?'9+':queue.length.toString();
-    badge.title=`${queue.length} ${queue.length===1?'entry':'entries'} pending sync`;
+    badge.title=`${queue.length} ${queue.length===1?'entry':'entries'} saved while offline`;
   } else {
     if(badge)badge.remove();
   }
@@ -8529,7 +9747,7 @@ function confirmSelection(){
   window._confirmBusy=true;
   state.result.confirmed=true;
   const btn=document.querySelector('#section-result .action-bar .btn-action');
-  if(btn){btn.disabled=true;btn.textContent='Confirming…';btn.style.opacity='0.7';btn.style.cursor='not-allowed';}
+  if(btn){btn.disabled=true;btn.textContent='Saving…';btn.style.opacity='0.7';btn.style.cursor='not-allowed';}
   logEntry('saved',function(){
     // Update Confirm button to show success feedback briefly
     if(btn){btn.textContent='Confirmed ✓';btn.style.background='var(--emerald)';btn.style.opacity='1';}
@@ -9067,7 +10285,7 @@ async function emailQuoteToPartner(){
   },400);
 }
 
-function clearLog(){if(confirm('Clear LOCAL history? (Central Google Sheet is not affected.)')){saveLocalLog([]);renderLog();}}
+function clearLog(){if(confirm('Clear this device\'s history view?\n\nYour actual entries are safe — this only clears what\'s shown on this device.')){saveLocalLog([]);renderLog();}}
 
 /* v24.2.11: Fetch with timeout wrapper — abort after ms to prevent hung requests */
 function fetchWithTimeout(url,options,timeoutMs){
@@ -9102,16 +10320,14 @@ async function refreshLog(){
     const result=await tryFetchCentralLog();
     if(result.ok){
       window._centralLog=result.data;
-      const suffix=result.attempts>1?` (attempt ${result.attempts})`:'';
-      showSync('Central log loaded ✓'+suffix,'success');
+      showSync('History updated ✓','success');
       renderLog();
       renderDashboard();
       return;
     }
-    // All retries exhausted
-    showSync('Central fetch failed · showing local cache','error');
+    showSync('Unable to refresh · showing last known data','error');
   } else {
-    showSync('Local refresh ✓','success');
+    showSync('Refreshed ✓','success');
   }
   renderLog();
   renderDashboard();
@@ -9191,17 +10407,17 @@ function renderLog(){
   const seesAll=isSuper || role==='OEM';
   if(isSuper){
     pageTitle.textContent='All-team selection history';
-    pageSubtitle.textContent=WEBHOOK_URL?'Aggregated from the central Google Sheet. Click Refresh to sync.':'Aggregated from local browser storage.';
+    pageSubtitle.textContent=WEBHOOK_URL?'All team entries. Tap Refresh to check for updates.':'All team entries.';
     exportBtn.style.display='inline-flex';
     const sr=document.getElementById('super-reset-btn');if(sr)sr.style.display='inline-flex';
   } else if(seesAll){
     pageTitle.textContent='Team selection history';
-    pageSubtitle.textContent=WEBHOOK_URL?'All team entries. Read-only access.':'All team entries (local).';
+    pageSubtitle.textContent=WEBHOOK_URL?'All team entries. Read-only access.':'All team entries.';
     exportBtn.style.display='inline-flex';
     const sr=document.getElementById('super-reset-btn');if(sr)sr.style.display='none';
   } else {
     pageTitle.textContent='My selection history';
-    pageSubtitle.textContent=WEBHOOK_URL?'Your past recommendations from central log. Click Refresh to sync.':'Your past recommendations.';
+    pageSubtitle.textContent=WEBHOOK_URL?'Your past recommendations. Tap Refresh to check for updates.':'Your past recommendations.';
     exportBtn.style.display='none';
     const sr=document.getElementById('super-reset-btn');if(sr)sr.style.display='none';
   }
@@ -9395,8 +10611,16 @@ function editPastEntry(entryIdx){
     hdmiIn:entry.hdmiIn||'',touch:entry.touch||'',wifi:entry.wifi||'',
     gpio:entry.gpio||'',ssd:entry.ssd||'',os:entry.os||'',
     cmsVendor:entry.cmsVendor||'',cmsTerm:(entry.cmsTerm||'').toString(),
-    cmsBillingType:entry.cmsBillingType||''
+    cmsBillingType:entry.cmsBillingType||'',
+    // v24.4.0
+    leadSource:entry.leadSource||'',
+    dealValue:(entry.dealValue||0).toString(),
+    outcome:entry.outcome||'open'
   };
+  // v24.4.0: Also copy new fields into state.form so prefillFormUI shows them
+  state.form.leadSource=entry.leadSource||'';
+  state.form.dealValue=(entry.dealValue && entry.dealValue>0)?entry.dealValue:'';
+  state.form.outcome=entry.outcome||'open';
 
   prefillFormUI();
   applyEditLocks(true);  // v22.3: lock basic info
@@ -9499,11 +10723,21 @@ function prefillFormUI(){
   const qoEl=document.getElementById('f-qty-outdoor');
   if(qoEl)qoEl.value=f.qtyOutdoor||0;
   // Dropdowns
-  const dropdowns=['stage','cmsVendor','cmsTerm'];
+  const dropdowns=['stage','cmsVendor','cmsTerm','leadsource','outcome'];
   dropdowns.forEach(id=>{
+    // Frontend input id uses lowercase without camelCase, state uses camelCase for new fields
     const el=document.getElementById('f-'+id);
-    if(el && f[id]!=null)el.value=f[id];
+    if(!el)return;
+    if(id==='leadsource')el.value=f.leadSource||'';
+    else if(id==='outcome')el.value=f.outcome||'open';
+    else if(f[id]!=null)el.value=f[id];
   });
+  // v24.4.0: dealvalue text input — show raw number, user can edit as-is
+  const dvEl=document.getElementById('f-dealvalue');
+  if(dvEl){
+    const dv=f.dealValue;
+    dvEl.value=(dv && typeof dv==='number' && dv>0)?dv.toString():(dv||'');
+  }
   // Pill groups + choice cards
   const pillInputs=['environment','update','content','resolution','hdmiIn','touch','wifi','gpio','ssd','cmsInclude'];
   pillInputs.forEach(input=>{
@@ -10406,6 +11640,18 @@ setBudget(2);
 
   // Add shine-host class to result-cards, choice-cards for shine sweep
   document.querySelectorAll('.choice-card').forEach(el=>el.classList.add('shine-host'));
+
+  // v24.3.0: Ping backend on boot for version check + health
+  if(typeof pingBackend==='function')setTimeout(()=>pingBackend(),500);
+
+  // v24.3.0: Inject version footer if not present
+  if(!document.getElementById('app-version-footer')){
+    const f=document.createElement('div');
+    f.id='app-version-footer';
+    f.className='app-version-footer';
+    f.textContent='v'+FRONTEND_VERSION;
+    document.body.appendChild(f);
+  }
 })();
 
 /* v19: Enhance showTab to add staggered page-enter animations */
