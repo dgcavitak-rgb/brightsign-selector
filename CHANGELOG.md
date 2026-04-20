@@ -69,6 +69,268 @@ Frontend-only patch release. UX improvement.
 
 ---
 
+## [v24.4.13] — 2026-04-20 · Remove Password button from header
+
+Frontend-only patch. Removes the "🔑 Password" button that lived in the header next to the avatar.
+
+### Removed
+
+- **Header Password button** (`<button class="btn-password">🔑 Password</button>`) — it cluttered the header and was redundant with the same functionality already in the Profile tab.
+
+### Preserved
+
+- **"🔑 Change password" button in Profile tab** remains — users can still change their own password there.
+- **All password change logic** (`showChangePasswordModal`, forced-change flow on first login) is unchanged.
+- **CSS for `.btn-password`** class kept (no longer used, but harmless — removing would trigger a full sweep).
+
+### Deploy
+
+Single-file swap. Replace `index.html` on GitHub. Hard refresh.
+
+---
+
+## [v24.4.17] — 2026-04-20 · Dark mode polish + remove outdated deployment notes
+
+Frontend-only patch. Addresses 5 specific issues reported from dark-mode QA.
+
+### Fixed — Dashboard chart cards had white backgrounds in dark mode
+
+All 9 charts (Deal Stage Funnel, Model Distribution, Deal Stage Pipeline, User Leaderboard, Top Partners, City Distribution, Activity Timeline, and the two Product Demand charts) rendered with hardcoded `background:#fff` backgrounds. In dark mode this meant white cards with white-ish titles — the chart headings ("Deal Stage Funnel", "Model Distribution", etc.) were nearly invisible.
+
+Added `html[data-theme="dark"] .chart-card-v18, .chart-card` override: dark translucent background, explicit ink colors for titles and subtitles, proper border.
+
+### Fixed — "Alternative Tiers" (Step Down / Step Up) cards unreadable in dark mode
+
+Same pattern: `.alt-card-v21` used a light grey background (`rgba(248,250,252,0.7)`) with `color: var(--indigo)` for the model name. In dark mode `--indigo` is light lavender (for dark-bg text), so the card was pale-grey-on-dark with lavender-on-pale-grey model name — three layers of low contrast.
+
+Added dark overrides: opaque dark background, saturated `#818CF8` for model name (visible against dark), muted `#CBD5E1` for description tags.
+
+### Fixed — "PRIMARY" tier badge in Tender Specs invisible in dark mode
+
+`.tender-section-badge` used `background: var(--indigo)` + white text. In dark mode this resolved to lavender-on-lavender-ish-card. Added dark override pinning badge background to saturated `#4F46E5`. Also fixed the Common (`#64748B`) and Outdoor (`#B45309`) badge variants which had the same issue.
+
+### Removed — "HDMI input — HDCP on OS roadmap" deployment note
+
+Per PM request, this advisory is removed from the Deployment Notes list on the Result page. The note was added when HDCP support on HDMI inputs was still pending on BrightSign's firmware roadmap; it's no longer relevant messaging. Tender spec clauses that mention HDCP in formal documents (for output side, HDCP 2.2) are unchanged — only the advisory on the results page is removed.
+
+### Removed — "confirm CMS scaling early" note for 100+ players
+
+Per PM request, the note triggered when quantity exceeded 100 units is removed. CMS scaling is handled during presales design now; the advisory is no longer needed in the result output.
+
+### Not changed (already working)
+
+- **"Confirm ✓" button** uses `.btn-action`, which got its dark-mode gradient override in v24.4.15/v24.4.16. User's screenshot of a washed-out Confirm was from pre-v24.4.16 deploy; after deploying v24.4.16 or later, button renders correctly in both themes.
+
+### Files in release
+
+- `brightsign-v24-4-17.html` — frontend only (Apps Script v24.5.2 unchanged)
+
+### Deploy
+
+Single-file swap.
+
+### QA test matrix (light + dark modes)
+
+| Location | Check |
+|----------|-------|
+| Dashboard tab | All 9 chart card titles + subtitles clearly readable |
+| Result page → Alternative Tiers | Step Down / Step Up cards show dark bg + visible model text |
+| Result page → Tender Specs | PRIMARY / Common / Outdoor tier badges saturated + white text |
+| Result page → Deployment Notes | No HDCP roadmap entry, no CMS scaling early entry |
+| Result page → action bar | Confirm ✓ button saturated indigo gradient |
+
+---
+
+## [v24.4.16] — 2026-04-20 · Smart close-month picker + Recommend button dark fix
+
+Frontend-only patch.
+
+### Fixed — Recommend button washed-out in dark mode (same root cause as v24.4.15)
+
+v24.4.15 fixed the Add user button but only targeted `.btn-action`. The Recommend button on the form also rendered as lavender in dark mode because it shares the same class. Extended the dark-mode override to cover both `.btn-action` AND `.btn-primary`, with a proper indigo gradient (`#4F46E5 → #6366F1`) and stronger shadow. Now Recommend, Add user, and Sign in all look correct in both themes.
+
+### Changed — Smarter close-month picker
+
+The previous "24 months forward" flat dropdown worked but was clunky — too many options to scroll through, and users often just wanted "this month" or "end of quarter". Replaced with a three-part smart picker:
+
+1. **Quick-pick chips** — one-click selection for common targets:
+   - This month
+   - Next month
+   - End of quarter (Indian FY quarters: Q1 Apr-Jun, Q2 Jul-Sep, Q3 Oct-Dec, Q4 Jan-Mar)
+   - End of FY (March 31 of the next April, respecting Indian fiscal year)
+
+2. **Year + Month selectors** — for anything else. Year is 3 years forward (current + 2), Month is all 12. Grid layout on desktop (1fr + 1fr), stacks to single column on mobile (<640px).
+
+3. **Confirmation display** — "✓ Target close: May 2026" in green below the picker, so the user can see exactly what was picked without having to mentally combine Year + Month.
+
+The underlying `f-closemonth` field is now a hidden input holding the YYYY-MM value for backend compatibility. All downstream code (validation, save payload, edit-mode prefill, export) works unchanged.
+
+### Internal changes
+
+- New `pickCloseMonth(value)`, `syncCloseMonth()`, `renderCloseMonthQuickChips()`, `updateCloseMonthDisplay()` helpers.
+- `resetForm()` updated to clear new picker state (selects, chips, display).
+- `prefillFormUI()` updated to call `pickCloseMonth()` in edit mode so visible widgets sync with the entry's stored value.
+- `applyEditLocks()` updated to disable the Year/Month selects and the quick-pick chips (plus visual lock icon) when an edit is in progress for a past entry.
+- Full dark-mode CSS for all picker elements.
+
+### Files in release
+
+- `brightsign-v24-4-16.html` — frontend only (Apps Script v24.5.2 unchanged)
+
+### Deploy
+
+Single-file swap.
+
+### Test after deploy
+
+1. **Recommend button:** open New Selection in dark mode → scroll to bottom → button should be saturated indigo, not lavender.
+2. **Close-month picker (new entry):**
+   - Click "This month" chip → selects auto-fill to current month, display reads "✓ Target close: [Month] [Year]"
+   - Change month via dropdown → display updates, chip deselects
+   - Click "End of FY" → should pick March of whichever April is next
+3. **Close-month picker (edit past entry):**
+   - Go to History → Edit on an entry with a close month set
+   - Picker should show the entry's month pre-selected in both dropdowns and the display
+   - Picker should be locked (disabled) if the entry predates the smart-lock logic
+4. **Reset:** after entering a close month, click Reset → picker should fully clear (selects empty, chips deselected, display back to "No month selected yet.")
+
+---
+
+## [v24.4.15] — 2026-04-20 · Add user button dark-mode fix + super self-reset
+
+Frontend-only patch.
+
+### Fixed — "Add user" button washed out in dark mode
+
+Root cause: the `--indigo` CSS variable is redefined in dark mode as `#C7D2FE` (light lavender) so that indigo-colored **text** reads well against dark backgrounds. But `btn-action` used `var(--indigo)` as its **background** with white text — resulting in lavender-on-white in dark mode, basically invisible.
+
+Added dark-mode-specific override that pins the button background to saturated `#4F46E5` (true indigo) with strong indigo shadow, and `#6366F1` on hover. Same button now looks correct in both themes.
+
+### Added — Super can reset their own password
+
+Previously the "🔑 Reset" button in the Team tab's user row was hidden for super-users (`${u.isSuper?'':...}`). This meant if a super got locked into a weird password state, they had no self-service recovery path beyond the manual SHA-256 hash reset in the Sheet.
+
+Now super-users see the Reset button on their own row. Clicking it shows a stronger confirmation dialog explicitly warning that they'll be signed out and forced to set a new password on next login. On success:
+- Password is reset to `cavitak@123`
+- `mustChange=TRUE` flag is set
+- User is automatically signed out
+- Next login forces the password-change modal
+
+### Files in release
+
+- `brightsign-v24-4-15.html` — frontend only (Apps Script v24.5.2 unchanged)
+
+### Deploy
+
+Single-file swap.
+
+---
+
+## [v24.4.14] — 2026-04-20 · Accessibility (P3 / architecture review #17)
+
+Frontend-only patch. Addresses accessibility issue #17 from the senior-dev architecture review. No visible UX changes for sighted mouse users; screen-reader and keyboard users get a substantially better experience.
+
+### Added
+
+**Skip-to-main-content link.** First element on every page. Hidden off-screen until focused (keyboard tab from page load), then appears top-left. Lets keyboard users skip the nav and jump directly to content.
+
+**Proper ARIA tab semantics.** The top navigation previously was just a row of buttons with no semantic meaning for assistive tech. Now:
+- The nav container uses `role="tablist"` with `aria-label="Main navigation"`
+- Each tab button has `role="tab"`, `aria-selected`, and `aria-controls` pointing to its panel
+- Each section div has `role="tabpanel"` and `aria-labelledby` pointing to its tab
+- `aria-selected` state is dynamically synced when user changes tabs (via `showTab()`)
+- Decorative SVG icons inside tabs marked `aria-hidden="true"` so screen readers don't announce redundant "image" labels
+
+**Focus-visible outline.** `*:focus-visible { outline: 3px solid #FBBF24; outline-offset: 2px; }` — keyboard users see a clear gold outline on the currently-focused element (buttons, inputs, links). Mouse users don't see focus rings on click (browser default behavior).
+
+**`prefers-reduced-motion` support.** Users with motion sensitivity (OS-level setting) now get near-zero animation/transition durations. Respects OS accessibility preference without requiring in-app configuration.
+
+**`.sr-only` utility class.** Standard visually-hidden helper for adding screen-reader-only text where a visible label would be redundant.
+
+### Changed
+
+- `.app-nav` div changed to `<nav>` landmark element (proper HTML5 semantic).
+- `showTab()` now sets `aria-selected="true"` on the active tab and `"false"` on others, so screen readers announce the current tab correctly.
+
+### Not in this release
+
+Other priorities from the architecture review (#3 backend calculation, #4 rate limiting, #14 multi-tenancy, #15 real-time sync) were scoped for this session but were not safely shipable in the available context budget. They are each substantial enough to deserve their own focused session. Suggested prompts for each are available in Dipenkumar's session log.
+
+### Files in release
+
+- `brightsign-v24-4-14.html` — frontend only (Apps Script v24.5.2 unchanged)
+
+### Deploy
+
+Single-file swap. Replace `index.html` on GitHub. Hard refresh.
+
+### Test checklist
+
+- **Keyboard only:** Tab from page load → skip link appears top-left → Enter → focus moves past header
+- **Keyboard only:** Tab through nav → each tab gets gold outline → Space/Enter activates
+- **Screen reader (NVDA/JAWS/VoiceOver):** Reads "Main navigation, tablist", each tab announces as "tab, 1 of 5, selected" when active
+- **System preference:** Enable "Reduce motion" in OS → animations stop
+- No visual regression for typical mouse users
+
+---
+
+## [v24.4.13] — 2026-04-20 · Remove redundant Reset user password button from History
+
+Frontend-only patch.
+
+### Removed
+
+- "🔑 Reset user password" button from the History tab's action bar. Functionality was redundant — the Team tab already has per-user 🔑 Reset buttons on every non-super user row, which is a more discoverable and granular way to reset passwords (the History-tab version was a floating action that prompted for a login name).
+
+Action bar on History tab now just has:
+- ↻ Refresh
+- ⟳ Retry offline saves (only when queue has items)
+- ⤓ Export (CSV / Excel / PDF)
+- Clear
+
+The `superResetUserPassword()` function is preserved in the JS in case any other code paths call it, but no UI element invokes it now.
+
+### Files in release
+
+- `brightsign-v24-4-13.html` — frontend only (Apps Script v24.5.2 unchanged)
+
+### Deploy
+
+Single-file swap. Replace `index.html` on GitHub. Hard refresh.
+
+---
+
+## [v24.4.12] — 2026-04-20 · Theme icons + KPI cards fixed
+
+Frontend-only patch. Two reported issues from v24.4.11 screenshots.
+
+### Fixed — Theme pill icons were essentially invisible (showing as dots)
+
+Previous SVG-based icons (filled sun, bold A, filled moon) were not rendering reliably — in the user's screenshot only tiny dots were visible. Root cause suspected to be browser-specific CSS or rendering issue with the SVG markup.
+
+Replaced all 6 theme-pill icons (3 in header + 3 on login page) with simple text characters wrapped in a `.theme-pill-icon` span:
+- **Light:** ☀ (U+2600 — black sun with rays)
+- **Auto:** A (bold letter A)
+- **Dark:** ☾ (U+263E — crescent moon)
+
+These are baseline Unicode characters that render in every browser and OS. Font stack explicitly includes `'Segoe UI Symbol'` / `'Apple Color Emoji'` / `'Noto Sans Symbols'` to ensure the unicode symbols fall back correctly if the system font doesn't have them.
+
+### Fixed — KPI dashboard cards looked too dark in dark mode
+
+User wanted the colorful per-child gradients (indigo / emerald / gold / slate / rose) to appear in BOTH light and dark modes — they look vibrant and distinctive. Previous dark-mode override was replacing them all with a single dark-blue gradient, which user found worse than the original.
+
+Removed the `html[data-theme="dark"] .kpi-tile` override entirely. The per-child gradients now apply in dark mode too. The white label text reads fine on all five gradients regardless of theme.
+
+### Files in release
+
+- `brightsign-v24-4-12.html` — frontend only (Apps Script v24.5.2 unchanged)
+
+### Deploy
+
+Single-file swap. Replace `index.html` on GitHub. Hard refresh.
+
+---
+
 ## [v24.4.11] — 2026-04-20 · Dark mode visibility fixes
 
 Frontend-only patch. Addresses three reported dark-mode visibility issues in one CSS batch.

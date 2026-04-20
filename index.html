@@ -359,6 +359,65 @@ html[data-theme="dark"] .os-pill.selected .os-pill-name{color:#E0E7FF !important
 html[data-theme="dark"] .os-pill-note{color:var(--ink-muted) !important;}
 
 *{box-sizing:border-box;margin:0;padding:0;}
+
+/* v24.4.16: Smart close-month picker */
+.closemonth-picker{display:flex;flex-direction:column;gap:10px;}
+.closemonth-quick{display:flex;flex-wrap:wrap;gap:6px;}
+.closemonth-chip{
+  padding:6px 12px;border-radius:999px;
+  background:#F8FAFC;
+  border:1px solid #E2E8F0;
+  font-family:var(--sans,system-ui),sans-serif;font-size:12px;font-weight:600;
+  color:#0F172A;
+  cursor:pointer;transition:all 140ms;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.closemonth-chip:hover{border-color:#818CF8;color:#4F46E5;}
+.closemonth-chip.active{
+  background:linear-gradient(135deg,#4F46E5 0%,#6366F1 100%);
+  border-color:#4F46E5;color:#fff;
+  box-shadow:0 2px 8px rgba(79,70,229,0.35);
+}
+.closemonth-chip-q{
+  background:rgba(99,102,241,0.08);
+  border-color:rgba(99,102,241,0.25);
+  color:#4F46E5;
+}
+html[data-theme="dark"] .closemonth-chip{
+  background:rgba(30,41,59,0.55);border-color:rgba(148,163,184,0.22);color:#E2E8F0;
+}
+html[data-theme="dark"] .closemonth-chip:hover{
+  border-color:#A5B4FC;color:#C7D2FE;background:rgba(99,102,241,0.18);
+}
+html[data-theme="dark"] .closemonth-chip.active{
+  background:linear-gradient(135deg,#4F46E5 0%,#6366F1 100%);
+  border-color:#818CF8;color:#fff;
+}
+html[data-theme="dark"] .closemonth-chip-q{
+  background:rgba(99,102,241,0.15);border-color:rgba(165,180,252,0.30);color:#C7D2FE;
+}
+.closemonth-selects{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.closemonth-selects select{
+  padding:10px 12px;border-radius:8px;
+  border:1px solid #E2E8F0;
+  background:#FFF;color:#0F172A;
+  font-family:var(--sans,system-ui),sans-serif;font-size:13px;font-weight:500;
+  cursor:pointer;
+}
+html[data-theme="dark"] .closemonth-selects select{
+  background:rgba(15,23,42,0.75);border-color:rgba(148,163,184,0.25);color:#E2E8F0;
+}
+.closemonth-display{
+  font-family:var(--sans,system-ui),sans-serif;font-size:12px;color:#64748B;
+  padding:2px 4px;min-height:16px;
+}
+.closemonth-display.set{color:#10B981;font-weight:600;}
+html[data-theme="dark"] .closemonth-display{color:#94A3B8;}
+html[data-theme="dark"] .closemonth-display.set{color:#6EE7B7;}
+@media (max-width:640px){
+  .closemonth-selects{grid-template-columns:1fr;}
+}
+
 /* v24.4.14 #17: Accessibility */
 .skip-link{
   position:absolute;top:-100px;left:0;z-index:9999;
@@ -823,6 +882,58 @@ button{font-family:var(--sans);}
   box-shadow:0 4px 12px rgba(30,27,75,0.25);
 }
 .btn-action:hover{background:var(--indigo-soft);}
+/* v24.4.15 + v24.4.16: In dark mode the --indigo variable is light lavender (for text contrast),
+   but btn-action and btn-primary use it as BACKGROUND with white text — which looks washed-out.
+   Override to use the saturated indigo colors regardless of theme. Covers Add user, Recommend, Sign in. */
+html[data-theme="dark"] .btn-action,
+html[data-theme="dark"] .btn-primary{
+  background:linear-gradient(135deg,#4F46E5 0%,#6366F1 100%) !important;
+  color:#fff !important;
+  box-shadow:0 4px 14px rgba(79,70,229,0.50), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+  border:none !important;
+}
+html[data-theme="dark"] .btn-action:hover,
+html[data-theme="dark"] .btn-primary:hover{
+  background:linear-gradient(135deg,#6366F1 0%,#818CF8 100%) !important;
+  box-shadow:0 6px 20px rgba(99,102,241,0.60), inset 0 1px 0 rgba(255,255,255,0.20) !important;
+}
+
+/* v24.4.17: Dark-mode dashboard chart cards — were hardcoded #fff, making white-on-white text invisible */
+html[data-theme="dark"] .chart-card-v18,
+html[data-theme="dark"] .chart-card{
+  background:rgba(27,33,66,0.70) !important;
+  border-color:var(--border) !important;
+  color:var(--ink) !important;
+}
+html[data-theme="dark"] .chart-card-v18 *,
+html[data-theme="dark"] .chart-card *{color:inherit;}
+html[data-theme="dark"] .chart-card-v18 .chart-v18-title,
+html[data-theme="dark"] .chart-card .chart-v18-title{color:var(--ink) !important;}
+html[data-theme="dark"] .chart-card-v18 .chart-v18-subtitle,
+html[data-theme="dark"] .chart-card .chart-v18-subtitle{color:var(--ink-muted) !important;}
+
+/* v24.4.17: Dark-mode Alternative Tiers cards — were washed out grey, invisible text */
+html[data-theme="dark"] .alt-card-v21{
+  background:rgba(27,33,66,0.75) !important;
+  border-color:var(--border) !important;
+}
+html[data-theme="dark"] .alt-card-v21:hover{
+  background:rgba(79,70,229,0.15) !important;
+  border-color:#818CF8 !important;
+  box-shadow:0 10px 24px rgba(79,70,229,0.25) !important;
+}
+html[data-theme="dark"] .alt-label-v21{color:#94A3B8 !important;}
+html[data-theme="dark"] .alt-model-v21{color:#818CF8 !important;}
+html[data-theme="dark"] .alt-tag-v21{color:#CBD5E1 !important;}
+
+/* v24.4.17: Dark-mode PRIMARY / Common / Outdoor tier badges — --indigo is lavender in dark so the badge
+   bg + white text became nearly invisible. Pin to saturated indigo in dark mode. */
+html[data-theme="dark"] .tender-section-badge{
+  background:#4F46E5 !important;
+  color:#fff !important;
+}
+html[data-theme="dark"] .tender-section-common .tender-section-badge{background:#64748B !important;}
+html[data-theme="dark"] .tender-section-outdoor .tender-section-badge{background:#B45309 !important;}
 .btn-print{
   background:var(--emerald);color:#fff;border:none;
   padding:12px 28px;border-radius:10px;
@@ -5188,7 +5299,28 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           <div class="form-group" style="margin:0;"><label>Deal stage<span class="req">*</span></label><select id="f-stage"><option value="">Select stage…</option><option>Lead</option><option>Opportunity</option><option>Proposal</option><option>Negotiation</option><option>Order</option></select></div>
           <div class="form-group" style="margin:0;"><label>Lead source<span class="req">*</span></label><select id="f-leadsource"><option value="">Select source…</option><option value="OEM-referred">OEM-referred (BrightSign gave lead)</option><option value="Cavitak-generated">Cavitak-generated (we found it)</option></select></div>
           <div class="form-group" style="margin:0;"><label>Outcome<span class="req">*</span></label><select id="f-outcome"><option value="open">Open (active)</option><option value="won">Won</option><option value="lost">Lost</option><option value="on-hold">On hold</option></select></div>
-          <div class="form-group" style="margin:0;"><label>Expected close month<span class="req">*</span></label><select id="f-closemonth"><option value="">Select month…</option></select></div>
+          <div class="form-group" style="margin:0;">
+            <label>Expected close month<span class="req">*</span></label>
+            <div class="closemonth-picker">
+              <div class="closemonth-quick" id="closemonth-quick-chips"></div>
+              <div class="closemonth-selects">
+                <select id="f-closemonth-month" aria-label="Close month" onchange="syncCloseMonth()">
+                  <option value="">Month…</option>
+                  <option value="01">January</option><option value="02">February</option>
+                  <option value="03">March</option><option value="04">April</option>
+                  <option value="05">May</option><option value="06">June</option>
+                  <option value="07">July</option><option value="08">August</option>
+                  <option value="09">September</option><option value="10">October</option>
+                  <option value="11">November</option><option value="12">December</option>
+                </select>
+                <select id="f-closemonth-year" aria-label="Close year" onchange="syncCloseMonth()">
+                  <option value="">Year…</option>
+                </select>
+              </div>
+              <input type="hidden" id="f-closemonth" value="">
+              <div class="closemonth-display" id="closemonth-display"></div>
+            </div>
+          </div>
           <div class="form-group" style="margin:0;"><label>Contact person<span class="req">*</span></label><input type="text" id="f-contactname" placeholder="End-user contact name"></div>
           <div class="form-group" style="margin:0;"><label>Contact phone<span class="req">*</span></label><input type="tel" id="f-contactphone" placeholder="10-digit mobile number" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10);"></div>
           <div class="form-group" style="margin:0;"><label>Contact email<span class="req">*</span></label><input type="email" id="f-contactemail" placeholder="name@client.com" autocomplete="off"></div>
@@ -5585,7 +5717,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.4.14';
+const FRONTEND_VERSION = '24.4.17';
 /* v24.4.8: Feature flag — set to true once product pricing is integrated into the selector.
    When false, hides all monetary cards/columns from Review tab (Pipeline, Won, etc.) since
    there's no reliable source for deal value in this version. Keep at false until pricing lands. */
@@ -6630,31 +6762,120 @@ function toggleTheme(){
   setThemeMode(next);
 }
 
-/* v24.4.9: Populate the close-month dropdown with 24 months forward from today.
-   Replaces <input type="month"> which had inconsistent cross-browser/mobile behavior.
-   Format values as "YYYY-MM" (same as the old input) so all downstream code works unchanged. */
+/* v24.4.16: Smart close-month picker
+   - Quick-pick chips: This month, Next month, End of quarter, End of next quarter, End of FY
+   - Year + Month selectors (3 years forward)
+   - Synced hidden input f-closemonth keeps the YYYY-MM value so downstream code works unchanged
+   - Human-readable display confirmation below */
+const CLOSEMONTH_MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
 function populateCloseMonthDropdown(){
-  const sel=document.getElementById('f-closemonth');
-  if(!sel)return;
-  // Only populate once
-  if(sel.options.length>1)return;
-  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const now=new Date();
-  for(let i=0;i<24;i++){
-    const d=new Date(now.getFullYear(),now.getMonth()+i,1);
-    const y=d.getFullYear();
-    const m=d.getMonth();
-    const value=y+'-'+String(m+1).padStart(2,'0');  // e.g. "2026-05"
-    const label=monthNames[m]+' '+y;
-    const opt=document.createElement('option');
-    opt.value=value;
-    opt.textContent=label;
-    sel.appendChild(opt);
+  const yearSel=document.getElementById('f-closemonth-year');
+  const quickHost=document.getElementById('closemonth-quick-chips');
+  if(!yearSel||yearSel.options.length>1){
+    if(quickHost&&quickHost.children.length===0)renderCloseMonthQuickChips();
+    return;
   }
+  const now=new Date();
+  const startYear=now.getFullYear();
+  // 3 years forward
+  for(let i=0;i<3;i++){
+    const y=startYear+i;
+    const opt=document.createElement('option');
+    opt.value=String(y);
+    opt.textContent=String(y);
+    yearSel.appendChild(opt);
+  }
+  renderCloseMonthQuickChips();
 }
-// Run once when script parses (DOM will be ready since script is below the form)
+
+function renderCloseMonthQuickChips(){
+  const host=document.getElementById('closemonth-quick-chips');
+  if(!host)return;
+  const now=new Date();
+  const thisMonth=new Date(now.getFullYear(),now.getMonth(),1);
+  const nextMonth=new Date(now.getFullYear(),now.getMonth()+1,1);
+  // End of current quarter — Indian FY quarters: Q1 Apr-Jun, Q2 Jul-Sep, Q3 Oct-Dec, Q4 Jan-Mar
+  const currMonth=now.getMonth();  // 0-indexed
+  let qEndMonth, qEndYear=now.getFullYear();
+  if(currMonth>=3&&currMonth<=5){qEndMonth=5;}        // Q1 ends Jun
+  else if(currMonth>=6&&currMonth<=8){qEndMonth=8;}   // Q2 ends Sep
+  else if(currMonth>=9&&currMonth<=11){qEndMonth=11;} // Q3 ends Dec
+  else{qEndMonth=2;qEndYear=currMonth===0?now.getFullYear():now.getFullYear();} // Q4 Jan-Mar → ends Mar
+  const qEnd=new Date(qEndYear,qEndMonth,1);
+  // End of FY (March 31 of the next April)
+  const fyEnd=currMonth>=3
+    ?new Date(now.getFullYear()+1,2,1)   // April or later → FY ends next March
+    :new Date(now.getFullYear(),2,1);     // Jan-Mar → FY ends this March
+  const toVal=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  const chips=[
+    {label:'This month',val:toVal(thisMonth)},
+    {label:'Next month',val:toVal(nextMonth)},
+    {label:'End of quarter',val:toVal(qEnd),cls:'closemonth-chip-q'},
+    {label:'End of FY',val:toVal(fyEnd),cls:'closemonth-chip-q'}
+  ];
+  // Dedupe — skip chips that duplicate an earlier chip's value
+  const seen=new Set();
+  host.innerHTML=chips.filter(c=>{
+    if(seen.has(c.val))return false;
+    seen.add(c.val);return true;
+  }).map(c=>
+    `<button type="button" class="closemonth-chip ${c.cls||''}" data-val="${c.val}" onclick="pickCloseMonth('${c.val}')">${c.label}</button>`
+  ).join('');
+}
+
+function pickCloseMonth(value){
+  // value is YYYY-MM
+  const hidden=document.getElementById('f-closemonth');
+  const yearSel=document.getElementById('f-closemonth-year');
+  const monthSel=document.getElementById('f-closemonth-month');
+  if(!hidden||!yearSel||!monthSel)return;
+  const parts=(value||'').split('-');
+  if(parts.length!==2)return;
+  hidden.value=value;
+  yearSel.value=parts[0];
+  monthSel.value=parts[1];
+  // Highlight matching chip if any
+  document.querySelectorAll('#closemonth-quick-chips .closemonth-chip').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.val===value);
+  });
+  updateCloseMonthDisplay();
+}
+
+function syncCloseMonth(){
+  const hidden=document.getElementById('f-closemonth');
+  const yearSel=document.getElementById('f-closemonth-year');
+  const monthSel=document.getElementById('f-closemonth-month');
+  if(!hidden||!yearSel||!monthSel)return;
+  const y=yearSel.value,m=monthSel.value;
+  if(y&&m){
+    const v=y+'-'+m;
+    hidden.value=v;
+    document.querySelectorAll('#closemonth-quick-chips .closemonth-chip').forEach(btn=>{
+      btn.classList.toggle('active',btn.dataset.val===v);
+    });
+  } else {
+    hidden.value='';
+    document.querySelectorAll('#closemonth-quick-chips .closemonth-chip').forEach(btn=>btn.classList.remove('active'));
+  }
+  updateCloseMonthDisplay();
+}
+
+function updateCloseMonthDisplay(){
+  const hidden=document.getElementById('f-closemonth');
+  const disp=document.getElementById('closemonth-display');
+  if(!hidden||!disp)return;
+  const v=hidden.value;
+  if(!v||v.indexOf('-')<0){disp.textContent='No month selected yet.';disp.classList.remove('set');return;}
+  const parts=v.split('-');
+  const y=parts[0],m=parseInt(parts[1],10);
+  if(isNaN(m)||m<1||m>12){disp.textContent='Invalid selection.';disp.classList.remove('set');return;}
+  disp.textContent='✓ Target close: '+CLOSEMONTH_MONTH_NAMES[m-1]+' '+y;
+  disp.classList.add('set');
+}
+
+// Run once when script parses
 try{populateCloseMonthDropdown();}catch(e){console.warn('populateCloseMonthDropdown failed:',e);}
-// Also try again on DOMContentLoaded as safety net in case script ran too early
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded',populateCloseMonthDropdown,{once:true});
 }
@@ -7843,7 +8064,7 @@ function renderTeamList(host,users){
       <div class="team-row-right">
         ${statusChip}
         <button class="team-btn" onclick="editUserInTeam('${u.loginName}')" title="Edit details">✎ Edit</button>
-        ${u.isSuper?'':`<button class="team-btn" onclick="resetUserFromTeam('${u.loginName}')" title="Reset password to default">🔑 Reset</button>`}
+        <button class="team-btn" onclick="resetUserFromTeam('${u.loginName}')" title="Reset password to default 'cavitak@123'">🔑 Reset</button>
         ${u.isSuper?'':`<button class="team-btn danger" onclick="deleteUserFromTeam('${u.loginName}')" title="Delete this user">🗑 Delete</button>`}
       </div>
     </div>`;
@@ -8031,7 +8252,12 @@ async function submitEditUser(targetLogin){
 
 async function resetUserFromTeam(loginName){
   if(!(await requireAuth()))return;
-  if(!confirm(`Reset password for @${loginName} to the default "cavitak@123"?\n\nThey will be forced to change it on next login.`))return;
+  // v24.4.15: Extra warning if super is resetting their own password
+  const isSelfReset = state.user && state.user.loginName === loginName;
+  const confirmMsg = isSelfReset
+    ? `⚠️ Reset YOUR OWN password back to the default "cavitak@123"?\n\nYou will be forced to change it on your next login.\n\nIf you're locked out of your account, this is the right action. Otherwise, use the header's "🔑 Password" button to change your password without resetting.\n\nProceed?`
+    : `Reset password for @${loginName} to the default "cavitak@123"?\n\nThey will be forced to change it on next login.`;
+  if(!confirm(confirmMsg))return;
   try{
     const pwHash=await sha256Hex(window._sessionPassword||'');
     const resp=await fetch(WEBHOOK_URL,{
@@ -8045,7 +8271,12 @@ async function resetUserFromTeam(loginName){
     });
     const data=await resp.json();
     if(data.status==='ok'){
-      showSync(`Reset ${loginName} ✓`,'success');
+      if(isSelfReset){
+        alert('Your password has been reset to "cavitak@123". You will now be signed out. On your next login you will be prompted to choose a new password.');
+        handleLogout();
+      } else {
+        showSync(`Reset ${loginName} ✓`,'success');
+      }
     } else {
       alert(`Reset failed: ${data.message||'Unknown error'}`);
     }
@@ -8531,6 +8762,14 @@ function escapeHtml(str){
 
 function resetForm(){
   ['f-project','f-enduser','f-venue','f-partner','f-consultant','f-contactname','f-contactphone','f-contactemail','f-closemonth'].forEach(id=>document.getElementById(id).value='');
+  // v24.4.16: Also clear the new smart-picker selects, chips, and display
+  const cmYear=document.getElementById('f-closemonth-year');
+  const cmMonth=document.getElementById('f-closemonth-month');
+  if(cmYear)cmYear.value='';
+  if(cmMonth)cmMonth.value='';
+  document.querySelectorAll('#closemonth-quick-chips .closemonth-chip').forEach(btn=>btn.classList.remove('active'));
+  const cmDisp=document.getElementById('closemonth-display');
+  if(cmDisp){cmDisp.textContent='No month selected yet.';cmDisp.classList.remove('set');}
   ['f-city','f-stage','f-ssd-cap'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-qty').value=1;
   document.getElementById('f-qty-indoor').value='0';
@@ -9070,9 +9309,8 @@ function buildConcerns(m,f){
   const list=[];
   if(f.environment==='outdoor')list.push('<strong>Outdoor</strong> requires third-party IP-rated enclosure.');
   if(m.chassis==='metal' && f.environment==='outdoor')list.push('<strong>XC metal chassis</strong> is indoor-rated. Consider XT series.');
-  if(f.hdmiIn==='yes')list.push('<strong>HDMI input</strong> — HDCP on OS roadmap.');
+  // v24.4.17: Removed HDCP-on-OS-roadmap and CMS-scaling notes per PM request
   if(f.update==='cloud' && f.wifi==='no')list.push('<strong>Remote cloud + no Wi-Fi</strong> — ensure wired Ethernet on site.');
-  if(parseInt(f.qty)>100)list.push(`<strong>${f.qty} players</strong> — confirm CMS scaling early.`);
   if(f.ssd==='yes' && m.ssdCapable===null)list.push('<strong>SSD</strong> — verify M.2 NVMe compatibility with BrightSign rep.');
   if(f.ssd==='yes' && m.ssdCapable===false)list.push(`<strong>SSD not supported</strong> on ${m.id}. 64 GB microSD included.`);
   return list;
@@ -11098,6 +11336,16 @@ function applyEditLocks(locked){
       el.setAttribute('disabled','disabled');
       el.classList.add('locked-field');
       el.setAttribute('title','Locked in edit mode · Cannot change basic project info');
+      // v24.4.16: f-closemonth is now a hidden input — also lock the visible selects + chips
+      if(id==='f-closemonth'){
+        const yr=document.getElementById('f-closemonth-year');
+        const mo=document.getElementById('f-closemonth-month');
+        if(yr){yr.setAttribute('disabled','disabled');yr.classList.add('locked-field');}
+        if(mo){mo.setAttribute('disabled','disabled');mo.classList.add('locked-field');}
+        document.querySelectorAll('#closemonth-quick-chips .closemonth-chip').forEach(btn=>{
+          btn.setAttribute('disabled','disabled');btn.classList.add('locked-field');
+        });
+      }
       // Also lock the label visual
       const label=el.closest('.form-group')?.querySelector('label');
       if(label && !label.querySelector('.lock-icon')){
@@ -11108,6 +11356,16 @@ function applyEditLocks(locked){
       el.removeAttribute('disabled');
       el.classList.remove('locked-field');
       el.removeAttribute('title');
+      // v24.4.16: Unlock the visible close-month widgets too
+      if(id==='f-closemonth'){
+        const yr=document.getElementById('f-closemonth-year');
+        const mo=document.getElementById('f-closemonth-month');
+        if(yr){yr.removeAttribute('disabled');yr.classList.remove('locked-field');}
+        if(mo){mo.removeAttribute('disabled');mo.classList.remove('locked-field');}
+        document.querySelectorAll('#closemonth-quick-chips .closemonth-chip').forEach(btn=>{
+          btn.removeAttribute('disabled');btn.classList.remove('locked-field');
+        });
+      }
       const label=el.closest('.form-group')?.querySelector('label');
       if(label){
         const lockIcon=label.querySelector('.lock-icon');
@@ -11157,7 +11415,12 @@ function prefillFormUI(){
   const textFields=['project','enduser','venue','partner','consultant','city','contactname','contactphone','contactemail','closemonth'];
   textFields.forEach(id=>{
     const el=document.getElementById('f-'+id);
-    if(el)el.value=f[id]||'';
+    if(!el)return;
+    el.value=f[id]||'';
+    // v24.4.16: closemonth is now a hidden input with visible Year/Month selects — sync those
+    if(id==='closemonth' && f.closemonth){
+      try{pickCloseMonth(f.closemonth);}catch(e){console.warn('pickCloseMonth prefill failed:',e);}
+    }
   });
   // Quantity inputs
   const qEl=document.getElementById('f-qty');
