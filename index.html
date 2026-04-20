@@ -4997,7 +4997,6 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           <div class="form-group" style="margin:0;"><label>City<span class="req">*</span></label><select id="f-city"><option value="">Select city…</option><option>Ahmedabad</option><option>Bangalore</option><option>Chennai</option><option>Delhi / NCR</option><option>Hyderabad</option><option>Kolkata</option><option>Mumbai</option><option>Pune</option><option>Jaipur</option><option>Kochi</option><option>Chandigarh</option><option>Lucknow</option><option>Indore</option><option>Bhubaneswar</option><option>Nagpur</option><option>Surat</option><option>Vadodara</option><option>Goa</option><option>Other</option></select></div>
           <div class="form-group" style="margin:0;"><label>Deal stage<span class="req">*</span></label><select id="f-stage"><option value="">Select stage…</option><option>Lead</option><option>Opportunity</option><option>Proposal</option><option>Negotiation</option><option>Order</option></select></div>
           <div class="form-group" style="margin:0;"><label>Lead source<span class="req">*</span></label><select id="f-leadsource"><option value="">Select source…</option><option value="OEM-referred">OEM-referred (BrightSign gave lead)</option><option value="Cavitak-generated">Cavitak-generated (we found it)</option></select></div>
-          <div class="form-group" style="margin:0;"><label>Deal value (₹)</label><input type="text" id="f-dealvalue" placeholder="e.g. 12,50,000 or 12.5 L or 1.25 Cr — optional"><div style="font-size:10px;color:var(--ink-subtle);margin-top:4px;">Optional. Accepts rupees, lakh (L), or crore (Cr).</div></div>
           <div class="form-group" style="margin:0;"><label>Outcome<span class="req">*</span></label><select id="f-outcome"><option value="open">Open (active)</option><option value="won">Won</option><option value="lost">Lost</option><option value="on-hold">On hold</option></select></div>
           <div class="form-group" style="margin:0;"><label>Expected close month<span class="req">*</span></label><input type="month" id="f-closemonth"></div>
           <div class="form-group" style="margin:0;"><label>Contact person<span class="req">*</span></label><input type="text" id="f-contactname" placeholder="End-user contact name"></div>
@@ -5397,7 +5396,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.4.5';
+const FRONTEND_VERSION = '24.4.7';
 window.FRONTEND_VERSION = FRONTEND_VERSION;
 window._backendVersion = null;  // populated by ping
 window._versionMismatch = false;
@@ -6396,7 +6395,7 @@ const TENDER_CLAUSES = {
 
 const state = {
   user:null,
-  form:{project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',dealValue:'',outcome:'open'},
+  form:{project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',outcome:'open'},
   result:null,
   osChoice:'brightsignos'
 };
@@ -8319,7 +8318,7 @@ function resetForm(){
   if(oneYrPill)oneYrPill.classList.add('selected');
   document.getElementById('section-cms').style.display='none';
   clearFieldErrors();
-  state.form={project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',dealValue:'',outcome:'open'};
+  state.form={project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',outcome:'open'};
   setBudget(2);
   document.querySelectorAll('.progress-step').forEach(s=>s.classList.remove('done'));
   // v20.1: Clear any lingering lock from prior sessions
@@ -8385,9 +8384,8 @@ function runSelector(){
   state.form.contactemail=document.getElementById('f-contactemail').value.trim();
   state.form.stage=document.getElementById('f-stage').value;
   state.form.closemonth=document.getElementById('f-closemonth').value;
-  // v24.4.0: channel review fields
+  // v24.4.0: channel review fields (v24.4.6: dealValue removed)
   state.form.leadSource=document.getElementById('f-leadsource').value;
-  state.form.dealValue=document.getElementById('f-dealvalue').value.trim();
   state.form.outcome=document.getElementById('f-outcome').value||'open';
   state.form.ssdCap=document.getElementById('f-ssd-cap').value;
   // v15: capture indoor/outdoor split for mixed deployment
@@ -9091,9 +9089,8 @@ function buildEntryPayload(status){
     cmsVendor:cmsBillingType==='Standalone (no CMS)'?'':f.cmsVendor||'BrightSign CMS',
     cmsTerm:cmsBillingType==='Standalone (no CMS)'?'':(f.cmsTerm||'1'),
     cmsBillingType:cmsBillingType,
-    // v24.4.0: channel review fields
+    // v24.4.0: channel review fields (v24.4.6: dealValue removed)
     leadSource:f.leadSource||'',
-    dealValue:parseDealValueClient(f.dealValue),
     outcome:f.outcome||'open'
   };
 }
@@ -10395,10 +10392,24 @@ function getVisibleEntries(){
   const isSuper=state.user.isSuper;
   const role=(state.user.role||'').trim();
   const seesAll=isSuper || role==='OEM';  // v24: OEM gets team-wide read
-  // v24.4.5: If we've successfully fetched from server (even empty array), trust that over local cache.
-  // Previous logic fell back to loadLocalLog() when _centralLog was []  — showing phantom entries after admin deleted rows from the sheet.
+  // v24.4.5: trust empty server responses (no fallback to stale cache)
   const haveServerData=Array.isArray(window._centralLog);
-  const allEntries=haveServerData?window._centralLog:loadLocalLog();
+  const rawEntries=haveServerData?window._centralLog:loadLocalLog();
+  // v24.4.7: filter ghost entries — rows with no refId AND no valid timestamp AND no project are likely
+  // empty sheet rows left over after manual deletion. Also skip entries with 1970 epoch timestamps.
+  const allEntries=rawEntries.filter(e=>{
+    if(!e||typeof e!=='object')return false;
+    const refId=(e.refId||'').toString().trim();
+    const project=(e.project||'').toString().trim();
+    const tsStr=(e.ts||'').toString();
+    const tsDate=tsStr?new Date(tsStr):null;
+    const tsYear=tsDate && !isNaN(tsDate.getTime())?tsDate.getFullYear():0;
+    // Must have refId OR a valid recent timestamp (year > 2000) OR a project name
+    if(refId)return true;
+    if(tsYear>2000)return true;
+    if(project)return true;
+    return false;
+  });
   if(seesAll)return allEntries;
   const myLogin=(state.user.loginName||'').toLowerCase();
   const myFullName=(state.user.fullName||'').toLowerCase();
@@ -10664,14 +10675,11 @@ function editPastEntry(entryIdx){
     gpio:entry.gpio||'',ssd:entry.ssd||'',os:entry.os||'',
     cmsVendor:entry.cmsVendor||'',cmsTerm:(entry.cmsTerm||'').toString(),
     cmsBillingType:entry.cmsBillingType||'',
-    // v24.4.0
+    // v24.4.0 (v24.4.6: dealValue removed)
     leadSource:entry.leadSource||'',
-    dealValue:(entry.dealValue||0).toString(),
     outcome:entry.outcome||'open'
   };
-  // v24.4.0: Also copy new fields into state.form so prefillFormUI shows them
   state.form.leadSource=entry.leadSource||'';
-  state.form.dealValue=(entry.dealValue && entry.dealValue>0)?entry.dealValue:'';
   state.form.outcome=entry.outcome||'open';
 
   prefillFormUI();
@@ -10785,11 +10793,6 @@ function prefillFormUI(){
     else if(f[id]!=null)el.value=f[id];
   });
   // v24.4.0: dealvalue text input — show raw number, user can edit as-is
-  const dvEl=document.getElementById('f-dealvalue');
-  if(dvEl){
-    const dv=f.dealValue;
-    dvEl.value=(dv && typeof dv==='number' && dv>0)?dv.toString():(dv||'');
-  }
   // Pill groups + choice cards
   const pillInputs=['environment','update','content','resolution','hdmiIn','touch','wifi','gpio','ssd','cmsInclude'];
   pillInputs.forEach(input=>{

@@ -69,6 +69,78 @@ Frontend-only patch release. UX improvement.
 
 ---
 
+## [v24.4.7 + Apps Script v24.5.2] — 2026-04-20 · Ghost entries purged
+
+Bug: User deleted entries from Google Sheet manually by clearing cell values (Delete key), which left empty rows. Backend read these empty rows and returned them as entries with blank data → frontend rendered them as ghost "1970-01-01 05:30 am" rows that couldn't be deleted (no refId).
+
+### Fixed — Backend (Apps Script v24.5.2)
+
+- **`doGet` read action** now skips empty rows. A row is considered empty if ALL three are missing: refId (column A), valid timestamp (column C with year > 2000), and project name (column G). Such rows are filtered out before being returned to the frontend.
+
+### Fixed — Frontend (v24.4.7)
+
+- **`getVisibleEntries()`** now defensively filters ghost entries. Same logic as backend — need at least one of: refId, valid timestamp (year > 2000), or project name. Catches cases where backend might miss them (e.g., if user hasn't deployed Apps Script v24.5.2 yet).
+- Entries with 1970-era timestamps (Unix epoch default) are now always filtered.
+
+### Recommended user action
+
+Even with these fixes, the cleanest state is to properly delete the rows in the Sheet:
+
+1. Open the Sheet
+2. Click row header for row 2 (first data row)
+3. Shift-click last row with data
+4. Right-click → **Delete rows**
+5. Hard refresh the app
+
+Using Delete key on cells leaves empty rows that the app still has to filter past on every render (minor performance cost). Deleting entire rows removes them cleanly.
+
+### Files in release
+
+- `brightsign-v24-4-7.html` — frontend
+- `apps-script-v24-5-2.gs` — backend
+
+### Deploy
+
+1. **Apps Script first:** paste new code → Save → Deploy → Manage deployments → ✏️ → New version → Deploy
+2. **Frontend:** replace `index.html` → commit
+3. Hard refresh
+
+---
+
+## [v24.4.6] — 2026-04-20 · Remove Deal value field
+
+Frontend-only patch. Deal value input removed from the New selection form per request.
+
+### Removed
+
+- **Deal value (₹) input field** on the New selection form (section 01, between Lead source and Outcome)
+- **`dealValue` from state.form** initialization (both primary + resetForm paths)
+- **`dealValue` from form read** in runSelector
+- **`dealValue` from buildEntryPayload** — submitted entries no longer include this field
+- **`dealValue` from editPastEntry snapshot** and state prefill
+- **`dealValue` prefill block in prefillFormUI**
+
+### Preserved (for historical data compatibility)
+
+- **`parseDealValueClient()`** helper — still used by Review tab for reading pre-v24.4.6 entries that have deal values in the spreadsheet
+- **`formatINR()`** helper — display utility still used
+- **Sheet column AM (dealValue)** — existing data preserved; Apps Script continues to accept it if submitted, just no longer sent from frontend
+- **Review tab aggregation** — still sums `dealValue` from historical rows (entries saved before this update)
+
+### Rationale
+
+Deal value was making the form feel heavy for quick preliminary entries. Since most Cavitak entries at early stages don't have firm deal values yet, removing the field streamlines the flow. Review tab can be recalibrated in future to work from quantity × estimated-unit-price if commercial analytics are needed.
+
+### Files in release
+
+- `brightsign-v24-4-6.html` — frontend only (Apps Script v24.5.1 unchanged)
+
+### Deploy
+
+Single-file swap. Replace `index.html` on GitHub. Hard refresh.
+
+---
+
 ## [v24.4.5] — 2026-04-20 · Validation + history cache + theme icons
 
 Frontend-only patch addressing 5 user-reported issues.
