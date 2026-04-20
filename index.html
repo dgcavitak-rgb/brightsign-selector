@@ -173,10 +173,9 @@ html[data-theme="dark"] .progress-step.done{
   background:linear-gradient(135deg,#4F46E5,#7C3AED);
   color:#FFFFFF;
 }
-/* Dark: Dashboard KPI tiles — keep gradients but darken base */
-html[data-theme="dark"] .kpi-tile{
-  background:linear-gradient(135deg,rgba(27,33,66,0.88) 0%,rgba(20,25,55,0.82) 100%) !important;
-}
+/* v24.4.12: Removed the dark-mode gradient override — per-child colorful gradients
+   (indigo/emerald/gold/slate/rose) now apply in both light and dark modes, as user preferred.
+   The label text stays white, which reads fine on all gradients regardless of theme. */
 /* Dark: Log table */
 html[data-theme="dark"] .log-table th,
 html[data-theme="dark"] .log-table td{
@@ -241,6 +240,18 @@ html[data-theme="dark"] .theme-pill{color:#CBD5E1;}
   /* v24.4.5: ensure SVG paints even if parent has filter/opacity issues */
   display:block;
   pointer-events:none;
+}
+/* v24.4.12: Text-based icons for guaranteed rendering across all browsers */
+.theme-pill-icon{
+  font-size:15px;
+  line-height:1;
+  font-weight:700;
+  color:inherit;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  pointer-events:none;
+  font-family:system-ui,-apple-system,'Segoe UI Symbol','Apple Color Emoji','Noto Sans Symbols',sans-serif;
 }
 .theme-pill.auto-pill svg circle.half-fill{
   fill:currentColor !important;
@@ -348,6 +359,36 @@ html[data-theme="dark"] .os-pill.selected .os-pill-name{color:#E0E7FF !important
 html[data-theme="dark"] .os-pill-note{color:var(--ink-muted) !important;}
 
 *{box-sizing:border-box;margin:0;padding:0;}
+/* v24.4.14 #17: Accessibility */
+.skip-link{
+  position:absolute;top:-100px;left:0;z-index:9999;
+  background:var(--indigo,#4F46E5);color:#fff;
+  padding:10px 16px;border-radius:0 0 8px 0;
+  text-decoration:none;font-weight:600;font-family:system-ui,sans-serif;
+  transition:top 150ms;
+}
+.skip-link:focus{top:0;outline:3px solid #FBBF24;}
+.sr-only{
+  position:absolute !important;width:1px !important;height:1px !important;
+  padding:0 !important;margin:-1px !important;overflow:hidden !important;
+  clip:rect(0,0,0,0) !important;white-space:nowrap !important;border:0 !important;
+}
+/* Visible focus ring for keyboard users */
+*:focus-visible{outline:3px solid #FBBF24;outline-offset:2px;border-radius:4px;}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible{outline:3px solid #FBBF24;outline-offset:2px;}
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:0.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:0.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}
 html,body{
   font-family:var(--sans);
   font-size:var(--fs-body);
@@ -4996,6 +5037,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
 </script>
 </head>
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 
 <!-- v19: Floating gradient orbs (animated background) -->
 <div class="orbs-container" aria-hidden="true">
@@ -5009,15 +5051,9 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
 <div id="page-login" class="page active">
   <!-- v24.4.2: Theme pill on login page (floating top-right) -->
   <div class="theme-pill-group theme-pill-login" role="radiogroup" aria-label="Theme">
-    <button class="theme-pill" data-mode="light" onclick="setThemeMode('light')" title="Light" aria-label="Light mode">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"><line x1="12" y1="3" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="21"/><line x1="3" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="21" y2="12"/><line x1="5.6" y1="5.6" x2="7" y2="7"/><line x1="17" y1="17" x2="18.4" y2="18.4"/><line x1="5.6" y1="18.4" x2="7" y2="17"/><line x1="17" y1="7" x2="18.4" y2="5.6"/></g></svg>
-        </button>
-    <button class="theme-pill" data-mode="auto" onclick="setThemeMode('auto')" title="Auto (follow device)" aria-label="Auto theme">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 20 L12 5 L18 20 M8.5 15 L15.5 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-        </button>
-    <button class="theme-pill" data-mode="dark" onclick="setThemeMode('dark')" title="Dark" aria-label="Dark mode">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 14.5 A 9 9 0 1 1 9.5 4 A 7 7 0 0 0 20 14.5 Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-        </button>
+    <button class="theme-pill" data-mode="light" onclick="setThemeMode('light')" title="Light" aria-label="Light mode"><span class="theme-pill-icon">☀</span></button>
+    <button class="theme-pill" data-mode="auto" onclick="setThemeMode('auto')" title="Auto (follow device)" aria-label="Auto theme"><span class="theme-pill-icon">A</span></button>
+    <button class="theme-pill" data-mode="dark" onclick="setThemeMode('dark')" title="Dark" aria-label="Dark mode"><span class="theme-pill-icon">☾</span></button>
   </div>
   <div class="login-card">
     <div class="login-logo-hero">
@@ -5090,49 +5126,42 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         <div class="app-user-role" id="user-label-role">—</div>
       </div>
       <div class="theme-pill-group theme-pill-header" role="radiogroup" aria-label="Theme">
-        <button class="theme-pill" data-mode="light" onclick="setThemeMode('light')" title="Light" aria-label="Light mode">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"><line x1="12" y1="3" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="21"/><line x1="3" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="21" y2="12"/><line x1="5.6" y1="5.6" x2="7" y2="7"/><line x1="17" y1="17" x2="18.4" y2="18.4"/><line x1="5.6" y1="18.4" x2="7" y2="17"/><line x1="17" y1="7" x2="18.4" y2="5.6"/></g></svg>
-        </button>
-        <button class="theme-pill" data-mode="auto" onclick="setThemeMode('auto')" title="Auto (follow device)" aria-label="Auto theme">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 20 L12 5 L18 20 M8.5 15 L15.5 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-        </button>
-        <button class="theme-pill" data-mode="dark" onclick="setThemeMode('dark')" title="Dark" aria-label="Dark mode">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 14.5 A 9 9 0 1 1 9.5 4 A 7 7 0 0 0 20 14.5 Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-        </button>
+        <button class="theme-pill" data-mode="light" onclick="setThemeMode('light')" title="Light" aria-label="Light mode"><span class="theme-pill-icon">☀</span></button>
+        <button class="theme-pill" data-mode="auto" onclick="setThemeMode('auto')" title="Auto (follow device)" aria-label="Auto theme"><span class="theme-pill-icon">A</span></button>
+        <button class="theme-pill" data-mode="dark" onclick="setThemeMode('dark')" title="Dark" aria-label="Dark mode"><span class="theme-pill-icon">☾</span></button>
       </div>
       <div class="app-user-avatar" id="user-avatar">?</div>
-      <button class="btn-password" onclick="showChangePasswordModal(false)" title="Change your password">🔑 Password</button>
       <button onclick="handleLogout()">Sign out</button>
     </div>
   </div>
-  <div class="app-nav">
-    <button id="tab-form" class="active" onclick="showTab('form')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+  <nav class="app-nav" role="tablist" aria-label="Main navigation">
+    <button id="tab-form" class="active" onclick="showTab('form')" role="tab" aria-selected="true" aria-controls="section-form">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
       New selection
     </button>
-    <button id="tab-result" onclick="showTab('result')" style="display:none;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    <button id="tab-result" onclick="showTab('result')" style="display:none;" role="tab" aria-selected="false" aria-controls="section-result">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       Result
     </button>
-    <button id="tab-log" onclick="showTab('log')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <button id="tab-log" onclick="showTab('log')" role="tab" aria-selected="false" aria-controls="section-log">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       <span id="log-tab-label">History</span>
     </button>
-    <button id="tab-dashboard" onclick="showTab('dashboard')" style="display:none;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+    <button id="tab-dashboard" onclick="showTab('dashboard')" style="display:none;" role="tab" aria-selected="false" aria-controls="section-dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
       <span id="dashboard-tab-label">Dashboard</span>
     </button>
-    <button id="tab-review" onclick="showTab('review')" style="display:none;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+    <button id="tab-review" onclick="showTab('review')" style="display:none;" role="tab" aria-selected="false" aria-controls="section-review">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
       <span>Review</span>
     </button>
-    <button id="tab-team" onclick="showTab('team')" style="display:none;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <button id="tab-team" onclick="showTab('team')" style="display:none;" role="tab" aria-selected="false" aria-controls="section-team">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       <span id="team-tab-label">Profile</span>
     </button>
-  </div>
+  </nav>
 
-  <div id="section-form">
+  <div id="section-form" role="tabpanel" aria-labelledby="tab-form">
     <div class="container">
       <div class="page-header">
         <div class="page-eyebrow">New selection</div>
@@ -5274,7 +5303,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
     </div>
   </div>
 
-  <div id="section-result" style="display:none;">
+  <div id="section-result" style="display:none;" role="tabpanel" aria-labelledby="tab-result">
     <div class="container">
       <div class="print-only-header">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
@@ -5294,7 +5323,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
     </div>
   </div>
 
-  <div id="section-log" style="display:none;">
+  <div id="section-log" style="display:none;" role="tabpanel" aria-labelledby="tab-log">
     <div class="container">
       <div class="page-header"><div class="page-eyebrow">History</div><div class="page-title" id="log-page-title">Selection history</div><div class="page-subtitle" id="log-page-subtitle">All past recommendations.</div></div>
 
@@ -5314,7 +5343,6 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
     <div class="action-bar" id="log-action-bar" style="display:none;">
       <button class="btn-secondary" onclick="refreshLog()">↻ Refresh</button>
       <button class="btn-secondary" id="manual-sync-btn" onclick="manualSync()" title="Try to upload any entries that saved while offline" style="display:none;">⟳ Retry offline saves</button>
-      <button class="btn-secondary" id="super-reset-btn" onclick="superResetUserPassword()" style="display:none;" title="Reset another user's password to the default">🔑 Reset user password</button>
       <div class="export-wrap" id="export-wrap" style="display:none;position:relative;">
         <button class="btn-gold" id="export-btn" onclick="toggleExportMenu()">⤓ Export ▾</button>
         <div id="export-menu" class="export-menu" style="display:none;">
@@ -5329,7 +5357,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
 
 
 <!-- v23.1: Dashboard section (split out from History) — super-user sees all-team, regular users see own -->
-<div id="section-dashboard" style="display:none;">
+<div id="section-dashboard" style="display:none;" role="tabpanel" aria-labelledby="tab-dashboard">
   <div class="container">
     <div class="page-header">
       <div class="page-eyebrow" id="dashboard-page-eyebrow">Dashboard</div>
@@ -5506,7 +5534,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
 </div>
 
 <!-- v23: Profile (regular users) / Team (super-user) section -->
-<div id="section-team" style="display:none;">
+<div id="section-team" style="display:none;" role="tabpanel" aria-labelledby="tab-team">
   <div class="container">
     <div class="page-header">
       <div class="page-eyebrow" id="team-page-eyebrow">Profile</div>
@@ -5517,7 +5545,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   </div>
 </div>
 
-<div id="section-review" style="display:none;">
+<div id="section-review" style="display:none;" role="tabpanel" aria-labelledby="tab-review">
   <div class="container">
     <div class="page-header">
       <div class="page-eyebrow">Review</div>
@@ -5557,7 +5585,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.4.11';
+const FRONTEND_VERSION = '24.4.14';
 /* v24.4.8: Feature flag — set to true once product pricing is integrated into the selector.
    When false, hides all monetary cards/columns from Review tab (Pipeline, Won, etc.) since
    there's no reliable source for deal value in this version. Keep at false until pricing lands. */
@@ -8220,7 +8248,7 @@ function showTab(which){
     const sec=document.getElementById('section-'+t);
     if(sec)sec.style.display=t===which?'block':'none';
     const btn=document.getElementById('tab-'+t);
-    if(btn)btn.classList.toggle('active',t===which);
+    if(btn){btn.classList.toggle('active',t===which);btn.setAttribute('aria-selected',t===which?'true':'false');}
   });
   if(which==='log'){
     renderLog();
@@ -10831,17 +10859,14 @@ function renderLog(){
     pageTitle.textContent='All-team selection history';
     pageSubtitle.textContent=WEBHOOK_URL?'All team entries. Tap Refresh to check for updates.':'All team entries.';
     exportBtn.style.display='inline-flex';
-    const sr=document.getElementById('super-reset-btn');if(sr)sr.style.display='inline-flex';
   } else if(seesAll){
     pageTitle.textContent='Team selection history';
     pageSubtitle.textContent=WEBHOOK_URL?'All team entries. Read-only access.':'All team entries.';
     exportBtn.style.display='inline-flex';
-    const sr=document.getElementById('super-reset-btn');if(sr)sr.style.display='none';
   } else {
     pageTitle.textContent='My selection history';
     pageSubtitle.textContent=WEBHOOK_URL?'Your past recommendations. Tap Refresh to check for updates.':'Your past recommendations.';
     exportBtn.style.display='none';
-    const sr=document.getElementById('super-reset-btn');if(sr)sr.style.display='none';
   }
 
   actionBar.style.display='flex';
