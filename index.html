@@ -225,20 +225,35 @@ html[data-theme="dark"] .theme-pill-group{
   width:30px;height:30px;
   padding:0;border:none;background:transparent;
   border-radius:999px;
-  cursor:pointer;color:var(--ink-muted);
+  cursor:pointer;
+  /* v24.4.3: bumped from --ink-muted for better contrast, esp. in dark mode */
+  color:#64748B;
   transition:all 180ms cubic-bezier(0.16,1,0.3,1);
 }
-.theme-pill svg{width:14px;height:14px;stroke-width:2;}
-.theme-pill:hover:not(.active){color:var(--ink);background:rgba(148,163,184,0.10);}
+html[data-theme="dark"] .theme-pill{color:#94A3B8;}
+.theme-pill svg{
+  width:15px;height:15px;
+  /* v24.4.3: thicker stroke so icons are visible at small size */
+  stroke-width:2.25;
+  fill:none;
+}
+.theme-pill:hover:not(.active){
+  color:var(--ink);
+  background:rgba(148,163,184,0.14);
+}
+html[data-theme="dark"] .theme-pill:hover:not(.active){
+  color:#E2E8F0;
+  background:rgba(148,163,184,0.18);
+}
 .theme-pill.active{
   background:var(--surface);
-  color:var(--indigo);
-  box-shadow:0 1px 3px rgba(15,23,42,0.12),0 0 0 1px rgba(99,102,241,0.18);
+  color:#4F46E5;
+  box-shadow:0 1px 3px rgba(15,23,42,0.12),0 0 0 1px rgba(99,102,241,0.22);
 }
 html[data-theme="dark"] .theme-pill.active{
-  background:rgba(79,70,229,0.25);
-  color:#C7D2FE;
-  box-shadow:0 1px 3px rgba(0,0,0,0.30),inset 0 0 0 1px rgba(199,210,254,0.24);
+  background:rgba(79,70,229,0.35);
+  color:#E0E7FF;
+  box-shadow:0 1px 3px rgba(0,0,0,0.30),inset 0 0 0 1px rgba(199,210,254,0.35);
 }
 /* Floating variant for login page */
 .theme-pill-login{
@@ -258,7 +273,7 @@ html[data-theme="dark"] .theme-pill-login{
 @media (max-width:640px){
   .theme-pill-login{top:14px;right:14px;}
   .theme-pill{width:28px;height:28px;}
-  .theme-pill svg{width:13px;height:13px;}
+  .theme-pill svg{width:14px;height:14px;}
 }
 
 /* v21.9.1: Dark mode fixes for choice-cards, number input, and other hardcoded light surfaces */
@@ -4826,13 +4841,13 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   <!-- v24.4.2: Theme pill on login page (floating top-right) -->
   <div class="theme-pill-group theme-pill-login" role="radiogroup" aria-label="Theme">
     <button class="theme-pill" data-mode="light" onclick="setThemeMode('light')" title="Light" aria-label="Light mode">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>
     </button>
     <button class="theme-pill" data-mode="auto" onclick="setThemeMode('auto')" title="Auto (follow device)" aria-label="Auto theme">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 4 A 8 8 0 0 0 12 20 Z" fill="currentColor" stroke="none"/></svg>
     </button>
     <button class="theme-pill" data-mode="dark" onclick="setThemeMode('dark')" title="Dark" aria-label="Dark mode">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
   </div>
   <div class="login-card">
@@ -4907,13 +4922,13 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
       </div>
       <div class="theme-pill-group theme-pill-header" role="radiogroup" aria-label="Theme">
         <button class="theme-pill" data-mode="light" onclick="setThemeMode('light')" title="Light" aria-label="Light mode">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>
         </button>
         <button class="theme-pill" data-mode="auto" onclick="setThemeMode('auto')" title="Auto (follow device)" aria-label="Auto theme">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 4 A 8 8 0 0 0 12 20 Z" fill="currentColor" stroke="none"/></svg>
         </button>
         <button class="theme-pill" data-mode="dark" onclick="setThemeMode('dark')" title="Dark" aria-label="Dark mode">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         </button>
       </div>
       <div class="app-user-avatar" id="user-avatar">?</div>
@@ -5374,7 +5389,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.4.2';
+const FRONTEND_VERSION = '24.4.4';
 window.FRONTEND_VERSION = FRONTEND_VERSION;
 window._backendVersion = null;  // populated by ping
 window._versionMismatch = false;
@@ -9200,7 +9215,15 @@ async function renderReview(){
     });
     const data=await resp.json();
     if(data.status!=='ok'){
-      host.innerHTML='<div class="review-empty">Could not load review data: '+(data.message||'unknown error')+'</div>';
+      // Better diagnostic: show what backend actually returned so we can tell if it's a
+      // stale-deploy issue (backend doesn't know the action) vs a data issue
+      let detail='unknown error';
+      if(data.message)detail=data.message;
+      else if(data.status==='error')detail='backend returned error';
+      else if(!data.status)detail='backend did not recognize this action — is the latest Apps Script deployed?';
+      else detail='backend returned status: '+data.status;
+      console.error('Review fetch returned:',data);
+      host.innerHTML='<div class="review-empty">Could not load review data.<br><small style="opacity:0.7;">'+detail+'</small></div>';
       return;
     }
     renderReviewCards(host,data,period,comparePeriod);
