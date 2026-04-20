@@ -69,6 +69,73 @@ Frontend-only patch release. UX improvement.
 
 ---
 
+## [v24.4.11] — 2026-04-20 · Dark mode visibility fixes
+
+Frontend-only patch. Addresses three reported dark-mode visibility issues in one CSS batch.
+
+### Fixed
+
+**Theme pill invisible in header after login.** The pill group in the app-header had weaker styling than needed for the dark background. Added a stronger dark override specifically for `.theme-pill-group.theme-pill-header`: higher-opacity background, more visible border, stronger text color. Active-state pill now has a brighter indigo background with a clearly visible ring.
+
+**Top-nav tabs invisible** ("New selection", "History", "Dashboard", "Review", "Team"). The `.app-nav` container had a hardcoded light background (`rgba(255,255,255,0.55)`) with no dark-mode override — so in dark mode it rendered as a light-ish bar that almost blended with the page, and the muted-gray text became unreadable against it. Added dark-mode overrides:
+- `.app-nav` dark background (`rgba(11,16,37,0.78)`)
+- Tab text color bumped to `#94A3B8`
+- Active tab in brighter indigo (`#A5B4FC`)
+- Hover state explicitly visible
+
+**Tender specs / BOM / result content washed out or unreadable in dark mode.** Several result-page components had hardcoded light gradients and no dark-mode styling, causing light backgrounds with low-contrast text in dark theme. Added dark overrides for:
+- `.tender-view-tabs`, `.tender-view-tab` (including active + hover)
+- `.tender-section` + all variants (common / model / premium)
+- `.tender-footer-box`
+- `.bom-table-v21` — additional coverage for background, header, hover states
+- `.result-hero`, `.result-section`, `.bom-card`, `.result-summary-card`
+- `.pricing-callout-card`
+- `.section-head`, `.section-title`, `.section-num` (form section headers)
+- `.form-group label` + choice card text
+- Generic catch-all for inline `style="background:#fff"` or `style="background:white"` elements
+
+### Files in release
+
+- `brightsign-v24-4-11.html` — frontend only (Apps Script v24.5.2 unchanged)
+
+### Deploy
+
+Single-file swap. Replace `index.html` on GitHub. Hard refresh.
+
+---
+
+## [v24.4.10] — 2026-04-20 · 1-on-1 briefing in Review tab
+
+Frontend-only patch. Adds the per-user drill-down feature that was requested twice and deferred. No Apps Script changes.
+
+### Added — 1-on-1 briefing
+
+- **Clickable rows in "Funnel by user" table.** Hover highlights the row; click opens a detailed briefing card below the table.
+- **Briefing card shows for the selected user:**
+  - Summary header with user name, total entry count, and active review period
+  - "Stages" chip row — count at each funnel stage (Lead / Opp / Prop / Neg / Order)
+  - "Outcomes" chip row — count in each outcome state (Open / Won / Lost / On hold), color-coded
+  - Full entry table with: date, project, end-user, partner, city, stage, outcome (color-coded pill), quantity × model
+  - Sorted newest entry first
+  - ✕ Close button to dismiss
+  - Smooth scroll to briefing after open
+- **Period-aware.** Briefing respects the same FY/quarter period selected in the Review tab's period selector. A new client-side helper `computePeriodDatesClient()` mirrors the backend's period logic so filtering matches server-side aggregation.
+- **Ghost-entry safe.** Same filter as the main History view — entries without refId, timestamp, or project are skipped.
+
+### Use case
+
+Super-user or OEM opens the Review tab → filters to "Q1 FY 26-27" → scrolls to "Funnel by user" → clicks on a team member's row. The briefing card that opens is effectively a ready-made talking-points sheet for a 1-on-1: every deal that person is working on, what stage each is at, what's won / lost / on hold, which partners and end-clients, which cities. All filtered to the period under review.
+
+### Files in release
+
+- `brightsign-v24-4-10.html` — frontend only (Apps Script v24.5.2 unchanged)
+
+### Deploy
+
+Single-file swap. Replace `index.html` on GitHub. Hard refresh.
+
+---
+
 ## [v24.4.9] — 2026-04-20 · Role-gated Review + phone & close-month hardening
 
 Frontend-only patch. Three user-reported issues addressed.

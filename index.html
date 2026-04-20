@@ -3017,8 +3017,122 @@ input:focus,select:focus,textarea:focus{
 .log-edit-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(79,70,229,0.40);}
 .log-edit-btn:active{transform:translateY(0);}
 html[data-theme="dark"] .log-edit-btn{box-shadow:0 2px 8px rgba(0,0,0,0.35);}
-/* v24.4.0: Review tab */
-.review-period-bar{
+/* ============================================================
+   v24.4.11: Batch dark mode visibility fixes
+   Fixes reported issues:
+   1. Theme pill invisible in header after login
+   2. Top nav tabs (New selection / History / Dashboard / Review / Team) invisible
+   3. Tender specs / BOM / result content washed out / unreadable
+   ============================================================ */
+
+/* FIX 1+2: App-nav — was using hardcoded light background, no dark override */
+html[data-theme="dark"] .app-nav{
+  background:rgba(11,16,37,0.78) !important;
+  border-bottom:1px solid var(--border) !important;
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+}
+html[data-theme="dark"] .app-nav button{
+  color:#94A3B8 !important;
+}
+html[data-theme="dark"] .app-nav button.active{
+  color:#A5B4FC !important;
+  border-bottom-color:#818CF8 !important;
+}
+html[data-theme="dark"] .app-nav button:hover:not(.active){
+  color:#E2E8F0 !important;
+}
+html[data-theme="dark"] .app-nav button svg{
+  color:currentColor;
+}
+
+/* FIX 2: Ensure theme pill is clearly visible in dark header */
+html[data-theme="dark"] .theme-pill-group.theme-pill-header{
+  background:rgba(30,41,59,0.75) !important;
+  border:1px solid rgba(148,163,184,0.35) !important;
+}
+html[data-theme="dark"] .theme-pill{
+  color:#E2E8F0 !important;
+}
+html[data-theme="dark"] .theme-pill.active{
+  background:rgba(99,102,241,0.55) !important;
+  color:#FFFFFF !important;
+  box-shadow:0 1px 4px rgba(0,0,0,0.40), inset 0 0 0 1px rgba(224,231,255,0.55) !important;
+}
+
+/* FIX 3: Tender Specs + BOM + result cards in dark mode */
+html[data-theme="dark"] .tender-view-tabs{border-bottom-color:var(--border) !important;}
+html[data-theme="dark"] .tender-view-tab{color:#94A3B8 !important;}
+html[data-theme="dark"] .tender-view-tab.active{color:#A5B4FC !important;border-bottom-color:#818CF8 !important;}
+html[data-theme="dark"] .tender-view-tab:hover:not(.active){color:#E2E8F0 !important;}
+
+/* Tender sections — hardcoded light gradient backgrounds → opaque dark */
+html[data-theme="dark"] .tender-section,
+html[data-theme="dark"] .tender-section-common,
+html[data-theme="dark"] .tender-section-model,
+html[data-theme="dark"] .tender-section-premium{
+  background:rgba(27,33,66,0.75) !important;
+  color:var(--ink) !important;
+  border-left-color:#818CF8 !important;
+}
+html[data-theme="dark"] .tender-section *,
+html[data-theme="dark"] .tender-section-common *,
+html[data-theme="dark"] .tender-section-model *,
+html[data-theme="dark"] .tender-section-premium *{
+  color:var(--ink) !important;
+}
+html[data-theme="dark"] .tender-section-common strong,
+html[data-theme="dark"] .tender-section-model strong,
+html[data-theme="dark"] .tender-section-premium strong{
+  color:#E0E7FF !important;
+}
+html[data-theme="dark"] .tender-footer-box{
+  background:rgba(27,33,66,0.75) !important;
+  color:var(--ink-muted) !important;
+  border-color:var(--border) !important;
+}
+html[data-theme="dark"] .tender-footer-box strong{color:#A5B4FC !important;}
+
+/* BOM table — additional coverage beyond existing bom-table-v21 override */
+html[data-theme="dark"] .bom-table-v21{background:rgba(27,33,66,0.50) !important;}
+html[data-theme="dark"] .bom-table-v21 thead{background:rgba(79,70,229,0.25) !important;}
+html[data-theme="dark"] .bom-table-v21 thead th{color:#E0E7FF !important;}
+html[data-theme="dark"] .bom-table-v21 tbody tr:hover{background:rgba(99,102,241,0.12) !important;}
+
+/* Result hero + model cards */
+html[data-theme="dark"] .result-hero,
+html[data-theme="dark"] .result-section,
+html[data-theme="dark"] .bom-card,
+html[data-theme="dark"] .result-summary-card{
+  background:rgba(27,33,66,0.70) !important;
+  color:var(--ink) !important;
+}
+html[data-theme="dark"] .pricing-callout-card{
+  background:rgba(27,33,66,0.80) !important;
+}
+
+/* Anywhere using hardcoded white background for content — make readable in dark */
+html[data-theme="dark"] [style*="background:#fff"],
+html[data-theme="dark"] [style*="background:white"],
+html[data-theme="dark"] [style*="background: #fff"],
+html[data-theme="dark"] [style*="background: white"]{
+  background:rgba(27,33,66,0.75) !important;
+  color:var(--ink) !important;
+}
+
+/* Section-head, section-num, section-title visibility */
+html[data-theme="dark"] .section-head{color:var(--ink) !important;}
+html[data-theme="dark"] .section-title{color:var(--ink) !important;}
+html[data-theme="dark"] .section-num{background:rgba(79,70,229,0.35) !important;color:#E0E7FF !important;}
+
+/* Form group labels */
+html[data-theme="dark"] .form-group label{color:var(--ink) !important;}
+
+/* Choice card text */
+html[data-theme="dark"] .choice-card .choice-label{color:var(--ink) !important;}
+html[data-theme="dark"] .choice-card .choice-desc{color:var(--ink-muted) !important;}
+
+/* v24.4.0: Review tab */.review-period-bar{
   display:flex;gap:16px;align-items:flex-end;
   padding:16px 20px;margin-bottom:20px;
   background:var(--glass-bg-strong);
@@ -3181,6 +3295,51 @@ html[data-theme="dark"] .log-edit-btn{box-shadow:0 2px 8px rgba(0,0,0,0.35);}
   font-weight:700;background:var(--surface-2);
   border-top:2px solid var(--border);
 }
+
+/* v24.4.10: 1-on-1 briefing card */
+.review-table-clickable tbody tr:hover{background:rgba(99,102,241,0.06);}
+html[data-theme="dark"] .review-table-clickable tbody tr:hover{background:rgba(199,210,254,0.08);}
+.briefing-link{
+  font-family:var(--sans);font-size:11px;font-weight:600;
+  color:var(--indigo);
+}
+.briefing-summary{
+  display:flex;gap:20px;flex-wrap:wrap;
+  padding:14px;background:var(--surface-2);border-radius:10px;
+  margin-bottom:4px;
+}
+.briefing-sum-group{display:flex;flex-direction:column;gap:6px;}
+.briefing-sum-label{
+  font-family:var(--sans);font-size:10px;font-weight:700;
+  letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-muted);
+}
+.briefing-sum-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.briefing-chip{
+  padding:3px 10px;border-radius:12px;
+  background:var(--surface);border:1px solid var(--border);
+  font-family:var(--sans);font-size:11px;font-weight:600;color:var(--ink);
+}
+.briefing-chip.outcome-open{background:rgba(14,165,233,0.12);border-color:rgba(14,165,233,0.30);color:#0369A1;}
+.briefing-chip.outcome-won{background:rgba(5,150,105,0.12);border-color:rgba(5,150,105,0.30);color:#047857;}
+.briefing-chip.outcome-lost{background:rgba(220,38,38,0.10);border-color:rgba(220,38,38,0.30);color:#991B1B;}
+.briefing-chip.outcome-hold{background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.30);color:#92400E;}
+html[data-theme="dark"] .briefing-chip.outcome-open{color:#7DD3FC;}
+html[data-theme="dark"] .briefing-chip.outcome-won{color:#6EE7B7;}
+html[data-theme="dark"] .briefing-chip.outcome-lost{color:#FCA5A5;}
+html[data-theme="dark"] .briefing-chip.outcome-hold{color:#FCD34D;}
+.briefing-outcome{
+  padding:2px 8px;border-radius:10px;
+  font-family:var(--sans);font-size:10px;font-weight:700;
+  letter-spacing:0.04em;text-transform:uppercase;
+}
+.briefing-outcome.outcome-open{background:rgba(14,165,233,0.15);color:#0369A1;}
+.briefing-outcome.outcome-won{background:rgba(5,150,105,0.15);color:#047857;}
+.briefing-outcome.outcome-lost{background:rgba(220,38,38,0.12);color:#991B1B;}
+.briefing-outcome.outcome-hold{background:rgba(245,158,11,0.15);color:#92400E;}
+html[data-theme="dark"] .briefing-outcome.outcome-open{color:#7DD3FC;}
+html[data-theme="dark"] .briefing-outcome.outcome-won{color:#6EE7B7;}
+html[data-theme="dark"] .briefing-outcome.outcome-lost{color:#FCA5A5;}
+html[data-theme="dark"] .briefing-outcome.outcome-hold{color:#FCD34D;}
 
 /* Data quality banner */
 .data-quality-banner{
@@ -5398,7 +5557,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.4.9';
+const FRONTEND_VERSION = '24.4.11';
 /* v24.4.8: Feature flag — set to true once product pricing is integrated into the selector.
    When false, hides all monetary cards/columns from Review tab (Pipeline, Won, etc.) since
    there's no reliable source for deal value in this version. Keep at false until pricing lands. */
@@ -9490,36 +9649,40 @@ function renderReviewCards(host,data,period,comparePeriod){
     </table>
   </div>`);
 
-  // Card 7: Funnel by user
+  // Card 7: Funnel by user — rows clickable to open 1-on-1 briefing below
   const byUser=primary.byUser||[];
   if(byUser.length){
     parts.push(`<div class="review-card">
       <div class="review-card-head">
         <div class="review-card-icon ri-user">☰</div>
         <div class="review-card-title">Funnel by user</div>
-        <div class="review-card-sub">${byUser.length} active user${byUser.length===1?'':'s'}</div>
+        <div class="review-card-sub">${byUser.length} active user${byUser.length===1?'':'s'} · click a row to see their entries</div>
       </div>
-      <table class="review-table">
+      <table class="review-table review-table-clickable">
         <thead>
           <tr>
             <th>User</th>
             <th class="num">Lead</th><th class="num">Oppt</th><th class="num">Prop</th><th class="num">Neg</th><th class="num">Order</th>
             ${SHOW_PRICING?'<th class="num">Pipeline</th><th class="num">Won</th>':''}
+            <th class="num" style="width:70px;">Details</th>
           </tr>
         </thead>
         <tbody>
-          ${byUser.map(u=>`<tr>
-            <td>${escapeHtml(u.user)}</td>
+          ${byUser.map(u=>`<tr onclick="showBriefing('${escapeHtml(u.user).replace(/'/g,"\\'")}','${escapeHtml(period)}')" style="cursor:pointer;">
+            <td><strong>${escapeHtml(u.user)}</strong></td>
             <td class="num">${u.funnel[0].count}</td>
             <td class="num">${u.funnel[1].count}</td>
             <td class="num">${u.funnel[2].count}</td>
             <td class="num">${u.funnel[3].count}</td>
             <td class="num">${u.funnel[4].count}</td>
             ${SHOW_PRICING?`<td class="num">${formatINR(u.pipelineValue)}</td><td class="num">${formatINR(u.wonValue)}</td>`:''}
+            <td class="num"><span class="briefing-link">View →</span></td>
           </tr>`).join('')}
         </tbody>
       </table>
     </div>`);
+    // Empty placeholder for the briefing card — populated by showBriefing()
+    parts.push(`<div id="review-briefing-host"></div>`);
   }
 
   // Data quality banner (only relevant when pricing is shown)
@@ -9531,6 +9694,147 @@ function renderReviewCards(host,data,period,comparePeriod){
   }
 
   host.innerHTML=parts.join('');
+}
+
+/* v24.4.10: 1-on-1 briefing — show a specific user's entries filtered to review period.
+   Called when a super/OEM clicks a row in the "Funnel by user" table. */
+function showBriefing(userName,period){
+  const host=document.getElementById('review-briefing-host');
+  if(!host){return;}
+  // Filter window._centralLog for this user, within the period dates
+  const allEntries=Array.isArray(window._centralLog)?window._centralLog:[];
+  const dates=computePeriodDatesClient(period);
+  const userLower=(userName||'').toLowerCase();
+  const entries=allEntries.filter(e=>{
+    if(!e||typeof e!=='object')return false;
+    const eUser=(e.user||'').toLowerCase();
+    const eLogin=(e.loginName||'').toLowerCase();
+    if(eUser!==userLower && eLogin!==userLower)return false;
+    // Skip ghost rows
+    const tsStr=(e.ts||'').toString();
+    const tsDate=tsStr?new Date(tsStr):null;
+    const tsYear=tsDate && !isNaN(tsDate.getTime())?tsDate.getFullYear():0;
+    const refId=(e.refId||'').toString().trim();
+    const project=(e.project||'').toString().trim();
+    if(!refId && tsYear<=2000 && !project)return false;
+    // Period filter
+    if(dates && tsDate && !isNaN(tsDate.getTime())){
+      if(tsDate<dates.start || tsDate>=dates.end)return false;
+    }
+    return true;
+  }).sort((a,b)=>new Date(b.ts||0)-new Date(a.ts||0));
+
+  if(!entries.length){
+    host.innerHTML=`<div class="review-card">
+      <div class="review-card-head">
+        <div class="review-card-icon ri-user">👤</div>
+        <div class="review-card-title">1-on-1 briefing — ${escapeHtml(userName)}</div>
+        <div class="review-card-sub">${escapeHtml(period)}</div>
+      </div>
+      <div class="review-empty">No entries for this user in this period.</div>
+    </div>`;
+    host.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+
+  // Stage/outcome counts for quick summary
+  const stageCounts={Lead:0,Opportunity:0,Proposal:0,Negotiation:0,Order:0};
+  const outcomeCounts={open:0,won:0,lost:0,'on-hold':0};
+  entries.forEach(e=>{
+    const s=(e.stage||'').toString();
+    if(stageCounts[s]!==undefined)stageCounts[s]++;
+    const o=(e.outcome||'open').toString().toLowerCase();
+    if(outcomeCounts[o]!==undefined)outcomeCounts[o]++;
+  });
+
+  // Build table of entries
+  const rows=entries.map(e=>{
+    const ts=e.ts?new Date(e.ts):null;
+    const dateStr=ts&&!isNaN(ts.getTime())?ts.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—';
+    const outcomeLabel=(e.outcome||'open').toString();
+    const outcomeClass=
+      outcomeLabel==='won'?'outcome-won':
+      outcomeLabel==='lost'?'outcome-lost':
+      outcomeLabel==='on-hold'?'outcome-hold':
+      'outcome-open';
+    return `<tr>
+      <td style="white-space:nowrap;font-family:var(--mono,monospace);font-size:11px;color:var(--ink-muted);">${dateStr}</td>
+      <td><strong>${escapeHtml(e.project||'—')}</strong></td>
+      <td>${escapeHtml(e.enduser||'—')}</td>
+      <td>${escapeHtml(e.partner||'—')}</td>
+      <td>${escapeHtml(e.city||'—')}</td>
+      <td>${escapeHtml(e.stage||'—')}</td>
+      <td><span class="briefing-outcome ${outcomeClass}">${escapeHtml(outcomeLabel)}</span></td>
+      <td class="num">${(e.qty||0)} × ${escapeHtml(e.model||'—')}</td>
+    </tr>`;
+  }).join('');
+
+  host.innerHTML=`<div class="review-card" id="briefing-card">
+    <div class="review-card-head">
+      <div class="review-card-icon ri-user">👤</div>
+      <div class="review-card-title">1-on-1 briefing — ${escapeHtml(userName)}</div>
+      <div class="review-card-sub">${entries.length} entr${entries.length===1?'y':'ies'} · ${escapeHtml(period)}</div>
+      <button onclick="document.getElementById('review-briefing-host').innerHTML='';" style="margin-left:10px;background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;color:var(--ink-muted);">✕ Close</button>
+    </div>
+    <div class="briefing-summary">
+      <div class="briefing-sum-group">
+        <div class="briefing-sum-label">Stages</div>
+        <div class="briefing-sum-chips">
+          <span class="briefing-chip">Lead ${stageCounts.Lead}</span>
+          <span class="briefing-chip">Opp ${stageCounts.Opportunity}</span>
+          <span class="briefing-chip">Prop ${stageCounts.Proposal}</span>
+          <span class="briefing-chip">Neg ${stageCounts.Negotiation}</span>
+          <span class="briefing-chip">Order ${stageCounts.Order}</span>
+        </div>
+      </div>
+      <div class="briefing-sum-group">
+        <div class="briefing-sum-label">Outcomes</div>
+        <div class="briefing-sum-chips">
+          <span class="briefing-chip outcome-open">Open ${outcomeCounts.open}</span>
+          <span class="briefing-chip outcome-won">Won ${outcomeCounts.won}</span>
+          <span class="briefing-chip outcome-lost">Lost ${outcomeCounts.lost}</span>
+          <span class="briefing-chip outcome-hold">On hold ${outcomeCounts['on-hold']}</span>
+        </div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;margin-top:12px;">
+      <table class="review-table">
+        <thead>
+          <tr>
+            <th>Date</th><th>Project</th><th>End-user</th><th>Partner</th><th>City</th><th>Stage</th><th>Outcome</th><th class="num">Model</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </div>`;
+  // Smooth scroll to briefing
+  setTimeout(()=>{
+    const el=document.getElementById('briefing-card');
+    if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  },50);
+}
+
+/* v24.4.10: Client-side period dates — mirrors backend getPeriodDates logic
+   Returns {start, end} dates, or null for ALL/unknown period. */
+function computePeriodDatesClient(periodKey){
+  if(!periodKey||periodKey==='ALL')return null;
+  if(periodKey.indexOf('YTD-')===0){
+    const fyStr=periodKey.substring(4);
+    const fyStartYear=2000+parseInt(fyStr.split('-')[0]);
+    return {start:new Date(fyStartYear,3,1),end:new Date()};
+  }
+  if(periodKey.indexOf('FY')===0){
+    const parts=periodKey.substring(2).split('-');
+    const fyStartYear=2000+parseInt(parts[0]);
+    if(parts.length===2)return {start:new Date(fyStartYear,3,1),end:new Date(fyStartYear+1,3,1)};
+    const q=parts[2];
+    if(q==='Q1')return {start:new Date(fyStartYear,3,1),end:new Date(fyStartYear,6,1)};
+    if(q==='Q2')return {start:new Date(fyStartYear,6,1),end:new Date(fyStartYear,9,1)};
+    if(q==='Q3')return {start:new Date(fyStartYear,9,1),end:new Date(fyStartYear,12,1)};
+    if(q==='Q4')return {start:new Date(fyStartYear+1,0,1),end:new Date(fyStartYear+1,3,1)};
+  }
+  return null;
 }
 
 /* v24.4.0: Clear all test data — super-only, double confirm */
