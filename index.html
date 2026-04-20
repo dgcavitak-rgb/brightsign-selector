@@ -5717,7 +5717,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.4.17';
+const FRONTEND_VERSION = '24.4.18';
 /* v24.4.8: Feature flag — set to true once product pricing is integrated into the selector.
    When false, hides all monetary cards/columns from Review tab (Pipeline, Won, etc.) since
    there's no reliable source for deal value in this version. Keep at false until pricing lands. */
@@ -6740,6 +6740,7 @@ function applyTheme(mode){
     const osPrefersDark=window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     effective=osPrefersDark?'dark':'light';
   }
+  const previousTheme=document.documentElement.getAttribute('data-theme');
   document.documentElement.setAttribute('data-theme',effective);
   try{localStorage.setItem('bs-theme-mode',mode);}catch(e){/* silent — privacy mode */}
   // Reflect selection in any active pill groups
@@ -6748,6 +6749,25 @@ function applyTheme(mode){
       p.classList.toggle('active',p.dataset.mode===mode);
     });
   });
+  // v24.4.18: Chart.js renders text on <canvas> with literal color values — CSS can't restyle them.
+  // When the effective theme actually changes, destroy and re-render all charts so they pick up
+  // the new theme-aware ink/muted/border colors.
+  if(previousTheme && previousTheme!==effective && window._charts){
+    try{
+      Object.keys(window._charts).forEach(k=>{
+        if(window._charts[k] && typeof window._charts[k].destroy==='function'){
+          window._charts[k].destroy();
+          delete window._charts[k];
+        }
+      });
+      // Re-render dashboard if it's the active tab
+      if(document.getElementById('section-dashboard') &&
+         document.getElementById('section-dashboard').style.display!=='none' &&
+         typeof renderDashboard==='function'){
+        setTimeout(()=>{try{renderDashboard();}catch(e){console.warn('Dashboard re-render after theme change failed:',e);}},50);
+      }
+    }catch(e){console.warn('Chart destroy on theme change failed:',e);}
+  }
 }
 
 function setThemeMode(mode){
@@ -11618,7 +11638,15 @@ function renderCharts(entries){
   if(!entries.length)return;
 
   const fontSans="'IBM Plex Sans',-apple-system,sans-serif";
-  const colorInk='#0F172A';const colorMuted='#64748B';const colorBorder='#E2E8F0';
+  // v24.4.18: Detect dark mode and use bright colors that render on dark card backgrounds.
+  // Chart.js text colors aren't affected by CSS — they're rendered on <canvas> with
+  // whatever color value we pass in. Need to check theme at render time.
+  const isDarkTheme=(function(){
+    try{return document.documentElement.getAttribute('data-theme')==='dark';}catch(e){return false;}
+  })();
+  const colorInk=isDarkTheme?'#E2E8F0':'#0F172A';
+  const colorMuted=isDarkTheme?'#94A3B8':'#64748B';
+  const colorBorder=isDarkTheme?'rgba(148,163,184,0.18)':'#E2E8F0';
 
   // ===== Chart 1: Deal Stage Funnel (Lead → Qualified → Proposal → Negotiation → Won/Lost) =====
   // v20: Tracks deal progression from stage field in each entry

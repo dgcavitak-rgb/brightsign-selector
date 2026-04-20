@@ -89,6 +89,60 @@ Single-file swap. Replace `index.html` on GitHub. Hard refresh.
 
 ---
 
+## [v24.4.18] — 2026-04-20 · Chart.js text colors theme-aware
+
+Frontend-only patch. Fixes the remaining dark-mode visibility issue in Dashboard charts that v24.4.17 didn't catch.
+
+### Fixed — Chart axis labels and tick text invisible in dark mode
+
+**Root cause:** Chart.js renders text (axis labels, tick numbers, legend text, tooltip content) as actual pixels on an HTML `<canvas>` element. This is fundamentally different from DOM text — **CSS cannot restyle canvas-rendered text**. No amount of `color: var(--ink) !important` will affect what Chart.js paints onto the canvas.
+
+v24.4.17 fixed the chart **card containers** (dark background, visible card titles) but the chart **contents** themselves continued to use hardcoded light-mode colors: `colorInk='#0F172A'` (near-black) for axis labels, `colorMuted='#64748B'` for tick text. On a dark card background these appeared as very dim dark-grey-on-dark-grey text — technically visible if you squinted, but effectively invisible for the user.
+
+Specifically affected:
+- **Deal Stage Funnel** — y-axis labels (Lead, Qualified, Proposal, Negotiation, Won, Lost) invisible
+- **Top Partners / SI** — partner names on y-axis (Allot, Chintech, Bholenath Agency, DOTCAD, N/A, Vishal Enterprises) invisible
+- **City Distribution** — city names on y-axis
+- **Activity Timeline** — x-axis date labels and y-axis tick numbers
+- **Product Demand charts** — axis labels on both
+- Any chart in dark mode used these variables
+
+**Fix:** Added `isDarkTheme` detection at chart render time (reads `data-theme` attribute) and pass theme-aware color values to every Chart.js config:
+
+```js
+const isDarkTheme = document.documentElement.getAttribute('data-theme') === 'dark';
+const colorInk    = isDarkTheme ? '#E2E8F0' : '#0F172A';  // bright slate in dark, near-black in light
+const colorMuted  = isDarkTheme ? '#94A3B8' : '#64748B';  // muted slate in dark, slate in light
+const colorBorder = isDarkTheme ? 'rgba(148,163,184,0.18)' : '#E2E8F0';  // translucent in dark
+```
+
+All existing chart configs already reference these `colorInk` / `colorMuted` / `colorBorder` variables in their `scales.x.ticks.color`, `scales.y.ticks.color`, `scales.x.grid.color`, etc. — so the fix is a single source change that cascades through all 9 charts automatically.
+
+### Fixed — Theme switch while Dashboard is open didn't refresh chart colors
+
+When a user toggles theme (Light / Auto / Dark) while viewing the Dashboard tab, the `data-theme` attribute changes instantly, but the already-rendered charts keep the colors that were baked in when they were first drawn (Chart.js doesn't know the theme changed).
+
+**Fix:** `applyTheme()` now captures the previous theme before applying the new one. If the effective theme actually changed AND there are charts in `window._charts`, it destroys all existing chart instances and (if the Dashboard tab is currently visible) re-renders via `renderDashboard()`. Wrapped in try/catch with graceful fallback so a malformed chart can't break theme switching.
+
+### Files in release
+
+- `brightsign-v24-4-18.html` — frontend only (Apps Script v24.5.2 unchanged)
+
+### Deploy
+
+Single-file swap.
+
+### QA test matrix
+
+| Scenario | Expected |
+|----------|----------|
+| Dashboard tab in **dark mode** | All axis labels (Lead/Qualified/etc., partner names, city names, date ticks) rendered in bright slate, clearly readable |
+| Dashboard tab in **light mode** | Axis labels rendered in near-black, same as before — no regression |
+| Switch theme Light → Dark while on Dashboard | Chart text colors should update within ~100ms (charts destroyed + re-rendered) |
+| Switch theme while NOT on Dashboard | Charts destroyed (won't leak memory); next time Dashboard opens, charts render fresh with correct colors |
+
+---
+
 ## [v24.4.17] — 2026-04-20 · Dark mode polish + remove outdated deployment notes
 
 Frontend-only patch. Addresses 5 specific issues reported from dark-mode QA.
