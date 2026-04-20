@@ -69,6 +69,111 @@ Frontend-only patch release. UX improvement.
 
 ---
 
+## [v24.4.5] — 2026-04-20 · Validation + history cache + theme icons
+
+Frontend-only patch addressing 5 user-reported issues.
+
+### Fixed
+
+**1. History tab showed phantom entries after manual row deletion.** `getVisibleEntries()` used `(window._centralLog && window._centralLog.length)` to decide between server data and localStorage fallback. When admin manually deleted all rows from the Sheet, the server returned `[]`, the `.length` check was falsy, and the code fell back to stale browser cache showing already-deleted entries. Fixed with `Array.isArray(window._centralLog)` — if we've fetched from server at all, we trust that result. Applied to all 4 locations. `clearLog()` also updated to clear in-memory `window._centralLog` and trigger a fresh server fetch.
+
+**2. Deal value is no longer required.** Per request — users entering a preliminary selection may not have a confirmed deal value yet. Removed from validation checklist, removed red asterisk from label, updated placeholder to say "optional". Internally still parsed via `parseDealValueClient()` if provided, stored as 0 if blank. Review tab's `missingDealValue` metric still tracks empty values for data quality reporting.
+
+**3. Email now validated as proper format.** Previously accepted any non-empty string — so random text like "abc" was accepted. Now validated against `/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/` (simplified RFC 5322). Error message updated to say "must be valid format like name@company.com".
+
+**4. Phone now requires 10 digits.** Previously accepted any non-empty string. Now validates that stripped digits (non-numeric chars removed) count to exactly 10, or 11 starting with 0, or 12 starting with 91 (India country code). So `9876543210`, `+91 9876543210`, `09876543210`, and `+91-98765-43210` all pass. `abc` and `123` are rejected. Input field upgraded with `maxlength="15"` and `inputmode="numeric"` for better mobile keyboards.
+
+**5. Theme pill icons visible in all states.** Previous icons were outline-only with thin strokes that disappeared at 15px in some rendering contexts (reported: icons invisible after login). Rebuilt all 6 SVGs (3 header + 3 login) with:
+   - Sun: filled center circle + stroke-based rays (not just outline)
+   - Auto: bold "A" letter path (letter is unambiguous at any size, unlike monitor/half-circle)
+   - Dark: filled crescent moon (not just outline)
+   - Stroke width bumped to 2, with `!important` on stroke color to override any inherited styles
+   - Pill size bumped from 30px to 32px, icon size from 15px to 16px
+   - Contrast colors hardcoded (`#475569` light, `#CBD5E1` dark) instead of theme-token dependent
+   - Active state uses brighter backgrounds for unmistakable selection
+
+### Deferred
+
+- "1-on-1 briefing" per-user drill-down in Review tab — saved for fresh chat (requires new backend endpoint to filter entries by user within period; scope too large for this session).
+
+### Files in release
+
+- `brightsign-v24-4-5.html` — frontend only (Apps Script v24.5.1 unchanged)
+
+### Deploy
+
+Single-file swap. Replace `index.html` on GitHub. Hard refresh.
+
+---
+
+## [Apps Script v24.5.1] — 2026-04-20 · Review data defensive hardening
+
+Backend patch. No schema change. Fixes "Could not load review data: unknown error" by ensuring all error paths surface a real error message instead of bubbling up as a generic failure.
+
+### Fixed / hardened
+
+- **handleReviewData:** every block (schema migration, sheet fetch, aggregation per period, FY math) now wrapped in its own try/catch with a specific error message. If migration fails, you see "Schema migration failed: ...". If aggregation fails for a specific period, you see "Aggregation failed for period FY26-27-Q1: ...". No more silent failures.
+- **aggregateReview:** hardened against NaN poisoning. Deal value parsing now checks `isFinite()` — previously `parseFloat(undefined)` returned NaN, which poisoned all downstream sums and could cause JSON serialization to silently fail.
+- **aggregateReview:** each row wrapped in try/catch — one malformed row no longer breaks the whole aggregation.
+- **Empty sheet:** now returns a fully-structured empty response (with currentFY, empty quarters, etc.) instead of a partial one, so the frontend renders empty cards cleanly instead of throwing.
+- **Compare period failure:** if the compare period aggregation fails, we return primary without compare rather than failing the whole review.
+- **Full stack trace:** errors now include the full stack trace in the response for debugging (will show in DevTools console).
+
+### Changed
+
+- `APPS_SCRIPT_VERSION` bumped from `24.5` to `24.5.1`.
+
+### Files in release
+
+- `apps-script-v24-5-1.gs` — backend only
+
+### Deploy
+
+Same as any Apps Script update:
+1. Open Google Sheet → Extensions → Apps Script
+2. Ctrl+A → Delete → paste `apps-script-v24-5-1.gs`
+3. Ctrl+S to save
+4. Deploy → Manage deployments → ✏️ edit → Version: **New version** → Deploy
+
+---
+
+## [v24.4.4] — 2026-04-20 · Better Review tab error diagnostics
+
+Frontend-only patch. No feature change — just better debugging when something goes wrong.
+
+### Changed
+
+- `renderReview()` now shows a more specific error message when backend returns an unexpected response. If the backend doesn't recognize the `review_data` action (symptom of stale Apps Script deploy), the UI now says "backend did not recognize this action — is the latest Apps Script deployed?" instead of the generic "unknown error".
+- Full response logged to console for debugging (check DevTools → Console).
+
+### Files in release
+
+- `brightsign-v24-4-4.html` — frontend only
+
+---
+
+## [v24.4.3] — 2026-04-20 · Theme pill icon visibility fix
+
+Frontend-only patch fixing a reported issue: theme pill icons were barely visible or invisible in dark mode.
+
+### Fixed
+
+- **Inactive pill icon color:** was using `--ink-muted` which is too dim against the dark pill background. Bumped to a fixed `#64748B` (light) / `#94A3B8` (dark) for guaranteed contrast regardless of theme token drift.
+- **Stroke width:** icons are tiny (15px) and thin 2px strokes disappeared at that size. Bumped to 2.25px, removed inline `stroke-width="2"` attributes that were overriding CSS.
+- **Active pill in dark mode:** background opacity raised from 0.25 to 0.35, icon color changed from `#C7D2FE` to `#E0E7FF` (brighter), border opacity raised from 0.24 to 0.35. Active state is now unmistakable.
+- **Auto icon:** the monitor-with-stand icon (rect + horizontal line + vertical stem) was visually cluttered at 15px and the stem went below the pill padding. Replaced with a crisper half-filled-circle icon (the universal "auto/mixed" symbol) that reads clearly at any size.
+- **Hover in dark mode:** explicit hover color added (was inheriting muted ink); now bumps to `#E2E8F0` with a more visible background.
+
+### Files in release
+
+- `brightsign-v24-4-3.html` — frontend only
+
+### Deploy
+
+- Single-file swap. Replace `index.html` on GitHub. Hard refresh.
+
+---
+
 ## [v24.4.2] — 2026-04-19 · Theme pill (light / auto / dark)
 
 Frontend-only patch. Replaces the 2-state dark/light toggle with a 3-state pill selector that includes an "Auto" mode following the user's OS preference.

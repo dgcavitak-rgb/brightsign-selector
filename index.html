@@ -222,38 +222,46 @@ html[data-theme="dark"] .theme-pill-group{
 }
 .theme-pill{
   display:flex;align-items:center;justify-content:center;
-  width:30px;height:30px;
+  width:32px;height:32px;
   padding:0;border:none;background:transparent;
   border-radius:999px;
   cursor:pointer;
-  /* v24.4.3: bumped from --ink-muted for better contrast, esp. in dark mode */
-  color:#64748B;
+  /* v24.4.5: strong contrast colors that work everywhere */
+  color:#475569;
   transition:all 180ms cubic-bezier(0.16,1,0.3,1);
 }
-html[data-theme="dark"] .theme-pill{color:#94A3B8;}
+html[data-theme="dark"] .theme-pill{color:#CBD5E1;}
 .theme-pill svg{
-  width:15px;height:15px;
-  /* v24.4.3: thicker stroke so icons are visible at small size */
-  stroke-width:2.25;
+  width:16px;height:16px;
+  stroke:currentColor !important;
+  stroke-width:2 !important;
+  stroke-linecap:round;
+  stroke-linejoin:round;
   fill:none;
+  /* v24.4.5: ensure SVG paints even if parent has filter/opacity issues */
+  display:block;
+  pointer-events:none;
+}
+.theme-pill.auto-pill svg circle.half-fill{
+  fill:currentColor !important;
 }
 .theme-pill:hover:not(.active){
-  color:var(--ink);
-  background:rgba(148,163,184,0.14);
-}
-html[data-theme="dark"] .theme-pill:hover:not(.active){
-  color:#E2E8F0;
+  color:#0F172A;
   background:rgba(148,163,184,0.18);
 }
+html[data-theme="dark"] .theme-pill:hover:not(.active){
+  color:#F1F5F9;
+  background:rgba(148,163,184,0.22);
+}
 .theme-pill.active{
-  background:var(--surface);
+  background:#FFFFFF;
   color:#4F46E5;
-  box-shadow:0 1px 3px rgba(15,23,42,0.12),0 0 0 1px rgba(99,102,241,0.22);
+  box-shadow:0 1px 4px rgba(15,23,42,0.15),0 0 0 1px rgba(99,102,241,0.30);
 }
 html[data-theme="dark"] .theme-pill.active{
-  background:rgba(79,70,229,0.35);
-  color:#E0E7FF;
-  box-shadow:0 1px 3px rgba(0,0,0,0.30),inset 0 0 0 1px rgba(199,210,254,0.35);
+  background:rgba(99,102,241,0.40);
+  color:#FFFFFF;
+  box-shadow:0 1px 3px rgba(0,0,0,0.35),inset 0 0 0 1px rgba(199,210,254,0.45);
 }
 /* Floating variant for login page */
 .theme-pill-login{
@@ -4841,14 +4849,14 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   <!-- v24.4.2: Theme pill on login page (floating top-right) -->
   <div class="theme-pill-group theme-pill-login" role="radiogroup" aria-label="Theme">
     <button class="theme-pill" data-mode="light" onclick="setThemeMode('light')" title="Light" aria-label="Light mode">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>
-    </button>
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"><line x1="12" y1="3" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="21"/><line x1="3" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="21" y2="12"/><line x1="5.6" y1="5.6" x2="7" y2="7"/><line x1="17" y1="17" x2="18.4" y2="18.4"/><line x1="5.6" y1="18.4" x2="7" y2="17"/><line x1="17" y1="7" x2="18.4" y2="5.6"/></g></svg>
+        </button>
     <button class="theme-pill" data-mode="auto" onclick="setThemeMode('auto')" title="Auto (follow device)" aria-label="Auto theme">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 4 A 8 8 0 0 0 12 20 Z" fill="currentColor" stroke="none"/></svg>
-    </button>
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 20 L12 5 L18 20 M8.5 15 L15.5 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        </button>
     <button class="theme-pill" data-mode="dark" onclick="setThemeMode('dark')" title="Dark" aria-label="Dark mode">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 14.5 A 9 9 0 1 1 9.5 4 A 7 7 0 0 0 20 14.5 Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        </button>
   </div>
   <div class="login-card">
     <div class="login-logo-hero">
@@ -4922,13 +4930,13 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
       </div>
       <div class="theme-pill-group theme-pill-header" role="radiogroup" aria-label="Theme">
         <button class="theme-pill" data-mode="light" onclick="setThemeMode('light')" title="Light" aria-label="Light mode">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"><line x1="12" y1="3" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="21"/><line x1="3" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="21" y2="12"/><line x1="5.6" y1="5.6" x2="7" y2="7"/><line x1="17" y1="17" x2="18.4" y2="18.4"/><line x1="5.6" y1="18.4" x2="7" y2="17"/><line x1="17" y1="7" x2="18.4" y2="5.6"/></g></svg>
         </button>
         <button class="theme-pill" data-mode="auto" onclick="setThemeMode('auto')" title="Auto (follow device)" aria-label="Auto theme">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 4 A 8 8 0 0 0 12 20 Z" fill="currentColor" stroke="none"/></svg>
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 20 L12 5 L18 20 M8.5 15 L15.5 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
         </button>
         <button class="theme-pill" data-mode="dark" onclick="setThemeMode('dark')" title="Dark" aria-label="Dark mode">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 14.5 A 9 9 0 1 1 9.5 4 A 7 7 0 0 0 20 14.5 Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
         </button>
       </div>
       <div class="app-user-avatar" id="user-avatar">?</div>
@@ -4989,12 +4997,12 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           <div class="form-group" style="margin:0;"><label>City<span class="req">*</span></label><select id="f-city"><option value="">Select city…</option><option>Ahmedabad</option><option>Bangalore</option><option>Chennai</option><option>Delhi / NCR</option><option>Hyderabad</option><option>Kolkata</option><option>Mumbai</option><option>Pune</option><option>Jaipur</option><option>Kochi</option><option>Chandigarh</option><option>Lucknow</option><option>Indore</option><option>Bhubaneswar</option><option>Nagpur</option><option>Surat</option><option>Vadodara</option><option>Goa</option><option>Other</option></select></div>
           <div class="form-group" style="margin:0;"><label>Deal stage<span class="req">*</span></label><select id="f-stage"><option value="">Select stage…</option><option>Lead</option><option>Opportunity</option><option>Proposal</option><option>Negotiation</option><option>Order</option></select></div>
           <div class="form-group" style="margin:0;"><label>Lead source<span class="req">*</span></label><select id="f-leadsource"><option value="">Select source…</option><option value="OEM-referred">OEM-referred (BrightSign gave lead)</option><option value="Cavitak-generated">Cavitak-generated (we found it)</option></select></div>
-          <div class="form-group" style="margin:0;"><label>Deal value (₹)<span class="req">*</span></label><input type="text" id="f-dealvalue" placeholder="e.g. 12,50,000 or 12.5 L or 1.25 Cr"><div style="font-size:10px;color:var(--ink-subtle);margin-top:4px;">Accepts rupees, lakh (L), or crore (Cr). Normalized to full ₹ on save.</div></div>
+          <div class="form-group" style="margin:0;"><label>Deal value (₹)</label><input type="text" id="f-dealvalue" placeholder="e.g. 12,50,000 or 12.5 L or 1.25 Cr — optional"><div style="font-size:10px;color:var(--ink-subtle);margin-top:4px;">Optional. Accepts rupees, lakh (L), or crore (Cr).</div></div>
           <div class="form-group" style="margin:0;"><label>Outcome<span class="req">*</span></label><select id="f-outcome"><option value="open">Open (active)</option><option value="won">Won</option><option value="lost">Lost</option><option value="on-hold">On hold</option></select></div>
           <div class="form-group" style="margin:0;"><label>Expected close month<span class="req">*</span></label><input type="month" id="f-closemonth"></div>
           <div class="form-group" style="margin:0;"><label>Contact person<span class="req">*</span></label><input type="text" id="f-contactname" placeholder="End-user contact name"></div>
-          <div class="form-group" style="margin:0;"><label>Contact phone<span class="req">*</span></label><input type="tel" id="f-contactphone" placeholder="+91 …"></div>
-          <div class="form-group" style="margin:0;"><label>Contact email<span class="req">*</span></label><input type="email" id="f-contactemail" placeholder="name@client.com"></div>
+          <div class="form-group" style="margin:0;"><label>Contact phone<span class="req">*</span></label><input type="tel" id="f-contactphone" placeholder="10-digit mobile number" maxlength="15" inputmode="numeric"></div>
+          <div class="form-group" style="margin:0;"><label>Contact email<span class="req">*</span></label><input type="email" id="f-contactemail" placeholder="name@client.com" autocomplete="off"></div>
         </div>
       </div>
 
@@ -5389,7 +5397,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.4.4';
+const FRONTEND_VERSION = '24.4.5';
 window.FRONTEND_VERSION = FRONTEND_VERSION;
 window._backendVersion = null;  // populated by ping
 window._versionMismatch = false;
@@ -8255,7 +8263,7 @@ function checkDuplicateProject(){
   const projectEl=document.getElementById('f-project');
   const typed=(projectEl.value||'').trim();
   if(typed.length<3){banner.style.display='none';banner.innerHTML='';return;}
-  const entries=(window._centralLog&&window._centralLog.length)?window._centralLog:loadLocalLog();
+  const entries=(Array.isArray(window._centralLog)?window._centralLog:loadLocalLog());
   if(!entries||!entries.length){banner.style.display='none';return;}
   const typedLower=typed.toLowerCase();
   const matches=entries.filter(e=>((e.project||'').toLowerCase().trim()===typedLower));
@@ -8399,11 +8407,21 @@ function runSelector(){
     {key:'consultant',test:()=>!!f.consultant,id:'f-consultant',label:'Consultant'},
     {key:'city',test:()=>!!f.city,id:'f-city',label:'City'},
     {key:'contactname',test:()=>!!f.contactname,id:'f-contactname',label:'Contact name'},
-    {key:'contactphone',test:()=>!!f.contactphone,id:'f-contactphone',label:'Contact phone'},
-    {key:'contactemail',test:()=>!!f.contactemail,id:'f-contactemail',label:'Contact email'},
+    {key:'contactphone',test:()=>{
+      // v24.4.5: Must contain exactly 10 digits (allow country code +91, spaces, dashes, parentheses as ignorable)
+      const digits=(f.contactphone||'').replace(/\D/g,'');
+      // Accept 10 digits, or 12 digits starting with 91 (India country code)
+      return digits.length===10 || (digits.length===12 && digits.substring(0,2)==='91') || (digits.length===11 && digits.substring(0,1)==='0');
+    },id:'f-contactphone',label:'Contact phone (must be 10 digits)'},
+    {key:'contactemail',test:()=>{
+      // v24.4.5: Proper email format — x@y.z minimum
+      const email=(f.contactemail||'').trim();
+      if(!email)return false;
+      // RFC 5322 simplified: local@domain.tld with at least one dot in domain
+      return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+    },id:'f-contactemail',label:'Contact email (must be valid format like name@company.com)'},
     {key:'stage',test:()=>!!f.stage,id:'f-stage',label:'Deal stage'},
     {key:'leadSource',test:()=>!!f.leadSource,id:'f-leadsource',label:'Lead source'},
-    {key:'dealValue',test:()=>parseDealValueClient(f.dealValue)>0,id:'f-dealvalue',label:'Deal value (₹)'},
     {key:'outcome',test:()=>!!f.outcome,id:'f-outcome',label:'Outcome'},
     {key:'closemonth',test:()=>!!f.closemonth,id:'f-closemonth',label:'Close month'},
     {key:'qty',test:()=>f.qty>=1,id:'f-qty',label:'Quantity'},
@@ -10308,7 +10326,15 @@ async function emailQuoteToPartner(){
   },400);
 }
 
-function clearLog(){if(confirm('Clear this device\'s history view?\n\nYour actual entries are safe — this only clears what\'s shown on this device.')){saveLocalLog([]);renderLog();}}
+function clearLog(){
+  if(confirm('Clear this device\'s history view?\n\nYour actual entries are safe — this only clears what\'s shown on this device.')){
+    saveLocalLog([]);
+    // v24.4.5: also clear in-memory cache so the view doesn't immediately repopulate from stale server fetch
+    window._centralLog=[];
+    renderLog();
+    if(typeof refreshLog==='function')refreshLog();  // re-fetch from server
+  }
+}
 
 /* v24.2.11: Fetch with timeout wrapper — abort after ms to prevent hung requests */
 function fetchWithTimeout(url,options,timeoutMs){
@@ -10369,7 +10395,10 @@ function getVisibleEntries(){
   const isSuper=state.user.isSuper;
   const role=(state.user.role||'').trim();
   const seesAll=isSuper || role==='OEM';  // v24: OEM gets team-wide read
-  const allEntries=(window._centralLog&&window._centralLog.length)?window._centralLog:loadLocalLog();
+  // v24.4.5: If we've successfully fetched from server (even empty array), trust that over local cache.
+  // Previous logic fell back to loadLocalLog() when _centralLog was []  — showing phantom entries after admin deleted rows from the sheet.
+  const haveServerData=Array.isArray(window._centralLog);
+  const allEntries=haveServerData?window._centralLog:loadLocalLog();
   if(seesAll)return allEntries;
   const myLogin=(state.user.loginName||'').toLowerCase();
   const myFullName=(state.user.fullName||'').toLowerCase();
@@ -11345,7 +11374,7 @@ function closeExportMenuOutside(e){
 
 /* v24.2.12: Get entries scoped to current user + filters, shared by all export formats */
 function getExportEntries(){
-  let entries=(window._centralLog&&window._centralLog.length)?window._centralLog:loadLocalLog();
+  let entries=(Array.isArray(window._centralLog)?window._centralLog:loadLocalLog());
   if(state.user && !state.user.isSuper){
     const myLogin=(state.user.loginName||'').toLowerCase();
     const myFullName=(state.user.fullName||'').toLowerCase();
@@ -11603,7 +11632,7 @@ function exportPDF(){
 }
 
 function exportCSV(){
-  let entries=(window._centralLog&&window._centralLog.length)?window._centralLog:loadLocalLog();
+  let entries=(Array.isArray(window._centralLog)?window._centralLog:loadLocalLog());
   // v22.3: Defensive filter — regular users only export their own entries
   if(state.user && !state.user.isSuper){
     const myLogin=(state.user.loginName||'').toLowerCase();
