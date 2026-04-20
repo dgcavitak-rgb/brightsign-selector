@@ -69,6 +69,88 @@ Frontend-only patch release. UX improvement.
 
 ---
 
+## [v24.4.9] — 2026-04-20 · Role-gated Review + phone & close-month hardening
+
+Frontend-only patch. Three user-reported issues addressed.
+
+### Changed — Review tab role-gated
+
+- **Before:** Review tab visible to all authenticated users.
+- **After:** Visible only to users with `isSuper = true` OR `role === 'OEM'`. Presales / Sales / Support users no longer see it — they already have the Dashboard tab showing their own data, and the channel-level analytics in Review were redundant (and potentially confusing) for operational roles.
+- Visibility controlled at two layers:
+  1. `tab-review` button display toggled in the post-login initialization block
+  2. `showTab('review')` route guard — if a non-authorized user somehow navigates there (stale tab state, browser console), they're routed back to History instead of rendering blank cards
+
+### Fixed — Phone number must be exactly 10 digits
+
+- **Before:** v24.4.5 validation accepted 10 digits, 11 with leading 0, or 12 starting with 91. Too lenient.
+- **After:** strictly 10 digits. Nothing else accepted.
+- **Input hardening:**
+  - `maxlength="10"` — browser blocks input beyond 10 chars
+  - `oninput="this.value=this.value.replace(/\D/g,'').slice(0,10);"` — strips non-digit characters in real time, so users literally cannot type letters, +, spaces, or hyphens
+  - `pattern="[0-9]{10}"` — provides native browser hint on mobile
+  - `inputmode="numeric"` — surfaces the numeric keypad on mobile
+- Validation error message updated: "Contact phone (must be exactly 10 digits)"
+
+### Fixed — Close month dropdown sometimes not working
+
+- **Root cause:** the field was `<input type="month">`, which has inconsistent support across browsers:
+  - Chrome/Edge desktop: works (shows date-picker popup)
+  - Firefox desktop: degrades to plain text field with no picker — user has to manually type `YYYY-MM`
+  - Safari desktop: plain text field, no picker at all
+  - Mobile Safari / mobile Chrome: works but can be finicky
+  - This browser-dependent fallback was what users were hitting as "sometimes doesn't work"
+- **Fix:** replaced with a reliable `<select>` dropdown populated with 24 months forward from today (e.g., if today is April 2026, options range from April 2026 through March 2028).
+- Values still formatted as `YYYY-MM` (same as old input) — no downstream changes needed in payload, validation, edit-mode prefill, or backend.
+- New helper: `populateCloseMonthDropdown()` — called once on script parse, with a `DOMContentLoaded` safety-net fallback if the script somehow runs before the DOM is ready.
+
+### Files in release
+
+- `brightsign-v24-4-9.html` — frontend only (Apps Script v24.5.2 unchanged)
+
+### Deploy
+
+Single-file swap. Replace `index.html` on GitHub. Hard refresh.
+
+---
+
+## [v24.4.8] — 2026-04-20 · Hide pricing cards until pricing integration
+
+Frontend-only patch. Monetary cards/columns in the Review tab are now gated behind a `SHOW_PRICING` feature flag (currently `false`). The selector app doesn't yet have product pricing integrated, so showing Pipeline/Won values based on user-entered deal values (removed in v24.4.6) or historical residue from test data was misleading — the observed `₹892739.49 Cr` was data pollution, not real pipeline.
+
+### Added
+
+- **`SHOW_PRICING` const** at top of main script (near `FRONTEND_VERSION`). Set to `true` once product pricing lands and per-entry values can be reliably computed from catalog prices × quantity.
+
+### Changed — Review tab (Channel review)
+
+- **Executive summary:** Pipeline (₹) and Won (₹) KPI tiles hidden. Grid collapses from 5 columns to 3 (Win rate, Active deals, Total entries). CSS variant `.exec-kpi-grid.no-pricing` handles the layout.
+- **Business source split:** pivots to deal **counts** instead of ₹ values when pricing hidden. Bar widths computed on count-share rather than ₹-share. Sub-label reads "N total deals" instead of "₹X Cr". Row values read as "N deals" / "1 deal".
+- **Funnel:** value column hidden entirely. CSS variant `.funnel-row.no-pricing` drops the column from the grid. Dropped-pills (Lost/On hold) show counts only, not counts-plus-₹.
+- **Quarterly breakdown table:** "Pipeline" and "Won" rows hidden. Only "Entries" and "Win rate" rows remain.
+- **YoY growth table:** "Total pipeline" and "Won value" rows hidden. "Entries", "Unique partners/consultants/end-clients" rows remain.
+- **Funnel by user table:** "Pipeline" and "Won" columns hidden from header and body.
+- **Data quality banner:** "missing deal value" warning suppressed entirely when pricing hidden (irrelevant without the field).
+
+### Preserved
+
+- All ₹-aware code paths (`formatINR`, `parseDealValueClient`, backend aggregation) remain intact. Flipping `SHOW_PRICING = true` after pricing integration restores the full monetary view without refactoring.
+- Backend aggregation (`handleReviewData` in Apps Script v24.5.1) still computes pipeline/won values — the frontend just chooses not to display them yet.
+
+### Rationale
+
+Per deployment feedback: showing a `₹892739.49 Cr` Pipeline number (clearly junk from earlier test entries) looked unprofessional and confused stakeholders. Since deal value was removed from the form in v24.4.6, new entries contribute 0 to pipeline, so the card only reflects legacy polluted data. Cleaner to hide until the numbers can be trusted.
+
+### Files in release
+
+- `brightsign-v24-4-8.html` — frontend only (Apps Script v24.5.2 unchanged)
+
+### Deploy
+
+Single-file swap. Replace `index.html` on GitHub. Hard refresh.
+
+---
+
 ## [v24.4.7 + Apps Script v24.5.2] — 2026-04-20 · Ghost entries purged
 
 Bug: User deleted entries from Google Sheet manually by clearing cell values (Delete key), which left empty rows. Backend read these empty rows and returned them as entries with blank data → frontend rendered them as ghost "1970-01-01 05:30 am" rows that couldn't be deleted (no refId).

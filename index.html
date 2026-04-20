@@ -3080,6 +3080,7 @@ html[data-theme="dark"] .log-edit-btn{box-shadow:0 2px 8px rgba(0,0,0,0.35);}
 
 /* Exec summary KPI strip */
 .exec-kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+.exec-kpi-grid.no-pricing{grid-template-columns:repeat(3,1fr);}
 .exec-kpi{
   padding:14px 16px;background:var(--surface-2);border-radius:10px;
   border:1px solid var(--border-soft);
@@ -3120,6 +3121,7 @@ html[data-theme="dark"] .log-edit-btn{box-shadow:0 2px 8px rgba(0,0,0,0.35);}
   display:grid;grid-template-columns:130px 60px 100px 1fr 70px;gap:12px;align-items:center;
   padding:10px 0;border-bottom:1px dashed var(--border-soft);
 }
+.funnel-row.no-pricing{grid-template-columns:130px 60px 1fr 70px;}
 .funnel-row:last-child{border-bottom:none;}
 .funnel-stage{font-family:var(--sans);font-size:12px;font-weight:600;color:var(--ink);}
 .funnel-count{font-family:var(--mono,monospace);font-size:13px;font-weight:600;color:var(--ink);text-align:right;}
@@ -4998,9 +5000,9 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           <div class="form-group" style="margin:0;"><label>Deal stage<span class="req">*</span></label><select id="f-stage"><option value="">Select stage…</option><option>Lead</option><option>Opportunity</option><option>Proposal</option><option>Negotiation</option><option>Order</option></select></div>
           <div class="form-group" style="margin:0;"><label>Lead source<span class="req">*</span></label><select id="f-leadsource"><option value="">Select source…</option><option value="OEM-referred">OEM-referred (BrightSign gave lead)</option><option value="Cavitak-generated">Cavitak-generated (we found it)</option></select></div>
           <div class="form-group" style="margin:0;"><label>Outcome<span class="req">*</span></label><select id="f-outcome"><option value="open">Open (active)</option><option value="won">Won</option><option value="lost">Lost</option><option value="on-hold">On hold</option></select></div>
-          <div class="form-group" style="margin:0;"><label>Expected close month<span class="req">*</span></label><input type="month" id="f-closemonth"></div>
+          <div class="form-group" style="margin:0;"><label>Expected close month<span class="req">*</span></label><select id="f-closemonth"><option value="">Select month…</option></select></div>
           <div class="form-group" style="margin:0;"><label>Contact person<span class="req">*</span></label><input type="text" id="f-contactname" placeholder="End-user contact name"></div>
-          <div class="form-group" style="margin:0;"><label>Contact phone<span class="req">*</span></label><input type="tel" id="f-contactphone" placeholder="10-digit mobile number" maxlength="15" inputmode="numeric"></div>
+          <div class="form-group" style="margin:0;"><label>Contact phone<span class="req">*</span></label><input type="tel" id="f-contactphone" placeholder="10-digit mobile number" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10);"></div>
           <div class="form-group" style="margin:0;"><label>Contact email<span class="req">*</span></label><input type="email" id="f-contactemail" placeholder="name@client.com" autocomplete="off"></div>
         </div>
       </div>
@@ -5396,7 +5398,11 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.4.7';
+const FRONTEND_VERSION = '24.4.9';
+/* v24.4.8: Feature flag — set to true once product pricing is integrated into the selector.
+   When false, hides all monetary cards/columns from Review tab (Pipeline, Won, etc.) since
+   there's no reliable source for deal value in this version. Keep at false until pricing lands. */
+const SHOW_PRICING = false;
 window.FRONTEND_VERSION = FRONTEND_VERSION;
 window._backendVersion = null;  // populated by ping
 window._versionMismatch = false;
@@ -6437,6 +6443,35 @@ function toggleTheme(){
   setThemeMode(next);
 }
 
+/* v24.4.9: Populate the close-month dropdown with 24 months forward from today.
+   Replaces <input type="month"> which had inconsistent cross-browser/mobile behavior.
+   Format values as "YYYY-MM" (same as the old input) so all downstream code works unchanged. */
+function populateCloseMonthDropdown(){
+  const sel=document.getElementById('f-closemonth');
+  if(!sel)return;
+  // Only populate once
+  if(sel.options.length>1)return;
+  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const now=new Date();
+  for(let i=0;i<24;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()+i,1);
+    const y=d.getFullYear();
+    const m=d.getMonth();
+    const value=y+'-'+String(m+1).padStart(2,'0');  // e.g. "2026-05"
+    const label=monthNames[m]+' '+y;
+    const opt=document.createElement('option');
+    opt.value=value;
+    opt.textContent=label;
+    sel.appendChild(opt);
+  }
+}
+// Run once when script parses (DOM will be ready since script is below the form)
+try{populateCloseMonthDropdown();}catch(e){console.warn('populateCloseMonthDropdown failed:',e);}
+// Also try again on DOMContentLoaded as safety net in case script ran too early
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',populateCloseMonthDropdown,{once:true});
+}
+
 // Apply saved theme immediately on script load
 (function initTheme(){
   try{
@@ -6572,9 +6607,14 @@ async function handleLogin(){
     // v23.1: Show Dashboard tab for all users (content differs by role)
     const dashTab=document.getElementById('tab-dashboard');
     if(dashTab){dashTab.style.display='inline-flex';}
-    // v24.4.0: Show Review tab for all users (scoped by role in backend)
+    // v24.4.9: Review tab restricted to Super + OEM only (channel-level analytics).
+    // Presales/Sales/Support have their own Dashboard tab — Review would be redundant for them.
     const reviewTab=document.getElementById('tab-review');
-    if(reviewTab){reviewTab.style.display='inline-flex';}
+    if(reviewTab){
+      const role=(state.user.role||'').trim();
+      const showReview=state.user.isSuper || role==='OEM';
+      reviewTab.style.display=showReview?'inline-flex':'none';
+    }
 
     document.getElementById('page-login').classList.remove('active');
     document.getElementById('page-app').classList.add('active');
@@ -8039,7 +8079,13 @@ function showTab(which){
     }
   }
   if(which==='team')renderTeamTab();
-  if(which==='review')renderReview();
+  if(which==='review'){
+    // v24.4.9: Double-guard — only Super + OEM can render review
+    const role=state.user?(state.user.role||'').trim():'';
+    const canReview=state.user && (state.user.isSuper || role==='OEM');
+    if(canReview)renderReview();
+    else{showTab('log');return;}
+  }
   window.scrollTo(0,0);
 }
 
@@ -8406,11 +8452,10 @@ function runSelector(){
     {key:'city',test:()=>!!f.city,id:'f-city',label:'City'},
     {key:'contactname',test:()=>!!f.contactname,id:'f-contactname',label:'Contact name'},
     {key:'contactphone',test:()=>{
-      // v24.4.5: Must contain exactly 10 digits (allow country code +91, spaces, dashes, parentheses as ignorable)
+      // v24.4.9: Must be EXACTLY 10 digits. No +91, no leading 0, no country code prefix.
       const digits=(f.contactphone||'').replace(/\D/g,'');
-      // Accept 10 digits, or 12 digits starting with 91 (India country code)
-      return digits.length===10 || (digits.length===12 && digits.substring(0,2)==='91') || (digits.length===11 && digits.substring(0,1)==='0');
-    },id:'f-contactphone',label:'Contact phone (must be 10 digits)'},
+      return digits.length===10;
+    },id:'f-contactphone',label:'Contact phone (must be exactly 10 digits)'},
     {key:'contactemail',test:()=>{
       // v24.4.5: Proper email format — x@y.z minimum
       const email=(f.contactemail||'').trim();
@@ -9266,9 +9311,9 @@ function renderReviewCards(host,data,period,comparePeriod){
       <div class="review-card-title">Executive summary</div>
       <div class="review-card-sub">${escapeHtml(period)}${compare?' vs '+escapeHtml(comparePeriod):''}</div>
     </div>
-    <div class="exec-kpi-grid">
-      ${kpi('Pipeline (₹)',formatINR(primary.pipelineValue),primary.pipelineValue,compare?compare.pipelineValue:null,false)}
-      ${kpi('Won (₹)',formatINR(primary.wonValue),primary.wonValue,compare?compare.wonValue:null,false)}
+    <div class="exec-kpi-grid${SHOW_PRICING?'':' no-pricing'}">
+      ${SHOW_PRICING?kpi('Pipeline (₹)',formatINR(primary.pipelineValue),primary.pipelineValue,compare?compare.pipelineValue:null,false):''}
+      ${SHOW_PRICING?kpi('Won (₹)',formatINR(primary.wonValue),primary.wonValue,compare?compare.wonValue:null,false):''}
       ${kpi('Win rate',primary.winRate+'%',primary.winRate,compare?compare.winRate:null,true)}
       ${kpi('Active deals',primary.activeCount,primary.activeCount,compare?compare.activeCount:null,false)}
       ${kpi('Total entries',primary.entryCount,primary.entryCount,compare?compare.entryCount:null,false)}
@@ -9277,30 +9322,37 @@ function renderReviewCards(host,data,period,comparePeriod){
 
   // Card 2: Business source split
   const bySource=primary.bySource||{OEM:{count:0,value:0},Cavitak:{count:0,value:0}};
-  const totalSrc=bySource.OEM.value+bySource.Cavitak.value;
-  const oemPct=totalSrc>0?Math.round((bySource.OEM.value/totalSrc)*100):0;
-  const cavPct=totalSrc>0?Math.round((bySource.Cavitak.value/totalSrc)*100):0;
+  // v24.4.8: when pricing is hidden, use deal COUNTS instead of ₹ values for the split
+  const oemMetric=SHOW_PRICING?bySource.OEM.value:bySource.OEM.count;
+  const cavMetric=SHOW_PRICING?bySource.Cavitak.value:bySource.Cavitak.count;
+  const totalSrc=oemMetric+cavMetric;
+  const oemPct=totalSrc>0?Math.round((oemMetric/totalSrc)*100):0;
+  const cavPct=totalSrc>0?Math.round((cavMetric/totalSrc)*100):0;
   const compSrc=compare?compare.bySource:null;
-  const oemDelta=compSrc?computeDelta(bySource.OEM.value,compSrc.OEM.value,false):null;
-  const cavDelta=compSrc?computeDelta(bySource.Cavitak.value,compSrc.Cavitak.value,false):null;
-  const compOemPct=compSrc&&(compSrc.OEM.value+compSrc.Cavitak.value)>0?Math.round((compSrc.OEM.value/(compSrc.OEM.value+compSrc.Cavitak.value))*100):0;
-  const compCavPct=compSrc&&(compSrc.OEM.value+compSrc.Cavitak.value)>0?Math.round((compSrc.Cavitak.value/(compSrc.OEM.value+compSrc.Cavitak.value))*100):0;
+  const compOemMetric=compSrc?(SHOW_PRICING?compSrc.OEM.value:compSrc.OEM.count):0;
+  const compCavMetric=compSrc?(SHOW_PRICING?compSrc.Cavitak.value:compSrc.Cavitak.count):0;
+  const oemDelta=compSrc?computeDelta(oemMetric,compOemMetric,false):null;
+  const cavDelta=compSrc?computeDelta(cavMetric,compCavMetric,false):null;
+  const compTotalSrc=compOemMetric+compCavMetric;
+  const compCavPct=compTotalSrc>0?Math.round((compCavMetric/compTotalSrc)*100):0;
   const shareDelta=compSrc?computeDelta(cavPct,compCavPct,true):null;
+  const valueLabel=(n)=>SHOW_PRICING?formatINR(n):(n+' '+(n===1?'deal':'deals'));
+  const subLabel=totalSrc>0?(SHOW_PRICING?'₹'+formatINR(totalSrc).replace('₹',''):(totalSrc+' total deals')):'no data';
   parts.push(`<div class="review-card">
     <div class="review-card-head">
       <div class="review-card-icon ri-src">◐</div>
       <div class="review-card-title">Business source split</div>
-      <div class="review-card-sub">${totalSrc>0?'₹'+formatINR(totalSrc).replace('₹',''):'no data'}</div>
+      <div class="review-card-sub">${subLabel}</div>
     </div>
     <div class="source-row">
       <div><div class="source-label">OEM-referred</div>${oemDelta?`<div class="source-delta ${oemDelta.cls}">${oemDelta.label}</div>`:''}</div>
       <div class="source-bar-wrap"><div class="source-bar source-bar-oem" style="width:${Math.max(oemPct,4)}%"><span class="source-bar-pct">${oemPct}%</span></div></div>
-      <div class="source-value">${formatINR(bySource.OEM.value)}</div>
+      <div class="source-value">${valueLabel(oemMetric)}</div>
     </div>
     <div class="source-row">
       <div><div class="source-label">Cavitak-generated</div>${cavDelta?`<div class="source-delta ${cavDelta.cls}">${cavDelta.label}</div>`:''}</div>
       <div class="source-bar-wrap"><div class="source-bar source-bar-cavitak" style="width:${Math.max(cavPct,4)}%"><span class="source-bar-pct">${cavPct}%</span></div></div>
-      <div class="source-value">${formatINR(bySource.Cavitak.value)}</div>
+      <div class="source-value">${valueLabel(cavMetric)}</div>
     </div>
     ${shareDelta?`<div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border-soft);font-family:var(--sans);font-size:12px;color:var(--ink-muted);">Cavitak share: ${cavPct}% <span class="${shareDelta.cls}">(${shareDelta.label} vs compare)</span></div>`:''}
   </div>`);
@@ -9319,10 +9371,10 @@ function renderReviewCards(host,data,period,comparePeriod){
     } else if(i===0){
       retention='—';
     }
-    funRows+=`<div class="funnel-row">
+    funRows+=`<div class="funnel-row${SHOW_PRICING?'':' no-pricing'}">
       <div class="funnel-stage">${escapeHtml(f.stage)}</div>
       <div class="funnel-count">${f.count}</div>
-      <div class="funnel-value">${formatINR(f.value)}</div>
+      ${SHOW_PRICING?`<div class="funnel-value">${formatINR(f.value)}</div>`:''}
       <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${Math.max(barW,2)}%"></div></div>
       <div class="funnel-retention">${retention}</div>
     </div>`;
@@ -9332,6 +9384,8 @@ function renderReviewCards(host,data,period,comparePeriod){
   const overallConv=leadCount>0?Math.round((orderCount/leadCount)*100):0;
   const lost=primary.lost||{count:0,value:0};
   const onHold=primary.onHold||{count:0,value:0};
+  const lostDisp=SHOW_PRICING?`${lost.count} (${formatINR(lost.value)})`:lost.count;
+  const onHoldDisp=SHOW_PRICING?`${onHold.count} (${formatINR(onHold.value)})`:onHold.count;
   parts.push(`<div class="review-card">
     <div class="review-card-head">
       <div class="review-card-icon ri-funnel">▽</div>
@@ -9344,8 +9398,8 @@ function renderReviewCards(host,data,period,comparePeriod){
       <span class="funnel-total-rate">${overallConv}%</span>
     </div>
     <div class="funnel-dropped">
-      <span class="funnel-dropped-pill" style="color:#991B1B;">✖ Lost: ${lost.count} (${formatINR(lost.value)})</span>
-      <span class="funnel-dropped-pill" style="color:#92400E;">⏸ On hold: ${onHold.count} (${formatINR(onHold.value)})</span>
+      <span class="funnel-dropped-pill" style="color:#991B1B;">✖ Lost: ${lostDisp}</span>
+      <span class="funnel-dropped-pill" style="color:#92400E;">⏸ On hold: ${onHoldDisp}</span>
     </div>
   </div>`);
 
@@ -9395,8 +9449,8 @@ function renderReviewCards(host,data,period,comparePeriod){
       </thead>
       <tbody>
         ${qRow('Entries',b=>b.entryCount||0)}
-        ${qRow('Pipeline',b=>formatINR(b.pipelineValue||0))}
-        ${qRow('Won',b=>formatINR(b.wonValue||0))}
+        ${SHOW_PRICING?qRow('Pipeline',b=>formatINR(b.pipelineValue||0)):''}
+        ${SHOW_PRICING?qRow('Won',b=>formatINR(b.wonValue||0)):''}
         ${qRow('Win rate',b=>(b.winRate||0)+'%')}
       </tbody>
     </table>
@@ -9426,8 +9480,8 @@ function renderReviewCards(host,data,period,comparePeriod){
         </tr>
       </thead>
       <tbody>
-        ${yoyRow('Total pipeline',ytdPrim.pipelineValue,prevFY.pipelineValue,formatINR)}
-        ${yoyRow('Won value',ytdPrim.wonValue,prevFY.wonValue,formatINR)}
+        ${SHOW_PRICING?yoyRow('Total pipeline',ytdPrim.pipelineValue,prevFY.pipelineValue,formatINR):''}
+        ${SHOW_PRICING?yoyRow('Won value',ytdPrim.wonValue,prevFY.wonValue,formatINR):''}
         ${yoyRow('Entries',ytdPrim.entryCount,prevFY.entryCount)}
         ${yoyRow('Unique partners',(ytdPrim.ecosystem||{}).partners||0,(prevFY.ecosystem||{}).partners||0)}
         ${yoyRow('Unique consultants',(ytdPrim.ecosystem||{}).consultants||0,(prevFY.ecosystem||{}).consultants||0)}
@@ -9450,7 +9504,7 @@ function renderReviewCards(host,data,period,comparePeriod){
           <tr>
             <th>User</th>
             <th class="num">Lead</th><th class="num">Oppt</th><th class="num">Prop</th><th class="num">Neg</th><th class="num">Order</th>
-            <th class="num">Pipeline</th><th class="num">Won</th>
+            ${SHOW_PRICING?'<th class="num">Pipeline</th><th class="num">Won</th>':''}
           </tr>
         </thead>
         <tbody>
@@ -9461,18 +9515,19 @@ function renderReviewCards(host,data,period,comparePeriod){
             <td class="num">${u.funnel[2].count}</td>
             <td class="num">${u.funnel[3].count}</td>
             <td class="num">${u.funnel[4].count}</td>
-            <td class="num">${formatINR(u.pipelineValue)}</td>
-            <td class="num">${formatINR(u.wonValue)}</td>
+            ${SHOW_PRICING?`<td class="num">${formatINR(u.pipelineValue)}</td><td class="num">${formatINR(u.wonValue)}</td>`:''}
           </tr>`).join('')}
         </tbody>
       </table>
     </div>`);
   }
 
-  // Data quality banner
-  const missing=(data.meta&&data.meta.missingDealValue)||0;
-  if(missing>0){
-    parts.push(`<div class="data-quality-banner">⚠️ ${missing} entr${missing===1?'y has':'ies have'} missing deal value — totals above may be understated. Edit those entries to fix.</div>`);
+  // Data quality banner (only relevant when pricing is shown)
+  if(SHOW_PRICING){
+    const missing=(data.meta&&data.meta.missingDealValue)||0;
+    if(missing>0){
+      parts.push(`<div class="data-quality-banner">⚠️ ${missing} entr${missing===1?'y has':'ies have'} missing deal value — totals above may be understated. Edit those entries to fix.</div>`);
+    }
   }
 
   host.innerHTML=parts.join('');
