@@ -5382,6 +5382,16 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           <div class="field" style="margin-bottom:0;"><label class="field-label">Wi-Fi<span class="req">*</span></label><div class="pill-group" data-input="wifi"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
           <div class="field" style="margin-bottom:0;"><label class="field-label">GPIO port required<span class="req">*</span></label><div class="pill-group" data-input="gpio"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div><div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;line-height:1.4;">12-pin Phoenix for sensors, buttons, relays</div></div>
           <div class="field" style="margin-bottom:0;"><label class="field-label">SSD required<span class="req">*</span></label><div class="pill-group" data-input="ssd"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div><div class="ssd-cap-wrap" id="ssd-cap-wrap"><select id="f-ssd-cap"><option value="">Storage capacity…</option><option value="128">128 GB</option><option value="256">256 GB</option><option value="512">512 GB</option><option value="1024">1 TB</option></select></div></div>
+          <!-- v24.4.19: XC OS variant — only relevant if budget lands on XC (tier 5 Flagship). -->
+          <div class="field" id="field-xc-os" style="margin-bottom:0;display:none;">
+            <label class="field-label">XC operating system<span class="req">*</span></label>
+            <div class="pill-group" data-input="xc-os">
+              <button class="pill selected" data-v="std">BrightSignOS (Standard)</button>
+              <button class="pill" data-v="win">Windows IoT (Win10/Win11)</button>
+            </div>
+            <input type="hidden" id="f-xc-os" value="std">
+            <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;line-height:1.4;">Windows IoT variant costs <strong>+₹27,083</strong> per player — select if Win10/Win11 apps are required.</div>
+          </div>
         </div>
       </div>
 
@@ -5717,7 +5727,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.4.18';
+const FRONTEND_VERSION = '24.4.19';
 /* v24.4.8: Feature flag — set to true once product pricing is integrated into the selector.
    When false, hides all monetary cards/columns from Review tab (Pipeline, Won, etc.) since
    there's no reliable source for deal value in this version. Keep at false until pricing lands. */
@@ -5869,6 +5879,73 @@ const BUDGET_ZONES = {
   5:{name:'Flagship',    models:'XC series · x86',   groups:['XC']}
 };
 const SERIES_LADDER = ['AU','LS','HD','XD','XT','XC'];
+
+/* v24.4.19: Indian rupee pricing for BrightSign Series 5 SKUs.
+   These are FINAL quoted prices (already negotiated), not MRP — no discount applied.
+   Update this map (and bump FRONTEND_VERSION) to change prices.
+
+   XC variants: base price is "Standard" (BrightSignOS). Selecting Win10/Win11 adds a
+   surcharge that brings the total to the Windows variant price from the rate card.
+
+   Series 6 SKUs (HD226/HD1026/XD236/XD1036) map to the same prices as their Series 5
+   predecessors (HD225/HD1025/XD235/XD1035) plus a small uplift, since Dipenkumar's rate
+   card shows the Series 6 prices. Adjust if the rate card diverges further. */
+const PRICING = {
+  // Series 5 — audio + HD + 4K
+  'AU335'  : 25729,
+  'LS425'  : 47396,
+  'LS445'  : 61615,
+  'HD225'  : 74479,   // Dipenkumar: rate card shows HD226 at this price; HD225 ≈ same
+  'HD1025' : 88021,
+  'XD235'  : 90729,
+  'XD1035' : 104271,
+  'XT245'  : 126615,
+  'XT1145' : 140156,
+  'XT2145' : 167240,
+  'XC2055' : 174688,
+  'XC4055' : 242396,
+  // Series 6 — use rate-card prices directly (mapped from price list provided Apr 2026)
+  'HD226'  : 74479,
+  'HD1026' : 88021,
+  'XD236'  : 90729,
+  'XD1036' : 104271
+};
+
+/* v24.4.19: XC Windows IoT variant surcharge.
+   When user selects Win10/Win11 as OS on an XC model, add this delta to the base price
+   to arrive at the Windows variant price from the rate card.
+   XC2055 base ₹174,688 + delta ₹27,083 = ₹201,771 (Win10/Win11)
+   XC4055 base ₹242,396 + delta ₹27,083 = ₹269,479 (Win10/Win11) */
+const XC_WIN_SURCHARGE = 27083;
+
+/* v24.4.19: WD105 — Wi-Fi dongle/module. Auto-added as accessory line item when
+   form selects Wi-Fi = Yes. One WD105 per player is assumed. */
+const WD105_PRICE = 16000;
+const WD105_SKU   = 'WD105';
+const WD105_NAME  = 'WD105 Wi-Fi module';
+
+/* v24.4.19: INR currency formatter — Indian grouping (1,23,456) */
+function formatINR(amount){
+  if(amount==null||isNaN(amount))return '—';
+  try{
+    return '₹'+Number(amount).toLocaleString('en-IN',{maximumFractionDigits:0});
+  }catch(e){
+    // Fallback if browser doesn't support en-IN
+    return '₹'+Math.round(Number(amount)).toString();
+  }
+}
+
+/* v24.4.19: Get unit price for a given model, factoring in XC OS variant.
+   Returns { unitPrice, sku, note } — sku is the actual variant SKU, note is optional disclaimer. */
+function getModelPrice(modelId, osVariant){
+  const base=PRICING[modelId];
+  if(base==null)return {unitPrice:null,sku:modelId,note:'Price not set — contact presales.'};
+  // XC models with Windows IoT variant
+  if((modelId==='XC2055'||modelId==='XC4055') && osVariant==='win'){
+    return {unitPrice:base+XC_WIN_SURCHARGE, sku:modelId+' - Win10/Win11', note:null};
+  }
+  return {unitPrice:base, sku:modelId, note:null};
+}
 
 /* BrightSign product photos — series-level images from brightsign.biz CDN.
    One photo per series (BrightSign uses visually identical photos for sub-variants).
@@ -6720,7 +6797,7 @@ const TENDER_CLAUSES = {
 
 const state = {
   user:null,
-  form:{project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',outcome:'open'},
+  form:{project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',xcOs:'std',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',outcome:'open'},
   result:null,
   osChoice:'brightsignos'
 };
@@ -8546,12 +8623,17 @@ document.querySelectorAll('.pill-group').forEach(group=>{
       group.querySelectorAll('.pill').forEach(p=>p.classList.remove('selected'));
       pill.classList.add('selected');
       const val=pill.getAttribute('data-v');
-      const keyMap={'resolution':'resolution','outputs':'outputs','hdmi-in':'hdmiIn','touch':'touch','wifi':'wifi','ssd':'ssd','gpio':'gpio','cms-term':'cmsTerm','cms-include':'cmsInclude'};
+      const keyMap={'resolution':'resolution','outputs':'outputs','hdmi-in':'hdmiIn','touch':'touch','wifi':'wifi','ssd':'ssd','gpio':'gpio','cms-term':'cmsTerm','cms-include':'cmsInclude','xc-os':'xcOs'};
       state.form[keyMap[key]]=val;
       if(key==='ssd'){
         const capWrap=document.getElementById('ssd-cap-wrap');
         capWrap.classList.toggle('show',val==='yes');
         if(val==='no'){state.form.ssdCap='';document.getElementById('f-ssd-cap').value='';}
+      }
+      // v24.4.19: keep hidden f-xc-os input in sync for getModelPrice() reads
+      if(key==='xc-os'){
+        const hidden=document.getElementById('f-xc-os');
+        if(hidden)hidden.value=val;
       }
       // v15: clear field-error state when user picks a value
       const wrap=group.closest('.field');if(wrap)wrap.classList.remove('field-error');
@@ -8559,6 +8641,20 @@ document.querySelectorAll('.pill-group').forEach(group=>{
     });
   });
 });
+
+// v24.4.19: XC OS variant field visibility — shown only when budget slider lands on tier 5 (XC/Flagship)
+(function wireXcOsVisibility(){
+  const budget=document.getElementById('f-budget');
+  const xcField=document.getElementById('field-xc-os');
+  if(!budget||!xcField)return;
+  function sync(){
+    const tier=parseInt(budget.value,10);
+    xcField.style.display=(tier===5)?'':'none';
+  }
+  budget.addEventListener('input',sync);
+  budget.addEventListener('change',sync);
+  sync();
+})();
 
 document.querySelectorAll('.choice-grid').forEach(group=>{
   const key=group.getAttribute('data-input');
@@ -8797,6 +8893,11 @@ function resetForm(){
   document.getElementById('mixed-qty-wrap').style.display='none';
   document.querySelectorAll('.pill').forEach(p=>p.classList.remove('selected'));
   document.querySelectorAll('.choice-card').forEach(p=>p.classList.remove('selected'));
+  // v24.4.19: Reset XC OS variant to 'std' (BrightSignOS) — also re-select the default pill.
+  const xcOsDefault=document.querySelector('[data-input="xc-os"] [data-v="std"]');
+  if(xcOsDefault)xcOsDefault.classList.add('selected');
+  const xcOsHidden=document.getElementById('f-xc-os');
+  if(xcOsHidden)xcOsHidden.value='std';
   document.getElementById('section-video-specs').style.display='block';
   document.getElementById('ssd-cap-wrap').classList.remove('show');
   document.getElementById('form-error').classList.remove('show');
@@ -8810,7 +8911,7 @@ function resetForm(){
   if(oneYrPill)oneYrPill.classList.add('selected');
   document.getElementById('section-cms').style.display='none';
   clearFieldErrors();
-  state.form={project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',outcome:'open'};
+  state.form={project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',xcOs:'std',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',outcome:'open'};
   setBudget(2);
   document.querySelectorAll('.progress-step').forEach(s=>s.classList.remove('done'));
   // v20.1: Clear any lingering lock from prior sessions
@@ -9346,11 +9447,11 @@ function buildPricingCallout(){
           <circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/>
         </svg>
       </span>
-      For Pricing &amp; Quotation
+      For Better Pricing
     </div>
     <div class="glass-card-divider"></div>
     <div class="pricing-callout-inner">
-      <div class="pricing-callout-eyebrow">Contact for best pricing</div>
+      <div class="pricing-callout-eyebrow">Call Dipenkumar for better pricing</div>
       <div class="pricing-callout-name">Dipenkumar Gajjar</div>
       <div class="pricing-callout-role">National Product Manager · BrightSign Portfolio</div>
       <div class="pricing-callout-pills">
@@ -9363,7 +9464,7 @@ function buildPricingCallout(){
           +91 8160 756 906
         </a>
       </div>
-      <div class="pricing-callout-note">Download the Excel BOM below and email it along with your enquiry for a swift quote.</div>
+      <div class="pricing-callout-note">Prices shown above are indicative. Contact Dipenkumar for volume rates, stock position, and PO placement.</div>
     </div>
   </div>`;
 }
@@ -9376,26 +9477,52 @@ function buildBOMCard(m,f,cms){
   const qtyOutdoor=isMixed?(parseInt(f.qtyOutdoor)||0):0;
   const rows=[];
   const ssdActive=f.ssd==='yes' && m.ssdCapable!==false && f.ssdCap;
+  // v24.4.19: XC OS variant affects price. Read from form if present.
+  const xcOs=(document.getElementById('f-xc-os')||{}).value||'std';
   // Primary model line (indoor slice if mixed, else full qty)
   if(ssdActive){
-    rows.push({name:`BrightSign ${m.id}`, qty:qtyIndoor, note:m.tag+(isMixed?' · Indoor slice':'')});
+    const pp=getModelPrice(m.id,xcOs);
+    rows.push({name:`BrightSign ${pp.sku}`, qty:qtyIndoor, unitPrice:pp.unitPrice, note:m.tag+(isMixed?' · Indoor slice':'')});
     const capLabel=f.ssdCap==='1024'?'1 TB':f.ssdCap+' GB';
-    rows.push({name:`M.2 NVMe SSD — ${capLabel}`, qty:qtyTotal, note:m.ssdCapable===null?'Verify M.2 NVMe compatibility · cost excluded':'Cost excluded'});
+    rows.push({name:`M.2 NVMe SSD — ${capLabel}`, qty:qtyTotal, unitPrice:null, note:m.ssdCapable===null?'Verify M.2 NVMe compatibility · cost excluded':'Cost excluded'});
   } else {
-    rows.push({name:`BrightSign ${m.id}`, qty:qtyIndoor, note:`${m.tag}${isMixed?' · Indoor slice':''} · 64 GB microSD included`});
+    const pp=getModelPrice(m.id,xcOs);
+    rows.push({name:`BrightSign ${pp.sku}`, qty:qtyIndoor, unitPrice:pp.unitPrice, note:`${m.tag}${isMixed?' · Indoor slice':''} · 64 GB microSD included`});
   }
   // Outdoor variant line for mixed deployments
   if(isMixed && r && r.outdoorVariant && qtyOutdoor>0){
-    rows.push({name:`BrightSign ${r.outdoorVariant.id}`, qty:qtyOutdoor, note:`${r.outdoorVariant.tag} · Outdoor slice · aluminium chassis · 64 GB microSD included`});
+    const op=getModelPrice(r.outdoorVariant.id,xcOs);
+    rows.push({name:`BrightSign ${op.sku}`, qty:qtyOutdoor, unitPrice:op.unitPrice, note:`${r.outdoorVariant.tag} · Outdoor slice · aluminium chassis · 64 GB microSD included`});
   }
-  if(f.wifi==='yes')rows.push({name:'WD-105 Wi-Fi / Bluetooth module', qty:qtyTotal, note:'M.2 E-Key dual-antenna'});
+  // v24.4.19: WD105 Wi-Fi module — auto-add when form has Wi-Fi = Yes
+  if(f.wifi==='yes')rows.push({name:`${WD105_NAME} (${WD105_SKU})`, qty:qtyTotal, unitPrice:WD105_PRICE, note:'M.2 E-Key dual-antenna Wi-Fi + Bluetooth module'});
   // v20: CMS rows now come directly from computeCMS (empty for Local ≤25, populated otherwise)
   if(cms.rows && cms.rows.length){
     cms.rows.forEach(row=>rows.push(row));
   }
-  let html=`<div class="glass-card"><div class="glass-card-title"><span class="glass-card-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M9 3v18"/></svg></span>Bill of Materials<span style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-subtle);font-weight:500;letter-spacing:0.04em;text-transform:uppercase;">${rows.length} line item${rows.length===1?'':'s'}</span></div><div class="glass-card-divider"></div><table class="bom-table-v21"><thead><tr><th>Line item</th><th class="num" style="width:90px;">Qty</th></tr></thead><tbody>`;
-  rows.forEach(row=>{html+=`<tr><td><div class="bom-item-name-v21">${row.name}</div>${row.note?`<div class="bom-item-note-v21">${row.note}</div>`:''}</td><td class="num">${row.qty}</td></tr>`;});
+  // v24.4.19: Compute subtotals and grand total
+  let subtotal=0;
+  rows.forEach(row=>{
+    if(row.unitPrice!=null && !isNaN(row.unitPrice)){
+      row.lineTotal=row.unitPrice*row.qty;
+      subtotal+=row.lineTotal;
+    }
+  });
+  const gst=Math.round(subtotal*0.18);
+  const grandTotal=subtotal+gst;
+  let html=`<div class="glass-card"><div class="glass-card-title"><span class="glass-card-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M9 3v18"/></svg></span>Bill of Materials<span style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-subtle);font-weight:500;letter-spacing:0.04em;text-transform:uppercase;">${rows.length} line item${rows.length===1?'':'s'}</span></div><div class="glass-card-divider"></div><table class="bom-table-v21"><thead><tr><th>Line item</th><th class="num" style="width:70px;">Qty</th><th class="num" style="width:120px;">Unit price</th><th class="num" style="width:130px;">Subtotal</th></tr></thead><tbody>`;
+  rows.forEach(row=>{
+    const unitCell=row.unitPrice!=null?formatINR(row.unitPrice):'<span style="color:var(--ink-subtle);">—</span>';
+    const subCell=row.lineTotal!=null?formatINR(row.lineTotal):'<span style="color:var(--ink-subtle);">—</span>';
+    html+=`<tr><td><div class="bom-item-name-v21">${row.name}</div>${row.note?`<div class="bom-item-note-v21">${row.note}</div>`:''}</td><td class="num">${row.qty}</td><td class="num">${unitCell}</td><td class="num">${subCell}</td></tr>`;
+  });
+  // Totals rows
+  html+=`<tr style="background:var(--surface-2,rgba(0,0,0,0.02));"><td colspan="3" style="text-align:right;font-weight:600;">Subtotal</td><td class="num" style="font-weight:700;">${formatINR(subtotal)}</td></tr>`;
+  html+=`<tr style="background:var(--surface-2,rgba(0,0,0,0.02));"><td colspan="3" style="text-align:right;font-weight:600;">GST @ 18%</td><td class="num" style="font-weight:700;">${formatINR(gst)}</td></tr>`;
+  html+=`<tr style="background:linear-gradient(135deg,rgba(79,70,229,0.08) 0%,rgba(99,102,241,0.12) 100%);"><td colspan="3" style="text-align:right;font-weight:700;font-size:14px;color:var(--indigo);">Grand total</td><td class="num" style="font-weight:800;font-size:15px;color:var(--indigo);">${formatINR(grandTotal)}</td></tr>`;
   html+=`</tbody></table></div>`;
+  // Cache totals on state for Excel + email to reuse
+  state._bomTotals={subtotal,gst,grandTotal,rows};
   return html;
 }
 /* v21: Dual-model tender spec — Common clauses shared, per-model unique sections stacked */
@@ -10596,22 +10723,50 @@ function downloadQuoteExcel(returnWorkbook){
   qAoa.push(['BILL OF MATERIALS']);
   qAoa.push(['#','SKU','Description','Qty','Unit Price (₹)','Line Total (₹)','Notes']);
 
+  // v24.4.19: Prefer real BOM totals cached by buildBOMCard — these already include pricing,
+  // XC variant handling, WD105, and CMS rows. Fall back to legacy logic if not present.
+  const cachedTotals=state._bomTotals;
   const bomRows=[];
-  if(isMixed){
-    bomRows.push({sku:m.id,desc:`BrightSign ${m.id} — ${m.tag} (Indoor)`,qty:qtyIndoor,notes:'Indoor deployment'});
-    if(om){bomRows.push({sku:om.id,desc:`BrightSign ${om.id} — ${om.tag} (Outdoor)`,qty:qtyOutdoor,notes:'Outdoor deployment · aluminium chassis'});}
+  if(cachedTotals && cachedTotals.rows && cachedTotals.rows.length){
+    cachedTotals.rows.forEach(r=>{
+      // Extract a plausible SKU from the display name.
+      // BOM rows look like "BrightSign XT1145" or "WD105 Wi-Fi module (WD105)" or "BrightSign XC2055 - Win10/Win11".
+      let sku='';
+      const nm=(r.name||'').trim();
+      // Match "BrightSign <SKU>" or text in parens at end, e.g. "(WD105)"
+      const mBs=nm.match(/BrightSign\s+([A-Z0-9]+(?:\s-\s[A-Za-z0-9/]+)?)/);
+      const mParen=nm.match(/\(([A-Z0-9-]+)\)\s*$/);
+      if(mBs)sku=mBs[1];
+      else if(mParen)sku=mParen[1];
+      else sku=nm.split(' ')[0]||'—';
+      bomRows.push({
+        sku:sku,
+        desc:nm+(r.note?' — '+r.note.replace(/<[^>]+>/g,''):''),
+        qty:r.qty,
+        unitPrice:(r.unitPrice!=null&&!isNaN(r.unitPrice))?Number(r.unitPrice):null,
+        notes:r.note?r.note.replace(/<[^>]+>/g,''):''
+      });
+    });
   } else {
-    bomRows.push({sku:m.id,desc:`BrightSign ${m.id} — ${m.tag}`,qty:qtyTotal,notes:m.chassis==='aluminium'?'Outdoor Grade':'Indoor Grade'});
+    // Legacy fallback
+    if(isMixed){
+      bomRows.push({sku:m.id,desc:`BrightSign ${m.id} — ${m.tag} (Indoor)`,qty:qtyIndoor,unitPrice:(getModelPrice(m.id,f.xcOs).unitPrice),notes:'Indoor deployment'});
+      if(om){bomRows.push({sku:om.id,desc:`BrightSign ${om.id} — ${om.tag} (Outdoor)`,qty:qtyOutdoor,unitPrice:(getModelPrice(om.id,f.xcOs).unitPrice),notes:'Outdoor deployment · aluminium chassis'});}
+    } else {
+      bomRows.push({sku:m.id,desc:`BrightSign ${m.id} — ${m.tag}`,qty:qtyTotal,unitPrice:(getModelPrice(m.id,f.xcOs).unitPrice),notes:m.chassis==='aluminium'?'Outdoor Grade':'Indoor Grade'});
+    }
+    if(f.ssd==='yes')bomRows.push({sku:'BS-SSD-'+(f.ssdCap||'256'),desc:`BrightSign SSD ${f.ssdCap==='1024'?'1TB':(f.ssdCap||'256')+'GB'} M.2 NVMe`,qty:qtyTotal,unitPrice:null,notes:'Expanded storage — price on request'});
+    if(f.wifi==='yes')bomRows.push({sku:WD105_SKU,desc:WD105_NAME+' (M.2 E-Key)',qty:qtyTotal,unitPrice:WD105_PRICE,notes:'Wi-Fi + BT connectivity'});
+    const excelCmsQ=computeCMS(f);
+    if(excelCmsQ.rows){excelCmsQ.rows.forEach(row=>bomRows.push({sku:'SVC-CMS',desc:row.name,qty:row.qty,unitPrice:null,notes:row.note||'CMS service'}));}
   }
-  if(f.ssd==='yes')bomRows.push({sku:'BS-SSD-'+(f.ssdCap||'256'),desc:`BrightSign SSD ${f.ssdCap==='1024'?'1TB':(f.ssdCap||'256')+'GB'} M.2 NVMe`,qty:qtyTotal,notes:'Expanded storage'});
-  if(f.wifi==='yes')bomRows.push({sku:'WD-105',desc:'WD-105 Wi-Fi / Bluetooth module (M.2 E-Key)',qty:qtyTotal,notes:'Wi-Fi + BT connectivity'});
-  const excelCmsQ=computeCMS(f);
-  if(excelCmsQ.rows){excelCmsQ.rows.forEach(row=>bomRows.push({sku:'SVC-CMS',desc:row.name,qty:row.qty,notes:row.note||'CMS service'}));}
 
   const bomStartRow=qAoa.length+1;
   bomRows.forEach((row,i)=>{
     const rn=bomStartRow+i;
-    qAoa.push([i+1,row.sku,row.desc,row.qty,'',{f:`D${rn}*E${rn}`},row.notes]);
+    // v24.4.19: If we have a real unit price, put it as a number cell; otherwise leave blank for manual fill.
+    const unitCell=(row.unitPrice!=null&&!isNaN(row.unitPrice))?Number(row.unitPrice):'';
+    qAoa.push([i+1,row.sku,row.desc,row.qty,unitCell,{f:`D${rn}*E${rn}`},row.notes]);
   });
 
   const subRow=bomStartRow+bomRows.length+1;
@@ -10686,8 +10841,9 @@ function downloadQuoteExcel(returnWorkbook){
       alignment:{horizontal:ci===0||ci===3?'center':'left',vertical:'center',indent:ci===2||ci===6?1:0,wrapText:true}
     });
   });
-  bomRows.forEach((_,i)=>{
+  bomRows.forEach((rowData,i)=>{
     const rn=bomStartRow+i;
+    const hasPrice=(rowData.unitPrice!=null&&!isNaN(rowData.unitPrice));
     'ABCDEFG'.split('').forEach((col,ci)=>{
       const baseStyle={
         fill:{fgColor:{rgb:C.white}},
@@ -10697,7 +10853,9 @@ function downloadQuoteExcel(returnWorkbook){
       };
       if(ci===1)baseStyle.font.bold=true;
       if(ci===4||ci===5)baseStyle.numFmt='#,##0';
-      if(ci===4){
+      // v24.4.19: Only draw the amber fill-in frame when no price is populated;
+      // for rows with a real price, keep the standard white/indigo cell styling.
+      if(ci===4 && !hasPrice){
         baseStyle.fill={fgColor:{rgb:'FFFBEB'}};
         baseStyle.border={top:{style:'thin',color:{rgb:'FBBF24'}},bottom:{style:'thin',color:{rgb:'FBBF24'}},left:{style:'thin',color:{rgb:'FBBF24'}},right:{style:'thin',color:{rgb:'FBBF24'}}};
       }
@@ -10923,10 +11081,15 @@ async function emailQuoteToPartner(){
     `Quantity: ${f.qty} unit${f.qty==1?'':'s'}`,
     `Deployment type: ${envStr}`,
     `Resolution: ${resStr}`,
+    ...((state._bomTotals && state._bomTotals.grandTotal)?[
+      '',
+      `Indicative quotation: ${formatINR(state._bomTotals.grandTotal)} (incl. GST @ 18%)`,
+      `(Subtotal ${formatINR(state._bomTotals.subtotal)} + GST ${formatINR(state._bomTotals.gst)})`
+    ]:[]),
     '',
-    `The attached Excel has three sheets: Summary, Quotation (with unit-price cells for you to fill), and Tender Compliance (for consultant/RFP response).`,
+    `The attached Excel has three sheets: Summary, Quotation (with BOM line-items + indicative pricing), and Tender Compliance (for consultant/RFP response).`,
     '',
-    `For commercial terms, pricing, stock position, or any clarifications, please contact:`,
+    `For commercial terms, volume rates, stock position, or any clarifications, please contact:`,
     `Dipenkumar Gajjar — National Product Manager, BrightSign`,
     `Cavitak Marketing Pvt Ltd · dipen.g@cavitak.com`,
     '',
@@ -11287,6 +11450,7 @@ function editPastEntry(entryIdx){
     gpio:entry.gpio||null,
     ssd:entry.ssd==='yes'?'yes':(entry.ssd==='no'?'no':null),
     ssdCap:'',
+    xcOs:entry.xcOs||'std',
     cmsVendor:entry.cmsVendor||'BrightSign CMS',
     cmsTerm:(entry.cmsTerm||'1').toString(),
     cmsInclude:null
