@@ -89,6 +89,116 @@ Single-file swap. Replace `index.html` on GitHub. Hard refresh.
 
 ---
 
+## [v24.4.19] — 2026-04-22 · Pricing integration (MAJOR feature)
+
+Frontend-only patch. First BrightSign release with in-app pricing. Previously the selector stopped at the BOM and directed users to contact Dipenkumar for quotes; now final prices flow from the BOM through to the Excel quote and the partner email.
+
+### Added — Hardcoded pricing catalog
+
+New `PRICING` const map with final (post-negotiation) INR prices for every currently-shipping SKU:
+
+| Series | Model | Price |
+|--------|-------|-------|
+| AU | AU335 | ₹25,729 |
+| LS | LS425 | ₹47,396 |
+| LS | LS445 | ₹61,615 |
+| HD | HD225 / HD226 | ₹74,479 |
+| HD | HD1025 / HD1026 | ₹88,021 |
+| XD | XD235 / XD236 | ₹90,729 |
+| XD | XD1035 / XD1036 | ₹1,04,271 |
+| XT | XT245 | ₹1,26,615 |
+| XT | XT1145 | ₹1,40,156 |
+| XT | XT2145 | ₹1,67,240 |
+| XC | XC2055 (Standard) | ₹1,74,688 |
+| XC | XC4055 (Standard) | ₹2,42,396 |
+
+Series 6 SKUs (HD226 / HD1026 / XD236 / XD1036) mapped to the same prices as their Series 5 predecessors per the current rate card — adjust the `PRICING` map and redeploy when Series 6 prices diverge.
+
+### Added — XC OS variant (Standard vs Win10/Win11)
+
+New pill group in the Video & Interactivity section, shown **only when the budget slider is on tier 5 (Flagship / XC)**. Two choices:
+- **BrightSignOS (Standard)** — default, base price
+- **Windows IoT (Win10/Win11)** — adds ₹27,083 surcharge per player
+
+The XC variant SKU rendering automatically adapts: XC2055 becomes "XC2055 - Win10/Win11" in the BOM, Excel SKU column, and quote line items. Implemented via new `XC_WIN_SURCHARGE` constant and `getModelPrice(modelId, osVariant)` helper — single source of truth for all downstream consumers.
+
+### Added — WD105 Wi-Fi module auto-add
+
+When the form's **Wi-Fi = Yes**, the BOM automatically includes one **WD105 Wi-Fi module (₹16,000)** per player. This replaces the previous "WD-105 Wi-Fi / Bluetooth module" text-only BOM line that had no price. One `WD105_PRICE` constant governs the price everywhere.
+
+### Added — Pricing columns in Result page BOM
+
+The BOM table now has four columns: **Line item · Qty · Unit price · Subtotal**. Rows without a fixed price (SSD, CMS line items with vendor-specific pricing) show an em-dash in those columns instead of a number. Totals section at the bottom of the table:
+
+- **Subtotal** — sum of all line totals with prices
+- **GST @ 18%** — auto-calculated  
+- **Grand total** — indigo gradient highlight row, displayed as bold `₹X,XX,XXX`
+
+All amounts use Indian grouping (`1,23,456`) via the new `formatINR(amount)` helper.
+
+### Added — Real prices in Excel quote export
+
+The Quotation sheet's Unit Price column now contains actual numbers instead of empty amber fill-in cells. Line Total = Qty × Unit Price formulas (`=D7*E7`) now resolve to real values. Subtotal / GST / Grand Total formulas at the bottom populate automatically. Amber fill-in styling is preserved only for rows where we have no price to populate (SSD, generic CMS rows) — these remain as manual fill-in cells for partners.
+
+Implementation approach: prefers to read from `state._bomTotals.rows` which is cached by `buildBOMCard()` every time the Result page renders — this guarantees the Excel and the in-app BOM always agree. Falls back to live price lookup via `getModelPrice()` if the cache is missing (defensive).
+
+### Added — Grand total in mailto email body
+
+The "Email to partner" button's pre-composed email now includes an "Indicative quotation" block after the project details:
+
+```
+Indicative quotation: ₹2,56,789 (incl. GST @ 18%)
+(Subtotal ₹2,17,618 + GST ₹39,171)
+```
+
+Reads from the same `state._bomTotals` cache. Excel description softened from "cells for you to fill" to "BOM line-items + indicative pricing". CTA softened from "for commercial terms, pricing" to "for commercial terms, volume rates".
+
+### Changed — Pricing callout card softened
+
+The "For Pricing & Quotation" glass card that previously said "Contact for best pricing" + "Download the Excel BOM below and email it along with your enquiry for a swift quote" is now titled **"For Better Pricing"** with the eyebrow **"Call Dipenkumar for better pricing"** and the supporting note **"Prices shown above are indicative. Contact Dipenkumar for volume rates, stock position, and PO placement."** Contact pills (email + phone) unchanged. This keeps the CTA to reach Dipenkumar for negotiation without contradicting the in-app prices.
+
+### Internal changes
+
+- New constants: `PRICING`, `XC_WIN_SURCHARGE`, `WD105_PRICE`, `WD105_SKU`, `WD105_NAME`
+- New helpers: `formatINR(amount)`, `getModelPrice(modelId, osVariant)`
+- `state.form` defaults: added `xcOs:'std'` (3 locations — initial state, `resetForm()` rewrite, edit-mode prefill)
+- `buildBOMCard()` — rewritten: 4-column table, row-level `unitPrice`/`lineTotal` fields, totals rows, caches `state._bomTotals = {subtotal, gst, grandTotal, rows}`
+- `downloadQuoteExcel()` — BOM rows loop reads from `state._bomTotals.rows` with legacy fallback; unit-price column populated with numbers; amber fill only when no price
+- `emailQuoteToPartner()` email body — conditional `Indicative quotation` block when `state._bomTotals.grandTotal` is present
+- Pill-group handler — added `xc-os` to keyMap, syncs `#f-xc-os` hidden input
+- New visibility wiring: `wireXcOsVisibility()` toggles `#field-xc-os` based on budget slider value (tier 5 only)
+- `buildPricingCallout()` — softened copy
+
+### Files in release
+
+- `brightsign-v24-4-19.html` — frontend only (Apps Script v24.5.2 unchanged)
+
+### Deploy
+
+Single-file swap. No backend migration required. Prices are baked into the frontend — **to update prices, edit the `PRICING` map (near line 5880), bump `FRONTEND_VERSION`, and redeploy**.
+
+### Test checklist
+
+1. **New selection → tier 1-4 budget** (LS/HD/XD/XT): XC OS field should be hidden
+2. **New selection → tier 5 (Flagship/XC)**: XC OS field appears with Standard pre-selected
+3. **Result page BOM with Wi-Fi = Yes**: Includes a WD105 line at ₹16,000/unit
+4. **Result page BOM with XC model**: Unit price reflects OS choice (base or +₹27,083)
+5. **Grand total row**: Indigo gradient highlight, bold amount
+6. **Download Excel**: Unit Price column is populated with numbers (not empty amber cells); Line Totals compute correctly; Subtotal/GST/Grand Total at bottom
+7. **Email to partner**: Composed email body contains "Indicative quotation: ₹X,XX,XXX (incl. GST @ 18%)"
+8. **Pricing callout card**: Now titled "For Better Pricing", eyebrow says "Call Dipenkumar for better pricing"
+9. **Dark mode**: All price text, BOM table, totals rows, pricing callout remain readable
+10. **Edit past entry**: Re-opening an old entry populates `xcOs` from stored data (or defaults to `'std'` if missing)
+
+### Known limitations (intentional for this iteration)
+
+- **SSD pricing** not in catalog — shows "Cost excluded" in BOM (your rate card didn't include SSD unit prices)
+- **CMS pricing** not in catalog — CMS line items show em-dash in unit price (CMS pricing is vendor/tier dependent and handled separately)
+- **No discount field** — per PM decision, prices are final quoted prices, not MRP
+- **Sheet-backed pricing** not implemented — per PM decision to start with hardcoded prices; editing prices requires app redeploy
+
+---
+
 ## [v24.4.18] — 2026-04-20 · Chart.js text colors theme-aware
 
 Frontend-only patch. Fixes the remaining dark-mode visibility issue in Dashboard charts that v24.4.17 didn't catch.
