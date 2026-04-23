@@ -5317,7 +5317,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         <div class="section-head"><div class="section-num">01</div><div><div class="section-title">Project context</div></div></div>
         <div id="dup-project-banner" class="dup-banner" style="display:none;"></div>
         <div class="spec-grid two-col">
-          <div class="form-group" style="margin:0;"><label>Project name<span class="req">*</span></label><input type="text" id="f-project" placeholder="e.g. Retail flagship — Chennai" oninput="checkDuplicateProject()"></div>
+          <div class="form-group" style="margin:0;"><label>Project Name<span class="req">*</span></label><input type="text" id="f-project" placeholder="e.g. Retail flagship — Chennai" oninput="checkDuplicateProject()"></div>
           <div class="form-group" style="margin:0;"><label>End-user / Client<span class="req">*</span></label><input type="text" id="f-enduser" placeholder="e.g. Reliance Retail"></div>
           <div class="form-group" style="margin:0;"><label>Partner / SI<span class="req">*</span></label><input type="text" id="f-partner" placeholder="e.g. Inviot AV Solutions"></div>
           <div class="form-group" style="margin:0;"><label>Consultant<span class="req">*</span></label><input type="text" id="f-consultant" placeholder="e.g. AV-Technik / Direct"></div>
@@ -5381,11 +5381,11 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           <!-- v24.7.0: City (existing list) + State (new) — City, State composite UX with auto-fill -->
           <div class="form-group" style="margin:0;"><label>City, State<span class="req">*</span></label><select id="f-city" onchange="autoFillStateFromCity()"><option value="">Select city…</option><option>Ahmedabad</option><option>Bangalore</option><option>Chennai</option><option>Delhi / NCR</option><option>Hyderabad</option><option>Kolkata</option><option>Mumbai</option><option>Pune</option><option>Jaipur</option><option>Kochi</option><option>Chandigarh</option><option>Lucknow</option><option>Indore</option><option>Bhubaneswar</option><option>Nagpur</option><option>Surat</option><option>Vadodara</option><option>Goa</option><option>Other</option></select></div>
           <div class="form-group" style="margin:0;"><label>State<span class="req">*</span></label><select id="f-state"><option value="">Select state…</option><option>Andhra Pradesh</option><option>Arunachal Pradesh</option><option>Assam</option><option>Bihar</option><option>Chhattisgarh</option><option>Goa</option><option>Gujarat</option><option>Haryana</option><option>Himachal Pradesh</option><option>Jharkhand</option><option>Karnataka</option><option>Kerala</option><option>Madhya Pradesh</option><option>Maharashtra</option><option>Manipur</option><option>Meghalaya</option><option>Mizoram</option><option>Nagaland</option><option>Odisha</option><option>Punjab</option><option>Rajasthan</option><option>Sikkim</option><option>Tamil Nadu</option><option>Telangana</option><option>Tripura</option><option>Uttar Pradesh</option><option>Uttarakhand</option><option>West Bengal</option><option>Delhi</option><option>Chandigarh</option><option>Jammu &amp; Kashmir</option><option>Ladakh</option><option>Puducherry</option><option>Andaman &amp; Nicobar</option><option>Dadra &amp; Nagar Haveli and Daman &amp; Diu</option><option>Lakshadweep</option></select></div>
-          <div class="form-group" style="margin:0;"><label>Deal stage<span class="req">*</span></label><select id="f-stage"><option value="">Select stage…</option><option>Lead</option><option>Opportunity</option><option>Proposal</option><option>Negotiation</option><option>Order</option></select></div>
-          <div class="form-group" style="margin:0;"><label>Lead source<span class="req">*</span></label><select id="f-leadsource"><option value="">Select source…</option><option value="OEM">OEM (BrightSign referral)</option><option value="Cavitak">Cavitak (self-sourced)</option></select></div>
+          <div class="form-group" style="margin:0;"><label>Deal Stage<span class="req">*</span></label><select id="f-stage"><option value="">Select stage…</option><option>Lead</option><option>Opportunity</option><option>Proposal</option><option>Negotiation</option><option>Order</option></select></div>
+          <div class="form-group" style="margin:0;"><label>Lead Source<span class="req">*</span></label><select id="f-leadsource"><option value="">Select source…</option><option value="OEM">OEM (BrightSign referral)</option><option value="Cavitak">Cavitak (self-sourced)</option></select></div>
           <div class="form-group" style="margin:0;"><label>Outcome<span class="req">*</span></label><select id="f-outcome"><option value="open">Open (active)</option><option value="won">Won</option><option value="lost">Lost</option><option value="on-hold">On hold</option></select></div>
           <div class="form-group" style="margin:0;">
-            <label>Expected close month<span class="req">*</span></label>
+            <label>Expected Closure<span class="req">*</span></label>
             <div class="closemonth-picker">
               <div class="closemonth-quick" id="closemonth-quick-chips"></div>
               <div class="closemonth-selects">
@@ -5812,7 +5812,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.7.0';
+const FRONTEND_VERSION = '24.7.1';
 
 /* v24.7.0: City → State auto-fill for composite City, State UX */
 const CITY_TO_STATE_BS = {
