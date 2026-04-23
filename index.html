@@ -5161,6 +5161,201 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   color:#fbbf24;
 }
 
+
+
+/* v24.8.0: Directory segment switcher (Customers / Partners / Consultants) */
+.dir-seg-wrap {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.dir-seg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: var(--surface-2, #F5F3FF);
+  border: 1px solid var(--border, #E5E7EB);
+  border-radius: 24px;
+  color: var(--ink-muted, #64748B);
+  font-family: var(--sans, system-ui);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 120ms;
+}
+.dir-seg:hover {
+  background: var(--indigo-light, #EEF2FF);
+  color: var(--indigo, #4F46E5);
+  border-color: var(--indigo, #4F46E5);
+}
+.dir-seg.active {
+  background: var(--indigo, #4F46E5);
+  color: #fff;
+  border-color: var(--indigo, #4F46E5);
+}
+.dir-seg-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+.dir-seg-count {
+  font-family: var(--mono, monospace);
+  font-size: 11px;
+  background: rgba(255,255,255,0.3);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+.dir-seg:not(.active) .dir-seg-count {
+  background: rgba(79,70,229,0.1);
+  color: var(--indigo, #4F46E5);
+}
+.dir-hidden { display: none !important; }
+.dir-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--sans, system-ui);
+  font-size: 13px;
+}
+.dir-table th {
+  background: var(--surface-2, #F5F3FF);
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted, #64748B);
+  border-bottom: 2px solid var(--border, #E5E7EB);
+}
+.dir-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-soft, #F1F5F9);
+  vertical-align: top;
+}
+.dir-table tr:hover td {
+  background: var(--surface-2, #F5F3FF);
+}
+.dir-table .col-num {
+  text-align: right;
+  font-family: var(--mono, monospace);
+  font-weight: 600;
+}
+.dir-btn-tiny {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--border, #E5E7EB);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink, #1F2937);
+  cursor: pointer;
+  font-family: var(--sans, system-ui);
+}
+.dir-btn-tiny:hover {
+  border-color: var(--indigo, #4F46E5);
+  color: var(--indigo, #4F46E5);
+}
+.dir-empty {
+  padding: 36px 24px;
+  text-align: center;
+  color: var(--ink-subtle, #94A3B8);
+  font-size: 13px;
+  background: var(--surface-2, #F5F3FF);
+  border-radius: 12px;
+}
+.dir-empty a {
+  color: var(--indigo, #4F46E5);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Modal styles for Customer Add/Edit + Merge */
+.dir-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+.dir-modal {
+  background: #fff;
+  border-radius: 16px;
+  max-width: 640px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+}
+.dir-modal-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border, #E5E7EB);
+}
+.dir-modal-title {
+  font-family: var(--serif, Georgia, serif);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink, #1F2937);
+}
+.dir-modal-close {
+  background: none; border: none;
+  font-size: 24px;
+  color: var(--ink-subtle, #94A3B8);
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+.dir-modal-body {
+  padding: 24px;
+}
+.dir-modal-body .form-group {
+  margin-bottom: 14px;
+}
+.dir-modal-body label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-muted, #64748B);
+  margin-bottom: 6px;
+}
+.dir-modal-body input,
+.dir-modal-body select,
+.dir-modal-body textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong, #CBD5E1);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: var(--sans, system-ui);
+}
+.dir-modal-foot {
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border, #E5E7EB);
+  background: var(--surface-2, #F5F3FF);
+  border-radius: 0 0 16px 16px;
+}
+.dir-modal-err {
+  display: none;
+  background: #FEE2E2;
+  color: #991B1B;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+.dir-modal-err.show { display: block; }
+.dir-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
 </style>
 <!-- v24.4.2: Apply saved theme BEFORE body renders (prevents flash-of-light) — 3-state light/auto/dark -->
 <script>
@@ -5292,6 +5487,10 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
     <button id="tab-review" onclick="showTab('review')" style="display:none;" role="tab" aria-selected="false" aria-controls="section-review">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
       <span>Review</span>
+    </button>
+    <button id="tab-directory" onclick="showTab('directory')" style="display:none;" role="tab" aria-selected="false" aria-controls="section-directory">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span>Directory</span>
     </button>
     <button id="tab-team" onclick="showTab('team')" style="display:none;" role="tab" aria-selected="false" aria-controls="section-team">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -5772,6 +5971,134 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   </div>
 </div>
 
+
+<!-- v24.8.0: Directory view (Customers master + Partners/Consultants derived) -->
+<div id="section-directory" style="display:none;" role="tabpanel" aria-labelledby="tab-directory">
+  <div class="container">
+    <div class="page-header">
+      <div class="page-eyebrow">Directory</div>
+      <div class="page-title">Directory</div>
+      <div class="page-subtitle">Master list of people you work with. Keep entries consistent so pipeline analytics stay clean. Super admin can merge duplicates.</div>
+    </div>
+
+    <!-- 3-tab segment switcher -->
+    <div class="dir-seg-wrap">
+      <button class="dir-seg active" data-dirtype="customer" onclick="setDirectoryType('customer')">
+        <span class="dir-seg-icon">🏢</span>
+        <span>Customers</span>
+        <span class="dir-seg-count" id="dirCountCustomer">0</span>
+      </button>
+      <button class="dir-seg" data-dirtype="partner" onclick="setDirectoryType('partner')">
+        <span class="dir-seg-icon">🤝</span>
+        <span>Partners / SI</span>
+        <span class="dir-seg-count" id="dirCountPartner">0</span>
+      </button>
+      <button class="dir-seg" data-dirtype="consultant" onclick="setDirectoryType('consultant')">
+        <span class="dir-seg-icon">💼</span>
+        <span>Consultants</span>
+        <span class="dir-seg-count" id="dirCountConsultant">0</span>
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px;">Search &amp; Filter</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">
+        <input type="text" id="customerSearch" placeholder="Search by name, city, industry…" oninput="renderDirectoryTable()" style="flex:1;min-width:220px;padding:10px 14px;border:1px solid var(--border-strong);border-radius:10px;font-family:var(--sans);font-size:13px;">
+        <select id="customerIndustryFilter" onchange="renderDirectoryTable()" style="padding:10px 14px;border:1px solid var(--border-strong);border-radius:10px;font-size:13px;min-width:180px;">
+          <option value="">All industries</option>
+          <option>Hospitality</option>
+          <option>Corporate</option>
+          <option>Retail</option>
+          <option>Education</option>
+          <option>Government</option>
+          <option>Healthcare</option>
+          <option>Broadcast</option>
+          <option>Transport</option>
+          <option>Other</option>
+        </select>
+        <button class="btn-primary" onclick="openAddCustomerModal()" id="dirAddBtn">+ Add Customer</button>
+        <button class="btn-secondary" onclick="refreshCustomers()">↻ Refresh</button>
+      </div>
+      <div id="customerCountLabel" style="font-size:12px;color:var(--ink-subtle);font-family:var(--mono);letter-spacing:0.08em;margin-bottom:10px;"></div>
+      <div id="customersContent" style="overflow-x:auto;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- v24.8.0: Customer Add/Edit modal -->
+<div id="customerModal" class="dir-modal-overlay" style="display:none;">
+  <div class="dir-modal">
+    <div class="dir-modal-head">
+      <div class="dir-modal-title" id="customerModalTitle">Add Customer</div>
+      <button class="dir-modal-close" onclick="closeCustomerModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="dir-modal-body">
+      <div id="customerModalError" class="dir-modal-err"></div>
+      <input type="hidden" id="customerFormId">
+      <div class="form-group"><label>Customer Name *</label><input type="text" id="customerFormName" placeholder="e.g. Reliance Retail Ltd." autocomplete="off"></div>
+      <div class="dir-grid-2">
+        <div class="form-group"><label>Industry</label>
+          <select id="customerFormIndustry">
+            <option value="">—</option>
+            <option>Hospitality</option>
+            <option>Corporate</option>
+            <option>Retail</option>
+            <option>Education</option>
+            <option>Government</option>
+            <option>Healthcare</option>
+            <option>Broadcast</option>
+            <option>Transport</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label>City</label><input type="text" id="customerFormCity" autocomplete="off"></div>
+      </div>
+      <div class="dir-grid-2">
+        <div class="form-group"><label>State</label><input type="text" id="customerFormState" autocomplete="off"></div>
+        <div class="form-group"><label>Country</label><input type="text" id="customerFormCountry" value="India" autocomplete="off"></div>
+      </div>
+      <div class="form-group"><label>Primary Contact Name</label><input type="text" id="customerFormContact" autocomplete="off"></div>
+      <div class="dir-grid-2">
+        <div class="form-group"><label>Phone (10 digits)</label><input type="tel" id="customerFormPhone" placeholder="10-digit mobile" maxlength="10" pattern="[0-9]{10}" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="customerFormEmail" autocomplete="off"></div>
+      </div>
+      <div class="form-group"><label>Website (optional)</label><input type="text" id="customerFormWebsite" placeholder="https://..." autocomplete="off"></div>
+      <div class="form-group"><label>Notes</label><textarea id="customerFormNotes" rows="2" style="min-height:60px;"></textarea></div>
+    </div>
+    <div class="dir-modal-foot">
+      <button class="btn-secondary" onclick="closeCustomerModal()">Cancel</button>
+      <button class="btn-primary" onclick="submitCustomerForm()" id="customerFormSubmitBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- v24.8.0: Customer Merge modal (Super only) -->
+<div id="customerMergeModal" class="dir-modal-overlay" style="display:none;">
+  <div class="dir-modal">
+    <div class="dir-modal-head">
+      <div class="dir-modal-title">Merge Customers</div>
+      <button class="dir-modal-close" onclick="closeMergeModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="dir-modal-body">
+      <div id="mergeModalError" class="dir-modal-err"></div>
+      <p style="font-size:13px;color:var(--ink-muted);margin-bottom:14px;">The SOURCE customer will be merged INTO the target. The source name will be added as an alias on the target, all deal entries for the source customer will be reassigned to the target, and the source customer will be deleted. This cannot be undone.</p>
+      <div class="form-group">
+        <label>Source (will be merged + deleted)</label>
+        <input type="text" id="mergeSourceLabel" readonly style="background:var(--surface-2);">
+        <input type="hidden" id="mergeSourceId">
+      </div>
+      <div class="form-group">
+        <label>Target (will absorb the source)</label>
+        <select id="mergeTargetSelect"></select>
+      </div>
+    </div>
+    <div class="dir-modal-foot">
+      <button class="btn-secondary" onclick="closeMergeModal()">Cancel</button>
+      <button class="btn-primary" style="background:#B91C1C;" onclick="submitMergeModal()">Merge &amp; Delete Source</button>
+    </div>
+  </div>
+</div>
+
 <div id="section-review" style="display:none;" role="tabpanel" aria-labelledby="tab-review">
   <div class="container">
     <div class="page-header">
@@ -5812,7 +6139,433 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.7.1';
+const FRONTEND_VERSION = '24.8.0';
+
+
+// ============================================================================
+// v24.8.0 · DIRECTORY FEATURE
+// Ported from tvONE CALICO Configurator v25.8+
+// Provides master Customers list + derived Partners/Consultants views.
+// ============================================================================
+
+let _customersCache = [];
+let _currentDirectoryType = 'customer';  // 'customer' | 'partner' | 'consultant'
+
+/** Switch between Customers / Partners / Consultants views */
+function setDirectoryType(type){
+  if(['customer','partner','consultant'].indexOf(type) < 0) type = 'customer';
+  _currentDirectoryType = type;
+  document.querySelectorAll('.dir-seg[data-dirtype]').forEach(function(btn){
+    btn.classList.toggle('active', btn.getAttribute('data-dirtype') === type);
+  });
+  // Hide "Add Customer" button + industry filter when not on customer tab
+  const addBtn = document.getElementById('dirAddBtn');
+  const indFilter = document.getElementById('customerIndustryFilter');
+  if(addBtn) addBtn.classList.toggle('dir-hidden', type !== 'customer');
+  if(indFilter) indFilter.classList.toggle('dir-hidden', type !== 'customer');
+  renderDirectoryTable();
+}
+
+/** Refresh customer list from server + pull central log for derived views */
+async function refreshCustomers(){
+  const content = document.getElementById('customersContent');
+  if(!content) return;
+  content.innerHTML = '<div class="dir-empty">Loading…</div>';
+
+  if(!WEBHOOK_URL || !state.user){
+    content.innerHTML = '<div class="dir-empty">Please sign in to view the directory.</div>';
+    return;
+  }
+
+  try{
+    const pwHash = await sha256Hex(window._sessionPassword || '');
+    const resp = await fetch(WEBHOOK_URL, {
+      method: 'POST', mode: 'cors',
+      headers: {'Content-Type': 'text/plain'},
+      body: JSON.stringify({
+        action: 'customer_list',
+        requesterLoginName: state.user.loginName,
+        requesterPasswordHash: pwHash
+      })
+    });
+    const data = await resp.json();
+    if(data.status !== 'ok'){
+      content.innerHTML = '<div class="dir-empty">Could not load directory: ' + (data.message || 'unknown error') + '</div>';
+      return;
+    }
+    _customersCache = data.customers || [];
+    // Also ensure window._centralLog is loaded for derived partners/consultants
+    if(!Array.isArray(window._centralLog) || window._centralLog.length === 0){
+      try{ if(typeof refreshLog === 'function') await refreshLog(); } catch(e){ /* non-fatal */ }
+    }
+    updateDirectoryCounts_();
+    renderDirectoryTable();
+  }catch(err){
+    console.error('[Directory] refreshCustomers failed:', err);
+    content.innerHTML = '<div class="dir-empty">Couldn\'t load directory — please try again.</div>';
+  }
+}
+
+/** Update badge counts on the 3 segment tabs */
+function updateDirectoryCounts_(){
+  const custCount = _customersCache.length;
+  const entries = Array.isArray(window._centralLog) ? window._centralLog : [];
+  const partners = new Set();
+  const consultants = new Set();
+  entries.forEach(function(e){
+    if(e.partner && String(e.partner).trim()) partners.add(String(e.partner).trim());
+    if(e.consultant && String(e.consultant).trim()) consultants.add(String(e.consultant).trim());
+  });
+  const elC = document.getElementById('dirCountCustomer');
+  const elP = document.getElementById('dirCountPartner');
+  const elCo = document.getElementById('dirCountConsultant');
+  if(elC) elC.textContent = custCount;
+  if(elP) elP.textContent = partners.size;
+  if(elCo) elCo.textContent = consultants.size;
+}
+
+/** Build derived partner/consultant directory from central log */
+function buildDerivedDirectory_(type){
+  const field = type;  // 'partner' or 'consultant'
+  const byName = new Map();
+  const entries = Array.isArray(window._centralLog) ? window._centralLog : [];
+  entries.forEach(function(r){
+    const name = r[field];
+    if(!name || !String(name).trim()) return;
+    const key = String(name).trim();
+    if(!byName.has(key)){
+      byName.set(key, {
+        name: key, dealsCount: 0, totalValueINR: 0,
+        cities: new Set(), endUsers: new Set(),
+        lastDealAt: null, lastProject: ''
+      });
+    }
+    const entry = byName.get(key);
+    entry.dealsCount++;
+    entry.totalValueINR += (parseFloat(r.dealValue) || 0);
+    if(r.city) entry.cities.add(r.city);
+    if(r.enduser) entry.endUsers.add(r.enduser);
+    const when = r.ts ? new Date(r.ts).getTime() : 0;
+    if(when && (!entry.lastDealAt || when > entry.lastDealAt)){
+      entry.lastDealAt = when;
+      entry.lastProject = r.project || '';
+    }
+  });
+  const arr = [];
+  byName.forEach(function(v){
+    arr.push({
+      name: v.name, dealsCount: v.dealsCount, totalValueINR: v.totalValueINR,
+      cities: [...v.cities].join(', '), endUsersCount: v.endUsers.size,
+      lastDealAt: v.lastDealAt, lastProject: v.lastProject
+    });
+  });
+  arr.sort(function(a,b){
+    if(b.dealsCount !== a.dealsCount) return b.dealsCount - a.dealsCount;
+    return b.totalValueINR - a.totalValueINR;
+  });
+  return arr;
+}
+
+/** HTML escape helper */
+function dirEsc_(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+/** Format INR with Cr/L suffix */
+function dirFmtINR_(n){
+  const v = parseFloat(n) || 0;
+  if(v >= 10000000) return '₹' + (v/10000000).toFixed(2) + ' Cr';
+  if(v >= 100000)   return '₹' + (v/100000).toFixed(1) + ' L';
+  if(v > 0)         return '₹' + Math.round(v).toLocaleString('en-IN');
+  return '—';
+}
+
+/** Render current directory tab (customer/partner/consultant) */
+function renderDirectoryTable(){
+  const content = document.getElementById('customersContent');
+  if(!content) return;
+  const q = (document.getElementById('customerSearch') && document.getElementById('customerSearch').value || '').toLowerCase().trim();
+  const industry = (document.getElementById('customerIndustryFilter') && document.getElementById('customerIndustryFilter').value) || '';
+  const type = _currentDirectoryType || 'customer';
+  const isSuper = state.user && state.user.isSuper;
+
+  // === CUSTOMERS tab ===
+  if(type === 'customer'){
+    let rows = _customersCache.slice();
+    if(industry) rows = rows.filter(function(c){ return c.industry === industry; });
+    if(q){
+      rows = rows.filter(function(c){
+        return [c.name,c.city,c.state,c.industry,c.primaryContact,c.primaryEmail,c.primaryPhone,c.notes]
+          .some(function(v){ return String(v||'').toLowerCase().indexOf(q) >= 0; });
+      });
+    }
+    if(rows.length === 0){
+      content.innerHTML = '<div class="dir-empty">No customers match. <a href="#" onclick="event.preventDefault();openAddCustomerModal()">+ Add one</a></div>';
+      const cnt = document.getElementById('customerCountLabel');
+      if(cnt) cnt.textContent = '';
+      return;
+    }
+    let html = '<table class="dir-table"><thead><tr>';
+    html += '<th>Name</th><th>Industry</th><th>City</th><th>Contact</th><th style="text-align:right">Deals</th><th style="text-align:right">Value</th><th>Actions</th>';
+    html += '</tr></thead><tbody>';
+    rows.forEach(function(c){
+      const contact = [c.primaryContact, c.primaryPhone, c.primaryEmail].filter(Boolean).join(' · ');
+      html += '<tr>';
+      html += '<td><b>' + dirEsc_(c.name) + '</b>' + (c.website ? '<br><span style="font-size:11px;color:var(--ink-subtle)">' + dirEsc_(c.website) + '</span>' : '') + '</td>';
+      html += '<td>' + dirEsc_(c.industry || '—') + '</td>';
+      html += '<td>' + dirEsc_([c.city,c.state].filter(Boolean).join(', ') || '—') + '</td>';
+      html += '<td style="font-size:12px">' + (dirEsc_(contact) || '—') + '</td>';
+      html += '<td class="col-num">' + (c.dealsCount || 0) + '</td>';
+      html += '<td class="col-num">' + dirFmtINR_(c.totalValueINR) + '</td>';
+      html += '<td style="white-space:nowrap">';
+      html += '<button class="dir-btn-tiny" onclick="openEditCustomerModal(\'' + dirEsc_(c.customerId) + '\')">Edit</button>';
+      if(isSuper){
+        html += ' <button class="dir-btn-tiny" style="color:#B91C1C" onclick="openMergeModal(\'' + dirEsc_(c.customerId) + '\')">Merge</button>';
+        html += ' <button class="dir-btn-tiny" style="color:#B91C1C" onclick="deleteCustomer(\'' + dirEsc_(c.customerId) + '\',\'' + dirEsc_((c.name||'').replace(/\\/g,'').replace(/\'/g,'')) + '\')">Delete</button>';
+      }
+      html += '</td></tr>';
+    });
+    html += '</tbody></table>';
+    content.innerHTML = html;
+    const cnt = document.getElementById('customerCountLabel');
+    if(cnt) cnt.textContent = rows.length + ' customer' + (rows.length === 1 ? '' : 's') + ' in master list';
+    return;
+  }
+
+  // === PARTNERS / CONSULTANTS tabs (derived) ===
+  let rows = buildDerivedDirectory_(type);
+  if(q){
+    rows = rows.filter(function(c){
+      return [c.name,c.cities,c.lastProject].some(function(v){ return String(v||'').toLowerCase().indexOf(q) >= 0; });
+    });
+  }
+  const typeLabel = type === 'partner' ? 'Partner / SI' : 'Consultant';
+  const typeLabelPlural = type === 'partner' ? 'partners' : 'consultants';
+  if(rows.length === 0){
+    content.innerHTML = '<div class="dir-empty">No ' + typeLabelPlural + ' found yet. They\'ll appear here once deals are registered.</div>';
+    const cnt = document.getElementById('customerCountLabel');
+    if(cnt) cnt.textContent = '0 ' + typeLabelPlural;
+    return;
+  }
+  let html = '<table class="dir-table"><thead><tr>';
+  html += '<th>' + typeLabel + ' Name</th><th>Cities</th>';
+  html += '<th style="text-align:right">Deals</th><th style="text-align:right">Unique End-clients</th><th style="text-align:right">Total Value</th><th>Last Deal</th>';
+  html += '</tr></thead><tbody>';
+  rows.forEach(function(c){
+    const lastDate = c.lastDealAt ? new Date(c.lastDealAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'}) : '—';
+    html += '<tr>';
+    html += '<td><b>' + dirEsc_(c.name) + '</b></td>';
+    html += '<td style="font-size:12px;color:var(--ink-subtle)">' + dirEsc_(c.cities || '—') + '</td>';
+    html += '<td class="col-num">' + c.dealsCount + '</td>';
+    html += '<td class="col-num">' + c.endUsersCount + '</td>';
+    html += '<td class="col-num">' + dirFmtINR_(c.totalValueINR) + '</td>';
+    html += '<td style="font-size:12px">' + lastDate + (c.lastProject ? '<br><span style="color:var(--ink-subtle);font-size:11px">' + dirEsc_(c.lastProject) + '</span>' : '') + '</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  content.innerHTML = html;
+  const cnt = document.getElementById('customerCountLabel');
+  if(cnt) cnt.textContent = rows.length + ' ' + typeLabelPlural + ' · derived from your deal history';
+}
+
+/** Delete a customer (super only) */
+async function deleteCustomer(customerId, customerName){
+  if(!state.user || !state.user.isSuper){ alert('Super admin only.'); return; }
+  if(!customerId) return;
+  const ok = confirm(
+    'Delete customer "' + customerName + '"?\n\n' +
+    'This removes them from the master list only. ' +
+    'Existing deals referencing this name stay intact.\n\n' +
+    'This cannot be undone.'
+  );
+  if(!ok) return;
+  try{
+    const pwHash = await sha256Hex(window._sessionPassword || '');
+    const resp = await fetch(WEBHOOK_URL, {
+      method: 'POST', mode: 'cors',
+      headers: {'Content-Type': 'text/plain'},
+      body: JSON.stringify({
+        action: 'customer_delete',
+        requesterLoginName: state.user.loginName,
+        requesterPasswordHash: pwHash,
+        customerId: customerId
+      })
+    });
+    const data = await resp.json();
+    if(data.status === 'ok'){
+      showSync && showSync('Customer removed', 'success');
+      refreshCustomers();
+    } else {
+      alert('Could not delete: ' + (data.message || 'unknown error'));
+    }
+  }catch(err){
+    console.error('[Directory] deleteCustomer failed:', err);
+    alert('Connection issue — please try again.');
+  }
+}
+
+/** Open Add Customer modal */
+function openAddCustomerModal(){
+  document.getElementById('customerModalTitle').textContent = 'Add Customer';
+  ['customerFormName','customerFormCity','customerFormState','customerFormContact','customerFormPhone','customerFormEmail','customerFormWebsite','customerFormNotes'].forEach(function(id){
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  const indEl = document.getElementById('customerFormIndustry');
+  if(indEl) indEl.value = '';
+  const ctryEl = document.getElementById('customerFormCountry');
+  if(ctryEl) ctryEl.value = 'India';
+  document.getElementById('customerFormId').value = '';
+  const err = document.getElementById('customerModalError');
+  if(err) err.classList.remove('show');
+  document.getElementById('customerModal').style.display = 'flex';
+  setTimeout(function(){ const nm = document.getElementById('customerFormName'); if(nm) nm.focus(); }, 80);
+}
+
+/** Open Edit Customer modal */
+function openEditCustomerModal(customerId){
+  const c = _customersCache.find(function(x){ return x.customerId === customerId; });
+  if(!c) return;
+  document.getElementById('customerModalTitle').textContent = 'Edit Customer';
+  document.getElementById('customerFormId').value = c.customerId;
+  document.getElementById('customerFormName').value = c.name || '';
+  document.getElementById('customerFormIndustry').value = c.industry || '';
+  document.getElementById('customerFormCity').value = c.city || '';
+  document.getElementById('customerFormState').value = c.state || '';
+  document.getElementById('customerFormCountry').value = c.country || 'India';
+  document.getElementById('customerFormContact').value = c.primaryContact || '';
+  document.getElementById('customerFormPhone').value = c.primaryPhone || '';
+  document.getElementById('customerFormEmail').value = c.primaryEmail || '';
+  document.getElementById('customerFormWebsite').value = c.website || '';
+  document.getElementById('customerFormNotes').value = c.notes || '';
+  const err = document.getElementById('customerModalError');
+  if(err) err.classList.remove('show');
+  document.getElementById('customerModal').style.display = 'flex';
+}
+
+/** Close Customer modal */
+function closeCustomerModal(){
+  const m = document.getElementById('customerModal');
+  if(m) m.style.display = 'none';
+}
+
+/** Submit Customer form (Add or Edit — delegated via customerFormId) */
+async function submitCustomerForm(){
+  const errEl = document.getElementById('customerModalError');
+  const showErr = function(msg){ if(errEl){ errEl.textContent = msg; errEl.classList.add('show'); } };
+  const btn = document.getElementById('customerFormSubmitBtn');
+
+  const name = document.getElementById('customerFormName').value.trim();
+  if(!name){ showErr('Customer Name is required.'); return; }
+
+  const phone = document.getElementById('customerFormPhone').value.trim();
+  if(phone && !/^[0-9]{10}$/.test(phone)){ showErr('Phone must be exactly 10 digits (or blank).'); return; }
+  const email = document.getElementById('customerFormEmail').value.trim();
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showErr('Email format looks invalid.'); return; }
+
+  const customer = {
+    customerId: document.getElementById('customerFormId').value || '',
+    name: name,
+    industry: document.getElementById('customerFormIndustry').value,
+    city: document.getElementById('customerFormCity').value.trim(),
+    state: document.getElementById('customerFormState').value.trim(),
+    country: document.getElementById('customerFormCountry').value.trim() || 'India',
+    primaryContact: document.getElementById('customerFormContact').value.trim(),
+    primaryPhone: phone,
+    primaryEmail: email,
+    website: document.getElementById('customerFormWebsite').value.trim(),
+    notes: document.getElementById('customerFormNotes').value.trim()
+  };
+
+  if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+  try{
+    const pwHash = await sha256Hex(window._sessionPassword || '');
+    const resp = await fetch(WEBHOOK_URL, {
+      method: 'POST', mode: 'cors',
+      headers: {'Content-Type': 'text/plain'},
+      body: JSON.stringify({
+        action: 'customer_upsert',
+        requesterLoginName: state.user.loginName,
+        requesterPasswordHash: pwHash,
+        customer: customer
+      })
+    });
+    const data = await resp.json();
+    if(data.status === 'ok'){
+      closeCustomerModal();
+      showSync && showSync(data.created ? 'Customer added ✓' : 'Customer updated ✓', 'success');
+      refreshCustomers();
+    } else {
+      showErr(data.message || 'Save failed');
+    }
+  }catch(err){
+    console.error('[Directory] submitCustomerForm failed:', err);
+    showErr('Connection issue — please try again.');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = 'Save'; }
+  }
+}
+
+/** Open Merge modal (Super only) */
+function openMergeModal(sourceId){
+  if(!state.user || !state.user.isSuper){ alert('Super admin only.'); return; }
+  const source = _customersCache.find(function(x){ return x.customerId === sourceId; });
+  if(!source){ alert('Source customer not found.'); return; }
+  document.getElementById('mergeSourceLabel').value = source.name + ' (' + (source.city || '—') + ')';
+  document.getElementById('mergeSourceId').value = sourceId;
+  // Populate target dropdown with all customers EXCEPT the source
+  const sel = document.getElementById('mergeTargetSelect');
+  sel.innerHTML = '<option value="">— Select target customer —</option>';
+  _customersCache.forEach(function(c){
+    if(c.customerId === sourceId) return;
+    const opt = document.createElement('option');
+    opt.value = c.customerId;
+    opt.textContent = c.name + ' · ' + (c.city || 'no city') + ' · ' + (c.dealsCount || 0) + ' deals';
+    sel.appendChild(opt);
+  });
+  const err = document.getElementById('mergeModalError');
+  if(err) err.classList.remove('show');
+  document.getElementById('customerMergeModal').style.display = 'flex';
+}
+
+/** Close Merge modal */
+function closeMergeModal(){
+  const m = document.getElementById('customerMergeModal');
+  if(m) m.style.display = 'none';
+}
+
+/** Submit Merge — source into target */
+async function submitMergeModal(){
+  const errEl = document.getElementById('mergeModalError');
+  const showErr = function(msg){ if(errEl){ errEl.textContent = msg; errEl.classList.add('show'); } };
+  const sourceId = document.getElementById('mergeSourceId').value;
+  const targetId = document.getElementById('mergeTargetSelect').value;
+  if(!sourceId || !targetId){ showErr('Pick a target customer.'); return; }
+  try{
+    const pwHash = await sha256Hex(window._sessionPassword || '');
+    const resp = await fetch(WEBHOOK_URL, {
+      method: 'POST', mode: 'cors',
+      headers: {'Content-Type': 'text/plain'},
+      body: JSON.stringify({
+        action: 'customer_merge',
+        requesterLoginName: state.user.loginName,
+        requesterPasswordHash: pwHash,
+        sourceId: sourceId, targetId: targetId
+      })
+    });
+    const data = await resp.json();
+    if(data.status === 'ok'){
+      closeMergeModal();
+      showSync && showSync('Merged · ' + data.submissionsUpdated + ' deals reassigned', 'success');
+      refreshCustomers();
+    } else {
+      showErr(data.message || 'Merge failed');
+    }
+  }catch(err){
+    console.error('[Directory] submitMergeModal failed:', err);
+    showErr('Connection issue — please try again.');
+  }
+}
+
 
 /* v24.7.0: City → State auto-fill for composite City, State UX */
 const CITY_TO_STATE_BS = {
@@ -7450,6 +8203,9 @@ async function handleLogin(){
     const teamTabLabel=document.getElementById('team-tab-label');
     if(teamTab){teamTab.style.display='inline-flex';}
     if(teamTabLabel){teamTabLabel.textContent=state.user.isSuper?'Team':'Profile';}
+    // v24.8.0: Show Directory tab (all logged-in users)
+    const dirTab=document.getElementById('tab-directory');
+    if(dirTab)dirTab.style.display='';
     // v23.1: Show Dashboard tab for all users (content differs by role)
     const dashTab=document.getElementById('tab-dashboard');
     if(dashTab){dashTab.style.display='inline-flex';}
@@ -8913,7 +9669,7 @@ function showTab(which){
     };
   }
   // v23.1: includes 'team' and 'dashboard' tabs; v24.4.0 adds 'review'
-  ['form','result','log','team','dashboard','review'].forEach(t=>{
+  ['form','result','log','team','dashboard','review','directory'].forEach(t=>{
     const sec=document.getElementById('section-'+t);
     if(sec)sec.style.display=t===which?'block':'none';
     const btn=document.getElementById('tab-'+t);
@@ -8935,6 +9691,10 @@ function showTab(which){
     }
   }
   if(which==='team')renderTeamTab();
+  if(which==='directory'){
+    // v24.8.0: Refresh customers on tab open (also populates derived partner+consultant lists)
+    if(typeof refreshCustomers==='function'){refreshCustomers();}
+  }
   if(which==='review'){
     // v24.4.9: Double-guard — only Super + OEM can render review
     const role=state.user?(state.user.role||'').trim():'';
