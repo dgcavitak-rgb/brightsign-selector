@@ -1,82 +1,86 @@
-## [v24.6.0] — 2026-04-23 · Deal value re-introduced + SAP codes in Excel quote
+## [v24.7.0] — 2026-04-23 · Project Context standardization (13-field spec, matches tvONE v25.9)
 
-Frontend-only patch. Reverses the v24.4.6 `dealValue` removal now that Cavitak's BrightSign TP price list has been consolidated in the app (present since v24.4.19). Flips `SHOW_PRICING` to `true` so Review-tab ₹ columns (Pipeline, Won, YoY) populate with real values. Adds SAP item codes to the Excel Quotation sheet as a new first-data column for ERP integration.
+Frontend-only patch. Aligns BrightSign's Project Context section with the unified 13-field spec shared between tvONE and BrightSign. Legacy contact* field names kept populated for backward compatibility — no Sheet rows are orphaned. Per Dipenkumar's stated plan to wipe the Sheet post-deploy, no migration script is needed for existing entries.
 
 ### Rationale
 
-Per session with Dipenkumar: "Now that we have given prices of all BS player, pipeline value field can be added to BS app." The prior v24.4.6 removal was because no reliable ₹ source existed; v24.4.19 then consolidated PRICING but the form field was never brought back. This release closes that loop. SAP codes were added to the Excel quote so Cavitak ERP/warehouse can drop the BOQ straight into a purchase order without manual SKU translation.
+Consistent data-entry experience across tvONE and BrightSign. Same field labels, same Venue Type options, same Stage list, same Lead Source values. Review-tab analytics across both apps become directly comparable.
 
 ### Added
 
-- **`SAP_CODES` map + `getSapCode(sku)` helper** — 15 SAP item codes covering all Series 5 SKUs (AU335, LS425, LS445, HD225, HD1025, XD235, XD1035, XT245, XT1145, XT2145, XC2055, XC4055), both XC Win10/Win11 variants (SI0010208, SI0010209), and the WD105 Wi-Fi module. Series 6 (HD226/HD1026/XD236/XD1036) deliberately excluded — per Dipenkumar: "SAP is for Series 5 only & as of now do not consider 6 Series player."
-- **`computeDealValue(f, r)` helper** — integer-rupee deal value computed from form + result:
-  - Single-model: `qty × getModelPrice(model, xcOs).unitPrice`
-  - Mixed environment: `(qtyIndoor × indoorPrice) + (qtyOutdoor × outdoorPrice)`
-  - Wi-Fi: adds `qty × WD105_PRICE` when `wifi === 'yes'` (one WD105 per player)
-  - XC OS variant: automatically applies `XC_WIN_SURCHARGE` (₹27,083) when `xcOs === 'win'`
-  - Intentionally excludes CMS, SSD upgrades, installation — those are priced-on-request
-- **Deal value (₹) form field** — re-introduced between Outcome and Expected close month on the New Selection form:
-  - Auto-fills from `computeDealValue()` on any change to qty / qtyIndoor / qtyOutdoor / model / environment / wifi / XC OS
-  - User can type over the value to override (switches to "manual" badge)
-  - "Reset to auto" link reverts to auto-calc
-  - Displays with Indian grouping (`1,25,000`), accepts flexible input (`1.25 L`, `50k`, `1.5 Cr`)
-- **Auto/Manual badge** next to field label — violet "auto" or amber "manual" to signal state at a glance
-- **Required validation** — dealValue must be > 0, same pattern as other required fields, inline error highlighting
-- **SAP Code column in Excel Quotation sheet** — new column B in the BOM table (between # and SKU), showing SAP code per line item with `—` fallback for non-catalog SKUs (services, custom items). Column width 16 chars, Consolas font, bold.
+- **`Venue Type` dropdown** (`f-venueType`) — 34-option list in 7 `<optgroup>` sections. Same list as tvONE v25.9. Replaces the free-text Venue/Location field.
+- **`State` dropdown** (`f-state`) — 36 Indian states + union territories. Required field.
+- **`CITY_TO_STATE_BS` map + `autoFillStateFromCity()` helper** — when user picks a City, the State dropdown auto-fills if a mapping exists. Covers the 18 cities in BrightSign's existing City dropdown.
+- **Partner Contact — Name / Mobile / Email** fields (`f-partnerContactName`, `f-partnerContactPhone`, `f-partnerContactEmail`) — same validation rules as tvONE (10-digit numeric mobile, `type="email"` + regex check for email).
 
 ### Changed
 
-- **`SHOW_PRICING` flag: `false` → `true`** — unhides Pipeline (₹) and Won (₹) KPI tiles in Card 1, the Pipeline/Won quarterly rows in Card 5, the Funnel ₹ values in Cards 3 and 7, and the Total pipeline / Won value rows in Card 6. Also restores the Data quality banner for missing dealValue (but new entries from v24.6.0 onward will all have values, so the banner should stay at 0).
-- **`state.form` initialization** — adds `dealValue: 0, dealValueEdited: false` flags
-- **`buildEntryPayload()`** — includes `dealValue` in every saved payload (Sheet column AM); schema was already there, just no longer writing `0`
-- **`editPastEntry()` snapshot** — reads `entry.dealValue` from the Sheet, treats any non-zero value as a manual override (locks auto-calc so editing an entry preserves its exact stored ₹)
-- **`prefillFormUI()`** — writes dealValue into the input field on edit-mode entry, sets badge state
-- **Excel Quotation sheet column layout** — shifted from 7 columns (A-G) to 8 columns (A-H):
-  - A=#, B=**SAP Code** (new), C=SKU, D=Description, E=Qty, F=Unit Price (₹), G=Gross Total (₹), H=Notes
-  - Cell formulas updated: `D{n}*E{n}` → `E{n}*F{n}`; `SUM(F...)` → `SUM(G...)`; `F{subRow}*0.18` → `G{subRow}*0.18`
-  - Cell style references shifted: `E4`→`F4` (Quote Ref label), `D8`→`E8` (right-side section header), `C15`→`D15` (model tag right-half); `B15`→`B15+C15` (model-ID fill extends one column right)
-  - 17 `!merges` entries updated: full-width merges end at `c:7` instead of `c:6`; interior split-row merges shift by +1 on appropriate sides
-  - Autofilter range `A18:G...` → `A18:H...`
-  - Column widths prepend `{wch:16}` for SAP Code
-- **Existing FY26-27 entries** unchanged per Dipenkumar's instruction — entries saved before v24.6.0 keep their blank `dealValue`; only new entries from this version forward capture ₹. No retroactive migration.
+- **`FRONTEND_VERSION`: `24.6.0` → `24.7.0`**
+- **Lead Source values** normalized to match tvONE:
+  - `"OEM-referred"` → `"OEM"` (label: "OEM (BrightSign referral)")
+  - `"Cavitak-generated"` → `"Cavitak"` (label: "Cavitak (self-sourced)")
+- **`state.form` init and reset** — both occurrences updated to use new field names
+- **Label map** — added `venueType`, `state`, `partnerContact*` entries
+- **Progress checker** — watches new field IDs
+- **Form watcher** — installs listeners on new field IDs
+- **Field clearer** — clears new field IDs on reset
+- **Form value reads** — reads new field IDs; legacy `contactname/phone/email` state keys mirrored to new values for any code path that still references them
+- **Validation** — new field IDs validated; phone still 10-digit-only; email still regex-checked
+- **Excel Summary** — Primary Contact row replaced by 3 rows (Name / Mobile / Email) plus new Venue Type + State rows
+
+### Removed
+
+- **`Venue / Location` text field** (`f-venue`) — Venue Type dropdown replaces it. The `state.form.venue` key is also removed; old saved entries retain their `venue` column data on the Sheet but the frontend no longer reads or writes it.
 
 ### Not changed
 
-- **Apps Script** — no changes. Sheet column AM (`dealValue`) still exists and still accepts what the frontend sends. Backend `handleReviewData` already aggregates `pipelineValue` and `wonValue` from this column.
-- **Tender Compliance sheet** — untouched. Per Dipenkumar: "Quotation sheet only — skip Tender Compliance sheet changes." Tender Compliance has no BOM table; its sole product reference is the "Model Offered" metadata row.
-- **Summary sheet** — untouched. Keeps existing project-context layout.
-- **Result page** — unchanged. Per Dipenkumar: "do not show on result page but in excel quote add those sap code column."
-- **PRIOR_FY_DATA + Review tab Cards 5 and 6** — v24.5.0 FY25-26 invoiced reference remains. With `SHOW_PRICING=true` and real dealValue flowing, Card 6's YoY table now shows **real** current-year pipeline alongside the FY25-26 invoiced baseline. Footnotes still explain the pipeline-vs-invoiced distinction.
+- **Recommendation engine** — fully intact. Technical section (qty, environment, content, resolution, I/O, CMS, budget, XC OS, SSD) is untouched.
+- **BOM card + BOM totals** — untouched.
+- **Excel Quotation sheet** (with SAP Code column B added in v24.6.0) — untouched.
+- **Tender Compliance sheet** — untouched.
+- **Deal value** (from `state._bomTotals.subtotal`, v24.6.0 feature) — untouched. Still flows silently to Sheet column AM on save.
+- **Review tab** — unchanged.
+- **Apps Script backend** — no changes required. The Sheet can accept the new column headers on first write via its existing add-column-on-demand behavior.
 
 ### Files in release
 
-- `brightsign-v24-6-0.html` — frontend only (Apps Script v24.5.2 unchanged)
+- `brightsign-v24-7-0.html` — frontend only (Apps Script v24.5.2 unchanged)
 
 ### Deploy
 
-1. Rename `brightsign-v24-6-0.html` → `index.html`
+1. Rename `brightsign-v24-7-0.html` → `index.html`
 2. Commit to GitHub repo, push
-3. Hard refresh (Ctrl+Shift+R)
-4. Verify by creating a new entry: pick model XT1145 at qty 10 → Deal value should auto-fill as `14,01,560`
-5. Open Review tab: Card 6 should now show real pipeline ₹ on the current-FY side
+3. Wait ~60 seconds for GitHub Pages propagation
+4. Hard refresh (Ctrl+Shift+R) on all active browsers
+5. Verify: open New Selection → Project Context should show Venue Type + City, State composite UX + Partner Contact split into 3 fields
+6. Test end-to-end: create an entry → save → check Google Sheet for new columns (`venueType`, `state`, `partnerContactName/Phone/Email`) — these will auto-create on first write
 
 ### Validation run (during build)
 
-All 44 surgical edits succeeded on single-anchor matches. Functional smoke test confirms:
-- PRICING lookups return expected values (XC2055 std ₹174,688; XC2055 win ₹201,771; XT1145 ₹140,156)
-- SAP codes resolve correctly for every catalog SKU
-- `computeDealValue()` accurate for single-model, Wi-Fi, XC Win variant, and mixed-environment cases
-- `fmtDealValueInput` ↔ `parseDealValueInput` round-trip preserves exact rupee values
-- Flexible input parsing works: "1.25 L", "50k", "1.5 Cr", "1,25,000" all normalize correctly
-- All 6 `<script>` blocks parse cleanly; tag balance clean
+- 21/21 surgical edits on single-anchor matches
+- All 6 inline `<script>` blocks parse cleanly via node's `new Function()` check
+- Tag balance clean
+- No duplicate `id="f-*"` attributes
+- Old `f-venue`, `f-contactname`, `f-contactphone`, `f-contactemail`, `value="OEM-referred"`, `value="Cavitak-generated"` all confirmed absent
+- Frontend size delta: +5.8 KB (633 → 639 KB)
+
+### Backward compatibility
+
+- `state.form.contactname/contactphone/contactemail` keys still exist in state, populated as mirrors of `partnerContactName/Phone/Email`. Any internal code path (Excel Summary, email template, etc.) that hasn't been updated this release will still receive values.
+- Legacy `contactname/phone/email` columns in the Sheet will no longer receive new data (new columns `partnerContactName/Phone/Email` take over), but existing column data is preserved.
+- Payload still includes both old and new field names so Apps Script v24.5.2 schema handling stays compatible.
 
 ### Known limitations
 
-- **Old entries stay at 0** — by design. If the team wants a one-time backfill (qty × catalog), it's straightforward as a separate Apps Script utility but out of scope for this release.
-- **Price changes require a new HTML deploy** — PRICING and SAP_CODES are hardcoded constants. When Cavitak issues a new rate card, update the consts and ship a version bump. (Future work: move PRICING into a Google Sheets tab like the architecture note in v24.5.0 mentioned.)
-- **Series 6 models in the catalog (`available: false`)** — cannot generate dealValue or SAP codes. When they launch India Sept 2026, add pricing and SAP codes then.
+- **Stage list unchanged** — BrightSign already had the 5-option list (Lead / Opportunity / Proposal / Negotiation / Order), which is what we're standardizing to. tvONE's richer 7-option list got reduced to match.
+- **Post-deploy Sheet wipe planned** — per Dipenkumar's note, old BrightSign Sheet entries will be deleted. If the Sheet isn't wiped, old entries will show with new labels but missing venueType/state/partnerContact* values.
+- **Lead Source value change is a breaking rename** — existing entries with `leadSource: "OEM-referred"` or `"Cavitak-generated"` will not match the new dropdown's selected state on edit. Either wipe the Sheet as planned, or run a one-time update: `leadSource = leadSource.replace('-referred','').replace('-generated','')`.
 
-### Companion work (still pending)
+### Companion release
 
-- Port the v24.2.7 auth fix (missing `user: data.user` return) to the **tvONE** app
-- tvONE v24.5.0 equivalent (PRIOR_FY_DATA reference, without dealValue — tvONE stays activity-only per Dipenkumar's earlier choice)
+- **tvONE v25.9** — shipped same day, same spec.
+
+### Pending (tracked separately)
+
+- Series 6 tender spec reconciliation (HD226/HD1026/XD236/XD1036 — "Launches India Sept 2026")
+- Apps Script column header migration (auto-rename `contactname → partnerContactName` etc. on first read) — deferred since Sheet will be wiped

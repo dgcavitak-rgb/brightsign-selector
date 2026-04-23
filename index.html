@@ -5161,16 +5161,6 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   color:#fbbf24;
 }
 
-/* v24.6.0: Deal value auto/manual badge */
-.dv-badge-auto, .dv-badge-manual {
-  display:inline-block; font-size:10px; font-weight:500;
-  margin-left:8px; padding:2px 7px; border-radius:10px;
-  vertical-align:middle; letter-spacing:0.02em;
-}
-.dv-badge-auto { background:rgba(124,58,237,0.10); color:#7C3AED; }
-.dv-badge-manual { background:rgba(245,158,11,0.14); color:#B45309; }
-[data-theme="dark"] .dv-badge-auto { background:rgba(139,92,246,0.18); color:#C4B5FD; }
-[data-theme="dark"] .dv-badge-manual { background:rgba(245,158,11,0.20); color:#FCD34D; }
 </style>
 <!-- v24.4.2: Apply saved theme BEFORE body renders (prevents flash-of-light) — 3-state light/auto/dark -->
 <script>
@@ -5329,22 +5319,71 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         <div class="spec-grid two-col">
           <div class="form-group" style="margin:0;"><label>Project name<span class="req">*</span></label><input type="text" id="f-project" placeholder="e.g. Retail flagship — Chennai" oninput="checkDuplicateProject()"></div>
           <div class="form-group" style="margin:0;"><label>End-user / Client<span class="req">*</span></label><input type="text" id="f-enduser" placeholder="e.g. Reliance Retail"></div>
-          <div class="form-group" style="margin:0;"><label>Venue / Location<span class="req">*</span></label><input type="text" id="f-venue" placeholder="e.g. Phoenix Marketcity"></div>
           <div class="form-group" style="margin:0;"><label>Partner / SI<span class="req">*</span></label><input type="text" id="f-partner" placeholder="e.g. Inviot AV Solutions"></div>
           <div class="form-group" style="margin:0;"><label>Consultant<span class="req">*</span></label><input type="text" id="f-consultant" placeholder="e.g. AV-Technik / Direct"></div>
-          <div class="form-group" style="margin:0;"><label>City<span class="req">*</span></label><select id="f-city"><option value="">Select city…</option><option>Ahmedabad</option><option>Bangalore</option><option>Chennai</option><option>Delhi / NCR</option><option>Hyderabad</option><option>Kolkata</option><option>Mumbai</option><option>Pune</option><option>Jaipur</option><option>Kochi</option><option>Chandigarh</option><option>Lucknow</option><option>Indore</option><option>Bhubaneswar</option><option>Nagpur</option><option>Surat</option><option>Vadodara</option><option>Goa</option><option>Other</option></select></div>
-          <div class="form-group" style="margin:0;"><label>Deal stage<span class="req">*</span></label><select id="f-stage"><option value="">Select stage…</option><option>Lead</option><option>Opportunity</option><option>Proposal</option><option>Negotiation</option><option>Order</option></select></div>
-          <div class="form-group" style="margin:0;"><label>Lead source<span class="req">*</span></label><select id="f-leadsource"><option value="">Select source…</option><option value="OEM-referred">OEM-referred (BrightSign gave lead)</option><option value="Cavitak-generated">Cavitak-generated (we found it)</option></select></div>
-          <div class="form-group" style="margin:0;"><label>Outcome<span class="req">*</span></label><select id="f-outcome"><option value="open">Open (active)</option><option value="won">Won</option><option value="lost">Lost</option><option value="on-hold">On hold</option></select></div>
-          <div class="form-group" style="margin:0;">
-            <label>Deal value (₹)<span class="req">*</span>
-              <span id="f-dealvalue-badge" class="dv-badge-auto" title="Auto-calculated from quantity × catalog price">auto</span>
-            </label>
-            <input type="text" id="f-dealvalue" placeholder="Auto-calculates from qty × price; override if needed" oninput="onDealValueEdited()">
-            <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;line-height:1.4;">
-              Pre-GST. Auto-fills from qty × model price. Type to override — <a href="#" onclick="resetDealValue();return false;" style="color:#7C3AED;text-decoration:underline;">reset to auto</a>.
-            </div>
+          <!-- v24.7.0: Venue Type added (replaces Venue/Location text) · 34-option grouped list · matches tvONE -->
+          <div class="form-group" style="margin:0;"><label>Venue Type<span class="req">*</span></label>
+            <select id="f-venueType">
+              <option value="">Select venue type…</option>
+              <optgroup label="Corporate & Office">
+                <option>Meeting Room / Huddle Room</option>
+                <option>Boardroom</option>
+                <option>Training Room</option>
+                <option>Open Office / Collaboration Zone</option>
+                <option>Reception / Lobby</option>
+                <option>Experience Center / Demo Room</option>
+                <option>Control Room / NOC</option>
+              </optgroup>
+              <optgroup label="Education">
+                <option>Classroom / Lecture Hall</option>
+                <option>Auditorium</option>
+                <option>Campus (multi-building)</option>
+                <option>Library</option>
+                <option>Laboratory</option>
+              </optgroup>
+              <optgroup label="Retail &amp; Hospitality">
+                <option>Retail Store</option>
+                <option>Shopping Mall</option>
+                <option>Showroom (Auto / Electronics / Luxury)</option>
+                <option>Hotel Lobby / Public Area</option>
+                <option>Hotel Ballroom / Banquet</option>
+                <option>Restaurant / QSR / Café</option>
+                <option>Bar / Nightclub</option>
+              </optgroup>
+              <optgroup label="Healthcare &amp; Public">
+                <option>Hospital</option>
+                <option>Clinic / Diagnostic Center</option>
+                <option>Government Office</option>
+                <option>Courtroom</option>
+                <option>Place of Worship</option>
+              </optgroup>
+              <optgroup label="Transit &amp; Infrastructure">
+                <option>Airport</option>
+                <option>Metro / Railway Station</option>
+                <option>Bus Terminal</option>
+                <option>Transit Hub</option>
+              </optgroup>
+              <optgroup label="Venues &amp; Entertainment">
+                <option>Stadium / Arena</option>
+                <option>Concert Hall / Theater</option>
+                <option>Museum / Art Gallery</option>
+                <option>Theme Park / Aquarium / Zoo</option>
+                <option>Casino</option>
+                <option>Cinema / Multiplex</option>
+                <option>Convention Center / Exhibition</option>
+                <option>Broadcast / TV Studio</option>
+              </optgroup>
+              <optgroup label="Other">
+                <option>Other (specify in notes)</option>
+              </optgroup>
+            </select>
           </div>
+          <!-- v24.7.0: City (existing list) + State (new) — City, State composite UX with auto-fill -->
+          <div class="form-group" style="margin:0;"><label>City, State<span class="req">*</span></label><select id="f-city" onchange="autoFillStateFromCity()"><option value="">Select city…</option><option>Ahmedabad</option><option>Bangalore</option><option>Chennai</option><option>Delhi / NCR</option><option>Hyderabad</option><option>Kolkata</option><option>Mumbai</option><option>Pune</option><option>Jaipur</option><option>Kochi</option><option>Chandigarh</option><option>Lucknow</option><option>Indore</option><option>Bhubaneswar</option><option>Nagpur</option><option>Surat</option><option>Vadodara</option><option>Goa</option><option>Other</option></select></div>
+          <div class="form-group" style="margin:0;"><label>State<span class="req">*</span></label><select id="f-state"><option value="">Select state…</option><option>Andhra Pradesh</option><option>Arunachal Pradesh</option><option>Assam</option><option>Bihar</option><option>Chhattisgarh</option><option>Goa</option><option>Gujarat</option><option>Haryana</option><option>Himachal Pradesh</option><option>Jharkhand</option><option>Karnataka</option><option>Kerala</option><option>Madhya Pradesh</option><option>Maharashtra</option><option>Manipur</option><option>Meghalaya</option><option>Mizoram</option><option>Nagaland</option><option>Odisha</option><option>Punjab</option><option>Rajasthan</option><option>Sikkim</option><option>Tamil Nadu</option><option>Telangana</option><option>Tripura</option><option>Uttar Pradesh</option><option>Uttarakhand</option><option>West Bengal</option><option>Delhi</option><option>Chandigarh</option><option>Jammu &amp; Kashmir</option><option>Ladakh</option><option>Puducherry</option><option>Andaman &amp; Nicobar</option><option>Dadra &amp; Nagar Haveli and Daman &amp; Diu</option><option>Lakshadweep</option></select></div>
+          <div class="form-group" style="margin:0;"><label>Deal stage<span class="req">*</span></label><select id="f-stage"><option value="">Select stage…</option><option>Lead</option><option>Opportunity</option><option>Proposal</option><option>Negotiation</option><option>Order</option></select></div>
+          <div class="form-group" style="margin:0;"><label>Lead source<span class="req">*</span></label><select id="f-leadsource"><option value="">Select source…</option><option value="OEM">OEM (BrightSign referral)</option><option value="Cavitak">Cavitak (self-sourced)</option></select></div>
+          <div class="form-group" style="margin:0;"><label>Outcome<span class="req">*</span></label><select id="f-outcome"><option value="open">Open (active)</option><option value="won">Won</option><option value="lost">Lost</option><option value="on-hold">On hold</option></select></div>
           <div class="form-group" style="margin:0;">
             <label>Expected close month<span class="req">*</span></label>
             <div class="closemonth-picker">
@@ -5367,9 +5406,9 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
               <div class="closemonth-display" id="closemonth-display"></div>
             </div>
           </div>
-          <div class="form-group" style="margin:0;"><label>Contact person<span class="req">*</span></label><input type="text" id="f-contactname" placeholder="End-user contact name"></div>
-          <div class="form-group" style="margin:0;"><label>Contact phone<span class="req">*</span></label><input type="tel" id="f-contactphone" placeholder="10-digit mobile number" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10);"></div>
-          <div class="form-group" style="margin:0;"><label>Contact email<span class="req">*</span></label><input type="email" id="f-contactemail" placeholder="name@client.com" autocomplete="off"></div>
+          <div class="form-group" style="margin:0;"><label>Partner Contact — Name<span class="req">*</span></label><input type="text" id="f-partnerContactName" placeholder="e.g. Rohit Sharma"></div>
+          <div class="form-group" style="margin:0;"><label>Partner Contact — Mobile<span class="req">*</span></label><input type="tel" id="f-partnerContactPhone" placeholder="10-digit mobile" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10);"></div>
+          <div class="form-group" style="margin:0;"><label>Partner Contact — Email<span class="req">*</span></label><input type="email" id="f-partnerContactEmail" placeholder="name@company.com" autocomplete="off"></div>
         </div>
       </div>
 
@@ -5773,10 +5812,29 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.6.0';
+const FRONTEND_VERSION = '24.7.0';
+
+/* v24.7.0: City → State auto-fill for composite City, State UX */
+const CITY_TO_STATE_BS = {
+  'Ahmedabad':'Gujarat','Bangalore':'Karnataka','Chennai':'Tamil Nadu',
+  'Delhi / NCR':'Delhi','Hyderabad':'Telangana','Kolkata':'West Bengal',
+  'Mumbai':'Maharashtra','Pune':'Maharashtra','Jaipur':'Rajasthan',
+  'Kochi':'Kerala','Chandigarh':'Chandigarh','Lucknow':'Uttar Pradesh',
+  'Indore':'Madhya Pradesh','Bhubaneswar':'Odisha','Nagpur':'Maharashtra',
+  'Surat':'Gujarat','Vadodara':'Gujarat','Goa':'Goa'
+};
+function autoFillStateFromCity(){
+  const c=document.getElementById('f-city');
+  const s=document.getElementById('f-state');
+  if(!c||!s)return;
+  const m=CITY_TO_STATE_BS[c.value];
+  if(m)s.value=m;
+}
+
 /* v24.4.8: Feature flag.
    v24.6.0: flipped TRUE. The PRICING table (all Series 5 models + WD105) is fully populated
-   and dealValue is now re-captured on the form via auto-calc from qty × catalog price. */
+   and dealValue is captured silently from the BOM subtotal (pre-GST "Gross Total") at save time.
+   No form input — users don't type it, no override, no drift. */
 const SHOW_PRICING = true;
 window.FRONTEND_VERSION = FRONTEND_VERSION;
 
@@ -6150,13 +6208,11 @@ const PRICING = {
 };
 
 /* v24.6.0: SAP item codes for Series 5 SKUs + XC Win10/Win11 variants + WD105.
-   Shown as a dedicated "SAP Code" column immediately after the line number in the
-   Excel Quotation sheet — allows Cavitak ERP to drop the quote straight into a
-   PO without SKU translation.
+   Displayed as column B in the Excel Quotation sheet — lets Cavitak ERP drop
+   the BOQ straight into a purchase order without SKU translation.
    Source: Cavitak SAP master price list (image shared by Dipenkumar, Apr 2026).
-   Series 6 models (HD226/HD1026/XD236/XD1036) intentionally absent — per
-   Dipenkumar: "SAP is for Series 5 only & as of now do not consider 6 Series
-   player." When Series 6 launches India Sept 2026, add real SAP codes here. */
+   Series 6 (HD226/HD1026/XD236/XD1036) deliberately absent — per Dipenkumar:
+   "SAP is for Series 5 only & as of now do not consider 6 Series player." */
 const SAP_CODES = {
   'AU335'  : 'SI0010195',
   'LS425'  : 'SI0010158',
@@ -6175,7 +6231,7 @@ const SAP_CODES = {
   'WD105'  : 'SI0010159'
 };
 
-/* Returns SAP code for a given SKU, '' if unknown. */
+/* Returns SAP code for a SKU. Empty string if not in the catalog (services, custom items). */
 function getSapCode(sku){
   if(!sku)return '';
   return SAP_CODES[String(sku).trim()] || '';
@@ -7082,7 +7138,7 @@ const TENDER_CLAUSES = {
 
 const state = {
   user:null,
-  form:{project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',xcOs:'std',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',outcome:'open',dealValue:0,dealValueEdited:false},
+  form:{project:'',enduser:'',venueType:'',partner:'',consultant:'',city:'',state:'',partnerContactName:'',partnerContactPhone:'',partnerContactEmail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',xcOs:'std',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',outcome:'open'},
   result:null,
   osChoice:'brightsignos'
 };
@@ -7989,7 +8045,7 @@ function prettifyAuditValue(v){
 function prettifyFieldName(f){
   const map={
     closemonth:'Close month',qty:'Qty',qtyIndoor:'Qty (indoor)',qtyOutdoor:'Qty (outdoor)',
-    enduser:'End-user',contactname:'Contact',contactphone:'Phone',contactemail:'Email',
+    enduser:'End-user',venueType:'Venue Type',state:'State',partnerContactName:'Partner Contact — Name',partnerContactPhone:'Partner Contact — Mobile',partnerContactEmail:'Partner Contact — Email',
     cmsVendor:'CMS vendor',cmsTerm:'CMS term',cmsBillingType:'CMS billing',
     hdmiIn:'HDMI in',outdoorModel:'Outdoor model',os:'OS',ssd:'SSD',gpio:'GPIO',
     wifi:'Wi-Fi',touch:'Touch',stage:'Stage',budget:'Budget',
@@ -9101,7 +9157,7 @@ function setBudget(val){
 
 function updateProgress(){
   const f=state.form;
-  const projDone=f.project||f.enduser||f.venue||f.partner||f.consultant||f.city||f.contactname||f.contactphone||f.contactemail||f.stage||f.closemonth;
+  const projDone=f.project||f.enduser||f.venueType||f.partner||f.consultant||f.city||f.state||f.partnerContactName||f.partnerContactPhone||f.partnerContactEmail||f.stage||f.closemonth;
   const deployDone=f.environment&&f.update;
   const contentDone=f.content;
   const videoDone=f.content==='audio'||(f.resolution&&f.outputs&&f.hdmiIn&&f.touch&&f.wifi&&f.ssd);
@@ -9111,7 +9167,7 @@ function updateProgress(){
   steps[2].classList.toggle('done',!!contentDone);
   steps[3].classList.toggle('done',!!videoDone);
 }
-['f-project','f-enduser','f-venue','f-partner','f-consultant','f-city','f-contactname','f-contactphone','f-contactemail','f-stage','f-closemonth'].forEach(id=>{
+['f-project','f-enduser','f-venueType','f-partner','f-consultant','f-city','f-state','f-partnerContactName','f-partnerContactPhone','f-partnerContactEmail','f-stage','f-closemonth'].forEach(id=>{
   document.getElementById(id).addEventListener('input',updateProgress);
   document.getElementById(id).addEventListener('change',updateProgress);
 });
@@ -9162,7 +9218,7 @@ function escapeHtml(str){
 }
 
 function resetForm(){
-  ['f-project','f-enduser','f-venue','f-partner','f-consultant','f-contactname','f-contactphone','f-contactemail','f-closemonth'].forEach(id=>document.getElementById(id).value='');
+  ['f-project','f-enduser','f-venueType','f-partner','f-consultant','f-partnerContactName','f-partnerContactPhone','f-partnerContactEmail','f-closemonth'].forEach(id=>document.getElementById(id).value='');
   // v24.4.16: Also clear the new smart-picker selects, chips, and display
   const cmYear=document.getElementById('f-closemonth-year');
   const cmMonth=document.getElementById('f-closemonth-month');
@@ -9196,7 +9252,7 @@ function resetForm(){
   if(oneYrPill)oneYrPill.classList.add('selected');
   document.getElementById('section-cms').style.display='none';
   clearFieldErrors();
-  state.form={project:'',enduser:'',venue:'',partner:'',consultant:'',city:'',contactname:'',contactphone:'',contactemail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',xcOs:'std',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',outcome:'open'};
+  state.form={project:'',enduser:'',venueType:'',partner:'',consultant:'',city:'',state:'',partnerContactName:'',partnerContactPhone:'',partnerContactEmail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',xcOs:'std',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',outcome:'open'};
   setBudget(2);
   document.querySelectorAll('.progress-step').forEach(s=>s.classList.remove('done'));
   // v20.1: Clear any lingering lock from prior sessions
@@ -9257,9 +9313,16 @@ function runSelector(){
   state.form.partner=document.getElementById('f-partner').value.trim();
   state.form.consultant=document.getElementById('f-consultant').value.trim();
   state.form.city=document.getElementById('f-city').value;
-  state.form.contactname=document.getElementById('f-contactname').value.trim();
-  state.form.contactphone=document.getElementById('f-contactphone').value.trim();
-  state.form.contactemail=document.getElementById('f-contactemail').value.trim();
+  state.form.partnerContactName=document.getElementById('f-partnerContactName').value.trim();
+  state.form.partnerContactPhone=document.getElementById('f-partnerContactPhone').value.trim();
+  state.form.partnerContactEmail=document.getElementById('f-partnerContactEmail').value.trim();
+  // v24.7.0: Legacy contact* fields kept populated for backward-compat
+  state.form.contactname=state.form.partnerContactName;
+  state.form.contactphone=state.form.partnerContactPhone;
+  state.form.contactemail=state.form.partnerContactEmail;
+  // New: venueType, state (from their dropdowns)
+  state.form.venueType=(document.getElementById('f-venueType')||{}).value||'';
+  state.form.state=(document.getElementById('f-state')||{}).value||'';
   state.form.stage=document.getElementById('f-stage').value;
   state.form.closemonth=document.getElementById('f-closemonth').value;
   // v24.4.0: channel review fields (v24.4.6: dealValue removed)
@@ -9282,23 +9345,24 @@ function runSelector(){
     {key:'partner',test:()=>!!f.partner,id:'f-partner',label:'Partner'},
     {key:'consultant',test:()=>!!f.consultant,id:'f-consultant',label:'Consultant'},
     {key:'city',test:()=>!!f.city,id:'f-city',label:'City'},
-    {key:'contactname',test:()=>!!f.contactname,id:'f-contactname',label:'Contact name'},
-    {key:'contactphone',test:()=>{
+    {key:'venueType',test:()=>!!f.venueType,id:'f-venueType',label:'Venue Type'},
+    {key:'state',test:()=>!!f.state,id:'f-state',label:'State'},
+    {key:'partnerContactName',test:()=>!!f.partnerContactName,id:'f-partnerContactName',label:'Partner Contact — Name'},
+    {key:'partnerContactPhone',test:()=>{
       // v24.4.9: Must be EXACTLY 10 digits. No +91, no leading 0, no country code prefix.
-      const digits=(f.contactphone||'').replace(/\D/g,'');
+      const digits=(f.partnerContactPhone||'').replace(/\D/g,'');
       return digits.length===10;
-    },id:'f-contactphone',label:'Contact phone (must be exactly 10 digits)'},
-    {key:'contactemail',test:()=>{
+    },id:'f-partnerContactPhone',label:'Partner Contact — Mobile (must be exactly 10 digits)'},
+    {key:'partnerContactEmail',test:()=>{
       // v24.4.5: Proper email format — x@y.z minimum
-      const email=(f.contactemail||'').trim();
+      const email=(f.partnerContactEmail||'').trim();
       if(!email)return false;
       // RFC 5322 simplified: local@domain.tld with at least one dot in domain
       return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
-    },id:'f-contactemail',label:'Contact email (must be valid format like name@company.com)'},
+    },id:'f-partnerContactEmail',label:'Partner Contact — Email (valid format like name@company.com)'},
     {key:'stage',test:()=>!!f.stage,id:'f-stage',label:'Deal stage'},
     {key:'leadSource',test:()=>!!f.leadSource,id:'f-leadsource',label:'Lead source'},
     {key:'outcome',test:()=>!!f.outcome,id:'f-outcome',label:'Outcome'},
-    {key:'dealValue',test:()=>(parseInt(f.dealValue)||0)>0,id:'f-dealvalue',label:'Deal value'},
     {key:'closemonth',test:()=>!!f.closemonth,id:'f-closemonth',label:'Close month'},
     {key:'qty',test:()=>f.qty>=1,id:'f-qty',label:'Quantity'},
     {key:'environment',test:()=>!!f.environment,id:'data-input:environment',label:'Deployment type'},
@@ -9917,7 +9981,7 @@ function buildProjectCardV21(){
   const fields=[
     ['Project',f.project||'—'],['End-user',f.enduser||'—'],['Venue',f.venue||'—'],
     ['Partner / SI',f.partner||'—'],['Consultant',f.consultant||'—'],['City',f.city||'—'],
-    ['Contact person',f.contactname||'—'],['Contact phone',f.contactphone||'—'],['Contact email',f.contactemail||'—'],
+    ['Venue Type',f.venueType||'—'],['State',f.state||'—'],['Partner Contact — Name',f.partnerContactName||'—'],['Partner Contact — Mobile',f.partnerContactPhone||'—'],['Partner Contact — Email',f.partnerContactEmail||'—'],
     ['Deal stage',f.stage||'—'],['Expected close',closeLabel],['Quantity',`${f.qty||'—'} players`],
     ['Deployment type',envLabel],['Content type',contentLabel],['GPIO required',gpioLabel],
     ['CMS',cmsLabel],['Warranty','5 years'],['Budget tier',BUDGET_ZONES[f.budget]?BUDGET_ZONES[f.budget].name:'—'],
@@ -9992,9 +10056,12 @@ function buildEntryPayload(status){
     cmsVendor:cmsBillingType==='Standalone (no CMS)'?'':f.cmsVendor||'BrightSign CMS',
     cmsTerm:cmsBillingType==='Standalone (no CMS)'?'':(f.cmsTerm||'1'),
     cmsBillingType:cmsBillingType,
-    // v24.4.0: channel review fields (v24.6.0: dealValue re-added; auto-calculated from qty × price, overridable)
+    // v24.4.0: channel review fields
+    // v24.6.0: dealValue re-captured, but NOT from a form input — read directly from the BOM's
+    // pre-GST Gross Total (state._bomTotals.subtotal). BOM = single source of truth for pricing.
+    // Includes hardware + WD105 + CMS + SSD (everything the BOQ adds up, before GST).
     leadSource:f.leadSource||'',
-    dealValue:parseInt(f.dealValue)||0,
+    dealValue:(state._bomTotals && state._bomTotals.subtotal)||0,
     outcome:f.outcome||'open'
   };
 }
@@ -10015,74 +10082,6 @@ function parseDealValueClient(v){
   else if(unit==='k'||unit==='thousand'||unit==='th')n*=1000;
   return isNaN(n)?0:Math.max(0,Math.round(n));
 }
-
-/* v24.6.0: Compute dealValue (₹, integer rupees) from form state + result.
-   Uses getModelPrice(id, xcOs) with XC OS variant. Handles mixed env. */
-function computeDealValue(f, r){
-  if(!f || !r || !r.model)return 0;
-  const xcOs = f.xcOs || 'std';
-  const qtyTotal = parseInt(f.qty) || 0;
-  const qtyIndoor = parseInt(f.qtyIndoor) || 0;
-  const qtyOutdoor = parseInt(f.qtyOutdoor) || 0;
-  let hw = 0;
-  if(f.environment === 'mixed' && r.outdoorVariant){
-    const pIn  = getModelPrice(r.model.id, xcOs).unitPrice || 0;
-    const pOut = getModelPrice(r.outdoorVariant.id, xcOs).unitPrice || 0;
-    hw = (qtyIndoor * pIn) + (qtyOutdoor * pOut);
-  } else {
-    const p = getModelPrice(r.model.id, xcOs).unitPrice || 0;
-    hw = qtyTotal * p;
-  }
-  const wifiPrice = (typeof WD105_PRICE !== 'undefined') ? WD105_PRICE : 16000;
-  const wifi = (f.wifi === 'yes') ? qtyTotal * wifiPrice : 0;
-  return Math.max(0, Math.round(hw + wifi));
-}
-
-function fmtDealValueInput(n){
-  n = parseInt(n) || 0;
-  if(n === 0) return '';
-  return formatINR(n).replace(/^₹/, '');
-}
-
-function parseDealValueInput(s){ return parseDealValueClient(s); }
-
-function updateDealValueAuto(){
-  if(!state.form.dealValueEdited){
-    const v = computeDealValue(state.form, state.result);
-    state.form.dealValue = v;
-    const el = document.getElementById('f-dealvalue');
-    if(el) el.value = fmtDealValueInput(v);
-    setDealValueBadge('auto');
-  }
-}
-
-function onDealValueEdited(){
-  const el = document.getElementById('f-dealvalue');
-  if(!el) return;
-  state.form.dealValueEdited = true;
-  state.form.dealValue = parseDealValueInput(el.value);
-  setDealValueBadge('manual');
-}
-
-function resetDealValue(){
-  state.form.dealValueEdited = false;
-  updateDealValueAuto();
-}
-
-function setDealValueBadge(mode){
-  const b = document.getElementById('f-dealvalue-badge');
-  if(!b) return;
-  if(mode === 'manual'){
-    b.className = 'dv-badge-manual';
-    b.textContent = 'manual';
-    b.title = 'You set this value manually. Click "reset to auto" to recompute.';
-  } else {
-    b.className = 'dv-badge-auto';
-    b.textContent = 'auto';
-    b.title = 'Auto-calculated from quantity × catalog price. Type to override.';
-  }
-}
-
 
 /* v24.4.0: Format rupees nicely for display: 12500000 → "₹1.25 Cr" */
 function formatINR(n){
@@ -11180,7 +11179,7 @@ function downloadQuoteExcel(returnWorkbook){
 
   css(qWs,'A4',{font:{bold:true,sz:16,color:{rgb:C.deepIndigo},name:'Calibri'},alignment:{horizontal:'left',vertical:'center'}});
   qWs['!merges'].push({s:{r:3,c:0},e:{r:3,c:3}});
-  css(qWs,'F4',{font:{bold:true,sz:11,color:{rgb:C.violetAccent},name:'Calibri'},alignment:{horizontal:'right',vertical:'center'}});  // v24.6.0: shifted for SAP Code col
+  css(qWs,'F4',{font:{bold:true,sz:11,color:{rgb:C.violetAccent},name:'Calibri'},alignment:{horizontal:'right',vertical:'center'}});  // v24.6.0
   css(qWs,'F4',{font:{bold:true,sz:11,color:{rgb:C.violetAccent},name:'Calibri'},alignment:{horizontal:'left',vertical:'center'}});
   qWs['!merges'].push({s:{r:3,c:6},e:{r:3,c:7}});
   css(qWs,'E5',{font:{sz:10,color:{rgb:C.inkSoft}},alignment:{horizontal:'right'}});
@@ -11196,7 +11195,8 @@ function downloadQuoteExcel(returnWorkbook){
   qWs['!merges'].push({s:{r:7,c:4},e:{r:7,c:7}});
 
   for(let r=8;r<12;r++){
-    // v24.6.0: column map updated for SAP Code insertion. Left-half label stays at A, value merges B:D (3 cols). Right-half label now at E, value at F.
+    // v24.6.0: project contact section — right-half shifted +1 col (D→E, E→F) for SAP Code insertion.
+    // Left-half label stays at A; value merges B:D now (was B:C).
     css(qWs,'A'+(r+1),{fill:{fgColor:{rgb:C.labelBg}},font:{sz:10,color:{rgb:C.inkSoft}},alignment:{horizontal:'left',vertical:'center',indent:1}});
     css(qWs,'B'+(r+1),{fill:{fgColor:{rgb:C.white}},font:{bold:true,sz:11,color:{rgb:C.ink}},alignment:{horizontal:'left',vertical:'center',indent:1}});
     qWs['!merges'].push({s:{r:r,c:1},e:{r:r,c:3}});
@@ -11209,14 +11209,14 @@ function downloadQuoteExcel(returnWorkbook){
   qWs['!merges'].push({s:{r:13,c:0},e:{r:13,c:7}});
   css(qWs,'A15',{fill:{fgColor:{rgb:C.modelHighlightBg}},font:{bold:true,sz:16,color:{rgb:C.violetAccent},name:'Consolas'},alignment:{horizontal:'left',vertical:'center',indent:1}});
   css(qWs,'B15',{fill:{fgColor:{rgb:C.modelHighlightBg}}});
-  css(qWs,'C15',{fill:{fgColor:{rgb:C.modelHighlightBg}}});  // v24.6.0: extended merge to include SAP Code col
-  css(qWs,'D15',{fill:{fgColor:{rgb:C.modelHighlightBg}},font:{sz:11,color:{rgb:C.inkSoft}},alignment:{horizontal:'left',vertical:'center'}});  // v24.6.0: shifted for SAP Code col
+  css(qWs,'C15',{fill:{fgColor:{rgb:C.modelHighlightBg}}});  // v24.6.0
+  css(qWs,'D15',{fill:{fgColor:{rgb:C.modelHighlightBg}},font:{sz:11,color:{rgb:C.inkSoft}},alignment:{horizontal:'left',vertical:'center'}});  // v24.6.0
   qWs['!merges'].push({s:{r:14,c:3},e:{r:14,c:7}});
   qWs['!merges'].push({s:{r:14,c:0},e:{r:14,c:2}});
 
   css(qWs,'A17',{fill:{fgColor:{rgb:C.medViolet}},font:{bold:true,sz:10,color:{rgb:C.white}},alignment:{horizontal:'left',vertical:'center',indent:1}});
   qWs['!merges'].push({s:{r:16,c:0},e:{r:16,c:7}});
-  'ABCDEFGH'.split('').forEach((col,ci)=>{  // v24.6.0: +SAP Code (col B); shift center/indent col indices
+  'ABCDEFGH'.split('').forEach((col,ci)=>{  // v24.6.0
     css(qWs,col+'18',{
       fill:{fgColor:{rgb:C.deepIndigo}},
       font:{bold:true,sz:10,color:{rgb:C.white}},
@@ -11226,8 +11226,7 @@ function downloadQuoteExcel(returnWorkbook){
   bomRows.forEach((rowData,i)=>{
     const rn=bomStartRow+i;
     const hasPrice=(rowData.unitPrice!=null&&!isNaN(rowData.unitPrice));
-    // v24.6.0: column indices shifted by +1 for SAP Code. Map:
-    //   0=#, 1=SAP Code, 2=SKU, 3=Description, 4=Qty, 5=Unit Price, 6=Gross Total, 7=Notes
+    // v24.6.0: 0=#, 1=SAP Code, 2=SKU, 3=Desc, 4=Qty, 5=Unit, 6=Gross, 7=Notes
     'ABCDEFGH'.split('').forEach((col,ci)=>{
       const baseStyle={
         fill:{fgColor:{rgb:C.white}},
@@ -11235,8 +11234,8 @@ function downloadQuoteExcel(returnWorkbook){
         alignment:{horizontal:ci===0||ci===4?'center':(ci===5||ci===6?'right':'left'),vertical:'center',indent:ci===3||ci===7?1:0,wrapText:ci===3||ci===7},
         border:{bottom:{style:'thin',color:{rgb:'E0E7FF'}}}
       };
-      if(ci===1||ci===2)baseStyle.font.bold=true;  // SAP Code + SKU both bold
-      if(ci===5||ci===6)baseStyle.numFmt='#,##0';  // Unit Price + Gross Total
+      if(ci===1||ci===2)baseStyle.font.bold=true;
+      if(ci===5||ci===6)baseStyle.numFmt='#,##0';
       if(ci===5 && !hasPrice){
         baseStyle.fill={fgColor:{rgb:'FFFBEB'}};
         baseStyle.border={top:{style:'thin',color:{rgb:'FBBF24'}},bottom:{style:'thin',color:{rgb:'FBBF24'}},left:{style:'thin',color:{rgb:'FBBF24'}},right:{style:'thin',color:{rgb:'FBBF24'}}};
@@ -11248,7 +11247,7 @@ function downloadQuoteExcel(returnWorkbook){
   const subtotalRowNum=subRow;
   const gstRowNum=subRow+1;
   const grandTotalRowNum=subRow+2;
-  // v24.6.0: totals label and value columns shifted +1 (E→F, F→G) for SAP Code insertion
+  // v24.6.0: totals columns shifted +1 (E→F label, F→G value) for SAP Code insertion
   css(qWs,'F'+subtotalRowNum,{font:{bold:true,sz:11,color:{rgb:C.ink}},alignment:{horizontal:'right',vertical:'center'}});
   css(qWs,'G'+subtotalRowNum,{font:{bold:true,sz:11,color:{rgb:C.ink}},alignment:{horizontal:'right',vertical:'center',indent:1},numFmt:'#,##0',border:{top:{style:'thin',color:{rgb:C.deepIndigo}}}});
   css(qWs,'F'+gstRowNum,{font:{sz:11,color:{rgb:C.inkSoft}},alignment:{horizontal:'right',vertical:'center'}});
@@ -11864,16 +11863,12 @@ function editPastEntry(entryIdx){
     gpio:entry.gpio||'',ssd:entry.ssd||'',os:entry.os||'',
     cmsVendor:entry.cmsVendor||'',cmsTerm:(entry.cmsTerm||'').toString(),
     cmsBillingType:entry.cmsBillingType||'',
-    // v24.4.0 (v24.6.0: dealValue re-added; editing preserves stored value as manual override)
+    // v24.4.0 (v24.4.6: dealValue removed)
     leadSource:entry.leadSource||'',
-    dealValue:parseDealValueClient(entry.dealValue||0),
-    dealValueEdited:parseDealValueClient(entry.dealValue||0) > 0,
     outcome:entry.outcome||'open'
   };
   state.form.leadSource=entry.leadSource||'';
   state.form.outcome=entry.outcome||'open';
-  state.form.dealValue=parseDealValueClient(entry.dealValue||0);
-  state.form.dealValueEdited=state.form.dealValue > 0;
 
   prefillFormUI();
   applyEditLocks(true);  // v22.3: lock basic info
@@ -12010,10 +12005,7 @@ function prefillFormUI(){
     else if(id==='outcome')el.value=f.outcome||'open';
     else if(f[id]!=null)el.value=f[id];
   });
-  // v24.6.0: dealvalue text input — show raw number, user can edit as-is
-  const dvEl = document.getElementById('f-dealvalue');
-  if(dvEl) dvEl.value = fmtDealValueInput(f.dealValue||0);
-  setDealValueBadge(f.dealValueEdited ? 'manual' : 'auto');
+  // v24.4.0: dealvalue text input — show raw number, user can edit as-is
   // Pill groups + choice cards
   const pillInputs=['environment','update','content','resolution','hdmiIn','touch','wifi','gpio','ssd','cmsInclude'];
   pillInputs.forEach(input=>{
@@ -12957,72 +12949,6 @@ window.showTab=function(which){
   // Re-wire ripples for any newly visible buttons
   if(window._wireRipple)setTimeout(window._wireRipple,10);
 };
-
-/* ==========================================================================
-   v24.6.0: Deal value auto-calc event wiring
-   Hooks qty, indoor/outdoor qty, environment, wifi, and XC OS changes so
-   dealValue recomputes automatically. Manual edits switch off auto-calc
-   until user clicks "reset to auto".
-   ========================================================================== */
-(function installDealValueAutoWiring(){
-  function wireUp(){
-    ['f-qty', 'f-qty-indoor', 'f-qty-outdoor'].forEach(function(id){
-      var el = document.getElementById(id);
-      if(el && !el._dvWired){
-        el.addEventListener('input', function(){
-          var v = parseInt(el.value) || 0;
-          if(id==='f-qty') state.form.qty = v;
-          else if(id==='f-qty-indoor') state.form.qtyIndoor = v;
-          else if(id==='f-qty-outdoor') state.form.qtyOutdoor = v;
-          if(state.result && state.result.model && typeof updateDealValueAuto === 'function'){
-            updateDealValueAuto();
-          }
-        });
-        el._dvWired = true;
-      }
-    });
-    ['environment', 'wifi', 'xc-os'].forEach(function(inputKey){
-      var group = document.querySelector('.pill-group[data-input="'+inputKey+'"]');
-      if(group && !group._dvWired){
-        group.addEventListener('click', function(ev){
-          if(!ev.target.classList || !ev.target.classList.contains('pill')) return;
-          setTimeout(function(){
-            if(state.result && state.result.model && typeof updateDealValueAuto === 'function'){
-              updateDealValueAuto();
-            }
-          }, 50);
-        });
-        group._dvWired = true;
-      }
-    });
-    document.querySelectorAll('.choice-card').forEach(function(card){
-      if(!card._dvWired){
-        card.addEventListener('click', function(){
-          setTimeout(function(){
-            if(state.result && state.result.model && typeof updateDealValueAuto === 'function'){
-              updateDealValueAuto();
-            }
-          }, 100);
-        });
-        card._dvWired = true;
-      }
-    });
-  }
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', wireUp);
-  } else {
-    wireUp();
-  }
-  var origShowTab = window.showTab;
-  if(typeof origShowTab === 'function' && !origShowTab._dvWrapped){
-    window.showTab = function(name){
-      var r = origShowTab.apply(this, arguments);
-      if(name === 'form') setTimeout(wireUp, 50);
-      return r;
-    };
-    window.showTab._dvWrapped = true;
-  }
-})();
 </script>
 </body>
 </html>
