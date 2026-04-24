@@ -5583,6 +5583,8 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           <div class="form-group" style="margin:0;"><label>Deal Stage<span class="req">*</span></label><select id="f-stage"><option value="">Select stage…</option><option>Lead</option><option>Opportunity</option><option>Proposal</option><option>Negotiation</option><option>Order</option></select></div>
           <div class="form-group" style="margin:0;"><label>Lead Source<span class="req">*</span></label><select id="f-leadsource"><option value="">Select source…</option><option value="OEM">OEM (BrightSign referral)</option><option value="Cavitak">Cavitak (self-sourced)</option></select></div>
           <div class="form-group" style="margin:0;"><label>Outcome<span class="req">*</span></label><select id="f-outcome"><option value="open">Open (active)</option><option value="won">Won</option><option value="lost">Lost</option><option value="on-hold">On hold</option></select></div>
+          <!-- v24.9: Plan of action — per-deal narrative, editable by owner and super -->
+          <div class="form-group full" style="margin:0;grid-column:1/-1;"><label>Plan of Action <span style="color:var(--ink-subtle);font-weight:400;font-size:11px">(optional · next step to close this deal)</span></label><textarea id="f-planofaction" rows="2" placeholder="e.g. Site survey on Nov 15; demo at HO scheduled. Awaiting CapEx approval."></textarea></div>
           <div class="form-group" style="margin:0;">
             <label>Expected Closure<span class="req">*</span></label>
             <div class="closemonth-picker">
@@ -6106,6 +6108,43 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
       <div class="page-title" id="review-page-title">Channel review</div>
       <div class="page-subtitle" id="review-page-subtitle">OEM vs Cavitak-generated business, ecosystem reach, funnel, and growth analysis — filtered by period.</div>
     </div>
+        <!-- v24.9: Super-only Excel upload for SalesHistory -->
+    <div id="review-admin-bar" style="display:none; background:var(--surface-2,#F5F3FF); border:1px solid var(--border,#E5E7EB); border-radius:12px; padding:14px 18px; margin-bottom:18px;">
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <div style="flex:1; min-width:220px;">
+          <div style="font-weight:600; font-size:13px; color:var(--ink,#1F2937); margin-bottom:2px;">Sales History Import (Super)</div>
+          <div style="font-size:12px; color:var(--ink-subtle,#94A3B8);">Upload your SAP invoice export Excel (.xlsx). App filters to BrightSign SKUs and stores in the SalesHistory tab. Re-upload monthly to append new months.</div>
+        </div>
+        <label style="cursor:pointer; background:var(--indigo,#4F46E5); color:#fff; padding:10px 16px; border-radius:8px; font-size:13px; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
+          📎 <span>Choose Excel file</span>
+          <input type="file" id="sales-history-file" accept=".xlsx,.xls" onchange="handleSalesHistoryFile(this)" style="display:none;">
+        </label>
+        <select id="sales-history-mode" style="padding:10px 12px; border:1px solid var(--border-strong,#CBD5E1); border-radius:8px; font-size:13px;">
+          <option value="append">Append new rows</option>
+          <option value="replace">Replace all existing rows</option>
+        </select>
+      </div>
+      <div id="sales-history-status" style="margin-top:10px; font-size:12px; color:var(--ink-muted,#64748B); font-family:var(--mono,monospace);"></div>
+    </div>
+
+    <!-- v24.9: Relationship counts — active partners / consultants / end-users -->
+    <div id="review-relationship-counts" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:18px;">
+      <div class="kpi-card" style="background:var(--surface-2,#F5F3FF); border:1px solid var(--border,#E5E7EB); border-radius:12px; padding:16px;">
+        <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Active Partners / SI</div>
+        <div id="kpi-active-partners" style="font-size:28px; font-weight:700; color:var(--indigo,#4F46E5); font-family:var(--serif,Georgia,serif); margin-top:4px;">—</div>
+        <div style="font-size:11px; color:var(--ink-subtle,#94A3B8);">in open funnel</div>
+      </div>
+      <div class="kpi-card" style="background:var(--surface-2,#F5F3FF); border:1px solid var(--border,#E5E7EB); border-radius:12px; padding:16px;">
+        <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Active Consultants</div>
+        <div id="kpi-active-consultants" style="font-size:28px; font-weight:700; color:var(--indigo,#4F46E5); font-family:var(--serif,Georgia,serif); margin-top:4px;">—</div>
+        <div style="font-size:11px; color:var(--ink-subtle,#94A3B8);">in open funnel</div>
+      </div>
+      <div class="kpi-card" style="background:var(--surface-2,#F5F3FF); border:1px solid var(--border,#E5E7EB); border-radius:12px; padding:16px;">
+        <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Active End-Users</div>
+        <div id="kpi-active-endusers" style="font-size:28px; font-weight:700; color:var(--indigo,#4F46E5); font-family:var(--serif,Georgia,serif); margin-top:4px;">—</div>
+        <div style="font-size:11px; color:var(--ink-subtle,#94A3B8);">in open funnel</div>
+      </div>
+    </div>
     <div id="review-period-bar" class="review-period-bar">
       <div class="review-period-group">
         <label>Period</label>
@@ -6139,7 +6178,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.8.0';
+const FRONTEND_VERSION = '24.9.0';
 
 
 // ============================================================================
@@ -7891,7 +7930,7 @@ const TENDER_CLAUSES = {
 
 const state = {
   user:null,
-  form:{project:'',enduser:'',venueType:'',partner:'',consultant:'',city:'',state:'',partnerContactName:'',partnerContactPhone:'',partnerContactEmail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',xcOs:'std',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',outcome:'open'},
+  form:{project:'',enduser:'',venueType:'',partner:'',consultant:'',city:'',state:'',partnerContactName:'',partnerContactPhone:'',partnerContactEmail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',xcOs:'std',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',outcome:'open',planOfAction:''},
   result:null,
   osChoice:'brightsignos'
 };
@@ -10012,7 +10051,7 @@ function resetForm(){
   if(oneYrPill)oneYrPill.classList.add('selected');
   document.getElementById('section-cms').style.display='none';
   clearFieldErrors();
-  state.form={project:'',enduser:'',venueType:'',partner:'',consultant:'',city:'',state:'',partnerContactName:'',partnerContactPhone:'',partnerContactEmail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',xcOs:'std',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',outcome:'open'};
+  state.form={project:'',enduser:'',venueType:'',partner:'',consultant:'',city:'',state:'',partnerContactName:'',partnerContactPhone:'',partnerContactEmail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',xcOs:'std',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',outcome:'open',planOfAction:''};
   setBudget(2);
   document.querySelectorAll('.progress-step').forEach(s=>s.classList.remove('done'));
   // v20.1: Clear any lingering lock from prior sessions
@@ -10088,6 +10127,7 @@ function runSelector(){
   // v24.4.0: channel review fields (v24.4.6: dealValue removed)
   state.form.leadSource=document.getElementById('f-leadsource').value;
   state.form.outcome=document.getElementById('f-outcome').value||'open';
+  state.form.planOfAction=(document.getElementById('f-planofaction')||{}).value||'';
   state.form.ssdCap=document.getElementById('f-ssd-cap').value;
   // v15: capture indoor/outdoor split for mixed deployment
   state.form.qtyIndoor=parseInt(document.getElementById('f-qty-indoor').value)||0;
@@ -10822,7 +10862,8 @@ function buildEntryPayload(status){
     // Includes hardware + WD105 + CMS + SSD (everything the BOQ adds up, before GST).
     leadSource:f.leadSource||'',
     dealValue:(state._bomTotals && state._bomTotals.subtotal)||0,
-    outcome:f.outcome||'open'
+    outcome:f.outcome||'open',
+    planOfAction:f.planOfAction||''
   };
 }
 
@@ -10932,7 +10973,157 @@ function computeDelta(current,previous,isPercent){
 }
 
 /* Main render function — fetches review_data + draws 6 cards */
+
+
+// ============================================================================
+// v24.9.0 · Sales History Excel upload + Relationship counts
+// ============================================================================
+
+/**
+ * Triggered when Super picks an Excel file.
+ * Parses .xlsx with SheetJS, extracts rows, filters to BrightSign SKUs (done server-side),
+ * and POSTs to the backend sales_history_import endpoint.
+ */
+async function handleSalesHistoryFile(inputEl){
+  const statusEl = document.getElementById('sales-history-status');
+  if(!inputEl || !inputEl.files || !inputEl.files[0]){ return; }
+  if(!state.user || !state.user.isSuper){
+    statusEl.textContent = '⚠ Super admin only — upload blocked.';
+    inputEl.value = '';
+    return;
+  }
+  const file = inputEl.files[0];
+  statusEl.textContent = '⏳ Reading ' + file.name + '…';
+
+  try{
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array', cellDates:true});
+    const firstSheet = wb.Sheets[wb.SheetNames[0]];
+    const rawRows = XLSX.utils.sheet_to_json(firstSheet, {defval:''});
+
+    if(rawRows.length === 0){
+      statusEl.textContent = '⚠ No rows found in the Excel file.';
+      inputEl.value = '';
+      return;
+    }
+
+    // Normalize expected column names (flexible to handle slight header variations)
+    const findCol = function(row, candidates){
+      const keys = Object.keys(row);
+      for(const cand of candidates){
+        const match = keys.find(function(k){ return k.trim().toLowerCase() === cand.trim().toLowerCase(); });
+        if(match) return match;
+      }
+      return null;
+    };
+    const sample = rawRows[0];
+    const cols = {
+      postingDate: findCol(sample, ['Posting Date', 'PostingDate', 'Date']),
+      docNumber:   findCol(sample, ['Document Number', 'DocNumber', 'Invoice']),
+      itemCode:    findCol(sample, ['Item No.', 'Item Code', 'ItemCode']),
+      itemDesc:    findCol(sample, ['Item Description', 'Description', 'Product']),
+      quantity:    findCol(sample, ['Quantity', 'Qty']),
+      salesLakh:   findCol(sample, ['Sales (Lakh)', 'Sales_Lakh']),
+      rowTotal:    findCol(sample, ['Row_Total_After_Discount', 'Row Total', 'Total Amount', 'Amount']),
+      customerName:findCol(sample, ['Customer Name', 'Customer']),
+      salesEmp:    findCol(sample, ['Sales Emp. Name', 'Sales Emp', 'Salesman']),
+      bpRefNo:     findCol(sample, ['BP Ref. No.', 'BP Ref No', 'PO Number']),
+      companyRsm:  findCol(sample, ['Company RSM', 'RSM']),
+      productSub:  findCol(sample, ['Product Sub Group', 'Sub Group']),
+      insideSp:    findCol(sample, ['InsideSP', 'Inside SP']),
+      project:     findCol(sample, ['Project']),
+      custProj:    findCol(sample, ['Customer Project Name', 'Customer Project'])
+    };
+
+    const payloadRows = rawRows.map(function(r){
+      return {
+        postingDate: cols.postingDate ? r[cols.postingDate] : '',
+        docNumber:   cols.docNumber ? r[cols.docNumber] : '',
+        itemCode:    cols.itemCode ? r[cols.itemCode] : '',
+        itemDescription: cols.itemDesc ? r[cols.itemDesc] : '',
+        quantity:    cols.quantity ? r[cols.quantity] : 0,
+        salesLakh:   cols.salesLakh ? r[cols.salesLakh] : 0,
+        rowTotal:    cols.rowTotal ? r[cols.rowTotal] : 0,
+        customerName:cols.customerName ? r[cols.customerName] : '',
+        salesEmp:    cols.salesEmp ? r[cols.salesEmp] : '',
+        bpRefNo:     cols.bpRefNo ? r[cols.bpRefNo] : '',
+        companyRsm:  cols.companyRsm ? r[cols.companyRsm] : '',
+        productSubGroup: cols.productSub ? r[cols.productSub] : '',
+        insideSp:    cols.insideSp ? r[cols.insideSp] : '',
+        project:     cols.project ? r[cols.project] : '',
+        customerProjectName: cols.custProj ? r[cols.custProj] : ''
+      };
+    });
+
+    const mode = document.getElementById('sales-history-mode').value || 'append';
+    statusEl.textContent = '⏳ Uploading ' + payloadRows.length + ' rows (' + mode + ' mode)…';
+
+    const pwHash = await sha256Hex(window._sessionPassword || '');
+    const resp = await fetch(WEBHOOK_URL, {
+      method: 'POST', mode: 'cors',
+      headers: {'Content-Type': 'text/plain'},
+      body: JSON.stringify({
+        action: 'sales_history_import',
+        requesterLoginName: state.user.loginName,
+        requesterPasswordHash: pwHash,
+        rows: payloadRows,
+        replaceMode: mode
+      })
+    });
+    const data = await resp.json();
+    if(data.status === 'ok'){
+      const byFam = data.summary && data.summary.byFamily || {};
+      const famStr = Object.keys(byFam).map(function(k){
+        return k + ': ₹' + (byFam[k]/100000).toFixed(1) + 'L';
+      }).join(' · ') || 'no family totals';
+      statusEl.textContent = '✓ Imported ' + data.imported + ' rows (' + mode + ' mode). ' + famStr;
+    } else {
+      statusEl.textContent = '✗ Import failed: ' + (data.message || 'unknown error');
+    }
+    inputEl.value = '';
+  }catch(err){
+    console.error('[SalesHistory] upload failed:', err);
+    statusEl.textContent = '✗ Upload error: ' + err.message;
+    inputEl.value = '';
+  }
+}
+
+/**
+ * Compute relationship counts from the central log.
+ * "Active" = stage in {Lead, Opportunity, Proposal, Negotiation, Order} AND outcome === 'open'.
+ */
+function updateRelationshipCounts_(){
+  const entries = Array.isArray(window._centralLog) ? window._centralLog : [];
+  const activeStages = {'Lead':true, 'Opportunity':true, 'Proposal':true, 'Negotiation':true, 'Order':true};
+  const partners = new Set();
+  const consultants = new Set();
+  const endUsers = new Set();
+  entries.forEach(function(e){
+    const stage = String(e.stage || '').trim();
+    const outcome = String(e.outcome || 'open').toLowerCase();
+    if(!activeStages[stage]) return;
+    if(outcome !== 'open') return;
+    if(e.partner && String(e.partner).trim()) partners.add(String(e.partner).trim().toLowerCase());
+    if(e.consultant && String(e.consultant).trim()) consultants.add(String(e.consultant).trim().toLowerCase());
+    if(e.enduser && String(e.enduser).trim()) endUsers.add(String(e.enduser).trim().toLowerCase());
+  });
+  const set = function(id, n){ const el = document.getElementById(id); if(el) el.textContent = n; };
+  set('kpi-active-partners', partners.size);
+  set('kpi-active-consultants', consultants.size);
+  set('kpi-active-endusers', endUsers.size);
+}
+
+/** Show/hide the Super-only upload bar based on current user */
+function updateReviewAdminBarVisibility_(){
+  const bar = document.getElementById('review-admin-bar');
+  if(!bar) return;
+  bar.style.display = (state.user && state.user.isSuper) ? '' : 'none';
+}
+
 async function renderReview(){
+  updateRelationshipCounts_();
+  updateReviewAdminBarVisibility_();
+  
   if(!state.user)return;
   populateReviewPeriodSelects();
   const periodEl=document.getElementById('review-period');
@@ -12554,6 +12745,14 @@ function renderDashboard(){
    Only technical fields (qty, resolution, environment, HDMI, touch, wifi, gpio, ssd, budget, CMS) are editable.
    Saving upserts the same RefId — no duplicate row. */
 function editPastEntry(entryIdx){
+  // v24.9: Prefill planOfAction from row (entry is assigned further down; this hook runs post-assign via setTimeout)
+  setTimeout(function(){
+    try{
+      const entry = window._centralLog && window._centralLog[entryIdx];
+      const el = document.getElementById('f-planofaction');
+      if(entry && el) el.value = entry.planOfAction || entry.planofaction || '';
+    } catch(e){}
+  }, 80);
   const entries=window._currentLogEntries||[];
   const entry=entries[entryIdx];
   if(!entry){alert('Entry not found.');return;}
