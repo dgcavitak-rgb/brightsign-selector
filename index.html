@@ -5583,8 +5583,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           <div class="form-group" style="margin:0;"><label>Deal Stage<span class="req">*</span></label><select id="f-stage"><option value="">Select stage…</option><option>Lead</option><option>Opportunity</option><option>Proposal</option><option>Negotiation</option><option>Order</option></select></div>
           <div class="form-group" style="margin:0;"><label>Lead Source<span class="req">*</span></label><select id="f-leadsource"><option value="">Select source…</option><option value="OEM">OEM (BrightSign referral)</option><option value="Cavitak">Cavitak (self-sourced)</option></select></div>
           <div class="form-group" style="margin:0;"><label>Outcome<span class="req">*</span></label><select id="f-outcome"><option value="open">Open (active)</option><option value="won">Won</option><option value="lost">Lost</option><option value="on-hold">On hold</option></select></div>
-          <!-- v24.9: Plan of action — per-deal narrative, editable by owner and super -->
-          <div class="form-group full" style="margin:0;grid-column:1/-1;"><label>Plan of Action <span style="color:var(--ink-subtle);font-weight:400;font-size:11px">(optional · next step to close this deal)</span></label><textarea id="f-planofaction" rows="2" placeholder="e.g. Site survey on Nov 15; demo at HO scheduled. Awaiting CapEx approval."></textarea></div>
+          <!-- v24.9.1: Per-deal Plan of Action textarea REMOVED — PoA now lives per-period on the Review tab -->
           <div class="form-group" style="margin:0;">
             <label>Expected Closure<span class="req">*</span></label>
             <div class="closemonth-picker">
@@ -5969,6 +5968,8 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
       <div class="page-title" id="team-page-title">Your profile</div>
       <div class="page-subtitle" id="team-page-subtitle">Manage your contact details and password.</div>
     </div>
+    <!-- v24.11 Cycle 2c — Super profile polished header (rendered only when state.user.isSuper) -->
+    <div id="bs-c2c-super-header" style="display:none;"></div>
     <div id="team-content"><!-- Rendered by renderTeamTab() --></div>
   </div>
 </div>
@@ -6156,6 +6157,88 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
       </div>
       <button class="btn-secondary" onclick="renderReview()" style="margin-left:auto;">↻ Refresh</button>
     </div>
+    <!-- v24.9 Cycle 2a — Comparison dropdown, 2-column card, Plan of Action textarea -->
+    <div id="bs-c2a-wrap" style="margin:18px 0 12px; padding:16px 18px; background:var(--surface-2,#F5F3FF); border:1px solid var(--border,#E5E7EB); border-radius:12px;">
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px;">
+        <div>
+          <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600; margin-bottom:4px;">Comparison</div>
+          <select id="bs-c2a-mode" onchange="bsC2aRender()" style="padding:8px 12px; border:1px solid var(--border-strong,#CBD5E1); border-radius:8px; font-size:13px; min-width:240px;">
+            <option value="qoq_yoy">Quarter vs same quarter last year</option>
+            <option value="qoq_seq">Quarter vs previous quarter</option>
+            <option value="yoy">Year-to-date vs last year YTD</option>
+            <option value="half">Half-year vs same half last year</option>
+            <option value="ytd">Year-to-date (no comparison)</option>
+          </select>
+        </div>
+        <div style="flex:1; min-width:180px; font-size:11px; color:var(--ink-subtle,#94A3B8);" id="bs-c2a-asof">As of: —</div>
+      </div>
+      <div id="bs-c2a-card" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="kpi-card" style="background:#FFF; border:1px solid var(--border,#E5E7EB); border-radius:10px; padding:14px;">
+          <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Current</div>
+          <div id="bs-c2a-cur-label" style="font-size:12px; color:var(--ink-muted,#64748B); margin:4px 0 10px; min-height:16px;">—</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div><div style="font-size:10px; color:var(--ink-subtle,#94A3B8); text-transform:uppercase; letter-spacing:0.05em;">Actuals</div><div id="bs-c2a-cur-actuals" style="font-size:22px; font-weight:700; color:var(--indigo,#4F46E5); font-family:var(--serif,Georgia,serif); margin-top:2px;">—</div></div>
+            <div><div style="font-size:10px; color:var(--ink-subtle,#94A3B8); text-transform:uppercase; letter-spacing:0.05em;">Pipeline (open)</div><div id="bs-c2a-cur-pipeline" style="font-size:22px; font-weight:700; color:var(--indigo,#4F46E5); font-family:var(--serif,Georgia,serif); margin-top:2px;">—</div></div>
+          </div>
+          <div id="bs-c2a-cur-tx" style="font-size:11px; color:var(--ink-subtle,#94A3B8); margin-top:8px;">—</div>
+        </div>
+        <div class="kpi-card" id="bs-c2a-cmp-card" style="background:#FFF; border:1px solid var(--border,#E5E7EB); border-radius:10px; padding:14px;">
+          <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Comparison</div>
+          <div id="bs-c2a-cmp-label" style="font-size:12px; color:var(--ink-muted,#64748B); margin:4px 0 10px; min-height:16px;">—</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div><div style="font-size:10px; color:var(--ink-subtle,#94A3B8); text-transform:uppercase; letter-spacing:0.05em;">Actuals</div><div id="bs-c2a-cmp-actuals" style="font-size:22px; font-weight:700; color:var(--ink,#1F2937); font-family:var(--serif,Georgia,serif); margin-top:2px;">—</div></div>
+            <div><div style="font-size:10px; color:var(--ink-subtle,#94A3B8); text-transform:uppercase; letter-spacing:0.05em;">Δ Actuals</div><div id="bs-c2a-delta" style="font-size:22px; font-weight:700; margin-top:2px; font-family:var(--serif,Georgia,serif);">—</div></div>
+          </div>
+          <div id="bs-c2a-cmp-tx" style="font-size:11px; color:var(--ink-subtle,#94A3B8); margin-top:8px;">—</div>
+        </div>
+      </div>
+      <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border,#E5E7EB);">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
+          <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Plan of Action <span id="bs-c2a-poa-period" style="font-weight:500; text-transform:none; letter-spacing:0; color:var(--ink-muted,#64748B);"></span></div>
+          <div id="bs-c2a-poa-status" style="font-size:11px; color:var(--ink-subtle,#94A3B8);"></div>
+        </div>
+        <textarea id="bs-c2a-poa" rows="3" placeholder="Super only — write the plan / commentary for this review period. Saves automatically on blur." style="width:100%; padding:10px; border:1px solid var(--border-strong,#CBD5E1); border-radius:8px; font-family:inherit; font-size:13px; resize:vertical; box-sizing:border-box;"></textarea>
+        <div id="bs-c2a-poa-meta" style="font-size:11px; color:var(--ink-subtle,#94A3B8); margin-top:4px; min-height:14px;"></div>
+      </div>
+      <!-- v24.10 Cycle 2b+2d — drilldown + export -->
+      <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border,#E5E7EB);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:8px;">
+          <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Open pipeline <span id="bs-c2b-count" style="font-weight:500; text-transform:none; letter-spacing:0; color:var(--ink-muted,#64748B);"></span></div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input id="bs-c2b-filter" type="text" placeholder="Filter by project / partner / end-user…" oninput="bsC2bRender()" style="padding:7px 10px; border:1px solid var(--border-strong,#CBD5E1); border-radius:6px; font-size:12px; min-width:220px;">
+            <button id="bs-c2d-export" onclick="bsC2dExport()" style="padding:8px 14px; background:var(--indigo,#4F46E5); color:#fff; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">📥 Export Review to Excel</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto; border:1px solid var(--border,#E5E7EB); border-radius:8px;">
+          <table id="bs-c2b-table" style="width:100%; border-collapse:collapse; font-size:12px; min-width:720px;">
+            <thead>
+              <tr style="background:var(--surface-2,#F5F3FF);">
+                <th data-sort="project"     style="padding:8px 10px; text-align:left; cursor:pointer; user-select:none; white-space:nowrap; border-bottom:1px solid var(--border,#E5E7EB);">Project ⇅</th>
+                <th data-sort="enduser"     style="padding:8px 10px; text-align:left; cursor:pointer; user-select:none; white-space:nowrap; border-bottom:1px solid var(--border,#E5E7EB);">End-user ⇅</th>
+                <th data-sort="partner"     style="padding:8px 10px; text-align:left; cursor:pointer; user-select:none; white-space:nowrap; border-bottom:1px solid var(--border,#E5E7EB);">Partner ⇅</th>
+                <th data-sort="stage"       style="padding:8px 10px; text-align:left; cursor:pointer; user-select:none; white-space:nowrap; border-bottom:1px solid var(--border,#E5E7EB);">Stage ⇅</th>
+                <th data-sort="dealValueINR" style="padding:8px 10px; text-align:right; cursor:pointer; user-select:none; white-space:nowrap; border-bottom:1px solid var(--border,#E5E7EB);">Deal value ⇅</th>
+                <th data-sort="closemonth"  style="padding:8px 10px; text-align:left; cursor:pointer; user-select:none; white-space:nowrap; border-bottom:1px solid var(--border,#E5E7EB);">Expected close ⇅</th>
+                <th data-sort="daysInStage" style="padding:8px 10px; text-align:right; cursor:pointer; user-select:none; white-space:nowrap; border-bottom:1px solid var(--border,#E5E7EB);">Days in stage ⇅</th>
+                <th data-sort="user"        style="padding:8px 10px; text-align:left; cursor:pointer; user-select:none; white-space:nowrap; border-bottom:1px solid var(--border,#E5E7EB);">Owner ⇅</th>
+              </tr>
+            </thead>
+            <tbody id="bs-c2b-tbody"><tr><td colspan="8" style="padding:18px; text-align:center; color:var(--ink-subtle,#94A3B8);">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- v24.12 Cycle 3A — Stage velocity histogram (Super only) -->
+      <div id="bs-c3a-velocity-wrap" style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border,#E5E7EB); display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:8px;">
+          <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Stage velocity <span id="bs-c3a-velocity-caption" style="font-weight:500; text-transform:none; letter-spacing:0; color:var(--ink-muted,#64748B);"></span></div>
+        </div>
+        <div id="bs-c3a-velocity-body" style="background:var(--surface-1,#FAFAFA); border:1px solid var(--border,#E5E7EB); border-radius:8px; padding:14px;">
+          <div style="height:220px; position:relative;"><canvas id="bs-c3a-velocity-chart"></canvas></div>
+          <div id="bs-c3a-velocity-empty" style="display:none; padding:28px 14px; text-align:center; color:var(--ink-subtle,#94A3B8); font-size:13px;">Not enough recorded transitions yet — velocity will populate as deals move through stages.</div>
+        </div>
+      </div>
+    </div>
+
     <div id="review-content"><div class="review-loading">Loading review data…</div></div>
   </div>
 </div>
@@ -6178,7 +6261,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.9.0';
+const FRONTEND_VERSION = '24.12';
 
 
 // ============================================================================
@@ -8555,6 +8638,8 @@ function renderTeamTab(){
     title.textContent='Team members';
     subtitle.textContent='Manage user accounts, contact details, and permissions.';
     renderSuperTeamView(host);
+    // v24.11 Cycle 2c — render polished header into its own container above team-content
+    if(typeof renderSuperProfileHeader_c2c === 'function') renderSuperProfileHeader_c2c();
   } else {
     eyebrow.textContent='Profile';
     title.textContent='Your profile';
@@ -9738,7 +9823,7 @@ function showTab(which){
     // v24.4.9: Double-guard — only Super + OEM can render review
     const role=state.user?(state.user.role||'').trim():'';
     const canReview=state.user && (state.user.isSuper || role==='OEM');
-    if(canReview)renderReview();
+    if(canReview){renderReview();bsC2aRender();}
     else{showTab('log');return;}
   }
   window.scrollTo(0,0);
@@ -10108,7 +10193,11 @@ function runSelector(){
   window._runSelectorSafetyTimer=setTimeout(()=>{releaseRunSelectorLock();},10000);
   state.form.project=document.getElementById('f-project').value.trim();
   state.form.enduser=document.getElementById('f-enduser').value.trim();
-  state.form.venue=document.getElementById('f-venue').value.trim();
+  // v24.12 F1 fix: f-venue element doesn't exist (replaced by f-venueType dropdown in v24.7).
+  // Null-safe read + mirror venueType so downstream consumers (Excel col I, central log, email template) still populate.
+  const _legacyVenueEl=document.getElementById('f-venue');
+  const _venueTypeEl=document.getElementById('f-venueType');
+  state.form.venue=(_legacyVenueEl ? (_legacyVenueEl.value||'').trim() : '') || (_venueTypeEl ? _venueTypeEl.value||'' : '');
   state.form.partner=document.getElementById('f-partner').value.trim();
   state.form.consultant=document.getElementById('f-consultant').value.trim();
   state.form.city=document.getElementById('f-city').value;
@@ -10127,7 +10216,7 @@ function runSelector(){
   // v24.4.0: channel review fields (v24.4.6: dealValue removed)
   state.form.leadSource=document.getElementById('f-leadsource').value;
   state.form.outcome=document.getElementById('f-outcome').value||'open';
-  state.form.planOfAction=(document.getElementById('f-planofaction')||{}).value||'';
+  // v24.9.1: planOfAction DOM capture removed (element removed from form); state.form.planOfAction stays '' default
   state.form.ssdCap=document.getElementById('f-ssd-cap').value;
   // v15: capture indoor/outdoor split for mixed deployment
   state.form.qtyIndoor=parseInt(document.getElementById('f-qty-indoor').value)||0;
@@ -10141,7 +10230,7 @@ function runSelector(){
   const orderedChecks=[
     {key:'project',test:()=>!!f.project,id:'f-project',label:'Project'},
     {key:'enduser',test:()=>!!f.enduser,id:'f-enduser',label:'End-user'},
-    {key:'venue',test:()=>!!f.venue,id:'f-venue',label:'Venue'},
+    // v24.12 F1 fix: 'venue' check removed — venueType (below) supersedes it; free-text f-venue no longer exists
     {key:'partner',test:()=>!!f.partner,id:'f-partner',label:'Partner'},
     {key:'consultant',test:()=>!!f.consultant,id:'f-consultant',label:'Consultant'},
     {key:'city',test:()=>!!f.city,id:'f-city',label:'City'},
@@ -12745,14 +12834,7 @@ function renderDashboard(){
    Only technical fields (qty, resolution, environment, HDMI, touch, wifi, gpio, ssd, budget, CMS) are editable.
    Saving upserts the same RefId — no duplicate row. */
 function editPastEntry(entryIdx){
-  // v24.9: Prefill planOfAction from row (entry is assigned further down; this hook runs post-assign via setTimeout)
-  setTimeout(function(){
-    try{
-      const entry = window._centralLog && window._centralLog[entryIdx];
-      const el = document.getElementById('f-planofaction');
-      if(entry && el) el.value = entry.planOfAction || entry.planofaction || '';
-    } catch(e){}
-  }, 80);
+  // v24.9.1: PoA prefill hook removed — per-deal PoA textarea no longer on form
   const entries=window._currentLogEntries||[];
   const entry=entries[entryIdx];
   if(!entry){alert('Entry not found.');return;}
@@ -13907,7 +13989,737 @@ window.showTab=function(which){
   }
   // Re-wire ripples for any newly visible buttons
   if(window._wireRipple)setTimeout(window._wireRipple,10);
+};/* ============================================================================
+ * v24.9 Cycle 2a — Comparison dropdown + per-period Plan of Action (PoA)
+ * ============================================================================ */
+(function(){
+  const LS_KEY = 'bs-c2a-mode';
+  const MODE_DEFAULT = 'qoq_yoy';
+  let _c2aLastPeriodKey = null;     // track current period key to avoid refetching PoA on mode flip within same period
+  let _c2aLastPoaText   = '';       // baseline text we loaded; compare on blur to decide save
+  let _c2aSaving        = false;
+
+  function fmtINR(n){
+    if(n === null || n === undefined || isNaN(n)) return '—';
+    const v = Number(n);
+    if(Math.abs(v) >= 10000000) return '₹' + (v/10000000).toFixed(2) + ' Cr';
+    if(Math.abs(v) >= 100000)   return '₹' + (v/100000).toFixed(1) + ' L';
+    if(Math.abs(v) >= 1000)     return '₹' + (v/1000).toFixed(0) + 'K';
+    return '₹' + Math.round(v);
+  }
+
+  function fmtDelta(pct){
+    if(pct === null || pct === undefined || isNaN(pct)) return {text:'—', color:'var(--ink-subtle,#94A3B8)'};
+    const rounded = pct.toFixed(1);
+    if(pct > 0)  return {text:'+' + rounded + '%', color:'#059669'};
+    if(pct < 0)  return {text: rounded + '%',        color:'#DC2626'};
+    return {text:'0%', color:'var(--ink-subtle,#94A3B8)'};
+  }
+
+  function currentPipelineForBS(){
+    // Sum dealValueINR for open deals in central log (this app's family = BrightSign by default of the whole app)
+    const log = window._centralLog || [];
+    const OPEN_STAGES = {Lead:1, Opportunity:1, Proposal:1, Negotiation:1, Order:1};
+    let total = 0, n = 0;
+    for(let i = 0; i < log.length; i++){
+      const r = log[i] || {};
+      const outcome = (r.outcome || 'open').toString().toLowerCase();
+      if(outcome !== 'open') continue;
+      const stage = (r.stage || '').toString();
+      if(!OPEN_STAGES[stage]) continue;
+      const v = parseFloat(r.dealValueINR || r.dealValue || r.dealvalueinr || 0);
+      if(!isNaN(v)) { total += v; n++; }
+    }
+    return {total:total, count:n};
+  }
+
+  async function fetchAggregate(mode){
+    if(!WEBHOOK_URL || !state.user){return null;}
+    try{
+      const pwHash = await sha256Hex(window._sessionPassword || '');
+      const resp = await fetch(WEBHOOK_URL, {
+        method:'POST', mode:'cors',
+        headers:{'Content-Type':'text/plain'},
+        body: JSON.stringify({
+          action: 'sales_history_aggregate',
+          family: 'BrightSign',
+          mode: mode,
+          requesterLoginName: state.user.loginName,
+          requesterPasswordHash: pwHash
+        })
+      });
+      const data = await resp.json();
+      if(data && data.status === 'ok') return data;
+      console.warn('[C2a] aggregate failed:', data);
+      return null;
+    } catch(e){
+      console.error('[C2a] aggregate error:', e);
+      return null;
+    }
+  }
+
+  async function fetchNote(periodKey){
+    if(!WEBHOOK_URL || !state.user){return null;}
+    try{
+      const pwHash = await sha256Hex(window._sessionPassword || '');
+      const resp = await fetch(WEBHOOK_URL, {
+        method:'POST', mode:'cors',
+        headers:{'Content-Type':'text/plain'},
+        body: JSON.stringify({
+          action: 'review_note_get',
+          periodKey: periodKey,
+          requesterLoginName: state.user.loginName,
+          requesterPasswordHash: pwHash
+        })
+      });
+      const data = await resp.json();
+      if(data && data.status === 'ok') return data;
+      return null;
+    } catch(e){
+      console.error('[C2a] note_get error:', e);
+      return null;
+    }
+  }
+
+  async function saveNote(periodKey, fy, scope, quarterOrHalf, text){
+    if(!WEBHOOK_URL || !state.user || !state.user.isSuper) return null;
+    _c2aSaving = true;
+    const statusEl = document.getElementById('bs-c2a-poa-status');
+    if(statusEl) statusEl.textContent = 'Saving…';
+    try{
+      const pwHash = await sha256Hex(window._sessionPassword || '');
+      const resp = await fetch(WEBHOOK_URL, {
+        method:'POST', mode:'cors',
+        headers:{'Content-Type':'text/plain'},
+        body: JSON.stringify({
+          action: 'review_note_upsert',
+          periodKey: periodKey,
+          fy: fy,
+          scope: scope,
+          quarterOrHalf: quarterOrHalf,
+          text: text,
+          requesterLoginName: state.user.loginName,
+          requesterPasswordHash: pwHash
+        })
+      });
+      const data = await resp.json();
+      if(data && data.status === 'ok'){
+        _c2aLastPoaText = text;
+        if(statusEl){
+          statusEl.textContent = 'Saved ✓';
+          statusEl.style.color = '#059669';
+          setTimeout(function(){ if(statusEl.textContent === 'Saved ✓') statusEl.textContent = ''; }, 2000);
+        }
+        const metaEl = document.getElementById('bs-c2a-poa-meta');
+        if(metaEl && data.updatedAt){
+          const when = new Date(data.updatedAt);
+          metaEl.textContent = 'Last updated by ' + (data.updatedBy || '—') + ' on ' + when.toLocaleString();
+        }
+        return data;
+      }
+      if(statusEl){ statusEl.textContent = 'Save failed'; statusEl.style.color = '#DC2626'; }
+      return null;
+    } catch(e){
+      console.error('[C2a] note_upsert error:', e);
+      if(statusEl){ statusEl.textContent = 'Save failed'; statusEl.style.color = '#DC2626'; }
+      return null;
+    } finally {
+      _c2aSaving = false;
+    }
+  }
+
+  function renderCard(agg){
+    const pipeline = currentPipelineForBS();
+    const asofEl = document.getElementById('bs-c2a-asof');
+    if(asofEl && agg && agg.asOfDate){
+      const d = new Date(agg.asOfDate);
+      asofEl.textContent = 'As of: ' + d.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+    } else if(asofEl){
+      asofEl.textContent = 'As of: — (no sales data uploaded yet)';
+    }
+
+    if(!agg){
+      ['bs-c2a-cur-label','bs-c2a-cmp-label','bs-c2a-cur-actuals','bs-c2a-cmp-actuals','bs-c2a-delta','bs-c2a-cur-pipeline','bs-c2a-cur-tx','bs-c2a-cmp-tx']
+        .forEach(function(id){ const el=document.getElementById(id); if(el) el.textContent='—'; });
+      return;
+    }
+
+    // Current
+    document.getElementById('bs-c2a-cur-label').textContent = agg.current ? agg.current.label : '—';
+    document.getElementById('bs-c2a-cur-actuals').textContent = fmtINR(agg.current ? agg.current.actuals : null);
+    document.getElementById('bs-c2a-cur-pipeline').textContent = fmtINR(pipeline.total);
+    document.getElementById('bs-c2a-cur-tx').textContent =
+      (agg.current ? (agg.current.txCount + ' invoices') : '—') + ' · ' + pipeline.count + ' open deals';
+
+    // Compare column
+    const cmpCard = document.getElementById('bs-c2a-cmp-card');
+    if(agg.compare){
+      cmpCard.style.display = '';
+      document.getElementById('bs-c2a-cmp-label').textContent = agg.compare.label;
+      if(agg.compareHasData){
+        document.getElementById('bs-c2a-cmp-actuals').textContent = fmtINR(agg.compare.actuals);
+        document.getElementById('bs-c2a-cmp-tx').textContent = agg.compare.txCount + ' invoices';
+        const d = fmtDelta(agg.deltaPct);
+        const deltaEl = document.getElementById('bs-c2a-delta');
+        deltaEl.textContent = d.text;
+        deltaEl.style.color = d.color;
+      } else {
+        document.getElementById('bs-c2a-cmp-actuals').textContent = '—';
+        document.getElementById('bs-c2a-cmp-tx').textContent = 'No data for this period';
+        const deltaEl = document.getElementById('bs-c2a-delta');
+        deltaEl.textContent = '—';
+        deltaEl.style.color = 'var(--ink-subtle,#94A3B8)';
+      }
+    } else {
+      // YTD mode — no comparison
+      cmpCard.style.display = 'none';
+    }
+  }
+
+  async function loadAndRenderNote(periodKey, fy, scope, qOrH){
+    const ta = document.getElementById('bs-c2a-poa');
+    const metaEl = document.getElementById('bs-c2a-poa-meta');
+    const periodLabel = document.getElementById('bs-c2a-poa-period');
+    if(!ta) return;
+
+    if(periodLabel) periodLabel.textContent = periodKey ? '· ' + periodKey : '';
+
+    // Same period key as before? Keep whatever text is in the textarea (user may be editing)
+    if(_c2aLastPeriodKey === periodKey) return;
+
+    ta.disabled = true;
+    if(metaEl) metaEl.textContent = 'Loading…';
+    const note = await fetchNote(periodKey);
+    ta.value = note ? (note.text || '') : '';
+    _c2aLastPoaText   = ta.value;
+    _c2aLastPeriodKey = periodKey;
+    // Store fy/scope/qOrH on the textarea dataset for the blur handler
+    ta.dataset.periodKey = periodKey;
+    ta.dataset.fy = fy || '';
+    ta.dataset.scope = scope || '';
+    ta.dataset.qOrH = qOrH || '';
+
+    // Super can edit; others read-only
+    const isSuper = !!(state.user && state.user.isSuper);
+    ta.readOnly = !isSuper;
+    ta.disabled = false;
+    ta.placeholder = isSuper
+      ? 'Super only — write the plan / commentary for this review period. Saves automatically on blur.'
+      : (ta.value ? '' : 'No plan of action recorded for this period.');
+
+    if(metaEl){
+      if(note && note.updatedAt){
+        const when = new Date(note.updatedAt);
+        metaEl.textContent = 'Last updated by ' + (note.updatedBy || '—') + ' on ' + when.toLocaleString();
+      } else {
+        metaEl.textContent = note === null ? 'Could not load plan of action.' : 'Not yet written.';
+      }
+    }
+  }
+
+  function wirePoaBlur(){
+    const ta = document.getElementById('bs-c2a-poa');
+    if(!ta || ta.dataset.wired === '1') return;
+    ta.dataset.wired = '1';
+    ta.addEventListener('blur', async function(){
+      if(_c2aSaving) return;
+      if(!state.user || !state.user.isSuper) return;
+      const text = ta.value;
+      if(text === _c2aLastPoaText) return; // no change
+      const periodKey = ta.dataset.periodKey;
+      if(!periodKey) return;
+      await saveNote(periodKey, ta.dataset.fy, ta.dataset.scope, ta.dataset.qOrH, text);
+    });
+  }
+
+  window.bsC2aRender = async function(){
+    const sel = document.getElementById('bs-c2a-mode');
+    if(!sel) return;
+    // Restore last mode from localStorage
+    try{
+      const saved = localStorage.getItem(LS_KEY);
+      if(saved && sel.querySelector('option[value="' + saved + '"]')) sel.value = saved;
+      else if(!sel.value) sel.value = MODE_DEFAULT;
+    } catch(e){ /* ignore */ }
+    try{ localStorage.setItem(LS_KEY, sel.value); } catch(e){}
+
+    wirePoaBlur();
+
+    const agg = await fetchAggregate(sel.value);
+    renderCard(agg);
+
+    if(agg && agg.periodKey){
+      await loadAndRenderNote(agg.periodKey, agg.fy, agg.scope, agg.quarterOrHalf);
+    }
+    // v24.10 Cycle 2b — refresh drilldown table on every Review render
+    // v24.12 Cycle 3A: fetch stage transitions FIRST so drilldown daysInStage is accurate
+    if(typeof window._bsC2bFetchTransitions === 'function'){
+      await window._bsC2bFetchTransitions();
+    }
+    if(typeof bsC2bRender === 'function') bsC2bRender();
+    // v24.12 Cycle 3A: render stage velocity card (fire-and-forget; empty state renders immediately)
+    if(typeof window.bsC3aRenderVelocity === 'function'){
+      window.bsC3aRenderVelocity();  // async internally; does its own fetch
+    }
+    // Cache latest aggregate for the Excel export
+    window._bsC2aLastAgg = agg;
+  };
+})();
+/* END v24.9 Cycle 2a block */
+
+/* ============================================================================
+ * v24.10 Cycle 2b + 2d — Forward funnel drilldown + Excel export
+ * ============================================================================ */
+(function(){
+  const OPEN_STAGES = {Lead:1, Opportunity:1, Proposal:1, Negotiation:1, Order:1};
+  let _bsC2bSort = {key:'dealValueINR', dir:'desc'};
+  // v24.12 Cycle 3A: cache of { refId -> { transitionedAtMs, toStage } } from backend stage_transitions_list.
+  // When present, daysInStage is measured from the latest transition. When absent (pre-v25.0 deals),
+  // falls back to deal createdAt and marks the row with a "~" reconstructed indicator.
+  let _bsC2bTransitions = null;  // null = not fetched yet, {} = fetched (may be empty)
+
+  function _fmtINR(n){
+    if(n === null || n === undefined || isNaN(n)) return '—';
+    const v = Number(n);
+    if(Math.abs(v) >= 10000000) return '₹' + (v/10000000).toFixed(2) + ' Cr';
+    if(Math.abs(v) >= 100000)   return '₹' + (v/100000).toFixed(1) + ' L';
+    if(Math.abs(v) >= 1000)     return '₹' + (v/1000).toFixed(0) + 'K';
+    return '₹' + Math.round(v);
+  }
+
+  // v24.12 Cycle 3A: fetch stage transitions from backend. Populates _bsC2bTransitions cache.
+  // Called from renderReview hook. Silent on error — drilldown just falls back to createdAt marker.
+  async function _bsC2bFetchTransitions(){
+    try {
+      if(!WEBHOOK_URL || !state.user) return;
+      const resp = await fetch(WEBHOOK_URL, {
+        method:'POST',
+        mode:'cors',
+        headers:{'Content-Type':'text/plain'},
+        body: JSON.stringify({ action:'stage_transitions_list' })
+      });
+      const data = await resp.json();
+      if(data && data.status === 'ok' && data.latestByRefId){
+        _bsC2bTransitions = data.latestByRefId;
+      } else {
+        _bsC2bTransitions = {};
+      }
+    } catch(err){
+      console.warn('[bsC2b stage_transitions_list] failed:', err);
+      _bsC2bTransitions = {};  // mark as fetched-but-empty so we don't retry on every render
+    }
+  }
+  window._bsC2bFetchTransitions = _bsC2bFetchTransitions;
+
+  function _openDeals(){
+    const log = window._centralLog || [];
+    const out = [];
+    const now = Date.now();
+    const transitions = _bsC2bTransitions || {};
+    for(let i = 0; i < log.length; i++){
+      const r = log[i] || {};
+      const outcome = (r.outcome || 'open').toString().toLowerCase();
+      if(outcome !== 'open') continue;
+      const stage = (r.stage || '').toString();
+      if(!OPEN_STAGES[stage]) continue;
+      // v24.12 Cycle 3A: prefer stage-transition timestamp over deal createdAt
+      const refId = r.refId || '';
+      const tx = refId ? transitions[refId] : null;
+      let daysInStage = 0;
+      let daysReconstructed = false;  // true = used createdAt fallback
+      if(tx && tx.transitionedAtMs){
+        daysInStage = Math.max(0, Math.floor((now - tx.transitionedAtMs) / 86400000));
+      } else {
+        const tsMs = r.ts ? Date.parse(r.ts) : 0;
+        daysInStage = tsMs ? Math.max(0, Math.floor((now - tsMs) / 86400000)) : 0;
+        daysReconstructed = true;
+      }
+      out.push({
+        project:      r.project || '—',
+        enduser:      r.enduser || '—',
+        partner:      r.partner || '—',
+        stage:        stage,
+        dealValueINR: parseFloat(r.dealValueINR || r.dealValue || r.dealvalueinr || 0) || 0,
+        closemonth:   r.closemonth || '—',
+        daysInStage:  daysInStage,
+        daysReconstructed: daysReconstructed,
+        user:         r.user || r.loginName || '—',
+        _raw:         r
+      });
+    }
+    return out;
+  }
+
+  function _applyFilter(rows, q){
+    if(!q) return rows;
+    const needle = q.toLowerCase();
+    return rows.filter(function(r){
+      return (
+        (r.project||'').toLowerCase().indexOf(needle) >= 0 ||
+        (r.enduser||'').toLowerCase().indexOf(needle) >= 0 ||
+        (r.partner||'').toLowerCase().indexOf(needle) >= 0 ||
+        (r.user||'').toLowerCase().indexOf(needle) >= 0
+      );
+    });
+  }
+
+  function _sort(rows, key, dir){
+    const mul = (dir === 'asc') ? 1 : -1;
+    return rows.slice().sort(function(a, b){
+      const av = a[key], bv = b[key];
+      if(typeof av === 'number' && typeof bv === 'number') return (av - bv) * mul;
+      return String(av||'').localeCompare(String(bv||'')) * mul;
+    });
+  }
+
+  function _escape(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  window.bsC2bRender = function(){
+    const tbody = document.getElementById('bs-c2b-tbody');
+    const countEl = document.getElementById('bs-c2b-count');
+    const filterEl = document.getElementById('bs-c2b-filter');
+    if(!tbody) return;
+
+    let rows = _openDeals();
+    if(filterEl && filterEl.value) rows = _applyFilter(rows, filterEl.value);
+    rows = _sort(rows, _bsC2bSort.key, _bsC2bSort.dir);
+
+    if(countEl){
+      const totalVal = rows.reduce(function(s, r){ return s + r.dealValueINR; }, 0);
+      countEl.textContent = '· ' + rows.length + ' open deals · ' + _fmtINR(totalVal) + ' total';
+    }
+
+    if(rows.length === 0){
+      tbody.innerHTML = '<tr><td colspan="8" style="padding:18px; text-align:center; color:var(--ink-subtle,#94A3B8);">No open deals match.</td></tr>';
+      return;
+    }
+
+    const html = rows.map(function(r){
+      // v24.12 Cycle 3A: "~" marker for rows with reconstructed daysInStage (no recorded transition yet)
+      const daysCell = r.daysReconstructed
+        ? '<span title="Reconstructed — no recorded stage transition yet. Accurate figure populates on next stage change." style="color:var(--ink-subtle,#94A3B8);">~</span>' + r.daysInStage
+        : String(r.daysInStage);
+      return '<tr>' +
+        '<td style="padding:8px 10px; border-bottom:1px solid var(--border,#E5E7EB);">' + _escape(r.project) + '</td>' +
+        '<td style="padding:8px 10px; border-bottom:1px solid var(--border,#E5E7EB);">' + _escape(r.enduser) + '</td>' +
+        '<td style="padding:8px 10px; border-bottom:1px solid var(--border,#E5E7EB);">' + _escape(r.partner) + '</td>' +
+        '<td style="padding:8px 10px; border-bottom:1px solid var(--border,#E5E7EB);">' + _escape(r.stage) + '</td>' +
+        '<td style="padding:8px 10px; border-bottom:1px solid var(--border,#E5E7EB); text-align:right; font-variant-numeric:tabular-nums;">' + _fmtINR(r.dealValueINR) + '</td>' +
+        '<td style="padding:8px 10px; border-bottom:1px solid var(--border,#E5E7EB);">' + _escape(r.closemonth) + '</td>' +
+        '<td style="padding:8px 10px; border-bottom:1px solid var(--border,#E5E7EB); text-align:right;">' + daysCell + '</td>' +
+        '<td style="padding:8px 10px; border-bottom:1px solid var(--border,#E5E7EB);">' + _escape(r.user) + '</td>' +
+      '</tr>';
+    }).join('');
+    tbody.innerHTML = html;
+  };
+
+  // Wire sort on header click (idempotent)
+  function _wireSortHeaders(){
+    const table = document.getElementById('bs-c2b-table');
+    if(!table || table.dataset.wired === '1') return;
+    table.dataset.wired = '1';
+    const ths = table.querySelectorAll('th[data-sort]');
+    ths.forEach(function(th){
+      th.addEventListener('click', function(){
+        const key = th.getAttribute('data-sort');
+        if(_bsC2bSort.key === key) _bsC2bSort.dir = (_bsC2bSort.dir === 'asc') ? 'desc' : 'asc';
+        else { _bsC2bSort.key = key; _bsC2bSort.dir = 'desc'; }
+        window.bsC2bRender();
+      });
+    });
+  }
+  // Wire once on DOMContentLoaded / immediately if already loaded
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _wireSortHeaders);
+  else _wireSortHeaders();
+
+  /* ---------------- Cycle 2d — Excel export (uses xlsx-js-style already loaded) ---------------- */
+
+  window.bsC2dExport = function(){
+    if(typeof XLSX === 'undefined'){
+      alert('Excel library not loaded. Please refresh and try again.');
+      return;
+    }
+    const agg = window._bsC2aLastAgg || null;
+    const poaEl = document.getElementById('bs-c2a-poa');
+    const poaText = poaEl ? (poaEl.value || '') : '';
+    const poaPeriod = (poaEl && poaEl.dataset.periodKey) || (agg && agg.periodKey) || '';
+
+    const openDeals = _openDeals();
+    const pipelineTotal = openDeals.reduce(function(s, r){ return s + r.dealValueINR; }, 0);
+
+    const wb = XLSX.utils.book_new();
+
+    // Sheet 1: Summary
+    const sum = [
+      ['BrightSign — Channel Review Export'],
+      ['Generated', new Date().toLocaleString()],
+      ['Generated by', (state.user && state.user.fullName) ? state.user.fullName : '—'],
+      ['As of date', agg ? new Date(agg.asOfDate).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}) : '—'],
+      [],
+      ['Comparison mode', agg ? agg.mode : '—'],
+      ['Period', agg && agg.current ? agg.current.label : '—'],
+      [],
+      ['Current period'],
+      ['  Actuals (₹)', agg && agg.current ? agg.current.actuals : 0],
+      ['  Invoices',   agg && agg.current ? agg.current.txCount : 0],
+      ['  Pipeline (₹)', pipelineTotal],
+      ['  Open deals', openDeals.length],
+      []
+    ];
+    if(agg && agg.compare){
+      sum.push(['Comparison period'],
+        ['  Label', agg.compare.label],
+        ['  Actuals (₹)', agg.compareHasData ? agg.compare.actuals : 0],
+        ['  Invoices',   agg.compareHasData ? agg.compare.txCount : 0],
+        ['  Δ Actuals %', (agg.deltaPct !== null && agg.deltaPct !== undefined) ? agg.deltaPct.toFixed(2) : '—'],
+        []);
+    }
+    sum.push(['Plan of Action'], ['  Period key', poaPeriod], ['  Text', poaText]);
+    const wsSum = XLSX.utils.aoa_to_sheet(sum);
+    wsSum['!cols'] = [{wch:28},{wch:60}];
+    XLSX.utils.book_append_sheet(wb, wsSum, 'Summary');
+
+    // Sheet 2: Pipeline (drilldown)
+    const pipHeaders = ['Project','End-user','Partner','Stage','Deal Value (₹)','Expected Close','Days in Stage','Owner'];
+    const pipRows = openDeals.map(function(r){
+      return [r.project, r.enduser, r.partner, r.stage, r.dealValueINR, r.closemonth, r.daysInStage, r.user];
+    });
+    const wsPip = XLSX.utils.aoa_to_sheet([pipHeaders].concat(pipRows));
+    wsPip['!cols'] = [{wch:30},{wch:30},{wch:30},{wch:14},{wch:16},{wch:16},{wch:14},{wch:24}];
+    XLSX.utils.book_append_sheet(wb, wsPip, 'Pipeline');
+
+    // Sheet 3: Relationship counts (from DOM)
+    const countCards = [
+      ['Metric', 'Count'],
+      ['Active Partners / SI', (document.getElementById('kpi-active-partners')||{}).textContent || '—'],
+      ['Active Consultants',   (document.getElementById('kpi-active-consultants')||{}).textContent || '—'],
+      ['Active End-Users',     (document.getElementById('kpi-active-endusers')||{}).textContent || '—']
+    ];
+    const wsRel = XLSX.utils.aoa_to_sheet(countCards);
+    wsRel['!cols'] = [{wch:30},{wch:12}];
+    XLSX.utils.book_append_sheet(wb, wsRel, 'Relationships');
+
+    const fy = (agg && agg.fy) ? agg.fy : 'FY';
+    const mode = (agg && agg.mode) ? agg.mode : 'review';
+    const stamp = new Date().toISOString().replace(/[:.]/g,'-').slice(0,16);
+    const filename = 'BrightSign_Review_' + fy + '_' + mode + '_' + stamp + '.xlsx';
+    XLSX.writeFile(wb, filename);
+  };
+})();
+/* END v24.10 Cycle 2b + 2d block */
+
+/* ============================================================================
+ * v24.11 Cycle 2c — Super profile polished header
+ * ============================================================================ */
+window.renderSuperProfileHeader_c2c = function(){
+  const host = document.getElementById('bs-c2c-super-header');
+  if(!host) return;
+  if(!state.user || !state.user.isSuper){ host.style.display='none'; host.innerHTML=''; return; }
+
+  const u = state.user;
+  const log = Array.isArray(window._centralLog) ? window._centralLog : [];
+  const users = Array.isArray(window._allUsers) ? window._allUsers : [];
+  const resets = Array.isArray(window._resetRequests) ? window._resetRequests : [];
+
+  // Stats
+  const activeUsers = users.filter(function(x){ return x.isActive !== false; }).length;
+  const totalDeals = log.length;
+  const openPipe = log
+    .filter(function(r){ return (r.outcome||'open').toString().toLowerCase()==='open'; })
+    .reduce(function(s,r){ return s + (parseFloat(r.dealValueINR || r.dealValue || 0) || 0); }, 0);
+  const pendingResets = resets.filter(function(r){ return r.status==='pending'; }).length;
+
+  // Last login
+  let lastLoginTxt = '—';
+  if(u.lastLogin){
+    try { lastLoginTxt = new Date(u.lastLogin).toLocaleString(); } catch(e) { lastLoginTxt = String(u.lastLogin); }
+  }
+
+  const initials = (u.fullName||'?').split(' ').map(function(s){return s[0];}).slice(0,2).join('').toUpperCase();
+  const fmtINR = function(n){
+    if(!n) return '₹0';
+    if(n >= 10000000) return '₹' + (n/10000000).toFixed(2) + ' Cr';
+    if(n >= 100000)   return '₹' + (n/100000).toFixed(1) + ' L';
+    if(n >= 1000)     return '₹' + (n/1000).toFixed(0) + 'K';
+    return '₹' + Math.round(n);
+  };
+
+  host.style.display = 'block';
+  host.style.marginBottom = '20px';
+  host.innerHTML =
+    '<div style="background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%); border-radius:14px; padding:20px 22px; color:#fff; box-shadow:0 4px 14px rgba(79,70,229,0.2);">' +
+      '<div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">' +
+        '<div style="width:56px; height:56px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:700; flex-shrink:0;">' + initials + '</div>' +
+        '<div style="flex:1; min-width:180px;">' +
+          '<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">' +
+            '<div style="font-size:18px; font-weight:700;">' + _bsEscapeHtml(u.fullName||'—') + '</div>' +
+            '<span style="font-size:10px; padding:2px 8px; background:rgba(255,255,255,0.25); border-radius:10px; letter-spacing:0.08em; font-weight:600;">SUPER</span>' +
+          '</div>' +
+          '<div style="font-size:12px; opacity:0.85; margin-top:2px;">' + _bsEscapeHtml(u.role||'—') + ' · Last login: ' + _bsEscapeHtml(lastLoginTxt) + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-top:16px;">' +
+        _bsC2cStat('Active users', activeUsers) +
+        _bsC2cStat('Total deals', totalDeals) +
+        _bsC2cStat('Open pipeline', fmtINR(openPipe)) +
+        _bsC2cStat('Pending resets', pendingResets) +
+      '</div>' +
+      '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:16px;">' +
+        '<button onclick="showAddUserModal()" style="padding:8px 14px; background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">➕ Invite user</button>' +
+        '<button onclick="showTab(\'review\')" style="padding:8px 14px; background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">📊 Go to Review</button>' +
+        (pendingResets > 0
+          ? '<button onclick="var el=document.getElementById(\'reset-requests-host\');if(el)el.scrollIntoView({behavior:\'smooth\',block:\'start\'});" style="padding:8px 14px; background:#FBBF24; color:#78350F; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">🔑 Review ' + pendingResets + ' pending</button>'
+          : '') +
+      '</div>' +
+    '</div>';
 };
+
+function _bsC2cStat(label, value){
+  return '<div style="background:rgba(255,255,255,0.15); border-radius:10px; padding:10px 12px;">' +
+    '<div style="font-size:10px; text-transform:uppercase; letter-spacing:0.08em; opacity:0.8;">' + label + '</div>' +
+    '<div style="font-size:20px; font-weight:700; margin-top:2px;">' + value + '</div>' +
+  '</div>';
+}
+
+function _bsEscapeHtml(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+/* END v24.11 Cycle 2c block */
+
+/* ============================================================================
+ * v24.12 Cycle 3A — Stage velocity histogram (Super only)
+ * Calls backend action=stage_velocity_aggregate and renders a Chart.js bar chart.
+ * Empty state shown when thresholdMet===false (no stage has sampleSize ≥ 5 yet).
+ * ============================================================================ */
+window.bsC3aRenderVelocity = async function(){
+  const wrap = document.getElementById('bs-c3a-velocity-wrap');
+  if(!wrap) return;
+  // Super-only: hide the whole card for non-Super users
+  const isSuper = !!(state && state.user && state.user.isSuper);
+  if(!isSuper){ wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+
+  const caption = document.getElementById('bs-c3a-velocity-caption');
+  const body = document.getElementById('bs-c3a-velocity-body');
+  const emptyEl = document.getElementById('bs-c3a-velocity-empty');
+  const canvas = document.getElementById('bs-c3a-velocity-chart');
+  if(!canvas || !emptyEl) return;
+
+  // Fetch aggregate
+  let data = null;
+  try {
+    if(!WEBHOOK_URL || !state.user) return;
+    const resp = await fetch(WEBHOOK_URL, {
+      method:'POST',
+      mode:'cors',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({ action:'stage_velocity_aggregate' })
+    });
+    data = await resp.json();
+  } catch(err){
+    console.warn('[bsC3a velocity fetch] failed:', err);
+    if(caption) caption.textContent = '· unable to load';
+    return;
+  }
+  if(!data || data.status !== 'ok'){
+    if(caption) caption.textContent = '· ' + ((data && data.message) || 'load failed');
+    return;
+  }
+
+  const metrics = Array.isArray(data.stageMetrics) ? data.stageMetrics : [];
+  const thresholdMet = !!data.thresholdMet;
+  const totalDeals = Number(data.totalDealsWithHistory || 0);
+
+  // Caption
+  if(caption){
+    if(thresholdMet){
+      caption.textContent = '· team average, based on ' + totalDeals + ' deal' + (totalDeals === 1 ? '' : 's') + ' with recorded transitions';
+    } else {
+      caption.textContent = '· awaiting more data';
+    }
+  }
+
+  // Empty-state handling
+  if(!thresholdMet){
+    canvas.style.display = 'none';
+    emptyEl.style.display = 'block';
+    // Tear down any previous chart instance
+    if(window._bsC3aVelocityChart){
+      try { window._bsC3aVelocityChart.destroy(); } catch(_){}
+      window._bsC3aVelocityChart = null;
+    }
+    return;
+  }
+
+  canvas.style.display = 'block';
+  emptyEl.style.display = 'none';
+
+  // Chart.js must be loaded — existing Review charts depend on it, so it should be present.
+  if(typeof Chart === 'undefined'){
+    if(caption) caption.textContent = '· Chart.js not loaded';
+    return;
+  }
+
+  const labels = metrics.map(function(m){ return m.stage; });
+  const values = metrics.map(function(m){ return Number((m.avgDays || 0).toFixed(1)); });
+  const samples = metrics.map(function(m){ return m.sampleSize || 0; });
+
+  // Indigo-violet gradient matching BrightSign theme
+  const ctx = canvas.getContext('2d');
+  const bgColors = metrics.map(function(m, i){
+    if((m.sampleSize || 0) < 5) return 'rgba(148, 163, 184, 0.55)';  // muted gray for low-sample stages
+    // Deep indigo → violet by index
+    const palette = ['#1E1B4B', '#312E81', '#4338CA', '#6366F1', '#7C3AED'];
+    return palette[i % palette.length];
+  });
+
+  // Tear down old chart before re-creating
+  if(window._bsC3aVelocityChart){
+    try { window._bsC3aVelocityChart.destroy(); } catch(_){}
+    window._bsC3aVelocityChart = null;
+  }
+
+  window._bsC3aVelocityChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Avg days in stage',
+        data: values,
+        backgroundColor: bgColors,
+        borderRadius: 6,
+        borderSkipped: false,
+        _sampleSizes: samples  // carried for tooltip
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx){
+              const n = (ctx.dataset._sampleSizes && ctx.dataset._sampleSizes[ctx.dataIndex]) || 0;
+              return ctx.parsed.y + ' days avg · ' + n + ' sample' + (n === 1 ? '' : 's');
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 11 } }
+        },
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'Days', font: { size: 11 } },
+          ticks: { font: { size: 11 } }
+        }
+      }
+    }
+  });
+};
+/* END v24.12 Cycle 3A block */
+
 </script>
 </body>
 </html>
