@@ -651,6 +651,31 @@ html[data-theme="dark"] .mode-toggle-hint{color:#64748B;}
   box-shadow:0 0 0 3px rgba(79,70,229,0.15);
 }
 .adv-player-table tr.has-qty td{background:rgba(79,70,229,0.05);}
+/* v24.12.6 — Sticky total footer for the player table */
+.adv-player-table tfoot tr.adv-player-total-row td{
+  background:var(--surface-2,#F1F5F9);
+  border-top:1px solid var(--border-soft,#E2E8F0);
+  padding:10px 14px;
+  position:sticky;bottom:0;
+}
+.adv-player-table .adv-player-total-label{
+  font-family:var(--sans,system-ui),sans-serif;
+  font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
+  color:var(--ink-muted,#64748B);
+}
+.adv-player-table .adv-player-total{
+  font-family:var(--mono,'JetBrains Mono',monospace);
+  font-size:13px;font-weight:600;color:var(--ink-muted,#64748B);
+  white-space:nowrap;
+  transition:color 150ms;
+}
+.adv-player-table .adv-player-total.has-total{color:var(--indigo,#4F46E5);}
+html[data-theme="dark"] .adv-player-table tfoot tr.adv-player-total-row td{
+  background:rgba(15,23,42,0.65);border-top-color:rgba(148,163,184,0.15);
+}
+html[data-theme="dark"] .adv-player-table .adv-player-total-label{color:#94A3B8;}
+html[data-theme="dark"] .adv-player-table .adv-player-total{color:#94A3B8;}
+html[data-theme="dark"] .adv-player-table .adv-player-total.has-total{color:#A5B4FC;}
 html[data-theme="dark"] .adv-player-table-wrap{background:rgba(15,23,42,0.5);border-color:rgba(148,163,184,0.2);}
 html[data-theme="dark"] .adv-player-table thead th{background:rgba(15,23,42,0.65);color:#94A3B8;border-color:rgba(148,163,184,0.15);}
 html[data-theme="dark"] .adv-player-table tbody td{color:#E2E8F0;border-color:rgba(148,163,184,0.1);}
@@ -6020,15 +6045,21 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
                 </tr>
               </thead>
               <tbody id="adv-player-tbody"></tbody>
+              <tfoot>
+                <tr id="adv-player-total-row" class="adv-player-total-row">
+                  <td colspan="3" style="text-align:right;"><span class="adv-player-total-label">Total selected</span></td>
+                  <td style="text-align:center;"><span id="adv-player-total" class="adv-player-total">0</span></td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </div>
 
         <div class="form-section">
           <div class="section-head"><div class="section-num">03</div><div><div class="section-title">Accessories</div><div style="font-family:var(--sans);font-size:12px;color:var(--ink-muted);margin-top:4px;">CMS, storage, expansion modules. All optional.</div></div></div>
-          <div class="spec-grid two-col" style="margin-bottom:18px;">
+          <div class="spec-grid two-col" style="margin-bottom:14px;">
             <div class="field" style="margin-bottom:0;"><label class="field-label">CMS vendor</label>
-              <select id="adv-cms-vendor" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;background:#fff;">
+              <select id="adv-cms-vendor" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;background:#fff;" oninput="advUpdateCmsFields()">
                 <option value="">— None —</option>
                 <option value="BrightSign CMS">BrightSign CMS</option>
                 <option value="Pickcel CMS">Pickcel CMS</option>
@@ -6044,6 +6075,19 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
                 <option value="4">4 years</option>
                 <option value="5">5 years</option>
               </select>
+            </div>
+          </div>
+          <div class="spec-grid two-col" style="margin-bottom:18px;">
+            <div class="field" style="margin-bottom:0;"><label class="field-label">CMS type</label>
+              <select id="adv-cms-type" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;background:#fff;">
+                <option value="cloud">Cloud (Remote)</option>
+                <option value="onprem">On-Prem (Local)</option>
+              </select>
+              <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Hosting model for the CMS deployment</div>
+            </div>
+            <div class="field" style="margin-bottom:0;"><label class="field-label">No. of licenses</label>
+              <input type="text" id="adv-cms-licenses" value="0" readonly style="width:100%;padding:10px 12px;border:1px solid var(--border-soft);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;background:var(--surface-2,#F1F5F9);color:var(--ink-muted);cursor:not-allowed;">
+              <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Auto-set to total players in project</div>
             </div>
           </div>
           <div class="spec-grid three-col">
@@ -6609,7 +6653,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.12.6';
+const FRONTEND_VERSION = '24.12.7';
 
 
 // ============================================================================
@@ -10657,12 +10701,14 @@ function resetForm(){
     const tr = inp.closest('tr');
     if(tr) tr.classList.remove('has-qty');
   });
-  ['adv-cms-vendor','adv-cms-term','adv-ssd-cap','adv-ssd-qty','adv-wd105-qty'].forEach(id => {
+  ['adv-cms-vendor','adv-cms-term','adv-cms-type','adv-ssd-cap','adv-ssd-qty','adv-wd105-qty'].forEach(id => {
     const el = document.getElementById(id);
     if(!el) return;
     if(el.tagName === 'SELECT') el.selectedIndex = 0;
     else el.value = '0';
   });
+  // v24.12.6: refresh totals readout (player total + auto-licenses) after wiping inputs
+  if(typeof advUpdateTotals === 'function') advUpdateTotals();
   // Return to "no mode picked" state so Sections 02+ stay hidden until the user chooses
   if(typeof setSelectionMode === 'function') setSelectionMode(null);
 }
@@ -11301,14 +11347,20 @@ function buildAdvancedBOQSummaryCard(r, f){
   const ssdQty    = parseInt(acc.ssdQty,10) || 0;
   const wd105Qty  = parseInt(acc.wd105Qty,10) || 0;
 
-  // Determine billing chip — Cloud / On-Prem / Standalone — based on the form's cmsBillingType
-  // (set by computeCMS in Guided flow; in Advanced, default to Cloud for cloud-style vendors)
+  // Determine billing chip — Cloud / On-Prem — from the user's explicit CMS Type choice
+  // (Advanced mode now exposes adv-cms-type; older deals fall back to cloud/heuristic).
   let cmsBillingLabel = '';
   if(cmsVendor){
-    const v = String(cmsVendor).toLowerCase();
-    if(v.indexOf('brightsign') >= 0) cmsBillingLabel = 'Cloud';
-    else if(v.indexOf('pickcel') >= 0 || v.indexOf('korbyt') >= 0 || v.indexOf('poppulo') >= 0) cmsBillingLabel = 'Cloud';
-    else cmsBillingLabel = 'On-Prem';
+    const explicitType = (acc.cmsType || '').toLowerCase();
+    if(explicitType === 'onprem' || explicitType === 'on-prem' || explicitType === 'local'){
+      cmsBillingLabel = 'On-Prem';
+    } else if(explicitType === 'cloud' || explicitType === 'remote'){
+      cmsBillingLabel = 'Cloud';
+    } else {
+      // Fallback for any pre-v24.12.6 saved deals that don't have cmsType
+      const v = String(cmsVendor).toLowerCase();
+      cmsBillingLabel = (v.indexOf('brightsign') >= 0 || v.indexOf('pickcel') >= 0 || v.indexOf('korbyt') >= 0 || v.indexOf('poppulo') >= 0) ? 'Cloud' : 'On-Prem';
+    }
   }
 
   // CMS card — only shown if user picked a vendor
@@ -11731,7 +11783,14 @@ function buildEntryPayload(status){
     leadSource:f.leadSource||'',
     dealValue:(state._bomTotals && state._bomTotals.subtotal)||0,
     outcome:f.outcome||'open',
-    planOfAction:f.planOfAction||''
+    planOfAction:f.planOfAction||'',
+    // v24.12.7: persist Custom BOQ data so edit-mode can restore the player table + accessories.
+    // Empty strings for Guided-mode deals; JSON for Advanced-mode deals.
+    // Server stores these in cols AR, AS as plain strings — no parsing on the server side.
+    advancedSelectionsJson: (r.isAdvanced && Array.isArray(r.advancedSelections))
+      ? JSON.stringify(r.advancedSelections) : '',
+    advancedAccessoriesJson: (r.isAdvanced && r.advancedAccessories)
+      ? JSON.stringify(r.advancedAccessories) : ''
   };
 }
 
@@ -13886,11 +13945,88 @@ function editPastEntry(entryIdx){
   state.form.leadSource=entry.leadSource||'';
   state.form.outcome=entry.outcome||'open';
 
+  // v24.12.7: Detect saved-as-Advanced and restore the player table + accessories.
+  // Pre-v24.12.7 deals don't have these JSON fields → fall back to Guided prefill.
+  let advancedRestored = false;
+  try {
+    const selJson = entry.advancedSelectionsJson || entry.advancedSelectionsJSON || '';
+    const accJson = entry.advancedAccessoriesJson || entry.advancedAccessoriesJSON || '';
+    if (selJson && String(selJson).trim()) {
+      const selections = JSON.parse(selJson);
+      if (Array.isArray(selections) && selections.length > 0) {
+        // Stash on state for prefillFormUI to consume after the table renders
+        window._editAdvancedSelections  = selections;
+        window._editAdvancedAccessories = accJson ? JSON.parse(accJson) : {};
+        advancedRestored = true;
+      }
+    }
+  } catch (parseErr) {
+    console.warn('[edit] Could not parse advanced JSON, falling back to Guided:', parseErr);
+  }
+
   prefillFormUI();
   applyEditLocks(true);  // v22.3: lock basic info
 
+  // v24.12.7: After the form UI is ready, switch into the right mode and (for Advanced)
+  // restore the player table + accessory inputs. Done after prefillFormUI so the DOM exists.
+  if (advancedRestored) {
+    setSelectionMode('advanced');
+    // Populate Advanced fields after the player table is rendered (lazy-init runs inside setSelectionMode)
+    setTimeout(() => {
+      _restoreAdvancedFromEdit();
+    }, 0);
+  } else {
+    // Saved as Guided OR pre-v24.12.7 deal with no advanced data → open in Guided
+    setSelectionMode('guided');
+  }
+
   showTab('form');
   showSync(`Editing ${entry.refId} · basic info locked`,'success');
+}
+
+/* v24.12.7: After the Advanced player table has been populated, restore the saved
+   selections + accessories into the form inputs. Reads from window._editAdvanced*
+   which editPastEntry stashes. Idempotent — safe if called multiple times. */
+function _restoreAdvancedFromEdit() {
+  const selections = window._editAdvancedSelections;
+  const acc = window._editAdvancedAccessories || {};
+  if (!Array.isArray(selections)) return;
+
+  // Restore player qty inputs
+  selections.forEach(sel => {
+    const id = sel && sel.id;
+    const qty = parseInt(sel && sel.qty, 10);
+    if (!id || !qty || qty <= 0) return;
+    const input = document.querySelector('#adv-player-tbody .adv-qty-input[data-model="' + id + '"]');
+    if (input) {
+      input.value = String(qty);
+      const tr = input.closest('tr');
+      if (tr) tr.classList.add('has-qty');
+    }
+  });
+
+  // Restore accessory fields
+  const setSelectVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val != null) el.value = String(val);
+  };
+  const setInputVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val != null) el.value = String(val);
+  };
+  setSelectVal('adv-cms-vendor', acc.cmsVendor || '');
+  setSelectVal('adv-cms-term',   acc.cmsTerm   || '1');
+  setSelectVal('adv-cms-type',   acc.cmsType   || 'cloud');
+  setSelectVal('adv-ssd-cap',    acc.ssdCap    || '');
+  setInputVal ('adv-ssd-qty',    acc.ssdQty    != null ? acc.ssdQty   : 0);
+  setInputVal ('adv-wd105-qty',  acc.wd105Qty  != null ? acc.wd105Qty : 0);
+
+  // Refresh sticky total + auto-licenses readout
+  if (typeof advUpdateTotals === 'function') advUpdateTotals();
+
+  // Clear the one-shot stash so we don't accidentally re-apply later
+  window._editAdvancedSelections  = null;
+  window._editAdvancedAccessories = null;
 }
 
 /* v22.3: Lock / unlock the basic info form fields when in edit mode.
@@ -15803,6 +15939,8 @@ function populateAdvancedPlayerTable(){
       <td style="text-align:center;"><input type="number" class="adv-qty-input" data-model="${p.id}" min="0" step="1" value="0" oninput="advOnQtyChange(this)"></td>
     </tr>
   `).join('');
+  // v24.12.6: initialize the sticky total footer + auto-licenses readout
+  advUpdateTotals();
 }
 
 function advOnQtyChange(inputEl){
@@ -15813,6 +15951,37 @@ function advOnQtyChange(inputEl){
   if(isNaN(v) || v < 0) inputEl.value = '0';
   if((parseInt(inputEl.value,10) || 0) > 0) tr.classList.add('has-qty');
   else tr.classList.remove('has-qty');
+  // v24.12.6: live-update the total-players footer + the auto-licenses readout
+  advUpdateTotals();
+}
+
+/* v24.12.6: Refresh the player-table sticky total + the CMS auto-licenses field.
+   Called whenever a qty input changes, on form reset, and on initial table populate. */
+function advUpdateTotals(){
+  let totalUnits = 0;
+  let modelCount = 0;
+  document.querySelectorAll('#adv-player-tbody .adv-qty-input').forEach(input => {
+    const q = parseInt(input.value, 10) || 0;
+    if(q > 0){ totalUnits += q; modelCount++; }
+  });
+  const totalEl = document.getElementById('adv-player-total');
+  if(totalEl){
+    totalEl.textContent = totalUnits === 0
+      ? '0'
+      : totalUnits + ' player' + (totalUnits===1?'':'s') + ' · ' + modelCount + ' model' + (modelCount===1?'':'s');
+    totalEl.classList.toggle('has-total', totalUnits > 0);
+  }
+  const licEl = document.getElementById('adv-cms-licenses');
+  if(licEl){
+    licEl.value = String(totalUnits);
+  }
+}
+
+/* v24.12.6: When CMS vendor changes, ensure CMS Type + licenses are visually meaningful.
+   We always render the fields; if the user picks "None" we just leave them at defaults. */
+function advUpdateCmsFields(){
+  // Currently a no-op stub — CMS Type stays visible. If we later want to grey it out
+  // when vendor=None, we'd toggle a class here.
 }
 
 function _advReadSelections(){
@@ -15962,13 +16131,16 @@ async function runAdvancedBOQ(){
     const ssdCapEl    = document.getElementById('adv-ssd-cap');
     const ssdQtyEl    = document.getElementById('adv-ssd-qty');
     const wd105El     = document.getElementById('adv-wd105-qty');
+    const cmsTypeEl   = document.getElementById('adv-cms-type');
     const cmsVendor = cmsVendorEl ? (cmsVendorEl.value || '') : '';
     const cmsTerm   = cmsTermEl   ? (cmsTermEl.value || '1') : '1';
+    const cmsType   = cmsTypeEl   ? (cmsTypeEl.value || 'cloud') : 'cloud';
     const ssdCap    = ssdCapEl    ? (ssdCapEl.value || '') : '';
     const ssdQty    = ssdQtyEl    ? (parseInt(ssdQtyEl.value,10) || 0) : 0;
     const wd105Qty  = wd105El     ? (parseInt(wd105El.value,10) || 0) : 0;
     f.cmsVendor    = cmsVendor || '';
     f.cmsTerm      = String(cmsTerm);
+    f.cmsType      = cmsType;
     f.cmsInclude   = cmsVendor ? 'yes' : 'no';
     // SSD: an SSD is included when capacity is picked AND qty > 0
     f.ssd          = (ssdCap && ssdQty > 0) ? 'yes' : 'no';
@@ -15980,6 +16152,8 @@ async function runAdvancedBOQ(){
     //    renderResult / hero card has a model to display. Stash the full picks list separately
     //    so a future BOM enhancement can enumerate every selected model.
     const primary = selections[0].model;
+    // Total players = sum of qty across all selections — used as the auto-licenses count
+    const totalPlayers = selections.reduce((acc,s) => acc + (parseInt(s.qty,10)||0), 0);
     state.result = {
       model: primary,
       alt_down: null,
@@ -15992,7 +16166,7 @@ async function runAdvancedBOQ(){
       // Custom BOQ flags + payload
       isAdvanced: true,
       advancedSelections: selections.map(s => ({ id: s.id, qty: s.qty, group: s.model.group, tag: s.model.tag, chassis: s.model.chassis })),
-      advancedAccessories: { cmsVendor, cmsTerm, ssdCap, ssdQty, wd105Qty }
+      advancedAccessories: { cmsVendor, cmsTerm, cmsType, cmsLicenses: totalPlayers, ssdCap, ssdQty, wd105Qty }
     };
 
     // 6. RefId — preserve when re-running for same project, else generate fresh
