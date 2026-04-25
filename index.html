@@ -475,6 +475,99 @@ html[data-theme="dark"] .cm-picker-nav{color:#94A3B8;}
 html[data-theme="dark"] .cm-picker-nav:hover{background:rgba(148,163,184,0.1);}
 
 /* ======================================================================
+ * v24.12.6: Custom BOQ Result page summary card (Advanced mode).
+ * E2 gradient sheen + hover lift. Light + dark mode.
+ * ====================================================================== */
+.adv-result-summary-card{
+  padding:22px 24px;
+}
+.adv-result-header{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:16px;
+  padding-bottom:14px;
+  border-bottom:0.5px solid var(--border-soft, rgba(15,23,42,0.08));
+  margin-bottom:18px;
+}
+.adv-result-headline{
+  font-size:18px;font-weight:600;color:var(--ink,#0F172A);
+  font-family:var(--sans,system-ui),sans-serif;
+  margin-top:2px;
+}
+.adv-result-ref{text-align:right;}
+.adv-result-refid{
+  font-family:var(--mono,'JetBrains Mono',monospace);
+  font-size:14px;font-weight:600;color:var(--ink,#0F172A);
+}
+.adv-result-section-label{
+  font-family:var(--sans,system-ui),sans-serif;
+  font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--ink-muted,#64748B);
+  margin:0 0 10px;
+}
+.adv-result-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
+}
+.adv-result-card{
+  position:relative;overflow:hidden;
+  border-radius:12px;padding:16px 14px;
+  box-shadow:0 1px 2px rgba(15,23,42,0.04);
+  transition:transform 200ms ease, box-shadow 200ms ease;
+  cursor:default;
+}
+.adv-result-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 6px 20px rgba(15,23,42,0.10), 0 12px 28px rgba(15,23,42,0.06);
+}
+.adv-result-strip{
+  position:absolute;top:0;left:0;right:0;height:4px;
+}
+.adv-result-glow{
+  position:absolute;top:-30px;right:-30px;width:84px;height:84px;border-radius:50%;
+  pointer-events:none;
+}
+.adv-result-body{position:relative;}
+.adv-result-eyebrow{
+  font-family:var(--sans,system-ui),sans-serif;
+  font-size:11px;font-weight:600;letter-spacing:0.06em;
+  margin:6px 0 4px;
+}
+.adv-result-qty{
+  font-family:var(--mono,'JetBrains Mono',monospace);
+  font-size:20px;font-weight:600;
+  margin-bottom:2px;
+}
+.adv-result-value{
+  font-family:var(--mono,'JetBrains Mono',monospace);
+  font-size:16px;font-weight:600;
+  margin-bottom:6px;
+}
+.adv-result-sub{
+  font-family:var(--sans,system-ui),sans-serif;
+  font-size:11px;font-weight:500;
+  margin-top:4px;
+}
+.adv-result-chip{
+  display:inline-block;
+  font-family:var(--sans,system-ui),sans-serif;
+  font-size:11px;font-weight:600;
+  padding:3px 9px;border-radius:999px;
+  box-shadow:0 1px 2px rgba(0,0,0,0.04);
+}
+@media (max-width:720px){
+  .adv-result-grid{grid-template-columns:1fr;}
+  .adv-result-header{flex-direction:column;}
+  .adv-result-ref{text-align:left;}
+}
+html[data-theme="dark"] .adv-result-headline{color:#E2E8F0;}
+html[data-theme="dark"] .adv-result-refid{color:#E2E8F0;}
+html[data-theme="dark"] .adv-result-section-label{color:#94A3B8;}
+html[data-theme="dark"] .adv-result-card{
+  box-shadow:0 1px 2px rgba(0,0,0,0.20);
+}
+html[data-theme="dark"] .adv-result-card:hover{
+  box-shadow:0 8px 24px rgba(0,0,0,0.40), 0 12px 32px rgba(79,70,229,0.18);
+}
+
+/* ======================================================================
  * v24.12.5: Mode toggle (Guided / Advanced) — compact pill, sits between
  * Section 01 (project context) and Section 02 (deployment). Inline-flex
  * so it doesn't dominate the layout.
@@ -5954,7 +6047,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
             </div>
           </div>
           <div class="spec-grid three-col">
-            <div class="field" style="margin-bottom:0;"><label class="field-label">SSD (per player)</label>
+            <div class="field" style="margin-bottom:0;"><label class="field-label">SSD capacity</label>
               <select id="adv-ssd-cap" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;background:#fff;">
                 <option value="">— None —</option>
                 <option value="128">128 GB</option>
@@ -5962,14 +6055,14 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
                 <option value="512">512 GB</option>
                 <option value="1024">1 TB</option>
               </select>
-              <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Optional add-on storage</div>
+              <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Storage size per drive</div>
             </div>
-            <div class="field" style="margin-bottom:0;"><label class="field-label">WD105 video card (qty)</label>
+            <div class="field" style="margin-bottom:0;"><label class="field-label">SSD (qty)</label>
+              <input type="number" id="adv-ssd-qty" min="0" step="1" value="0" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;">
+              <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">How many drives to include</div>
+            </div>
+            <div class="field" style="margin-bottom:0;"><label class="field-label">WD105 Wi-Fi module (qty)</label>
               <input type="number" id="adv-wd105-qty" min="0" step="1" value="0" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;">
-              <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">HDMI/SDI input expansion</div>
-            </div>
-            <div class="field" style="margin-bottom:0;"><label class="field-label">WD215 Wi-Fi module (qty)</label>
-              <input type="number" id="adv-wd215-qty" min="0" step="1" value="0" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;">
               <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Wireless connectivity</div>
             </div>
           </div>
@@ -6516,7 +6609,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.12.5';
+const FRONTEND_VERSION = '24.12.6';
 
 
 // ============================================================================
@@ -10557,6 +10650,21 @@ function resetForm(){
   window._confirmBusy=false;
   // v21.6: Clear cached refId so next selection gets a fresh BS- reference
   window._lastRefIdForEdit=null;
+  // v24.12.6 Issue #2 + #3: Reset Advanced-mode player qty inputs + accessory fields,
+  // and put the form back into "no mode picked" state so the user has to choose again.
+  document.querySelectorAll('.adv-qty-input').forEach(inp => {
+    inp.value = '0';
+    const tr = inp.closest('tr');
+    if(tr) tr.classList.remove('has-qty');
+  });
+  ['adv-cms-vendor','adv-cms-term','adv-ssd-cap','adv-ssd-qty','adv-wd105-qty'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(el.tagName === 'SELECT') el.selectedIndex = 0;
+    else el.value = '0';
+  });
+  // Return to "no mode picked" state so Sections 02+ stay hidden until the user chooses
+  if(typeof setSelectionMode === 'function') setSelectionMode(null);
 }
 
 /* ===== ENGINE ===== */
@@ -10820,6 +10928,21 @@ function renderResult(){
   document.getElementById('print-date').textContent=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
   document.getElementById('print-ref').textContent='BS-'+Date.now().toString().slice(-8);
   const r=state.result;const host=document.getElementById('result-content');const f=state.form;
+
+  // v24.12.6 Issue #1: Custom BOQ short-circuit. When the user generated a BOQ via Advanced mode,
+  // skip the recommender hero/alternates/concerns and render the multi-model summary card instead.
+  // The Project Summary, Pricing callout, and BOM/Tender cards still apply.
+  if(r && r.isAdvanced){
+    let advHtml = '';
+    advHtml += buildAdvancedBOQSummaryCard(r, f);
+    advHtml += buildPricingCallout();
+    advHtml += buildBOMCard(r.model, f, computeCMS(f));
+    advHtml += buildProjectCardV21();
+    host.innerHTML = advHtml;
+    requestAnimationFrame(()=>{wireHeroInteractions();burstSparkles();});
+    return;
+  }
+
   if(r.noRec){host.innerHTML=`<div class="glass-card"><div class="no-rec-block"><div class="no-rec-title">No single player matches these requirements</div><div class="no-rec-desc">The combination of resolution, screens, HDMI input, touch, and outdoor chassis doesn't fit any current Series 5 model. Common causes: 8K with 4 screens + HDMI input, or outdoor deployment needing plastic-body tier. Consider splitting into two player types, or relaxing one input.</div></div></div>${buildProjectCardV21()}`;return;}
   const m=r.model;const isXC=m.xc===true;
   const cms=computeCMS(f);
@@ -11119,6 +11242,150 @@ function buildPricingCallout(){
       <div class="pricing-callout-note">Prices shown above are indicative. Contact Dipenkumar for volume rates, stock position, and PO placement.</div>
     </div>
   </div>`;
+}
+
+/* ==========================================================================
+ * v24.12.6 — Custom BOQ Result page summary card (Advanced mode only).
+ * E2 gradient sheen + hover lift. Two card rows:
+ *   1. Players  — colored tier cards, qty as headline (3× XT1145)
+ *   2. Add-ons & software — CMS (with Cloud/On-Prem chip), SSD, Connectivity
+ * Cool palette for players (purple/blue/teal), warm palette for accessories
+ * (coral/amber/pink). Each card: 135° gradient body, gradient top accent strip,
+ * corner glow, hover-lift 2px.
+ * ========================================================================== */
+function buildAdvancedBOQSummaryCard(r, f){
+  // Pull tier metadata from the player catalog so tier label + palette stay consistent
+  const catalog = (typeof ADV_PLAYER_CATALOG !== 'undefined') ? ADV_PLAYER_CATALOG : [];
+  const catalogById = {};
+  catalog.forEach(p => { catalogById[p.id] = p; });
+
+  // Tier-class → palette stops (background grad start/end, strip grad start/end, eyebrow text, qty text, sub text)
+  const tierPalette = {
+    'flagship': { bg1:'#EEEDFE', bg2:'#F8F7FF', strip1:'#534AB7', strip2:'#7F77DD', glow:'rgba(127,119,221,0.18)', eyebrow:'#3C3489', qty:'#26215C', sub:'#534AB7', label:'FLAGSHIP' },
+    'outdoor':  { bg1:'#E1F5EE', bg2:'#F2FBF7', strip1:'#0F6E56', strip2:'#1D9E75', glow:'rgba(29,158,117,0.18)',  eyebrow:'#085041', qty:'#04342C', sub:'#0F6E56', label:'OUTDOOR' },
+    '':         { bg1:'#E6F1FB', bg2:'#F4F9FE', strip1:'#185FA5', strip2:'#378ADD', glow:'rgba(55,138,221,0.18)',  eyebrow:'#0C447C', qty:'#042C53', sub:'#185FA5', label:'STANDARD' }
+  };
+
+  // Accessory palettes — warm family
+  const cmsPal     = { bg1:'#FAECE7', bg2:'#FDF6F4', strip1:'#D85A30', strip2:'#F0997B', glow:'rgba(216,90,48,0.18)',  eyebrow:'#993C1D', value:'#4A1B0C', sub:'#D85A30',  chipBg:'#ffffff',     chipText:'#712B13' };
+  const storagePal = { bg1:'#FAEEDA', bg2:'#FDF7EC', strip1:'#BA7517', strip2:'#EF9F27', glow:'rgba(186,117,23,0.18)', eyebrow:'#854F0B', value:'#412402', sub:'#BA7517',  chipBg:'#ffffff',     chipText:'#633806' };
+  const wifiPal    = { bg1:'#FBEAF0', bg2:'#FDF5F8', strip1:'#D4537E', strip2:'#ED93B1', glow:'rgba(212,83,126,0.18)', eyebrow:'#993556', value:'#4B1528', sub:'#D4537E',  chipBg:'#ffffff',     chipText:'#72243E' };
+
+  // Selections — array of {id, qty, group, tag, chassis} pushed in by runAdvancedBOQ
+  const selections = Array.isArray(r.advancedSelections) ? r.advancedSelections : [];
+  const totalUnits = selections.reduce((acc,s)=> acc + (parseInt(s.qty,10)||0), 0);
+  const modelCount = selections.length;
+
+  // Player tier cards — one per selected model
+  let playerCards = '';
+  selections.forEach(s => {
+    const cat = catalogById[s.id] || { tierClass:'', hl: s.tag || '' };
+    const pal = tierPalette[cat.tierClass] || tierPalette[''];
+    playerCards += `
+      <div class="adv-result-card" style="background:linear-gradient(135deg, ${pal.bg1} 0%, ${pal.bg2} 100%);">
+        <div class="adv-result-strip" style="background:linear-gradient(90deg, ${pal.strip1} 0%, ${pal.strip2} 100%);"></div>
+        <div class="adv-result-glow" style="background:radial-gradient(circle, ${pal.glow} 0%, transparent 70%);"></div>
+        <div class="adv-result-body">
+          <div class="adv-result-eyebrow" style="color:${pal.eyebrow};">${escapeHtml(pal.label)}</div>
+          <div class="adv-result-qty" style="color:${pal.qty};">${parseInt(s.qty,10)||0} × ${escapeHtml(s.id)}</div>
+          <div class="adv-result-sub" style="color:${pal.sub};">${escapeHtml(cat.hl||'')}</div>
+        </div>
+      </div>`;
+  });
+
+  // Accessories — pull from r.advancedAccessories, fallback safely
+  const acc = r.advancedAccessories || {};
+  const cmsVendor = acc.cmsVendor || '';
+  const cmsTerm   = acc.cmsTerm || '';
+  const ssdCap    = acc.ssdCap || '';
+  const ssdQty    = parseInt(acc.ssdQty,10) || 0;
+  const wd105Qty  = parseInt(acc.wd105Qty,10) || 0;
+
+  // Determine billing chip — Cloud / On-Prem / Standalone — based on the form's cmsBillingType
+  // (set by computeCMS in Guided flow; in Advanced, default to Cloud for cloud-style vendors)
+  let cmsBillingLabel = '';
+  if(cmsVendor){
+    const v = String(cmsVendor).toLowerCase();
+    if(v.indexOf('brightsign') >= 0) cmsBillingLabel = 'Cloud';
+    else if(v.indexOf('pickcel') >= 0 || v.indexOf('korbyt') >= 0 || v.indexOf('poppulo') >= 0) cmsBillingLabel = 'Cloud';
+    else cmsBillingLabel = 'On-Prem';
+  }
+
+  // CMS card — only shown if user picked a vendor
+  let cmsCard = '';
+  if(cmsVendor){
+    cmsCard = `
+      <div class="adv-result-card" style="background:linear-gradient(135deg, ${cmsPal.bg1} 0%, ${cmsPal.bg2} 100%);">
+        <div class="adv-result-strip" style="background:linear-gradient(90deg, ${cmsPal.strip1} 0%, ${cmsPal.strip2} 100%);"></div>
+        <div class="adv-result-glow" style="background:radial-gradient(circle, ${cmsPal.glow} 0%, transparent 70%);"></div>
+        <div class="adv-result-body">
+          <div class="adv-result-eyebrow" style="color:${cmsPal.eyebrow};">CMS</div>
+          <div class="adv-result-value" style="color:${cmsPal.value};">${escapeHtml(cmsVendor)}${cmsTerm ? ' · '+escapeHtml(cmsTerm)+'y' : ''}</div>
+          ${cmsBillingLabel ? `<div class="adv-result-chip" style="background:${cmsPal.chipBg}; color:${cmsPal.chipText};">${escapeHtml(cmsBillingLabel)}</div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  // SSD card — only shown if both capacity and qty are set
+  let ssdCard = '';
+  if(ssdCap && ssdQty > 0){
+    const capLabel = ssdCap === '1024' ? '1 TB' : (ssdCap + ' GB');
+    ssdCard = `
+      <div class="adv-result-card" style="background:linear-gradient(135deg, ${storagePal.bg1} 0%, ${storagePal.bg2} 100%);">
+        <div class="adv-result-strip" style="background:linear-gradient(90deg, ${storagePal.strip1} 0%, ${storagePal.strip2} 100%);"></div>
+        <div class="adv-result-glow" style="background:radial-gradient(circle, ${storagePal.glow} 0%, transparent 70%);"></div>
+        <div class="adv-result-body">
+          <div class="adv-result-eyebrow" style="color:${storagePal.eyebrow};">STORAGE</div>
+          <div class="adv-result-value" style="color:${storagePal.value};">${ssdQty} × ${escapeHtml(capLabel)}</div>
+          <div class="adv-result-sub" style="color:${storagePal.sub};">SSD module${ssdQty===1?'':'s'}</div>
+        </div>
+      </div>`;
+  }
+
+  // Wi-Fi card — only shown if qty > 0
+  let wifiCard = '';
+  if(wd105Qty > 0){
+    wifiCard = `
+      <div class="adv-result-card" style="background:linear-gradient(135deg, ${wifiPal.bg1} 0%, ${wifiPal.bg2} 100%);">
+        <div class="adv-result-strip" style="background:linear-gradient(90deg, ${wifiPal.strip1} 0%, ${wifiPal.strip2} 100%);"></div>
+        <div class="adv-result-glow" style="background:radial-gradient(circle, ${wifiPal.glow} 0%, transparent 70%);"></div>
+        <div class="adv-result-body">
+          <div class="adv-result-eyebrow" style="color:${wifiPal.eyebrow};">CONNECTIVITY</div>
+          <div class="adv-result-value" style="color:${wifiPal.value};">${wd105Qty} × WD105</div>
+          <div class="adv-result-sub" style="color:${wifiPal.sub};">Wi-Fi module${wd105Qty===1?'':'s'}</div>
+        </div>
+      </div>`;
+  }
+
+  const accessoriesHtml = (cmsCard || ssdCard || wifiCard) ? `
+    <div class="adv-result-section-label">Add-ons &amp; software</div>
+    <div class="adv-result-grid">${cmsCard}${ssdCard}${wifiCard}</div>
+  ` : '';
+
+  return `<div class="glass-card adv-result-summary-card">
+    <div class="adv-result-header">
+      <div>
+        <div class="adv-result-section-label" style="margin:0 0 4px;">Custom BOQ</div>
+        <div class="adv-result-headline">${totalUnits} BrightSign player${totalUnits===1?'':'s'} · ${modelCount} model${modelCount===1?'':'s'}</div>
+      </div>
+      <div class="adv-result-ref">
+        <div class="adv-result-section-label" style="margin:0 0 4px;">Reference</div>
+        <div class="adv-result-refid">${escapeHtml(r.refId || '—')}</div>
+      </div>
+    </div>
+    <div class="adv-result-section-label">Players</div>
+    <div class="adv-result-grid" style="margin-bottom:18px;">${playerCards}</div>
+    ${accessoriesHtml}
+  </div>`;
+}
+
+// Tiny HTML-escape helper used by the BOQ card (safe even if defined elsewhere — gets shadowed harmlessly)
+function _advEscapeHtmlInline(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+// Use existing escapeHtml if present, fall back otherwise
+if(typeof escapeHtml === 'undefined'){
+  window.escapeHtml = _advEscapeHtmlInline;
 }
 
 function buildBOMCard(m,f,cms){
@@ -15447,20 +15714,21 @@ async function runAdvancedBOQ(){
     const cmsVendorEl = document.getElementById('adv-cms-vendor');
     const cmsTermEl   = document.getElementById('adv-cms-term');
     const ssdCapEl    = document.getElementById('adv-ssd-cap');
+    const ssdQtyEl    = document.getElementById('adv-ssd-qty');
     const wd105El     = document.getElementById('adv-wd105-qty');
-    const wd215El     = document.getElementById('adv-wd215-qty');
     const cmsVendor = cmsVendorEl ? (cmsVendorEl.value || '') : '';
     const cmsTerm   = cmsTermEl   ? (cmsTermEl.value || '1') : '1';
     const ssdCap    = ssdCapEl    ? (ssdCapEl.value || '') : '';
+    const ssdQty    = ssdQtyEl    ? (parseInt(ssdQtyEl.value,10) || 0) : 0;
     const wd105Qty  = wd105El     ? (parseInt(wd105El.value,10) || 0) : 0;
-    const wd215Qty  = wd215El     ? (parseInt(wd215El.value,10) || 0) : 0;
     f.cmsVendor    = cmsVendor || '';
     f.cmsTerm      = String(cmsTerm);
     f.cmsInclude   = cmsVendor ? 'yes' : 'no';
-    f.ssd          = ssdCap ? 'yes' : 'no';
+    // SSD: an SSD is included when capacity is picked AND qty > 0
+    f.ssd          = (ssdCap && ssdQty > 0) ? 'yes' : 'no';
     f.ssdCap       = ssdCap || '';
-    // Stash WD105 / WD215 quantities in a side bag the BOM renderer / Excel export can consume.
-    f._advAccessories = { wd105Qty, wd215Qty };
+    // Stash SSD qty + WD105 Wi-Fi module qty in a side bag the BOM renderer / Excel export can consume.
+    f._advAccessories = { ssdQty, wd105Qty };
 
     // 5. Build a synthetic state.result. Use the FIRST selection as primary so the existing
     //    renderResult / hero card has a model to display. Stash the full picks list separately
@@ -15478,7 +15746,7 @@ async function runAdvancedBOQ(){
       // Custom BOQ flags + payload
       isAdvanced: true,
       advancedSelections: selections.map(s => ({ id: s.id, qty: s.qty, group: s.model.group, tag: s.model.tag, chassis: s.model.chassis })),
-      advancedAccessories: { cmsVendor, cmsTerm, ssdCap, wd105Qty, wd215Qty }
+      advancedAccessories: { cmsVendor, cmsTerm, ssdCap, ssdQty, wd105Qty }
     };
 
     // 6. RefId — preserve when re-running for same project, else generate fresh
