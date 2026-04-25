@@ -418,6 +418,136 @@ html[data-theme="dark"] .closemonth-display.set{color:#6EE7B7;}
   .closemonth-selects{grid-template-columns:1fr;}
 }
 
+/* v24.12.5: month-only picker styles */
+.cm-picker{position:relative;display:block;}
+.cm-picker-btn{
+  display:flex;align-items:center;justify-content:space-between;width:100%;
+  padding:10px 14px;background:#fff;border:1px solid #CBD5E1;border-radius:8px;
+  font:inherit;font-size:14px;color:#0F172A;cursor:pointer;text-align:left;
+  transition:border-color .15s,box-shadow .15s;
+}
+.cm-picker-btn:hover{border-color:#94A3B8;}
+.cm-picker-btn:focus{outline:none;border-color:var(--blue,#2563EB);box-shadow:0 0 0 3px rgba(37,99,235,0.15);}
+.cm-picker-value{flex:1;color:#0F172A;}
+.cm-picker-value.placeholder{color:#94A3B8;}
+.cm-picker-icon{margin-left:10px;font-size:16px;opacity:.7;}
+.cm-picker-popover{
+  position:absolute;top:calc(100% + 6px);left:0;z-index:50;
+  width:300px;max-width:calc(100vw - 32px);
+  background:#fff;border:1px solid #E2E8F0;border-radius:12px;
+  box-shadow:0 12px 32px rgba(15,23,42,0.18);
+  padding:12px;
+}
+.cm-picker-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.cm-picker-year{font-weight:700;font-size:15px;color:#0F172A;}
+.cm-picker-nav{
+  background:transparent;border:1px solid transparent;border-radius:6px;
+  width:32px;height:32px;font-size:18px;cursor:pointer;color:#475569;
+  display:flex;align-items:center;justify-content:center;
+}
+.cm-picker-nav:hover{background:#F1F5F9;}
+.cm-picker-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.cm-picker-month{
+  background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;
+  padding:10px 8px;font-size:13px;font-weight:500;color:#334155;
+  cursor:pointer;transition:all .12s;
+}
+.cm-picker-month:hover{background:#EEF2FF;border-color:var(--indigo,#4F46E5);color:var(--indigo,#4F46E5);}
+.cm-picker-month.selected{background:var(--indigo,#4F46E5);border-color:var(--indigo,#4F46E5);color:#fff;font-weight:600;}
+.cm-picker-month.disabled{opacity:.35;cursor:not-allowed;background:#F8FAFC;}
+.cm-picker-month.disabled:hover{background:#F8FAFC;border-color:#E2E8F0;color:#334155;}
+.cm-picker-foot{display:flex;justify-content:space-between;margin-top:12px;gap:8px;}
+.cm-picker-clear,.cm-picker-close{
+  background:transparent;border:none;padding:6px 10px;font:inherit;font-size:13px;
+  font-weight:600;cursor:pointer;border-radius:6px;
+}
+.cm-picker-clear{color:#DC2626;}
+.cm-picker-clear:hover{background:#FEF2F2;}
+.cm-picker-close{color:var(--indigo,#4F46E5);}
+.cm-picker-close:hover{background:#EEF2FF;}
+html[data-theme="dark"] .cm-picker-btn{background:rgba(15,23,42,0.75);border-color:rgba(148,163,184,0.25);color:#E2E8F0;}
+html[data-theme="dark"] .cm-picker-value{color:#E2E8F0;}
+html[data-theme="dark"] .cm-picker-popover{background:#1E293B;border-color:rgba(148,163,184,0.25);}
+html[data-theme="dark"] .cm-picker-year{color:#E2E8F0;}
+html[data-theme="dark"] .cm-picker-month{background:rgba(30,41,59,0.7);border-color:rgba(148,163,184,0.2);color:#E2E8F0;}
+html[data-theme="dark"] .cm-picker-month:hover{background:rgba(79,70,229,0.2);}
+html[data-theme="dark"] .cm-picker-nav{color:#94A3B8;}
+html[data-theme="dark"] .cm-picker-nav:hover{background:rgba(148,163,184,0.1);}
+
+/* ======================================================================
+ * v24.12.5: Mode toggle (Guided / Advanced) + Advanced player table
+ * ====================================================================== */
+.mode-toggle-wrap{margin:0 0 22px;}
+.mode-toggle{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  background:var(--surface-2,#F1F5F9);padding:6px;border-radius:14px;
+}
+.mode-toggle-btn{
+  display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+  padding:14px 18px;background:transparent;border:1px solid transparent;
+  border-radius:10px;cursor:pointer;text-align:left;
+  font:inherit;color:var(--ink-muted,#475569);
+  transition:all .15s;
+}
+.mode-toggle-btn:hover{background:rgba(255,255,255,0.55);}
+.mode-toggle-btn.active{
+  background:#fff;border-color:var(--indigo,#4F46E5);
+  box-shadow:0 4px 12px rgba(79,70,229,0.12);
+  color:var(--ink,#0F172A);
+}
+.mode-toggle-emoji{font-size:18px;}
+.mode-toggle-label{font-size:15px;font-weight:700;color:inherit;display:block;}
+.mode-toggle-active .mode-toggle-label{color:var(--indigo,#4F46E5);}
+.mode-toggle-sub{font-size:12px;color:var(--ink-subtle,#94A3B8);font-weight:500;}
+html[data-theme="dark"] .mode-toggle{background:rgba(15,23,42,0.55);}
+html[data-theme="dark"] .mode-toggle-btn{color:#94A3B8;}
+html[data-theme="dark"] .mode-toggle-btn.active{background:rgba(30,41,59,0.95);border-color:var(--indigo,#4F46E5);color:#E2E8F0;}
+@media (max-width:640px){
+  .mode-toggle{grid-template-columns:1fr;}
+}
+
+/* Advanced player table */
+.adv-player-table-wrap{
+  background:#fff;border:1px solid var(--border-soft,#E2E8F0);border-radius:12px;
+  overflow:hidden;
+}
+.adv-player-table{width:100%;border-collapse:collapse;font-family:var(--sans,system-ui),sans-serif;font-size:13px;}
+.adv-player-table thead th{
+  background:var(--surface-2,#F8FAFC);
+  padding:12px 14px;text-align:left;font-weight:700;font-size:11px;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--ink-muted,#64748B);
+  border-bottom:1px solid var(--border-soft,#E2E8F0);
+}
+.adv-player-table tbody td{
+  padding:12px 14px;border-bottom:1px solid var(--border-soft,#F1F5F9);
+  vertical-align:middle;color:var(--ink,#0F172A);
+}
+.adv-player-table tbody tr:last-child td{border-bottom:none;}
+.adv-player-table tbody tr:hover td{background:rgba(99,102,241,0.04);}
+.adv-player-table .adv-model-id{font-family:var(--mono,monospace);font-weight:700;font-size:14px;color:var(--indigo,#4F46E5);}
+.adv-player-table .adv-tier{
+  display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;
+  background:#EEF2FF;color:#4338CA;
+}
+.adv-player-table .adv-tier.outdoor{background:#ECFDF5;color:#047857;}
+.adv-player-table .adv-tier.flagship{background:#FEF3C7;color:#B45309;}
+.adv-player-table .adv-highlights{color:var(--ink-muted,#64748B);font-size:12px;}
+.adv-player-table .adv-qty-input{
+  width:80px;padding:8px 10px;border:1px solid var(--border-strong,#CBD5E1);
+  border-radius:8px;font-family:var(--mono,monospace);font-weight:700;font-size:14px;
+  text-align:center;
+}
+.adv-player-table .adv-qty-input:focus{
+  outline:none;border-color:var(--indigo,#4F46E5);
+  box-shadow:0 0 0 3px rgba(79,70,229,0.15);
+}
+.adv-player-table tr.has-qty td{background:rgba(79,70,229,0.05);}
+html[data-theme="dark"] .adv-player-table-wrap{background:rgba(15,23,42,0.5);border-color:rgba(148,163,184,0.2);}
+html[data-theme="dark"] .adv-player-table thead th{background:rgba(15,23,42,0.65);color:#94A3B8;border-color:rgba(148,163,184,0.15);}
+html[data-theme="dark"] .adv-player-table tbody td{color:#E2E8F0;border-color:rgba(148,163,184,0.1);}
+html[data-theme="dark"] .adv-player-table .adv-model-id{color:#A5B4FC;}
+html[data-theme="dark"] .adv-player-table .adv-qty-input{background:rgba(15,23,42,0.7);border-color:rgba(148,163,184,0.25);color:#E2E8F0;}
+
 /* v24.4.14 #17: Accessibility */
 .skip-link{
   position:absolute;top:-100px;left:0;z-index:9999;
@@ -5512,6 +5642,22 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         </div>
       </div>
 
+      <!-- v24.12.5: Guided / Advanced mode toggle -->
+      <div class="mode-toggle-wrap">
+        <div class="mode-toggle" role="tablist" aria-label="Selection mode">
+          <button type="button" id="mode-toggle-guided" class="mode-toggle-btn active" role="tab" aria-selected="true" onclick="setSelectionMode('guided')">
+            <span class="mode-toggle-emoji">🧭</span>
+            <span class="mode-toggle-label">Guided</span>
+            <span class="mode-toggle-sub">Answer a few questions, we'll suggest the player</span>
+          </button>
+          <button type="button" id="mode-toggle-advanced" class="mode-toggle-btn" role="tab" aria-selected="false" onclick="setSelectionMode('advanced')">
+            <span class="mode-toggle-emoji">⚙️</span>
+            <span class="mode-toggle-label">Advanced</span>
+            <span class="mode-toggle-sub">Pick players directly — for known requirements</span>
+          </button>
+        </div>
+      </div>
+
       <div class="form-section">
         <div class="section-head"><div class="section-num">01</div><div><div class="section-title">Project context</div></div></div>
         <div id="dup-project-banner" class="dup-banner" style="display:none;"></div>
@@ -5588,7 +5734,29 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
             <label>Expected Closure<span class="req">*</span></label>
             <div class="closemonth-picker">
               <div class="closemonth-quick" id="closemonth-quick-chips"></div>
-              <div class="closemonth-selects">
+              <!-- v24.12.5: Single month picker. Replaces Year+Month dropdowns.
+                   Hidden f-closemonth keeps YYYY-MM format so downstream code works unchanged.
+                   Legacy selects retained but visually hidden so existing JS (syncCloseMonth) stays functional. -->
+              <div class="cm-picker">
+                <button type="button" class="cm-picker-btn" id="cm-picker-btn" onclick="cmPickerToggle()" aria-haspopup="dialog" aria-expanded="false">
+                  <span class="cm-picker-value" id="cm-picker-value">Pick month…</span>
+                  <span class="cm-picker-icon" aria-hidden="true">📅</span>
+                </button>
+                <div class="cm-picker-popover" id="cm-picker-popover" role="dialog" aria-label="Pick closure month" hidden>
+                  <div class="cm-picker-head">
+                    <button type="button" class="cm-picker-nav" onclick="cmPickerNavYear(-1)" aria-label="Previous year">‹</button>
+                    <span class="cm-picker-year" id="cm-picker-year"></span>
+                    <button type="button" class="cm-picker-nav" onclick="cmPickerNavYear(1)" aria-label="Next year">›</button>
+                  </div>
+                  <div class="cm-picker-grid" id="cm-picker-grid"></div>
+                  <div class="cm-picker-foot">
+                    <button type="button" class="cm-picker-clear" onclick="cmPickerClear()">Clear</button>
+                    <button type="button" class="cm-picker-close" onclick="cmPickerClose()">Close</button>
+                  </div>
+                </div>
+              </div>
+              <!-- Legacy selects: hidden, syncCloseMonth keeps writing to them so existing readers stay happy -->
+              <div class="closemonth-selects" style="display:none;">
                 <select id="f-closemonth-month" aria-label="Close month" onchange="syncCloseMonth()">
                   <option value="">Month…</option>
                   <option value="01">January</option><option value="02">February</option>
@@ -5612,6 +5780,8 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         </div>
       </div>
 
+      <!-- v24.12.5: Sections 02–05 (Deployment, Content, Video, CMS) are GUIDED-only -->
+      <div id="guided-only">
       <div class="form-section">
         <div class="section-head"><div class="section-num">02</div><div><div class="section-title">Deployment & budget</div></div></div>
         <div class="spec-grid three-col" style="margin-bottom:24px;">
@@ -5721,12 +5891,78 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           </div>
         </div>
       </div>
+      </div><!-- /guided-only -->
+
+      <!-- v24.12.5: Advanced panel — direct player picking + accessories. Hidden by default. -->
+      <div id="advanced-only" style="display:none;">
+        <div class="form-section">
+          <div class="section-head"><div class="section-num">02</div><div><div class="section-title">Pick players</div><div style="font-family:var(--sans);font-size:12px;color:var(--ink-muted);margin-top:4px;">Set quantity for each model you want included. Leave at 0 to skip.</div></div></div>
+          <div class="adv-player-table-wrap">
+            <table class="adv-player-table" id="adv-player-table">
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>Tier</th>
+                  <th>Highlights</th>
+                  <th style="text-align:center;">Qty</th>
+                </tr>
+              </thead>
+              <tbody id="adv-player-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="section-head"><div class="section-num">03</div><div><div class="section-title">Accessories</div><div style="font-family:var(--sans);font-size:12px;color:var(--ink-muted);margin-top:4px;">CMS, storage, expansion modules. All optional.</div></div></div>
+          <div class="spec-grid two-col" style="margin-bottom:18px;">
+            <div class="field" style="margin-bottom:0;"><label class="field-label">CMS vendor</label>
+              <select id="adv-cms-vendor" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;background:#fff;">
+                <option value="">— None —</option>
+                <option value="BrightSign CMS">BrightSign CMS</option>
+                <option value="Pickcel CMS">Pickcel CMS</option>
+                <option value="Korbyt CMS">Korbyt CMS</option>
+                <option value="Poppulo CMS">Poppulo CMS</option>
+              </select>
+            </div>
+            <div class="field" style="margin-bottom:0;"><label class="field-label">CMS term (years)</label>
+              <select id="adv-cms-term" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;background:#fff;">
+                <option value="1">1 year</option>
+                <option value="2">2 years</option>
+                <option value="3">3 years</option>
+                <option value="4">4 years</option>
+                <option value="5">5 years</option>
+              </select>
+            </div>
+          </div>
+          <div class="spec-grid three-col">
+            <div class="field" style="margin-bottom:0;"><label class="field-label">SSD (per player)</label>
+              <select id="adv-ssd-cap" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;background:#fff;">
+                <option value="">— None —</option>
+                <option value="128">128 GB</option>
+                <option value="256">256 GB</option>
+                <option value="512">512 GB</option>
+                <option value="1024">1 TB</option>
+              </select>
+              <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Optional add-on storage</div>
+            </div>
+            <div class="field" style="margin-bottom:0;"><label class="field-label">WD105 video card (qty)</label>
+              <input type="number" id="adv-wd105-qty" min="0" step="1" value="0" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;">
+              <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">HDMI/SDI input expansion</div>
+            </div>
+            <div class="field" style="margin-bottom:0;"><label class="field-label">WD215 Wi-Fi module (qty)</label>
+              <input type="number" id="adv-wd215-qty" min="0" step="1" value="0" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;">
+              <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Wireless connectivity</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div id="form-error" class="error-msg"></div>
     </div>
     <div class="action-bar">
       <button class="btn-secondary" onclick="resetForm()">Reset</button>
-      <button class="btn-action" onclick="runSelector()">Recommend →</button>
+      <button class="btn-action" id="action-recommend" onclick="runSelector()">Recommend →</button>
+      <button class="btn-action" id="action-generate-boq" onclick="runAdvancedBOQ()" style="display:none;">Generate BOQ →</button>
     </div>
   </div>
 
@@ -6261,7 +6497,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.12.4';
+const FRONTEND_VERSION = '24.12.5';
 
 
 // ============================================================================
@@ -8191,6 +8427,164 @@ function updateCloseMonthDisplay(){
 try{populateCloseMonthDropdown();}catch(e){console.warn('populateCloseMonthDropdown failed:',e);}
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded',populateCloseMonthDropdown,{once:true});
+}
+
+/* ==========================================================================
+ * v24.12.5: Month-only picker (replaces Year+Month dropdowns)
+ * The picker writes to the hidden f-closemonth input AND to the legacy
+ * f-closemonth-year / f-closemonth-month selects so existing readers
+ * (syncCloseMonth, pickCloseMonth, validation) keep working unchanged.
+ * ========================================================================== */
+const CM_PICKER_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+let _cmPickerYear = (new Date()).getFullYear();
+let _cmPickerOpen = false;
+
+function _cmPickerCurrentSelection(){
+  // Read current selection from hidden f-closemonth (format: YYYY-MM)
+  const hidden = document.getElementById('f-closemonth');
+  if(!hidden || !hidden.value) return {year:null, month:null};
+  const m = String(hidden.value).match(/^(\d{4})-(\d{2})$/);
+  if(!m) return {year:null, month:null};
+  return {year:parseInt(m[1],10), month:parseInt(m[2],10)};
+}
+
+function cmPickerRender(year){
+  _cmPickerYear = year;
+  const yearEl = document.getElementById('cm-picker-year');
+  const grid = document.getElementById('cm-picker-grid');
+  if(!yearEl || !grid) return;
+  yearEl.textContent = String(year);
+  // Build 12 month buttons
+  const sel = _cmPickerCurrentSelection();
+  const today = new Date();
+  const todayY = today.getFullYear();
+  const todayM = today.getMonth() + 1;  // 1..12
+  // Disable months strictly in the past (before current month). Equal to current month is allowed.
+  let html = '';
+  for(let m=1; m<=12; m++){
+    const isPast = (year < todayY) || (year === todayY && m < todayM);
+    const isSelected = (sel.year === year && sel.month === m);
+    const cls = ['cm-picker-month'];
+    if(isSelected) cls.push('selected');
+    if(isPast) cls.push('disabled');
+    html += `<button type="button" class="${cls.join(' ')}" data-m="${m}" ${isPast?'disabled':''} onclick="cmPickerSelect(${year},${m})">${CM_PICKER_MONTHS[m-1]}</button>`;
+  }
+  grid.innerHTML = html;
+}
+
+function cmPickerToggle(){
+  const pop = document.getElementById('cm-picker-popover');
+  const btn = document.getElementById('cm-picker-btn');
+  if(!pop || !btn) return;
+  if(_cmPickerOpen){
+    cmPickerClose();
+    return;
+  }
+  // Initialize displayed year from current selection or from this year
+  const sel = _cmPickerCurrentSelection();
+  cmPickerRender(sel.year || (new Date()).getFullYear());
+  pop.hidden = false;
+  btn.setAttribute('aria-expanded','true');
+  _cmPickerOpen = true;
+  // Bind outside-click-to-close handler ONCE while open
+  setTimeout(()=>{
+    document.addEventListener('click', cmPickerOutsideClick, {once:false, capture:true});
+  }, 0);
+}
+
+function cmPickerClose(){
+  const pop = document.getElementById('cm-picker-popover');
+  const btn = document.getElementById('cm-picker-btn');
+  if(pop) pop.hidden = true;
+  if(btn) btn.setAttribute('aria-expanded','false');
+  _cmPickerOpen = false;
+  document.removeEventListener('click', cmPickerOutsideClick, {capture:true});
+}
+
+function cmPickerOutsideClick(e){
+  if(!_cmPickerOpen) return;
+  const pickerRoot = document.querySelector('.cm-picker');
+  if(pickerRoot && !pickerRoot.contains(e.target)){
+    cmPickerClose();
+  }
+}
+
+function cmPickerNavYear(delta){
+  cmPickerRender((_cmPickerYear || (new Date()).getFullYear()) + delta);
+}
+
+function cmPickerSelect(year, month){
+  // Write to legacy selects then call syncCloseMonth() so all downstream code stays consistent.
+  const yearSel = document.getElementById('f-closemonth-year');
+  const monthSel = document.getElementById('f-closemonth-month');
+  // Ensure year exists as an option in the legacy select; if not, add it
+  if(yearSel){
+    const exists = Array.from(yearSel.options).some(o => o.value === String(year));
+    if(!exists){
+      const opt = document.createElement('option');
+      opt.value = String(year);
+      opt.textContent = String(year);
+      yearSel.appendChild(opt);
+    }
+    yearSel.value = String(year);
+  }
+  if(monthSel) monthSel.value = String(month).padStart(2,'0');
+  if(typeof syncCloseMonth === 'function') syncCloseMonth();
+  cmPickerUpdateButton();
+  cmPickerRender(year);  // re-render to highlight selection
+  cmPickerClose();
+}
+
+function cmPickerClear(){
+  const yearSel = document.getElementById('f-closemonth-year');
+  const monthSel = document.getElementById('f-closemonth-month');
+  if(yearSel) yearSel.value = '';
+  if(monthSel) monthSel.value = '';
+  if(typeof syncCloseMonth === 'function') syncCloseMonth();
+  cmPickerUpdateButton();
+  cmPickerRender(_cmPickerYear);
+}
+
+function cmPickerUpdateButton(){
+  // Refresh the picker button label from current f-closemonth value.
+  // Called from syncCloseMonth (extended below) and from pickCloseMonth (existing chip handler).
+  const btn = document.getElementById('cm-picker-value');
+  if(!btn) return;
+  const hidden = document.getElementById('f-closemonth');
+  const v = hidden ? hidden.value : '';
+  if(!v){
+    btn.textContent = 'Pick month…';
+    btn.classList.add('placeholder');
+    return;
+  }
+  const m = String(v).match(/^(\d{4})-(\d{2})$/);
+  if(!m){
+    btn.textContent = 'Pick month…';
+    btn.classList.add('placeholder');
+    return;
+  }
+  const year = parseInt(m[1],10);
+  const monthIdx = parseInt(m[2],10) - 1;
+  btn.textContent = `${CM_PICKER_MONTHS[monthIdx]} ${year}`;
+  btn.classList.remove('placeholder');
+}
+
+// Hook into existing syncCloseMonth so picker stays consistent when chips or legacy selects change
+(function wrapSyncCloseMonth(){
+  if(typeof window.syncCloseMonth !== 'function') return;
+  const orig = window.syncCloseMonth;
+  window.syncCloseMonth = function(){
+    const r = orig.apply(this, arguments);
+    try { cmPickerUpdateButton(); } catch(_) {}
+    return r;
+  };
+})();
+
+// Initial label
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', cmPickerUpdateButton, {once:true});
+} else {
+  setTimeout(cmPickerUpdateButton, 0);
 }
 
 // Apply saved theme immediately on script load
@@ -10929,6 +11323,7 @@ function buildEntryPayload(status){
     project:f.project||'(unnamed)',enduser:f.enduser||'—',venue:f.venue||'—',
     partner:f.partner||'—',consultant:f.consultant||'—',city:f.city||'—',
     state:f.state||'',  // v24.12.4 fix: state column was never saved (silently dropped since v24.7 spec)
+    outputs:f.outputs||'',  // v24.12.5: outputs (displays per player) was never saved either
     contactname:f.contactname||'—',contactphone:f.contactphone||'—',contactemail:f.contactemail||'—',
     stage:f.stage||'—',closemonth:f.closemonth||'—',
     qty:f.qty,
@@ -14797,6 +15192,308 @@ window.bsC3aRenderVelocity = async function(){
   });
 };
 /* END v24.12 Cycle 3A block */
+
+/* ============================================================================
+ * v24.12.5: Custom BOQ — Advanced mode (manual player selection)
+ * Toggle between Guided and Advanced modes. In Advanced mode, user picks players
+ * directly via a multi-select table + accessories, bypassing the recommender.
+ * Save path / Result page / BOM render use the same plumbing as Guided.
+ * ============================================================================ */
+window._selectionMode = 'guided';
+
+// Player catalog used in the Advanced table — Series 5 only (the 13 currently-available models).
+// The order matches the recommendation ladder: LS → HD → XD → XT → XC.
+const ADV_PLAYER_CATALOG = [
+  { id:'AU335',  tier:'Audio', tierClass:'',         hl:'Audio-only · 3 zones · HDMI ARC' },
+  { id:'LS425',  tier:'LS',    tierClass:'',         hl:'Affordable HD · Basic I/O' },
+  { id:'LS445',  tier:'LS',    tierClass:'',         hl:'Affordable 4K · Basic I/O' },
+  { id:'HD225',  tier:'HD',    tierClass:'',         hl:'Entry 4K HDR · GPIO + IR' },
+  { id:'HD1025', tier:'HD',    tierClass:'',         hl:'Entry 4K HDR · USB-A · RS-232 · touch-ready' },
+  { id:'XD235',  tier:'XD',    tierClass:'outdoor',  hl:'4K Deployable · PoE+ · aluminium' },
+  { id:'XD1035', tier:'XD',    tierClass:'outdoor',  hl:'4K Deployable · PoE+ · USB · touch · aluminium' },
+  { id:'XT245',  tier:'XT',    tierClass:'outdoor',  hl:'Power & Performance · HDMI 2.1a · PoE+' },
+  { id:'XT1145', tier:'XT',    tierClass:'outdoor',  hl:'8K · HDMI-in · PoE+ · hero product' },
+  { id:'XT2145', tier:'XT',    tierClass:'outdoor',  hl:'8K · 2× HDMI out + HDMI-in · dual display' },
+  { id:'XC2055', tier:'XC',    tierClass:'flagship', hl:'Most Powerful · 8K · 2-screen · x86' },
+  { id:'XC4055', tier:'XC',    tierClass:'flagship', hl:'Flagship · 8K · 4-screen · x86' }
+];
+
+function setSelectionMode(mode){
+  if(mode !== 'guided' && mode !== 'advanced') mode = 'guided';
+  window._selectionMode = mode;
+  // Toggle button states
+  const gBtn = document.getElementById('mode-toggle-guided');
+  const aBtn = document.getElementById('mode-toggle-advanced');
+  if(gBtn){ gBtn.classList.toggle('active', mode==='guided'); gBtn.setAttribute('aria-selected', mode==='guided'); }
+  if(aBtn){ aBtn.classList.toggle('active', mode==='advanced'); aBtn.setAttribute('aria-selected', mode==='advanced'); }
+  // Toggle panels
+  const guidedPanel = document.getElementById('guided-only');
+  const advPanel = document.getElementById('advanced-only');
+  if(guidedPanel) guidedPanel.style.display = (mode==='guided') ? '' : 'none';
+  if(advPanel)    advPanel.style.display    = (mode==='advanced') ? '' : 'none';
+  // Toggle action buttons
+  const recBtn = document.getElementById('action-recommend');
+  const boqBtn = document.getElementById('action-generate-boq');
+  if(recBtn) recBtn.style.display = (mode==='guided') ? '' : 'none';
+  if(boqBtn) boqBtn.style.display = (mode==='advanced') ? '' : 'none';
+  // Lazy-init the Advanced table the first time we switch into Advanced mode
+  if(mode==='advanced'){
+    const tbody = document.getElementById('adv-player-tbody');
+    if(tbody && !tbody.children.length) populateAdvancedPlayerTable();
+  }
+  // Hide form-error on mode change so stale errors don't confuse users
+  const err = document.getElementById('form-error');
+  if(err){ err.classList.remove('show'); err.textContent=''; }
+}
+
+function populateAdvancedPlayerTable(){
+  const tbody = document.getElementById('adv-player-tbody');
+  if(!tbody) return;
+  tbody.innerHTML = ADV_PLAYER_CATALOG.map(p => `
+    <tr data-model="${p.id}">
+      <td><span class="adv-model-id">${p.id}</span></td>
+      <td><span class="adv-tier ${p.tierClass}">${p.tier}</span></td>
+      <td class="adv-highlights">${p.hl}</td>
+      <td style="text-align:center;"><input type="number" class="adv-qty-input" data-model="${p.id}" min="0" step="1" value="0" oninput="advOnQtyChange(this)"></td>
+    </tr>
+  `).join('');
+}
+
+function advOnQtyChange(inputEl){
+  // Tag the row so it gets the highlighted-row style when qty>0
+  const tr = inputEl.closest('tr');
+  if(!tr) return;
+  const v = parseInt(inputEl.value, 10);
+  if(isNaN(v) || v < 0) inputEl.value = '0';
+  if((parseInt(inputEl.value,10) || 0) > 0) tr.classList.add('has-qty');
+  else tr.classList.remove('has-qty');
+}
+
+function _advReadSelections(){
+  // Returns array of { id, qty, model } — only rows where qty > 0
+  const out = [];
+  document.querySelectorAll('#adv-player-tbody .adv-qty-input').forEach(input => {
+    const qty = parseInt(input.value, 10) || 0;
+    if(qty <= 0) return;
+    const id = input.getAttribute('data-model');
+    const model = MODELS.find(m => m.id === id && m.available);
+    if(model) out.push({ id, qty, model });
+  });
+  return out;
+}
+
+function _advValidateProjectContext(){
+  // Mirrors the Project-Context portion of runSelector validation (project, enduser, partner,
+  // consultant, venueType, city, contact name/phone/email, stage, leadSource, outcome, closemonth).
+  // Returns null on success, error message string on failure (focused element side-effect).
+  // Reuse field-by-field by directly reading DOM (not state.form, since runSelector populates that).
+  const fields = [
+    { id:'f-project',              key:'project',          label:'Project Name' },
+    { id:'f-enduser',              key:'enduser',          label:'End-user / Client' },
+    { id:'f-partner',              key:'partner',          label:'Partner / SI' },
+    { id:'f-consultant',           key:'consultant',       label:'Consultant' },
+    { id:'f-venueType',            key:'venueType',        label:'Venue Type' },
+    { id:'f-city',                 key:'city',             label:'City' },
+    { id:'f-state',                key:'state',            label:'State' },
+    { id:'f-stage',                key:'stage',            label:'Deal Stage' },
+    { id:'f-leadsource',           key:'leadSource',       label:'Lead Source' },
+    { id:'f-outcome',              key:'outcome',          label:'Outcome' },
+    { id:'f-closemonth',           key:'closemonth',       label:'Expected Closure' },
+    { id:'f-partnerContactName',   key:'contactname',      label:'Partner Contact — Name' },
+    { id:'f-partnerContactPhone',  key:'contactphone',     label:'Partner Contact — Mobile' },
+    { id:'f-partnerContactEmail',  key:'contactemail',     label:'Partner Contact — Email' }
+  ];
+  if(typeof clearFieldErrors === 'function') clearFieldErrors();
+  for(const fld of fields){
+    const el = document.getElementById(fld.id);
+    if(!el) continue;
+    const v = (el.value || '').toString().trim();
+    if(!v){
+      const wrap = el.closest('.form-group, .field');
+      if(wrap) wrap.classList.add('field-error');
+      try { el.focus(); } catch(_){}
+      return `Please fill in ${fld.label}.`;
+    }
+  }
+  // Mobile and email pattern checks
+  const mobileEl = document.getElementById('f-partnerContactPhone');
+  if(mobileEl && !/^\d{10}$/.test(mobileEl.value)){
+    const wrap = mobileEl.closest('.form-group, .field');
+    if(wrap) wrap.classList.add('field-error');
+    return 'Partner Contact Mobile must be 10 digits.';
+  }
+  const emailEl = document.getElementById('f-partnerContactEmail');
+  if(emailEl && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailEl.value)){
+    const wrap = emailEl.closest('.form-group, .field');
+    if(wrap) wrap.classList.add('field-error');
+    return 'Partner Contact Email is not a valid format.';
+  }
+  return null;
+}
+
+function _advCaptureProjectContextToState(){
+  // Pull all Project-Context DOM values into state.form. Mirrors what runSelector does for Section 01.
+  const f = state.form;
+  f.project        = (document.getElementById('f-project')||{}).value || '';
+  f.enduser        = (document.getElementById('f-enduser')||{}).value || '';
+  f.partner        = (document.getElementById('f-partner')||{}).value || '';
+  f.consultant     = (document.getElementById('f-consultant')||{}).value || '';
+  const vt = (document.getElementById('f-venueType')||{}).value || '';
+  f.venueType      = vt;
+  f.venue          = vt;  // legacy mirror — backend writes col I from data.venue
+  f.city           = (document.getElementById('f-city')||{}).value || '';
+  f.state          = (document.getElementById('f-state')||{}).value || '';
+  f.stage          = (document.getElementById('f-stage')||{}).value || '';
+  f.leadSource     = (document.getElementById('f-leadsource')||{}).value || '';
+  f.outcome        = (document.getElementById('f-outcome')||{}).value || 'open';
+  f.closemonth     = (document.getElementById('f-closemonth')||{}).value || '';
+  f.contactname    = (document.getElementById('f-partnerContactName')||{}).value || '';
+  f.contactphone   = (document.getElementById('f-partnerContactPhone')||{}).value || '';
+  f.contactemail   = (document.getElementById('f-partnerContactEmail')||{}).value || '';
+}
+
+function _advDeriveEnvironment(selections){
+  // Derive environment label from the chassis mix of picked players.
+  // All-aluminium → outdoor; all-non-aluminium → indoor; mix → mixed.
+  let hasOutdoor = false, hasIndoor = false;
+  selections.forEach(s => {
+    if(s.model.chassis === 'aluminium') hasOutdoor = true;
+    else hasIndoor = true;
+  });
+  if(hasOutdoor && hasIndoor) return 'mixed';
+  if(hasOutdoor) return 'outdoor';
+  return 'indoor';
+}
+
+async function runAdvancedBOQ(){
+  if(window._runSelectorBusy) return;
+  window._runSelectorBusy = true;
+  try {
+    // 1. Project Context validation
+    const ctxErr = _advValidateProjectContext();
+    if(ctxErr){
+      const err = document.getElementById('form-error');
+      if(err){ err.textContent = ctxErr; err.classList.add('show'); }
+      return;
+    }
+    // 2. At least one player selected
+    const selections = _advReadSelections();
+    if(selections.length === 0){
+      const err = document.getElementById('form-error');
+      if(err){ err.textContent = 'Pick at least one player by setting its quantity above zero.'; err.classList.add('show'); }
+      return;
+    }
+    // 3. Capture Project Context into state.form (mirrors what Section 01 does in runSelector)
+    _advCaptureProjectContextToState();
+
+    // 4. Build state.form fields the rest of the pipeline expects.
+    const f = state.form;
+    const totalQty = selections.reduce((s,x) => s + x.qty, 0);
+    f.qty = totalQty;
+    f.environment = _advDeriveEnvironment(selections);
+    // Indoor/outdoor split for mixed: indoor = sum of non-aluminium qty, outdoor = aluminium qty
+    if(f.environment === 'mixed'){
+      f.qtyIndoor = selections.filter(s => s.model.chassis !== 'aluminium').reduce((s,x) => s + x.qty, 0);
+      f.qtyOutdoor = selections.filter(s => s.model.chassis === 'aluminium').reduce((s,x) => s + x.qty, 0);
+    } else {
+      f.qtyIndoor = '';
+      f.qtyOutdoor = '';
+    }
+    // Sensible defaults for fields the BOM/Result page reads but Advanced doesn't ask for.
+    // These won't appear as form-validation errors because we're skipping Sections 02–05.
+    f.content     = f.content     || 'video';
+    f.resolution  = f.resolution  || '4k';
+    f.update      = f.update      || 'cloud';
+    f.budget      = (typeof f.budget === 'number') ? f.budget : 2;  // Standard
+    f.outputs     = f.outputs     || '1';
+    f.hdmiIn      = f.hdmiIn      || 'no';
+    f.touch       = f.touch       || 'no';
+    f.wifi        = f.wifi        || 'no';
+    f.gpio        = f.gpio        || 'no';
+    // Accessories
+    const cmsVendorEl = document.getElementById('adv-cms-vendor');
+    const cmsTermEl   = document.getElementById('adv-cms-term');
+    const ssdCapEl    = document.getElementById('adv-ssd-cap');
+    const wd105El     = document.getElementById('adv-wd105-qty');
+    const wd215El     = document.getElementById('adv-wd215-qty');
+    const cmsVendor = cmsVendorEl ? (cmsVendorEl.value || '') : '';
+    const cmsTerm   = cmsTermEl   ? (cmsTermEl.value || '1') : '1';
+    const ssdCap    = ssdCapEl    ? (ssdCapEl.value || '') : '';
+    const wd105Qty  = wd105El     ? (parseInt(wd105El.value,10) || 0) : 0;
+    const wd215Qty  = wd215El     ? (parseInt(wd215El.value,10) || 0) : 0;
+    f.cmsVendor    = cmsVendor || '';
+    f.cmsTerm      = String(cmsTerm);
+    f.cmsInclude   = cmsVendor ? 'yes' : 'no';
+    f.ssd          = ssdCap ? 'yes' : 'no';
+    f.ssdCap       = ssdCap || '';
+    // Stash WD105 / WD215 quantities in a side bag the BOM renderer / Excel export can consume.
+    f._advAccessories = { wd105Qty, wd215Qty };
+
+    // 5. Build a synthetic state.result. Use the FIRST selection as primary so the existing
+    //    renderResult / hero card has a model to display. Stash the full picks list separately
+    //    so a future BOM enhancement can enumerate every selected model.
+    const primary = selections[0].model;
+    state.result = {
+      model: primary,
+      alt_down: null,
+      alt_up: null,
+      noRec: false,
+      budgetUpgraded: false,
+      minCompliantId: primary.id,
+      climbPath: [primary.group],
+      outdoorVariant: null,
+      // Custom BOQ flags + payload
+      isAdvanced: true,
+      advancedSelections: selections.map(s => ({ id: s.id, qty: s.qty, group: s.model.group, tag: s.model.tag, chassis: s.model.chassis })),
+      advancedAccessories: { cmsVendor, cmsTerm, ssdCap, wd105Qty, wd215Qty }
+    };
+
+    // 6. RefId — preserve when re-running for same project, else generate fresh
+    const existingRefId = window._lastRefIdForEdit;
+    if(existingRefId && existingRefId.startsWith('BS-')){
+      state.result.refId = existingRefId;
+    } else {
+      state.result.refId = 'BS-' + Date.now().toString().slice(-8);
+    }
+    window._lastRefIdForEdit = state.result.refId;
+    state.result.confirmed = false;
+
+    // 7. Log + render — same path as Guided mode
+    logEntry('viewed', function(){
+      if(typeof showAnalysisOverlay === 'function'){
+        showAnalysisOverlay(()=>{
+          if(typeof renderResult === 'function') renderResult();
+          const tabResult = document.getElementById('tab-result');
+          if(tabResult) tabResult.style.display = 'inline-flex';
+          if(typeof showTab === 'function') showTab('result');
+          window._runSelectorBusy = false;
+        });
+      } else {
+        if(typeof renderResult === 'function') renderResult();
+        const tabResult = document.getElementById('tab-result');
+        if(tabResult) tabResult.style.display = 'inline-flex';
+        if(typeof showTab === 'function') showTab('result');
+        window._runSelectorBusy = false;
+      }
+    });
+  } catch(err){
+    console.error('runAdvancedBOQ failed:', err);
+    const errEl = document.getElementById('form-error');
+    if(errEl){ errEl.textContent = 'Could not generate BOQ: ' + (err.message || err); errEl.classList.add('show'); }
+    window._runSelectorBusy = false;
+  } finally {
+    // Safety unlock
+    setTimeout(()=>{ window._runSelectorBusy = false; }, 10000);
+  }
+}
+
+// Initialize default mode on load
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', ()=>setSelectionMode('guided'), {once:true});
+} else {
+  setTimeout(()=>setSelectionMode('guided'), 0);
+}
+/* END v24.12.5 Custom BOQ block */
 
 </script>
 </body>
