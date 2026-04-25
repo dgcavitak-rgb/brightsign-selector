@@ -10931,13 +10931,13 @@ function renderResult(){
 
   // v24.12.6 Issue #1: Custom BOQ short-circuit. When the user generated a BOQ via Advanced mode,
   // skip the recommender hero/alternates/concerns and render the multi-model summary card instead.
-  // The Project Summary, Pricing callout, and BOM/Tender cards still apply.
+  // Order on Result page: BOQ summary → BOM (multi-model) → Project Summary → Pricing callout (last).
   if(r && r.isAdvanced){
     let advHtml = '';
     advHtml += buildAdvancedBOQSummaryCard(r, f);
-    advHtml += buildPricingCallout();
-    advHtml += buildBOMCard(r.model, f, computeCMS(f));
+    advHtml += buildAdvancedBOMCard(r, f);
     advHtml += buildProjectCardV21();
+    advHtml += buildPricingCallout();
     host.innerHTML = advHtml;
     requestAnimationFrame(()=>{wireHeroInteractions();burstSparkles();});
     return;
@@ -11386,6 +11386,103 @@ function _advEscapeHtmlInline(s){
 // Use existing escapeHtml if present, fall back otherwise
 if(typeof escapeHtml === 'undefined'){
   window.escapeHtml = _advEscapeHtmlInline;
+}
+
+/* ==========================================================================
+ * v24.12.6 — Advanced-mode BOM card. Enumerates EVERY selected player model
+ * with its qty + unit price + line total, plus SSD/Wi-Fi/CMS lines. Mirrors
+ * the row format of buildBOMCard so state._bomTotals stays compatible with
+ * the Excel export.
+ * ========================================================================== */
+function buildAdvancedBOMCard(r, f){
+  const rows = [];
+  const selections = Array.isArray(r.advancedSelections) ? r.advancedSelections : [];
+  const acc = r.advancedAccessories || {};
+  // XC OS variant — Advanced flow doesn't expose the OS picker yet; default to standard.
+  const xcOs = (document.getElementById('f-xc-os')||{}).value || 'std';
+
+  // 1. Player lines — one per selected model
+  selections.forEach(sel => {
+    const id = sel.id;
+    const qty = parseInt(sel.qty,10) || 0;
+    if(qty <= 0) return;
+    const model = MODELS.find(m => m.id === id);
+    const tag = model ? model.tag : (sel.tag || '');
+    const pp = getModelPrice(id, xcOs);
+    rows.push({
+      name: `BrightSign ${pp.sku}`,
+      qty: qty,
+      unitPrice: pp.unitPrice,
+      note: tag + ' · 64 GB microSD included'
+    });
+  });
+
+  // 2. SSD line — only if user picked capacity AND qty > 0
+  const ssdCap = acc.ssdCap || '';
+  const ssdQty = parseInt(acc.ssdQty,10) || 0;
+  if(ssdCap && ssdQty > 0){
+    const capLabel = ssdCap === '1024' ? '1 TB' : (ssdCap + ' GB');
+    rows.push({
+      name: `M.2 NVMe SSD — ${capLabel}`,
+      qty: ssdQty,
+      unitPrice: null,
+      note: 'Verify M.2 NVMe compatibility · cost excluded'
+    });
+  }
+
+  // 3. WD105 Wi-Fi line — only if qty > 0
+  const wd105Qty = parseInt(acc.wd105Qty,10) || 0;
+  if(wd105Qty > 0){
+    rows.push({
+      name: `${WD105_NAME} (${WD105_SKU})`,
+      qty: wd105Qty,
+      unitPrice: WD105_PRICE,
+      note: 'M.2 E-Key dual-antenna Wi-Fi + Bluetooth module'
+    });
+  }
+
+  // 4. CMS lines — re-use computeCMS() with a synthetic form that has the right
+  //    cmsVendor, cmsTerm, cmsInclude, and the total qty across all models.
+  const totalUnits = selections.reduce((acc2, s) => acc2 + (parseInt(s.qty,10)||0), 0);
+  if(acc.cmsVendor){
+    const synthForm = Object.assign({}, f, {
+      cmsVendor: acc.cmsVendor,
+      cmsTerm:   String(acc.cmsTerm || '1'),
+      cmsInclude:'yes',
+      qty:       totalUnits
+    });
+    const cms = computeCMS(synthForm);
+    if(cms && Array.isArray(cms.rows)){
+      cms.rows.forEach(row => rows.push(row));
+    }
+  }
+
+  // 5. Compute subtotals + grand total (same logic as buildBOMCard)
+  let subtotal = 0;
+  rows.forEach(row => {
+    if(row.unitPrice != null && !isNaN(row.unitPrice)){
+      row.lineTotal = row.unitPrice * row.qty;
+      subtotal += row.lineTotal;
+    }
+  });
+  const gst = Math.round(subtotal * 0.18);
+  const grandTotal = subtotal + gst;
+
+  // 6. Render — same template as buildBOMCard so styling is identical
+  let html = `<div class="glass-card"><div class="glass-card-title"><span class="glass-card-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M9 3v18"/></svg></span>Bill of Quantities<span style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-subtle);font-weight:500;letter-spacing:0.04em;text-transform:uppercase;">${rows.length} line item${rows.length===1?'':'s'}</span></div><div class="glass-card-divider"></div><table class="bom-table-v21"><thead><tr><th>Item</th><th class="num" style="width:70px;">Qty</th><th class="num" style="width:150px;white-space:nowrap;">Unit Price</th><th class="num" style="width:160px;white-space:nowrap;">Gross Total</th></tr></thead><tbody>`;
+  rows.forEach(row => {
+    const unitCell = row.unitPrice != null ? formatINR(row.unitPrice) : '<span style="color:var(--ink-subtle);">—</span>';
+    const subCell  = row.lineTotal != null ? formatINR(row.lineTotal) : '<span style="color:var(--ink-subtle);">—</span>';
+    html += `<tr><td><div class="bom-item-name-v21">${row.name}</div>${row.note?`<div class="bom-item-note-v21">${row.note}</div>`:''}</td><td class="num">${row.qty}</td><td class="num" style="white-space:nowrap;">${unitCell}</td><td class="num" style="white-space:nowrap;">${subCell}</td></tr>`;
+  });
+  html += `<tr style="background:var(--surface-2,rgba(0,0,0,0.02));"><td colspan="3" style="text-align:right;font-weight:600;">Gross Total</td><td class="num" style="font-weight:700;white-space:nowrap;">${formatINR(subtotal)}</td></tr>`;
+  html += `<tr style="background:var(--surface-2,rgba(0,0,0,0.02));"><td colspan="3" style="text-align:right;font-weight:600;">GST @ 18%</td><td class="num" style="font-weight:700;white-space:nowrap;">${formatINR(gst)}</td></tr>`;
+  html += `<tr style="background:linear-gradient(135deg,rgba(79,70,229,0.08) 0%,rgba(99,102,241,0.12) 100%);"><td colspan="3" style="text-align:right;font-weight:700;font-size:14px;color:var(--indigo);">Total with GST</td><td class="num" style="font-weight:800;font-size:15px;color:var(--indigo);white-space:nowrap;">${formatINR(grandTotal)}</td></tr>`;
+  html += `</tbody></table></div>`;
+
+  // Cache totals on state so Excel + email reuse them — identical shape to buildBOMCard
+  state._bomTotals = { subtotal, gst, grandTotal, rows };
+  return html;
 }
 
 function buildBOMCard(m,f,cms){
@@ -12707,6 +12804,147 @@ function confirmSelection(){
 }
 
 /* Download quote as single-sheet .xlsx — contains contact header, project details, all inputs, recommendation, tender spec */
+/* ==========================================================================
+ * v24.12.6 — Advanced-mode Excel export. Builds a 2-sheet workbook from
+ * state._bomTotals.rows (which buildAdvancedBOMCard populates with every
+ * picked player + SSD/Wi-Fi/CMS lines). Reuses the same Cavitak palette as
+ * the Guided exporter so deliverables look consistent.
+ * ========================================================================== */
+function _downloadAdvancedQuoteExcel(returnWorkbook){
+  const f = state.form;
+  const r = state.result;
+  const refId = r.refId || ('BS-'+Date.now().toString().slice(-8));
+  const dateStr = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  const validUntil = new Date(Date.now()+15*24*60*60*1000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  const totals = state._bomTotals || { subtotal:0, gst:0, grandTotal:0, rows:[] };
+  const rows = Array.isArray(totals.rows) ? totals.rows : [];
+  const selections = Array.isArray(r.advancedSelections) ? r.advancedSelections : [];
+  const totalUnits = selections.reduce((acc,s) => acc + (parseInt(s.qty,10)||0), 0);
+
+  const C = {
+    deepIndigo:'1E1B4B', medViolet:'312E81', indigoText:'C7D2FE',
+    labelBg:'EEF2FF', modelHighlightBg:'F5F3FF', white:'FFFFFF',
+    ink:'1E1B4B', inkSoft:'475569', violetAccent:'7C3AED', palePastel:'EDE9FE'
+  };
+  const wb = XLSX.utils.book_new();
+  function css(ws,ref,styleObj){
+    if(!ws[ref]) ws[ref] = { v:'', t:'s' };
+    ws[ref].s = Object.assign({}, ws[ref].s||{}, styleObj);
+  }
+
+  // === SHEET 1: SUMMARY ===
+  const sAoa = [];
+  sAoa.push(['BrightSign Custom BOQ — Summary']);
+  sAoa.push(['Signage that performs, effortlessly · '+(f.project||'Project')+' · '+dateStr]);
+  sAoa.push([]);
+  sAoa.push(['PROJECT CONTEXT']);
+  sAoa.push(['Project',f.project||'—']);
+  sAoa.push(['End-user',f.enduser||'—']);
+  sAoa.push(['Partner / SI',f.partner||'—']);
+  sAoa.push(['Consultant',f.consultant||'—']);
+  sAoa.push(['Location',f.city||'—']);
+  sAoa.push(['Stage',f.stage||'—']);
+  sAoa.push(['Expected Close',f.closemonth||'—']);
+  sAoa.push([]);
+  sAoa.push(['CUSTOM BOQ']);
+  sAoa.push(['Reference', refId]);
+  sAoa.push(['Total players', totalUnits]);
+  sAoa.push(['Distinct models', selections.length]);
+  selections.forEach(sel => {
+    sAoa.push(['  ' + sel.id, (parseInt(sel.qty,10)||0) + ' units']);
+  });
+  sAoa.push([]);
+  sAoa.push(['ACCESSORIES']);
+  const acc = r.advancedAccessories || {};
+  if(acc.cmsVendor) sAoa.push(['CMS', acc.cmsVendor + ' · ' + (acc.cmsTerm||'1') + 'y']);
+  if(acc.ssdCap && parseInt(acc.ssdQty,10)>0){
+    const capLabel = acc.ssdCap === '1024' ? '1 TB' : (acc.ssdCap + ' GB');
+    sAoa.push(['SSD', acc.ssdQty + ' × ' + capLabel]);
+  }
+  if(parseInt(acc.wd105Qty,10)>0) sAoa.push(['Wi-Fi (WD105)', acc.wd105Qty + ' modules']);
+  sAoa.push([]);
+  sAoa.push(['Quote valid until', validUntil]);
+  sAoa.push(['Lead time', '30 days from PO']);
+  sAoa.push(['Payment terms', '50% advance, balance on delivery']);
+
+  const ws1 = XLSX.utils.aoa_to_sheet(sAoa);
+  ws1['!cols'] = [ {wch:32}, {wch:48} ];
+  ws1['!merges'] = [
+    { s:{r:0,c:0}, e:{r:0,c:1} },
+    { s:{r:1,c:0}, e:{r:1,c:1} }
+  ];
+  // Title styling
+  css(ws1,'A1',{ font:{name:'Calibri',sz:18,bold:true,color:{rgb:C.white}}, fill:{fgColor:{rgb:C.deepIndigo}}, alignment:{horizontal:'center',vertical:'center'} });
+  css(ws1,'A2',{ font:{name:'Calibri',sz:11,italic:true,color:{rgb:C.indigoText}}, fill:{fgColor:{rgb:C.medViolet}}, alignment:{horizontal:'center'} });
+  ws1['!rows'] = [{hpt:32},{hpt:22}];
+  // Section headers (PROJECT CONTEXT, CUSTOM BOQ, ACCESSORIES) — bold + label fill
+  ['A4','A13','A20'].forEach(ref => {
+    css(ws1,ref,{ font:{name:'Calibri',sz:11,bold:true,color:{rgb:C.medViolet}}, fill:{fgColor:{rgb:C.labelBg}} });
+  });
+  XLSX.utils.book_append_sheet(wb, ws1, 'Summary');
+
+  // === SHEET 2: QUOTATION ===
+  const qAoa = [];
+  qAoa.push(['BrightSign Custom BOQ — Quotation']);
+  qAoa.push(['Reference: '+refId+' · Date: '+dateStr+' · Valid until: '+validUntil]);
+  qAoa.push([]);
+  qAoa.push(['#','Item','Qty','Unit Price (INR)','Line Total (INR)','Notes']);
+  let lineNo = 0;
+  rows.forEach(row => {
+    lineNo++;
+    qAoa.push([
+      lineNo,
+      row.name || '',
+      row.qty || 0,
+      row.unitPrice != null ? row.unitPrice : '—',
+      row.lineTotal != null ? row.lineTotal : '—',
+      row.note || ''
+    ]);
+  });
+  qAoa.push([]);
+  qAoa.push(['','','','Gross Total', totals.subtotal, '']);
+  qAoa.push(['','','','GST @ 18%',  totals.gst,      '']);
+  qAoa.push(['','','','Total with GST', totals.grandTotal, '']);
+
+  const ws2 = XLSX.utils.aoa_to_sheet(qAoa);
+  ws2['!cols'] = [ {wch:5}, {wch:42}, {wch:8}, {wch:18}, {wch:18}, {wch:42} ];
+  ws2['!merges'] = [
+    { s:{r:0,c:0}, e:{r:0,c:5} },
+    { s:{r:1,c:0}, e:{r:1,c:5} }
+  ];
+  // Title
+  css(ws2,'A1',{ font:{name:'Calibri',sz:18,bold:true,color:{rgb:C.white}}, fill:{fgColor:{rgb:C.deepIndigo}}, alignment:{horizontal:'center',vertical:'center'} });
+  css(ws2,'A2',{ font:{name:'Calibri',sz:11,italic:true,color:{rgb:C.indigoText}}, fill:{fgColor:{rgb:C.medViolet}}, alignment:{horizontal:'center'} });
+  ws2['!rows'] = [{hpt:32},{hpt:22}];
+  // Header row (row 4 = idx 3)
+  ['A4','B4','C4','D4','E4','F4'].forEach(ref => {
+    css(ws2,ref,{ font:{name:'Calibri',sz:11,bold:true,color:{rgb:C.white}}, fill:{fgColor:{rgb:C.medViolet}}, alignment:{horizontal:'center'} });
+  });
+  // Number formatting on price columns + totals
+  const dataStartRow = 5; // 1-based, row 5 is first data row
+  const dataEndRow = dataStartRow + rows.length - 1;
+  for(let rr = dataStartRow; rr <= dataEndRow; rr++){
+    css(ws2,'D'+rr,{ numFmt:'#,##0', alignment:{horizontal:'right'} });
+    css(ws2,'E'+rr,{ numFmt:'#,##0', alignment:{horizontal:'right'} });
+  }
+  // Totals rows — last 3 rows of qAoa
+  const totalsStart = dataEndRow + 2; // +1 for blank, +1 for first totals row
+  for(let rr = totalsStart; rr <= totalsStart + 2; rr++){
+    css(ws2,'D'+rr,{ font:{bold:true}, fill:{fgColor:{rgb:C.labelBg}}, alignment:{horizontal:'right'} });
+    css(ws2,'E'+rr,{ font:{bold:true}, fill:{fgColor:{rgb:C.labelBg}}, numFmt:'#,##0', alignment:{horizontal:'right'} });
+  }
+  // Grand total row gets accent
+  css(ws2,'D'+(totalsStart+2),{ font:{bold:true,color:{rgb:C.white}}, fill:{fgColor:{rgb:C.violetAccent}}, alignment:{horizontal:'right'} });
+  css(ws2,'E'+(totalsStart+2),{ font:{bold:true,color:{rgb:C.white}}, fill:{fgColor:{rgb:C.violetAccent}}, numFmt:'#,##0', alignment:{horizontal:'right'} });
+
+  XLSX.utils.book_append_sheet(wb, ws2, 'Quotation');
+
+  if(returnWorkbook === true) return wb;
+
+  const filename = 'BrightSign_CustomBOQ_'+(f.project||'Quote').replace(/[^a-zA-Z0-9]+/g,'_')+'_'+refId+'.xlsx';
+  XLSX.writeFile(wb, filename);
+}
+
 function downloadQuoteExcel(returnWorkbook){
   if(!state.result||state.result.noRec){
     if(returnWorkbook===true)return null;
@@ -12716,6 +12954,14 @@ function downloadQuoteExcel(returnWorkbook){
     if(returnWorkbook===true)return null;
     alert('Excel library not loaded. Check internet connection and reload.');return;
   }
+
+  // v24.12.6: Advanced-mode short-circuit. The original Excel template was built around a
+  // single primary model; for Custom BOQ we need every selected model on the Quotation
+  // sheet. Use the row data already cached on state._bomTotals.rows by buildAdvancedBOMCard.
+  if(state.result.isAdvanced){
+    return _downloadAdvancedQuoteExcel(returnWorkbook);
+  }
+
   const f=state.form;const r=state.result;const m=r.model;
   const refId=r.refId||'BS-'+Date.now().toString().slice(-8);
   const dateStr=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
