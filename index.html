@@ -6261,7 +6261,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.12';
+const FRONTEND_VERSION = '24.12.1';
 
 
 // ============================================================================
@@ -11709,7 +11709,7 @@ async function clearTestData(){
 /* Log entry with status — called automatically on Recommend and on Confirm.
    onDone callback fires after the save attempt completes (success or fail),
    so runSelector can chain renderResult() after the central-log roundtrip. */
-function logEntry(status,onDone){
+async function logEntry(status,onDone){
   const entry=buildEntryPayload(status);
   if(!entry){if(onDone)onDone();return;}
   // Local fallback (dedupe by refId so viewed→saved doesn't double-row)
@@ -11730,7 +11730,20 @@ function logEntry(status,onDone){
     showSync(msg);
     // v22.4: Push to pending queue BEFORE attempting. If fetch resolves, sync verifier will confirm + remove. If not, retry.
     queuePendingEntry(entry);
-    fetch(WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(entry)})
+    // v24.12.1 fix: backend's handleLogPost requires requesterLoginName + requesterPasswordHash (added by v24.7 hardening).
+    // Inject auth fields at POST time, NOT at queue time, so retries pick up the current hash even after password changes.
+    let postBody;
+    try{
+      const pwHash=await sha256Hex(window._sessionPassword||'');
+      postBody=JSON.stringify(Object.assign({}, entry, {
+        requesterLoginName: state.user.loginName,
+        requesterPasswordHash: pwHash
+      }));
+    }catch(hashErr){
+      console.warn('logEntry: hash compute failed, falling back to bare entry (will likely 401):',hashErr);
+      postBody=JSON.stringify(entry);
+    }
+    fetch(WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:postBody})
       .then(()=>{
         showSync(status==='saved'?'Saved ✓':'Saved ✓','success');
         // v22.4: Schedule a verification sweep in 4 seconds to confirm server received it
@@ -11749,7 +11762,7 @@ function logEntry(status,onDone){
 }
 
 /* v24.2.12: Compute diff between snapshot and current entry, send audit log to webhook */
-function sendAuditLogDiff(current,snapshot){
+async function sendAuditLogDiff(current,snapshot){
   if(!current||!snapshot)return;
   const fieldsToTrack=[
     'project','enduser','venue','partner','consultant','city',
@@ -11768,6 +11781,9 @@ function sendAuditLogDiff(current,snapshot){
     }
   });
   if(!changes.length)return;  // nothing changed, don't bother
+  // v24.12.1 fix: include auth fields — backend's audit_log_append requires them
+  let pwHash='';
+  try{ pwHash=await sha256Hex(window._sessionPassword||''); }catch(_){}
   // Fire and forget — audit log failing shouldn't block the save
   fetch(WEBHOOK_URL,{
     method:'POST',
@@ -11775,6 +11791,8 @@ function sendAuditLogDiff(current,snapshot){
     headers:{'Content-Type':'text/plain'},
     body:JSON.stringify({
       action:'audit_log_append',
+      requesterLoginName:state.user.loginName,
+      requesterPasswordHash:pwHash,
       refId:current.refId,
       editedBy:state.user.loginName,
       changes:changes
@@ -11862,10 +11880,19 @@ async function retryPendingSync(manualTrigger){
   }
   // Retry each still-pending entry
   let successCount=0,failCount=0;
+  // v24.12.1 fix: compute auth hash ONCE per retry cycle, inject into each POST so backend accepts.
+  // Using current session hash (not cached at queue time) so password changes don't invalidate the queue.
+  let pwHash='';
+  try{ pwHash=await sha256Hex(window._sessionPassword||''); }catch(_){}
+  const reqLogin=(state.user && state.user.loginName) || '';
   for(const item of queue){
     if(item.attempts>=MAX_ATTEMPTS){failCount++;continue;}
     try{
-      await fetch(WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(item.payload)});
+      const postPayload=Object.assign({}, item.payload, {
+        requesterLoginName: reqLogin,
+        requesterPasswordHash: pwHash
+      });
+      await fetch(WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(postPayload)});
       // Update attempt count
       item.attempts=(item.attempts||0)+1;
       item.lastAttempt=Date.now();
