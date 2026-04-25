@@ -6261,7 +6261,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.12.1';
+const FRONTEND_VERSION = '24.12.2';
 
 
 // ============================================================================
@@ -12952,9 +12952,13 @@ function editPastEntry(entryIdx){
    v24.2.8: SMART LOCK — if a basic-info field is empty (entry predates that field),
             leave it editable so user can backfill. Filled fields remain locked. */
 function applyEditLocks(locked){
+  // v24.12.2: progression fields (stage, closemonth, outcome) UNLOCKED in edit mode.
+  // A deal in Lead can move to Opportunity → Proposal → Negotiation → Order over weeks,
+  // so users need to update these as deals progress. Identity fields (project, enduser,
+  // venue, partner, consultant, city, contact info) stay locked — those define WHICH deal it is.
   const basicInfoIds=[
     'f-project','f-enduser','f-venue','f-partner','f-consultant','f-city',
-    'f-contactname','f-contactphone','f-contactemail','f-stage','f-closemonth'
+    'f-contactname','f-contactphone','f-contactemail'
   ];
   let unlockedCount=0;
   basicInfoIds.forEach(id=>{
