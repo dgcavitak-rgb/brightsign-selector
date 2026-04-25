@@ -6261,7 +6261,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.12.2';
+const FRONTEND_VERSION = '24.12.3';
 
 
 // ============================================================================
@@ -12877,14 +12877,18 @@ function editPastEntry(entryIdx){
     project:entry.project||'',
     enduser:entry.enduser||'',
     venue:entry.venue||'',
+    venueType:entry.venue||entry.venueType||'',  // v24.12.3: state stores both keys
     partner:entry.partner||'',
     consultant:entry.consultant||'',
     city:entry.city||'',
+    state:entry.state||'',                       // v24.12.3: was missing
     contactname:entry.contactname||'',
     contactphone:entry.contactphone||'',
     contactemail:entry.contactemail||'',
     stage:entry.stage||'',
     closemonth:entry.closemonth||'',
+    leadSource:entry.leadSource||'',             // v24.12.3: was missing
+    outcome:entry.outcome||'open',               // v24.12.3: was missing
     qty:parseInt(entry.qty)||1,
     qtyIndoor:parseInt(entry.qtyIndoor)||0,
     qtyOutdoor:parseInt(entry.qtyOutdoor)||0,
@@ -13049,14 +13053,29 @@ function cancelEditMode(){
 /* v22.2: Apply state.form values back onto form UI (inputs + pills + number widgets) */
 function prefillFormUI(){
   const f=state.form;
-  // Text inputs
-  const textFields=['project','enduser','venue','partner','consultant','city','contactname','contactphone','contactemail','closemonth'];
-  textFields.forEach(id=>{
-    const el=document.getElementById('f-'+id);
+  // v24.12.3: Map state-form keys to actual DOM ids. The form was renamed in v24.7
+  // (f-venue → f-venueType, f-contactname → f-partnerContactName, etc.) but prefillFormUI
+  // was never updated, so edit mode loaded blank into those fields.
+  // Format: [stateKey, domId]
+  const textFields=[
+    ['project','f-project'],
+    ['enduser','f-enduser'],
+    ['venue','f-venueType'],          // venue value populates the venueType dropdown
+    ['partner','f-partner'],
+    ['consultant','f-consultant'],
+    ['city','f-city'],
+    ['state','f-state'],              // v24.12.3: was missing entirely
+    ['contactname','f-partnerContactName'],
+    ['contactphone','f-partnerContactPhone'],
+    ['contactemail','f-partnerContactEmail'],
+    ['closemonth','f-closemonth']
+  ];
+  textFields.forEach(([key,domId])=>{
+    const el=document.getElementById(domId);
     if(!el)return;
-    el.value=f[id]||'';
+    el.value=f[key]||'';
     // v24.4.16: closemonth is now a hidden input with visible Year/Month selects — sync those
-    if(id==='closemonth' && f.closemonth){
+    if(key==='closemonth' && f.closemonth){
       try{pickCloseMonth(f.closemonth);}catch(e){console.warn('pickCloseMonth prefill failed:',e);}
     }
   });
