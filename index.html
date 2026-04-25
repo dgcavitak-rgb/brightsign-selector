@@ -12105,8 +12105,25 @@ async function handleSalesHistoryFile(inputEl){
       };
     });
 
+    // v24.12.7: Filter out SAP export footer rows. Every SAP invoice export has trailing
+    // garbage at the bottom: a "Total" row, an empty row, and an "Applied filters: …" row.
+    // A real data row has a Date in postingDate AND a non-empty docNumber.
+    const cleanRows = payloadRows.filter(function(r){
+      const isRealDate = (r.postingDate instanceof Date) && !isNaN(r.postingDate.getTime());
+      const hasDocNum = String(r.docNumber || '').trim().length > 0;
+      return isRealDate && hasDocNum;
+    });
+    const skippedFooter = payloadRows.length - cleanRows.length;
+
+    if(cleanRows.length === 0){
+      statusEl.textContent = '⚠ No data rows found. The Excel may only contain headers + footer summary.';
+      inputEl.value = '';
+      return;
+    }
+
     const mode = document.getElementById('sales-history-mode').value || 'append';
-    statusEl.textContent = '⏳ Uploading ' + payloadRows.length + ' rows (' + mode + ' mode)…';
+    const skipNote = skippedFooter > 0 ? ' (' + skippedFooter + ' footer row' + (skippedFooter===1?'':'s') + ' skipped)' : '';
+    statusEl.textContent = '⏳ Uploading ' + cleanRows.length + ' rows' + skipNote + ' in ' + mode + ' mode…';
 
     const pwHash = await sha256Hex(window._sessionPassword || '');
     const resp = await fetch(WEBHOOK_URL, {
@@ -12116,7 +12133,7 @@ async function handleSalesHistoryFile(inputEl){
         action: 'sales_history_import',
         requesterLoginName: state.user.loginName,
         requesterPasswordHash: pwHash,
-        rows: payloadRows,
+        rows: cleanRows,
         replaceMode: mode
       })
     });
@@ -12126,7 +12143,7 @@ async function handleSalesHistoryFile(inputEl){
       const famStr = Object.keys(byFam).map(function(k){
         return k + ': ₹' + (byFam[k]/100000).toFixed(1) + 'L';
       }).join(' · ') || 'no family totals';
-      statusEl.textContent = '✓ Imported ' + data.imported + ' rows (' + mode + ' mode). ' + famStr;
+      statusEl.textContent = '✓ Imported ' + data.imported + ' rows (' + mode + ' mode)' + skipNote + '. ' + famStr;
     } else {
       statusEl.textContent = '✗ Import failed: ' + (data.message || 'unknown error');
     }
