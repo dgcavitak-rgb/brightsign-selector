@@ -12107,11 +12107,16 @@ async function handleSalesHistoryFile(inputEl){
 
     // v24.12.7: Filter out SAP export footer rows. Every SAP invoice export has trailing
     // garbage at the bottom: a "Total" row, an empty row, and an "Applied filters: …" row.
-    // A real data row has a Date in postingDate AND a non-empty docNumber.
+    // A real data row needs a recognizable date (Date object OR Excel serial number) AND a
+    // non-empty docNumber. Despite cellDates:true, SheetJS sometimes returns serial numbers
+    // (e.g. 46121 = 2026-04-09) for cells with custom number formats — accept both forms.
     const cleanRows = payloadRows.filter(function(r){
-      const isRealDate = (r.postingDate instanceof Date) && !isNaN(r.postingDate.getTime());
+      const pd = r.postingDate;
+      const isRealDate = (pd instanceof Date) && !isNaN(pd.getTime());
+      // Excel serial numbers for valid dates: range ~25569 (1970-01-01) to ~80000 (2119)
+      const isExcelSerial = (typeof pd === 'number') && isFinite(pd) && pd > 25000 && pd < 80000;
       const hasDocNum = String(r.docNumber || '').trim().length > 0;
-      return isRealDate && hasDocNum;
+      return (isRealDate || isExcelSerial) && hasDocNum;
     });
     const skippedFooter = payloadRows.length - cleanRows.length;
 
