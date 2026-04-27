@@ -841,6 +841,127 @@ html[data-theme="dark"] .adv-player-table tbody td{color:#E2E8F0;border-color:rg
 html[data-theme="dark"] .adv-player-table .adv-model-id{color:#A5B4FC;}
 html[data-theme="dark"] .adv-player-table .adv-qty-input{background:rgba(15,23,42,0.7);border-color:rgba(148,163,184,0.25);color:#E2E8F0;}
 
+/* ======================================================================
+ * v24.12.10 — Mobile cleanup of Advanced mode form.
+ * Below 640px: player table converts to stacked cards (CSS-only, no JS
+ * restructure). Each row becomes a card with model+tier on top, highlights
+ * in middle, ± stepper on bottom. Accessories grid collapses to 1 column.
+ * Above 640px: existing layout unchanged.
+ * ====================================================================== */
+@media (max-width:640px){
+  /* Hide the table header on mobile — meaning is conveyed inline in each card */
+  .adv-player-table thead{display:none;}
+  /* Each row becomes a card */
+  .adv-player-table tbody{display:block;}
+  .adv-player-table tbody tr{
+    display:block;
+    margin:8px 10px;
+    padding:12px;
+    background:#fff;
+    border:1px solid var(--border-soft,#E2E8F0);
+    border-radius:10px;
+    box-shadow:0 1px 2px rgba(15,23,42,0.04);
+    transition:border-color 150ms, box-shadow 150ms;
+  }
+  .adv-player-table tbody tr.has-qty{
+    border-color:var(--indigo,#4F46E5);
+    box-shadow:0 2px 8px rgba(79,70,229,0.12);
+    background:linear-gradient(135deg,#fff 0%,rgba(238,237,254,0.4) 100%);
+  }
+  .adv-player-table tbody tr.has-qty td{background:transparent;}
+  /* Cells stack inside the card */
+  .adv-player-table tbody td{
+    display:block;
+    padding:0;
+    border:none;
+    text-align:left;
+  }
+  /* Model id row + tier badge inline */
+  .adv-player-table tbody td:first-child{
+    display:inline-flex;align-items:center;gap:8px;
+    margin-bottom:0;
+  }
+  .adv-player-table tbody td:nth-child(2){
+    display:inline-block;margin-left:8px;vertical-align:middle;
+  }
+  .adv-player-table tbody td:nth-child(2) .adv-tier{margin:0;}
+  /* Highlights row spans full width below model+tier */
+  .adv-player-table tbody td.adv-highlights,
+  .adv-player-table tbody td:nth-child(3){
+    display:block;
+    margin-top:6px;margin-bottom:10px;
+    font-size:12px;
+    color:var(--ink-muted,#64748B);
+  }
+  /* Qty stepper — full width, centered */
+  .adv-player-table tbody td.adv-qty-cell,
+  .adv-player-table tbody td:nth-child(4),
+  .adv-player-table tbody td:last-child{
+    display:flex;justify-content:center;
+    margin-top:8px;
+    padding-top:10px;
+    border-top:1px solid var(--border-soft,#E2E8F0);
+  }
+  /* Sticky footer stays sticky inside the wrap, full-width */
+  .adv-player-table tfoot{display:block;}
+  .adv-player-table tfoot tr.adv-player-total-row{
+    display:block;
+    margin:0;
+    border-radius:0;
+    border-top:1px solid var(--border-soft,#E2E8F0);
+    box-shadow:none;
+    background:var(--surface-2,#F1F5F9);
+  }
+  .adv-player-table tfoot tr.adv-player-total-row td{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:12px 16px;
+    border-top:none;
+    text-align:left;
+  }
+  /* Accessories — already stacking in narrow viewports via spec-grid, but guarantee 1-col */
+  .form-section .spec-grid.three-col,
+  .form-section .spec-grid.two-col{
+    grid-template-columns:1fr !important;
+    gap:14px !important;
+  }
+  /* Hide hover effect on touch devices (it stays "stuck" after tap) */
+  .adv-player-table tbody tr:hover td{background:transparent;}
+  .adv-player-table tbody tr.has-qty:hover td{background:transparent;}
+}
+/* Dark-mode adjustments for the mobile card style */
+@media (max-width:640px){
+  html[data-theme="dark"] .adv-player-table tbody tr{
+    background:rgba(15,23,42,0.7);
+    border-color:rgba(148,163,184,0.18);
+  }
+  html[data-theme="dark"] .adv-player-table tbody tr.has-qty{
+    background:linear-gradient(135deg,rgba(15,23,42,0.85) 0%,rgba(76,29,149,0.25) 100%);
+    border-color:#7F77DD;
+  }
+  html[data-theme="dark"] .adv-player-table tbody td.adv-qty-cell,
+  html[data-theme="dark"] .adv-player-table tbody td:nth-child(4),
+  html[data-theme="dark"] .adv-player-table tbody td:last-child{
+    border-top-color:rgba(148,163,184,0.15);
+  }
+  html[data-theme="dark"] .adv-player-table tfoot tr.adv-player-total-row{
+    border-top-color:rgba(148,163,184,0.15);
+  }
+}
+/* BOM table on mobile — wrap in horizontal scroll so wide rows don't break the page */
+@media (max-width:640px){
+  .glass-card .bom-table-v21{
+    display:block;
+    overflow-x:auto;
+    white-space:nowrap;
+    -webkit-overflow-scrolling:touch;
+  }
+  .glass-card .bom-table-v21 thead,
+  .glass-card .bom-table-v21 tbody,
+  .glass-card .bom-table-v21 tr{
+    display:table;width:100%;table-layout:fixed;
+  }
+}
+
 /* v24.4.14 #17: Accessibility */
 .skip-link{
   position:absolute;top:-100px;left:0;z-index:9999;
@@ -6680,24 +6801,6 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
       <div class="page-title" id="review-page-title">Channel review</div>
       <div class="page-subtitle" id="review-page-subtitle">OEM vs Cavitak-generated business, ecosystem reach, funnel, and growth analysis — filtered by period.</div>
     </div>
-        <!-- v24.9: Super-only Excel upload for SalesHistory -->
-    <div id="review-admin-bar" style="display:none; background:var(--surface-2,#F5F3FF); border:1px solid var(--border,#E5E7EB); border-radius:12px; padding:14px 18px; margin-bottom:18px;">
-      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-        <div style="flex:1; min-width:220px;">
-          <div style="font-weight:600; font-size:13px; color:var(--ink,#1F2937); margin-bottom:2px;">Sales History Import (Super)</div>
-          <div style="font-size:12px; color:var(--ink-subtle,#94A3B8);">Upload your SAP invoice export Excel (.xlsx). App filters to BrightSign SKUs and stores in the SalesHistory tab. Re-upload monthly to append new months.</div>
-        </div>
-        <label style="cursor:pointer; background:var(--indigo,#4F46E5); color:#fff; padding:10px 16px; border-radius:8px; font-size:13px; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
-          📎 <span>Choose Excel file</span>
-          <input type="file" id="sales-history-file" accept=".xlsx,.xls" onchange="handleSalesHistoryFile(this)" style="display:none;">
-        </label>
-        <select id="sales-history-mode" style="padding:10px 12px; border:1px solid var(--border-strong,#CBD5E1); border-radius:8px; font-size:13px;">
-          <option value="append">Append new rows</option>
-          <option value="replace">Replace all existing rows</option>
-        </select>
-      </div>
-      <div id="sales-history-status" style="margin-top:10px; font-size:12px; color:var(--ink-muted,#64748B); font-family:var(--mono,monospace);"></div>
-    </div>
 
     <!-- v24.9: Relationship counts — active partners / consultants / end-users -->
     <div id="review-relationship-counts" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:18px;">
@@ -6832,7 +6935,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.12.8';
+const FRONTEND_VERSION = '24.12.10';
 
 
 // ============================================================================
@@ -12085,136 +12188,6 @@ function computeDelta(current,previous,isPercent){
 // v24.9.0 · Sales History Excel upload + Relationship counts
 // ============================================================================
 
-/**
- * Triggered when Super picks an Excel file.
- * Parses .xlsx with SheetJS, extracts rows, filters to BrightSign SKUs (done server-side),
- * and POSTs to the backend sales_history_import endpoint.
- */
-async function handleSalesHistoryFile(inputEl){
-  const statusEl = document.getElementById('sales-history-status');
-  if(!inputEl || !inputEl.files || !inputEl.files[0]){ return; }
-  if(!state.user || !state.user.isSuper){
-    statusEl.textContent = '⚠ Super admin only — upload blocked.';
-    inputEl.value = '';
-    return;
-  }
-  const file = inputEl.files[0];
-  statusEl.textContent = '⏳ Reading ' + file.name + '…';
-
-  try{
-    const buf = await file.arrayBuffer();
-    const wb = XLSX.read(buf, {type:'array', cellDates:true});
-    const firstSheet = wb.Sheets[wb.SheetNames[0]];
-    const rawRows = XLSX.utils.sheet_to_json(firstSheet, {defval:''});
-
-    if(rawRows.length === 0){
-      statusEl.textContent = '⚠ No rows found in the Excel file.';
-      inputEl.value = '';
-      return;
-    }
-
-    // Normalize expected column names (flexible to handle slight header variations)
-    const findCol = function(row, candidates){
-      const keys = Object.keys(row);
-      for(const cand of candidates){
-        const match = keys.find(function(k){ return k.trim().toLowerCase() === cand.trim().toLowerCase(); });
-        if(match) return match;
-      }
-      return null;
-    };
-    const sample = rawRows[0];
-    const cols = {
-      postingDate: findCol(sample, ['Posting Date', 'PostingDate', 'Date']),
-      docNumber:   findCol(sample, ['Document Number', 'DocNumber', 'Invoice']),
-      itemCode:    findCol(sample, ['Item No.', 'Item Code', 'ItemCode']),
-      itemDesc:    findCol(sample, ['Item Description', 'Description', 'Product']),
-      quantity:    findCol(sample, ['Quantity', 'Qty']),
-      salesLakh:   findCol(sample, ['Sales (Lakh)', 'Sales_Lakh']),
-      rowTotal:    findCol(sample, ['Row_Total_After_Discount', 'Row Total', 'Total Amount', 'Amount']),
-      customerName:findCol(sample, ['Customer Name', 'Customer']),
-      salesEmp:    findCol(sample, ['Sales Emp. Name', 'Sales Emp', 'Salesman']),
-      bpRefNo:     findCol(sample, ['BP Ref. No.', 'BP Ref No', 'PO Number']),
-      companyRsm:  findCol(sample, ['Company RSM', 'RSM']),
-      productSub:  findCol(sample, ['Product Sub Group', 'Sub Group']),
-      insideSp:    findCol(sample, ['InsideSP', 'Inside SP']),
-      project:     findCol(sample, ['Project']),
-      custProj:    findCol(sample, ['Customer Project Name', 'Customer Project'])
-    };
-
-    const payloadRows = rawRows.map(function(r){
-      return {
-        postingDate: cols.postingDate ? r[cols.postingDate] : '',
-        docNumber:   cols.docNumber ? r[cols.docNumber] : '',
-        itemCode:    cols.itemCode ? r[cols.itemCode] : '',
-        itemDescription: cols.itemDesc ? r[cols.itemDesc] : '',
-        quantity:    cols.quantity ? r[cols.quantity] : 0,
-        salesLakh:   cols.salesLakh ? r[cols.salesLakh] : 0,
-        rowTotal:    cols.rowTotal ? r[cols.rowTotal] : 0,
-        customerName:cols.customerName ? r[cols.customerName] : '',
-        salesEmp:    cols.salesEmp ? r[cols.salesEmp] : '',
-        bpRefNo:     cols.bpRefNo ? r[cols.bpRefNo] : '',
-        companyRsm:  cols.companyRsm ? r[cols.companyRsm] : '',
-        productSubGroup: cols.productSub ? r[cols.productSub] : '',
-        insideSp:    cols.insideSp ? r[cols.insideSp] : '',
-        project:     cols.project ? r[cols.project] : '',
-        customerProjectName: cols.custProj ? r[cols.custProj] : ''
-      };
-    });
-
-    // v24.12.7: Filter out SAP export footer rows. Every SAP invoice export has trailing
-    // garbage at the bottom: a "Total" row, an empty row, and an "Applied filters: …" row.
-    // A real data row needs a recognizable date (Date object OR Excel serial number) AND a
-    // non-empty docNumber. Despite cellDates:true, SheetJS sometimes returns serial numbers
-    // (e.g. 46121 = 2026-04-09) for cells with custom number formats — accept both forms.
-    const cleanRows = payloadRows.filter(function(r){
-      const pd = r.postingDate;
-      const isRealDate = (pd instanceof Date) && !isNaN(pd.getTime());
-      // Excel serial numbers for valid dates: range ~25569 (1970-01-01) to ~80000 (2119)
-      const isExcelSerial = (typeof pd === 'number') && isFinite(pd) && pd > 25000 && pd < 80000;
-      const hasDocNum = String(r.docNumber || '').trim().length > 0;
-      return (isRealDate || isExcelSerial) && hasDocNum;
-    });
-    const skippedFooter = payloadRows.length - cleanRows.length;
-
-    if(cleanRows.length === 0){
-      statusEl.textContent = '⚠ No data rows found. The Excel may only contain headers + footer summary.';
-      inputEl.value = '';
-      return;
-    }
-
-    const mode = document.getElementById('sales-history-mode').value || 'append';
-    const skipNote = skippedFooter > 0 ? ' (' + skippedFooter + ' footer row' + (skippedFooter===1?'':'s') + ' skipped)' : '';
-    statusEl.textContent = '⏳ Uploading ' + cleanRows.length + ' rows' + skipNote + ' in ' + mode + ' mode…';
-
-    const pwHash = await sha256Hex(window._sessionPassword || '');
-    const resp = await fetch(WEBHOOK_URL, {
-      method: 'POST', mode: 'cors',
-      headers: {'Content-Type': 'text/plain'},
-      body: JSON.stringify({
-        action: 'sales_history_import',
-        requesterLoginName: state.user.loginName,
-        requesterPasswordHash: pwHash,
-        rows: cleanRows,
-        replaceMode: mode
-      })
-    });
-    const data = await resp.json();
-    if(data.status === 'ok'){
-      const byFam = data.summary && data.summary.byFamily || {};
-      const famStr = Object.keys(byFam).map(function(k){
-        return k + ': ₹' + (byFam[k]/100000).toFixed(1) + 'L';
-      }).join(' · ') || 'no family totals';
-      statusEl.textContent = '✓ Imported ' + data.imported + ' rows (' + mode + ' mode)' + skipNote + '. ' + famStr;
-    } else {
-      statusEl.textContent = '✗ Import failed: ' + (data.message || 'unknown error');
-    }
-    inputEl.value = '';
-  }catch(err){
-    console.error('[SalesHistory] upload failed:', err);
-    statusEl.textContent = '✗ Upload error: ' + err.message;
-    inputEl.value = '';
-  }
-}
 
 /**
  * Compute relationship counts from the central log.
