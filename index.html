@@ -6911,6 +6911,17 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           <div id="bs-c3a-velocity-empty" style="display:none; padding:28px 14px; text-align:center; color:var(--ink-subtle,#94A3B8); font-size:13px;">Not enough recorded transitions yet — velocity will populate as deals move through stages.</div>
         </div>
       </div>
+
+      <!-- v25.1.0 Cycle 3D — Pipeline trend (last 26 weekly snapshots) -->
+      <div id="bs-c3d-trend-wrap" style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border,#E5E7EB); display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:8px;">
+          <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Pipeline trend <span id="bs-c3d-trend-caption" style="font-weight:500; text-transform:none; letter-spacing:0; color:var(--ink-muted,#64748B);"></span></div>
+        </div>
+        <div id="bs-c3d-trend-body" style="background:var(--surface-1,#FAFAFA); border:1px solid var(--border,#E5E7EB); border-radius:8px; padding:14px;">
+          <div style="height:220px; position:relative;"><canvas id="bs-c3d-trend-chart"></canvas></div>
+          <div id="bs-c3d-trend-empty" style="display:none; padding:28px 14px; text-align:center; color:var(--ink-subtle,#94A3B8); font-size:13px;">No snapshots yet. Run setupPipelineSnapshotTrigger() once from the Apps Script editor to install the weekly cron and capture the first snapshot.</div>
+        </div>
+      </div>
     </div>
 
     <div id="review-content"><div class="review-loading">Loading review data…</div></div>
@@ -6935,7 +6946,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.12.10';
+const FRONTEND_VERSION = '24.14.0';
 
 
 // ============================================================================
@@ -10534,11 +10545,25 @@ function closeSessionWarningModal(){
   if(window._sessionCountdown){clearInterval(window._sessionCountdown);window._sessionCountdown=null;}
 }
 
-/* User clicked "Stay signed in" — restart the timer */
+/* User clicked "Stay signed in" — restart the timer.
+   v24.12.11: Hardened — explicitly stop ALL timers first (including any in-flight
+   setTimeout that might already be racing), log for diagnostics, then start fresh.
+   This guarantees a full 10 more minutes regardless of when in the 60s warning the
+   user clicked. */
 function sessionExtend(){
+  // 1. Hard-stop every session timer + countdown
+  stopSessionTimer();
+  // 2. Close the modal
   closeSessionWarningModal();
-  showSync('Session extended ✓','success');
+  // 3. Defensive: wipe any stale handles even if stopSessionTimer somehow missed
+  if(window._sessionTimer){clearTimeout(window._sessionTimer);window._sessionTimer=null;}
+  if(window._sessionWarnTimer){clearTimeout(window._sessionWarnTimer);window._sessionWarnTimer=null;}
+  if(window._sessionCountdown){clearInterval(window._sessionCountdown);window._sessionCountdown=null;}
+  // 4. Now start a fresh 10-minute window
   startSessionTimer();
+  // 5. Confirmation toast (after timer is armed, so feedback matches reality)
+  showSync('Session extended for another 10 minutes ✓','success');
+  console.log('[session] Extended at', new Date().toLocaleTimeString(), '— next warning in 9 min, logout in 10 min');
 }
 
 /* User clicked "Sign out now" */
@@ -10888,10 +10913,36 @@ function updateProgress(){
   document.getElementById(id).addEventListener('change',updateProgress);
 });
 
+/* v25.1.0 B1: Fuzzy similarity helpers for duplicate detection.
+   Normalizes string (lowercase, strip punctuation, collapse spaces) then computes
+   Jaccard token overlap. Returns 0..1 where 1.0 = identical. Threshold of 0.6
+   catches "Retail Mumbai" ≈ "Retail-Mumbai" and "ABC Infotech Pvt Ltd" ≈ "ABC Infotech".
+   Falls back gracefully on empty / very short strings. */
+function _bsNormalizeForFuzzy(s){
+  return String(s || '').toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+function _bsFuzzySimilarity(a, b){
+  const na = _bsNormalizeForFuzzy(a);
+  const nb = _bsNormalizeForFuzzy(b);
+  if(!na || !nb) return 0;
+  if(na === nb) return 1;
+  // Token overlap (Jaccard)
+  const ta = new Set(na.split(' ').filter(t => t.length > 1));
+  const tb = new Set(nb.split(' ').filter(t => t.length > 1));
+  if(ta.size === 0 || tb.size === 0) return 0;
+  let inter = 0;
+  ta.forEach(t => { if(tb.has(t)) inter++; });
+  const union = ta.size + tb.size - inter;
+  return union > 0 ? inter / union : 0;
+}
+
 /* v24: Duplicate project name warning — soft banner (user can still proceed).
-   Triggered on input event for the project field. Matches case-insensitive
-   against window._centralLog (which is the aggregated team log when loaded).
-   If window._lastRefIdForEdit is set (edit mode), skip — they're updating an existing entry. */
+   v25.1.0 B1: Upgraded to fuzzy match (token-overlap ≥ 0.6) so typos and
+   abbreviations get caught. Also surfaces customer-name matches.
+   Triggered on input event for the project field. Skips when in edit mode. */
 function checkDuplicateProject(){
   const banner=document.getElementById('dup-project-banner');
   if(!banner)return;
@@ -10901,21 +10952,34 @@ function checkDuplicateProject(){
   if(typed.length<3){banner.style.display='none';banner.innerHTML='';return;}
   const entries=(Array.isArray(window._centralLog)?window._centralLog:loadLocalLog());
   if(!entries||!entries.length){banner.style.display='none';return;}
-  const typedLower=typed.toLowerCase();
-  const matches=entries.filter(e=>((e.project||'').toLowerCase().trim()===typedLower));
-  if(!matches.length){banner.style.display='none';banner.innerHTML='';return;}
-  matches.sort((a,b)=>new Date(b.ts)-new Date(a.ts));
-  const first=matches[0];
-  const firstDate=new Date(first.ts);
-  const dateStr=isNaN(firstDate.getTime())?'':firstDate.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
-  const visible=getVisibleEntries();
-  const idx=visible.findIndex(e=>e.refId===first.refId);
-  const editLink=(idx!==-1)
+  // Find fuzzy matches above threshold; sort by similarity (best first), then recency
+  const FUZZY_THRESHOLD = 0.6;
+  const scored = entries.map(e => ({
+    e: e,
+    sim: _bsFuzzySimilarity(typed, e.project || '')
+  })).filter(x => x.sim >= FUZZY_THRESHOLD);
+  if(!scored.length){banner.style.display='none';banner.innerHTML='';return;}
+  scored.sort((a,b) => {
+    if(b.sim !== a.sim) return b.sim - a.sim;
+    return new Date(b.e.ts) - new Date(a.e.ts);
+  });
+  const first = scored[0].e;
+  const firstSim = scored[0].sim;
+  const firstDate = new Date(first.ts);
+  const dateStr = isNaN(firstDate.getTime()) ? '' : firstDate.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+  const visible = getVisibleEntries();
+  const idx = visible.findIndex(e => e.refId === first.refId);
+  const editLink = (idx !== -1)
     ? `<button class="dup-banner-link" onclick="goEditDuplicate(${idx})">Open existing entry to edit →</button>`
     : '';
-  const extra=matches.length>1?` · <em>${matches.length-1} more entr${matches.length-1===1?'y':'ies'} with this project name</em>`:'';
-  banner.innerHTML=`<div class="dup-banner-icon">⚠</div><div class="dup-banner-body"><strong>Similar project already exists:</strong> "${escapeHtml(first.project)}" by ${escapeHtml(first.user||'—')} · ${dateStr} · ${escapeHtml(first.model||'—')}${extra}<div class="dup-banner-hint">You can still proceed to create a new entry, or edit the existing one.</div></div>${editLink?`<div class="dup-banner-action">${editLink}</div>`:''}`;
-  banner.style.display='flex';
+  const extra = scored.length > 1
+    ? ` · <em>${scored.length - 1} more similar entr${scored.length - 1 === 1 ? 'y' : 'ies'}</em>`
+    : '';
+  // Show similarity score so user can judge confidence
+  const matchType = firstSim >= 0.95 ? 'Exact match' : 'Similar project';
+  const simPct = Math.round(firstSim * 100);
+  banner.innerHTML = `<div class="dup-banner-icon">⚠</div><div class="dup-banner-body"><strong>${matchType} (${simPct}%):</strong> "${escapeHtml(first.project)}" by ${escapeHtml(first.user||'—')} · ${dateStr} · ${escapeHtml(first.model||'—')}${extra}<div class="dup-banner-hint">You can still proceed to create a new entry, or edit the existing one.</div></div>${editLink ? `<div class="dup-banner-action">${editLink}</div>` : ''}`;
+  banner.style.display = 'flex';
 }
 
 /* v24: Jump to history tab and open the matching past entry for edit */
@@ -11318,9 +11382,8 @@ function renderResult(){
   // v21.7: Pricing callout card — directs partner/SI to contact Dipenkumar for quote
   html+=buildPricingCallout();
 
-  // BOM card, Tender spec card (dual-model aware), Project summary
+  // BOM card, Project summary (Tender spec removed in v24.12.12)
   html+=buildBOMCard(m,f,cms);
-  html+=buildTenderSpecCard(m,om);
   html+=buildProjectCardV21();
 
   host.innerHTML=html;
@@ -13515,136 +13578,11 @@ function downloadQuoteExcel(returnWorkbook){
   XLSX.utils.book_append_sheet(wb,qWs,'Quotation');
 
   // === SHEET 3: TENDER COMPLIANCE ===
-  const tAoa=[];
-  tAoa.push(['BrightSign — Tender Compliance Sheet']);
-  tAoa.push(['Signage that performs, effortlessly · '+(f.project||'Project')+' · '+dateStr]);
-  tAoa.push([]);
-  tAoa.push(['PROJECT CONTEXT']);
-  tAoa.push(['Project',f.project||'—']);
-  tAoa.push(['End-user',f.enduser||'—']);
-  tAoa.push(['Model Offered',m.id]);
-  tAoa.push(['Deployment type',f.environment||'—']);
-  tAoa.push(['Quantity',qtyTotal]);
-  tAoa.push(['Quote Reference',refId]);
-  tAoa.push([]);
-  tAoa.push(['CLAUSES']);
-  tAoa.push(['Clause #','Section','Specification','Comply (Y/N)','Make / Model','Remarks / Deviation']);
-  let tClauseNum=0;
-  const clauseRowIdxs=[];
-  const commonClausesT=(typeof TENDER_CLAUSES!=='undefined'&&TENDER_CLAUSES.baseline)?TENDER_CLAUSES.baseline:{};
-  if(Object.keys(commonClausesT).length){
-    tAoa.push(['','COMMON CLAUSES — APPLY TO ALL MODELS','','','','']);
-    Object.keys(commonClausesT).forEach(sec=>{
-      commonClausesT[sec].forEach(cl=>{
-        tClauseNum++;
-        tAoa.push([String(tClauseNum).padStart(3,'0'),sec,cl,'','','']);
-        clauseRowIdxs.push(tAoa.length);
-      });
-    });
-  }
-  const primaryUniqueT=(typeof TENDER_CLAUSES!=='undefined'&&TENDER_CLAUSES[m.group])?TENDER_CLAUSES[m.group]:{};
-  if(Object.keys(primaryUniqueT).length){
-    tAoa.push(['',om?`PRIMARY MODEL (INDOOR) — ${m.id}`:`PRIMARY MODEL — ${m.id}`,'','','','']);
-    Object.keys(primaryUniqueT).forEach(sec=>{
-      primaryUniqueT[sec].forEach(cl=>{
-        tClauseNum++;
-        tAoa.push([String(tClauseNum).padStart(3,'0'),sec,cl,'','','']);
-        clauseRowIdxs.push(tAoa.length);
-      });
-    });
-  }
-  if(om){
-    const outdoorUniqueT=(typeof TENDER_CLAUSES!=='undefined'&&TENDER_CLAUSES[om.group])?TENDER_CLAUSES[om.group]:{};
-    if(Object.keys(outdoorUniqueT).length){
-      tAoa.push(['',`OUTDOOR VARIANT — ${om.id}`,'','','','']);
-      Object.keys(outdoorUniqueT).forEach(sec=>{
-        outdoorUniqueT[sec].forEach(cl=>{
-          tClauseNum++;
-          tAoa.push([String(tClauseNum).padStart(3,'0'),sec,cl,'','','']);
-          clauseRowIdxs.push(tAoa.length);
-        });
-      });
-    }
-  }
-  tAoa.push([]);
-  tAoa.push(['AUTHORISED SIGNATORY']);
-  tAoa.push(['Name','_____________________','','Date','_____________','']);
-  tAoa.push(['Designation','_____________________','','Place','_____________','']);
-  tAoa.push(['Company Stamp','','','','','']);
-
-  const tWs=XLSX.utils.aoa_to_sheet(tAoa);
-  tWs['!cols']=[{wch:10},{wch:30},{wch:66},{wch:14},{wch:22},{wch:32}];
-  tWs['!merges']=tWs['!merges']||[];
-  tWs['!merges'].push({s:{r:0,c:0},e:{r:0,c:5}});
-  tWs['!merges'].push({s:{r:1,c:0},e:{r:1,c:5}});
-  css(tWs,'A1',{fill:{fgColor:{rgb:C.deepIndigo}},font:{bold:true,sz:20,color:{rgb:C.white},name:'Calibri'},alignment:{horizontal:'left',vertical:'center',indent:1}});
-  css(tWs,'A2',{fill:{fgColor:{rgb:C.deepIndigo}},font:{sz:10,color:{rgb:C.indigoText},italic:true},alignment:{horizontal:'left',vertical:'center',indent:1}});
-
-  tWs['!rows']=[{hpt:36},{hpt:20}];
-  for(let i=2;i<tAoa.length;i++){
-    const row=tAoa[i];
-    const rn=i+1;
-    const firstCell=(row[0]||'').toString();
-    const secondCell=(row[1]||'').toString();
-    if(row.length===1 && firstCell===firstCell.toUpperCase() && firstCell.length>3){
-      css(tWs,'A'+rn,{fill:{fgColor:{rgb:C.medViolet}},font:{bold:true,sz:10,color:{rgb:C.white}},alignment:{horizontal:'left',vertical:'center',indent:1}});
-      tWs['!merges'].push({s:{r:rn-1,c:0},e:{r:rn-1,c:5}});
-      tWs['!rows'].push({hpt:24});
-    } else if(firstCell==='Clause #'){
-      'ABCDEF'.split('').forEach((col,ci)=>{
-        css(tWs,col+rn,{fill:{fgColor:{rgb:C.deepIndigo}},font:{bold:true,sz:10,color:{rgb:C.white}},alignment:{horizontal:'center',vertical:'center',wrapText:true}});
-      });
-      tWs['!rows'].push({hpt:30});
-    } else if(!firstCell && (secondCell.startsWith('COMMON')||secondCell.startsWith('PRIMARY')||secondCell.startsWith('OUTDOOR'))){
-      const isOutdoor=secondCell.startsWith('OUTDOOR');
-      css(tWs,'B'+rn,{fill:{fgColor:{rgb:isOutdoor?'7C3AED':'4338CA'}},font:{bold:true,sz:10,color:{rgb:C.white}},alignment:{horizontal:'left',vertical:'center',indent:1}});
-      tWs['!merges'].push({s:{r:rn-1,c:1},e:{r:rn-1,c:5}});
-      css(tWs,'A'+rn,{fill:{fgColor:{rgb:isOutdoor?'7C3AED':'4338CA'}}});
-      tWs['!rows'].push({hpt:22});
-    } else if(/^\d{3}$/.test(firstCell)){
-      'ABCDEF'.split('').forEach((col,ci)=>{
-        const base={
-          fill:{fgColor:{rgb:(rn%2===0)?C.labelBg:C.white}},
-          font:{sz:9,color:{rgb:C.ink},name:'Calibri'},
-          alignment:{horizontal:ci===0?'center':ci===2?'left':'center',vertical:'top',wrapText:true,indent:ci===2?1:0},
-          border:{bottom:{style:'thin',color:{rgb:'E0E7FF'}}}
-        };
-        if(ci===3||ci===4||ci===5){
-          base.fill={fgColor:{rgb:'FFFBEB'}};
-          base.border={top:{style:'thin',color:{rgb:'FBBF24'}},bottom:{style:'thin',color:{rgb:'FBBF24'}},left:{style:'thin',color:{rgb:'FBBF24'}},right:{style:'thin',color:{rgb:'FBBF24'}}};
-        }
-        css(tWs,col+rn,base);
-      });
-      tWs['!rows'].push({hpt:40});
-    } else if(firstCell==='AUTHORISED SIGNATORY'){
-      css(tWs,'A'+rn,{fill:{fgColor:{rgb:C.medViolet}},font:{bold:true,sz:10,color:{rgb:C.white}},alignment:{horizontal:'left',vertical:'center',indent:1}});
-      tWs['!merges'].push({s:{r:rn-1,c:0},e:{r:rn-1,c:5}});
-      tWs['!rows'].push({hpt:24});
-    } else if(row.length>=2 && firstCell){
-      css(tWs,'A'+rn,{fill:{fgColor:{rgb:C.labelBg}},font:{sz:10,color:{rgb:C.inkSoft}},alignment:{horizontal:'left',vertical:'center',indent:1}});
-      css(tWs,'B'+rn,{fill:{fgColor:{rgb:C.white}},font:{bold:true,sz:10,color:{rgb:C.ink}},alignment:{horizontal:'left',vertical:'center',indent:1}});
-      if(rn<=11){
-        tWs['!merges'].push({s:{r:rn-1,c:1},e:{r:rn-1,c:5}});
-      }
-      tWs['!rows'].push({hpt:22});
-    } else {
-      tWs['!rows'].push({hpt:18});
-    }
-  }
-
-  const tableHeaderRow=13;
-  tWs['!autofilter']={ref:`A${tableHeaderRow}:F${tableHeaderRow+clauseRowIdxs.length}`};
-  tWs['!freeze']={xSplit:0,ySplit:tableHeaderRow};
-  tWs['!margins']={left:0.4,right:0.4,top:0.5,bottom:0.5};
-  tWs['!pageSetup']={orientation:'landscape',paperSize:9,fitToWidth:1,fitToHeight:0};
-  tWs['!printHeader']=[tableHeaderRow,tableHeaderRow];
-  XLSX.utils.book_append_sheet(wb,tWs,'Tender Compliance');
-
   const fname=`BrightSign-Quote-${m.id}-${(f.project||'Project').replace(/[^a-zA-Z0-9]/g,'_').slice(0,30)}-${new Date().toISOString().slice(0,10)}.xlsx`;
   // v22.5: If returnWorkbook is set, don't write file — return { wb, fname } so email function can reuse
   if(returnWorkbook===true){return {wb:wb,fname:fname};}
   XLSX.writeFile(wb,fname);
-  showSync('Excel downloaded ✓ (Summary · Quotation · Tender)','success');
+  showSync('Excel downloaded ✓ (Summary · Quotation)','success');
 }
 
 /* v22.5.1: Email the Excel quote via the USER's OWN mail app.
@@ -13697,7 +13635,7 @@ async function emailQuoteToPartner(){
       `(Gross Total ${formatINR(state._bomTotals.subtotal)} + GST ${formatINR(state._bomTotals.gst)})`
     ]:[]),
     '',
-    `The attached Excel has three sheets: Summary, Quotation (with BOQ line-items + indicative pricing), and Tender Compliance (for consultant/RFP response).`,
+    `The attached Excel has two sheets: Summary and Quotation (with BOQ line-items + indicative pricing).`,
     '',
     `For commercial terms, volume rates, stock position, or any clarifications, please contact:`,
     `Dipenkumar Gajjar — National Product Manager, BrightSign`,
@@ -15576,6 +15514,10 @@ window.showTab=function(which){
     if(typeof window.bsC3aRenderVelocity === 'function'){
       window.bsC3aRenderVelocity();  // async internally; does its own fetch
     }
+    // v25.1.0 Cycle 3D: render pipeline trend card (fire-and-forget; shows empty state if no snapshots yet)
+    if(typeof window.bsC3dRenderTrend === 'function'){
+      window.bsC3dRenderTrend();
+    }
     // Cache latest aggregate for the Excel export
     window._bsC2aLastAgg = agg;
   };
@@ -16034,6 +15976,118 @@ window.bsC3aRenderVelocity = async function(){
   });
 };
 /* END v24.12 Cycle 3A block */
+
+/* ============================================================================
+ * v25.1.0 Cycle 3D — Pipeline trend (weekly snapshots line chart)
+ * ============================================================================
+ * Reads from backend `pipeline_snapshots_list` action, draws a line chart of
+ * weekly open-pipeline count + value over the last 26 weeks. Renders into
+ * #bs-c3d-trend-chart canvas. Visible to all users (read-only insight).
+ * ============================================================================ */
+window.bsC3dRenderTrend = async function(){
+  const wrap = document.getElementById('bs-c3d-trend-wrap');
+  if(!wrap || !state.user) return;
+  // Show the card for any signed-in user
+  wrap.style.display = 'block';
+
+  const captionEl = document.getElementById('bs-c3d-trend-caption');
+  const emptyEl = document.getElementById('bs-c3d-trend-empty');
+  const canvas = document.getElementById('bs-c3d-trend-chart');
+  if(!canvas) return;
+
+  let snapshots = [];
+  try {
+    const pwHash = await sha256Hex(window._sessionPassword || '');
+    const resp = await fetch(WEBHOOK_URL, {
+      method:'POST', mode:'cors',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        action: 'pipeline_snapshots_list',
+        limit: 26,
+        requesterLoginName: state.user.loginName,
+        requesterPasswordHash: pwHash
+      })
+    });
+    const data = await resp.json();
+    if(data && data.status === 'ok') snapshots = Array.isArray(data.snapshots) ? data.snapshots : [];
+  } catch(e){
+    console.warn('[c3d] snapshots fetch failed:', e);
+  }
+
+  if(snapshots.length === 0){
+    canvas.style.display = 'none';
+    if(emptyEl) emptyEl.style.display = 'block';
+    if(captionEl) captionEl.textContent = '· no data';
+    return;
+  }
+  canvas.style.display = 'block';
+  if(emptyEl) emptyEl.style.display = 'none';
+  if(captionEl) captionEl.textContent = '· last ' + snapshots.length + ' week' + (snapshots.length===1?'':'s');
+
+  const labels = snapshots.map(s => {
+    const d = new Date(s.snapshotDate);
+    if(isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-IN', {day:'2-digit', month:'short'});
+  });
+  const counts = snapshots.map(s => s.totalOpenCount || 0);
+  const values = snapshots.map(s => (s.totalOpenValue || 0) / 100000);  // Lakhs
+
+  // Destroy previous chart if any
+  if(window._bsC3dTrendChart && typeof window._bsC3dTrendChart.destroy === 'function'){
+    window._bsC3dTrendChart.destroy();
+  }
+  const ctx = canvas.getContext('2d');
+  window._bsC3dTrendChart = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels:labels,
+      datasets:[
+        {
+          label:'Open deals (count)',
+          data:counts,
+          borderColor:'#4F46E5',
+          backgroundColor:'rgba(79,70,229,0.10)',
+          borderWidth:2,
+          pointRadius:3,
+          tension:0.25,
+          yAxisID:'y'
+        },
+        {
+          label:'Open value (₹ Lakh)',
+          data:values,
+          borderColor:'#10B981',
+          backgroundColor:'rgba(16,185,129,0.10)',
+          borderWidth:2,
+          pointRadius:3,
+          tension:0.25,
+          yAxisID:'y1'
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      interaction:{mode:'index', intersect:false},
+      plugins:{
+        legend:{position:'bottom', labels:{boxWidth:12, font:{size:11}}},
+        tooltip:{
+          callbacks:{
+            label:function(ctx){
+              const v = ctx.parsed.y;
+              if(ctx.dataset.yAxisID === 'y1') return ctx.dataset.label + ': ₹' + v.toFixed(1) + ' L';
+              return ctx.dataset.label + ': ' + v;
+            }
+          }
+        }
+      },
+      scales:{
+        y:{type:'linear', position:'left', beginAtZero:true, title:{display:true, text:'Count', font:{size:10}}},
+        y1:{type:'linear', position:'right', beginAtZero:true, grid:{drawOnChartArea:false}, title:{display:true, text:'₹ Lakh', font:{size:10}}}
+      }
+    }
+  });
+};
+/* END v25.1.0 Cycle 3D block */
 
 /* ============================================================================
  * v24.12.5: Custom BOQ — Advanced mode (manual player selection)
