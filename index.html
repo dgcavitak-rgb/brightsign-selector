@@ -5353,6 +5353,158 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   .dup-banner-action{align-self:stretch;}
   .dup-banner-link{width:100%;}
 }
+/* v24.14.3: GPIO soft-warning banner on Result page */
+.gpio-warn-banner{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:14px 18px;margin:24px 0 0;
+  background:linear-gradient(135deg,#FEF3C7 0%,#FDE68A 100%);
+  border:1px solid #F59E0B;
+  border-radius:12px;
+  box-shadow:0 2px 8px rgba(245,158,11,0.12);
+}
+.gpio-warn-icon{font-size:22px;line-height:1;flex-shrink:0;margin-top:2px;}
+.gpio-warn-body{flex:1;min-width:0;}
+.gpio-warn-title{
+  font-family:var(--sans);font-size:14px;font-weight:700;
+  color:#78350F;margin-bottom:4px;
+}
+.gpio-warn-text{
+  font-family:var(--sans);font-size:13px;line-height:1.5;color:#92400E;
+}
+html[data-theme="dark"] .gpio-warn-banner{
+  background:linear-gradient(135deg,rgba(120,53,15,0.45) 0%,rgba(146,64,14,0.35) 100%);
+  border-color:rgba(245,158,11,0.6);box-shadow:0 2px 8px rgba(0,0,0,0.25);
+}
+html[data-theme="dark"] .gpio-warn-title{color:#FDE68A;}
+html[data-theme="dark"] .gpio-warn-text{color:#FCD34D;}
+
+/* v24.14.4: XC4055 dual-OS choice card */
+.xc-os-card-wrap{
+  margin:24px 0 0;padding:24px;
+  background:var(--surface-1);
+  border:1px solid var(--border);
+  border-radius:14px;
+}
+.xc-os-card-title{
+  font-family:var(--sans);font-size:15px;font-weight:700;
+  color:var(--ink);margin-bottom:6px;
+}
+.xc-os-card-sub{
+  font-family:var(--sans);font-size:12px;color:var(--ink-muted);
+  margin-bottom:18px;line-height:1.5;
+}
+.xc-os-cards-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:14px;
+}
+.xc-os-choice{
+  position:relative;
+  background:#fff;
+  border:2px solid var(--border-soft,#E2E8F0);
+  border-radius:12px;
+  padding:20px;
+  cursor:pointer;
+  transition:transform 180ms,border-color 180ms,box-shadow 180ms;
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.xc-os-choice:hover{
+  transform:translateY(-2px);
+  border-color:#94A3B8;
+  box-shadow:0 6px 16px rgba(15,23,42,0.08);
+}
+.xc-os-choice:focus-visible{
+  outline:none;box-shadow:0 0 0 3px rgba(79,70,229,0.25);
+}
+/* BrightSignOS card — green/teal accent */
+.xc-os-choice:nth-child(1).selected{
+  border-color:#10B981;background:linear-gradient(135deg,#ECFDF5 0%,#fff 100%);
+  box-shadow:0 6px 20px rgba(16,185,129,0.18);
+}
+.xc-os-choice:nth-child(1).selected .xc-os-choice-check{background:#10B981;opacity:1;transform:scale(1);}
+/* Windows IoT card — Microsoft blue accent */
+.xc-os-choice:nth-child(2).selected{
+  border-color:#0078D4;background:linear-gradient(135deg,#EFF6FF 0%,#fff 100%);
+  box-shadow:0 6px 20px rgba(0,120,212,0.18);
+}
+.xc-os-choice:nth-child(2).selected .xc-os-choice-check{background:#0078D4;opacity:1;transform:scale(1);}
+
+.xc-os-choice-check{
+  position:absolute;top:10px;right:10px;
+  width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transform:scale(0.5);
+  transition:opacity 180ms ease,transform 180ms ease;
+}
+.xc-os-choice-check svg{width:13px;height:13px;}
+.xc-os-choice-logo{
+  height:44px;display:flex;align-items:center;justify-content:center;
+  margin-bottom:10px;
+}
+.xc-os-choice-logo img{max-height:32px;max-width:140px;object-fit:contain;}
+.xc-os-logo-fallback{
+  font-family:var(--sans);font-size:18px;font-weight:700;letter-spacing:-0.01em;
+}
+.xc-os-logo-fallback.xc-os-logo-bs{color:#10B981;}
+.xc-os-logo-fallback.xc-os-logo-win{color:#0078D4;}
+.xc-os-choice-name{
+  font-family:var(--sans);font-size:16px;font-weight:700;
+  color:var(--ink);margin-bottom:4px;
+}
+.xc-os-choice-tag{
+  font-family:var(--sans);font-size:11px;font-weight:600;
+  color:var(--ink-subtle);text-transform:uppercase;letter-spacing:0.06em;
+  margin-bottom:14px;
+}
+.xc-os-choice-pros{
+  display:flex;flex-direction:column;gap:6px;
+  width:100%;margin-bottom:14px;
+}
+.xc-os-bullet{
+  font-family:var(--sans);font-size:12px;color:var(--ink-muted);
+  text-align:left;line-height:1.4;
+}
+.xc-os-choice-cost{
+  font-family:var(--mono,'JetBrains Mono',monospace);
+  font-size:13px;font-weight:700;
+  padding:8px 14px;border-radius:8px;
+  margin-top:auto;
+}
+.xc-os-cost-included{
+  background:rgba(16,185,129,0.10);color:#047857;
+}
+.xc-os-cost-extra{
+  background:rgba(0,120,212,0.10);color:#0050A0;
+}
+
+@media (max-width:640px){
+  .xc-os-cards-grid{grid-template-columns:1fr;}
+  .xc-os-card-wrap{padding:18px;}
+}
+
+/* Dark mode */
+html[data-theme="dark"] .xc-os-card-wrap{
+  background:rgba(15,23,42,0.55);border-color:rgba(148,163,184,0.18);
+}
+html[data-theme="dark"] .xc-os-choice{
+  background:rgba(15,23,42,0.7);border-color:rgba(148,163,184,0.20);
+}
+html[data-theme="dark"] .xc-os-choice:hover{border-color:rgba(148,163,184,0.45);}
+html[data-theme="dark"] .xc-os-choice:nth-child(1).selected{
+  background:linear-gradient(135deg,rgba(6,78,59,0.50) 0%,rgba(15,23,42,0.7) 100%);
+  border-color:#10B981;
+}
+html[data-theme="dark"] .xc-os-choice:nth-child(2).selected{
+  background:linear-gradient(135deg,rgba(30,58,138,0.50) 0%,rgba(15,23,42,0.7) 100%);
+  border-color:#3B82F6;
+}
+html[data-theme="dark"] .xc-os-choice-name{color:#E0E7FF;}
+html[data-theme="dark"] .xc-os-bullet{color:#94A3B8;}
+html[data-theme="dark"] .xc-os-cost-included{
+  background:rgba(16,185,129,0.20);color:#6EE7B7;
+}
+html[data-theme="dark"] .xc-os-cost-extra{
+  background:rgba(59,130,246,0.20);color:#93C5FD;
+}
 /* v22.4: Pending sync badge on History tab */
 .pending-badge{
   display:inline-flex;
@@ -5943,10 +6095,10 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
       </div>
     </div>
     <div class="login-title">Sign in</div>
-    <div class="login-desc">Enter your first name and password to access the selector.</div>
+    <div class="login-desc">Enter your username and password to access the selector.</div>
     <div class="form-group">
-      <label for="login-name">First name<span class="req">*</span></label>
-      <input type="text" id="login-name" placeholder="e.g. Mohit" autocomplete="off">
+      <label for="login-name">Username<span class="req">*</span></label>
+      <input type="text" id="login-name" placeholder="e.g. mohit (lowercase)" autocomplete="off">
     </div>
     <div class="form-group">
       <label for="login-password">Password<span class="req">*</span></label>
@@ -6124,9 +6276,9 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           <!-- v24.7.0: City (existing list) + State (new) — City, State composite UX with auto-fill -->
           <div class="form-group" style="margin:0;"><label>City, State<span class="req">*</span></label><select id="f-city" onchange="autoFillStateFromCity()"><option value="">Select city…</option><option>Ahmedabad</option><option>Bangalore</option><option>Chennai</option><option>Delhi / NCR</option><option>Hyderabad</option><option>Kolkata</option><option>Mumbai</option><option>Pune</option><option>Jaipur</option><option>Kochi</option><option>Chandigarh</option><option>Lucknow</option><option>Indore</option><option>Bhubaneswar</option><option>Nagpur</option><option>Surat</option><option>Vadodara</option><option>Goa</option><option>Other</option></select></div>
           <div class="form-group" style="margin:0;"><label>State<span class="req">*</span></label><select id="f-state"><option value="">Select state…</option><option>Andhra Pradesh</option><option>Arunachal Pradesh</option><option>Assam</option><option>Bihar</option><option>Chhattisgarh</option><option>Goa</option><option>Gujarat</option><option>Haryana</option><option>Himachal Pradesh</option><option>Jharkhand</option><option>Karnataka</option><option>Kerala</option><option>Madhya Pradesh</option><option>Maharashtra</option><option>Manipur</option><option>Meghalaya</option><option>Mizoram</option><option>Nagaland</option><option>Odisha</option><option>Punjab</option><option>Rajasthan</option><option>Sikkim</option><option>Tamil Nadu</option><option>Telangana</option><option>Tripura</option><option>Uttar Pradesh</option><option>Uttarakhand</option><option>West Bengal</option><option>Delhi</option><option>Chandigarh</option><option>Jammu &amp; Kashmir</option><option>Ladakh</option><option>Puducherry</option><option>Andaman &amp; Nicobar</option><option>Dadra &amp; Nagar Haveli and Daman &amp; Diu</option><option>Lakshadweep</option></select></div>
-          <div class="form-group" style="margin:0;"><label>Deal Stage<span class="req">*</span></label><select id="f-stage"><option value="">Select stage…</option><option>Lead</option><option>Opportunity</option><option>Proposal</option><option>Negotiation</option><option>Order</option></select></div>
-          <div class="form-group" style="margin:0;"><label>Lead Source<span class="req">*</span></label><select id="f-leadsource"><option value="">Select source…</option><option value="OEM">OEM (BrightSign referral)</option><option value="Cavitak">Cavitak (self-sourced)</option></select></div>
-          <div class="form-group" style="margin:0;"><label>Outcome<span class="req">*</span></label><select id="f-outcome"><option value="open">Open (active)</option><option value="won">Won</option><option value="lost">Lost</option><option value="on-hold">On hold</option></select></div>
+          <div class="form-group" style="margin:0;"><label>Deal Stage<span class="req">*</span></label><select id="f-stage"><option value="">Select stage…</option><option>Lead</option><option>Opportunity</option><option>Proposal</option><option>Negotiation</option><option>Order</option></select><div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Where this deal stands in your funnel right now.</div></div>
+          <div class="form-group" style="margin:0;"><label>Lead Source<span class="req">*</span></label><select id="f-leadsource"><option value="">Select source…</option><option value="OEM">OEM (BrightSign referral)</option><option value="Cavitak">Cavitak (self-sourced)</option></select><div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">OEM = passed to us by BrightSign. Cavitak = generated by your team.</div></div>
+          <div class="form-group" style="margin:0;"><label>Outcome<span class="req">*</span></label><select id="f-outcome"><option value="open">Open (active)</option><option value="won">Won</option><option value="lost">Lost</option><option value="on-hold">On hold</option></select><div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Open = active deal. Won/Lost/On hold = final status.</div></div>
           <!-- v24.9.1: Per-deal Plan of Action textarea REMOVED — PoA now lives per-period on the Review tab -->
           <div class="form-group" style="margin:0;">
             <label>Expected Closure<span class="req">*</span></label>
@@ -6187,9 +6339,8 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           <div class="mode-hero-blob mode-hero-blob-tr"></div>
           <div class="mode-hero-blob mode-hero-blob-bl"></div>
           <div class="mode-hero-inner">
-            <div class="mode-hero-eyebrow">Step 02 of 03</div>
             <div class="mode-hero-headline">Choose your path</div>
-            <div class="mode-hero-sub" id="mode-toggle-hint">How would you like to specify the players for this project?</div>
+            <div class="mode-hero-sub" id="mode-toggle-hint">Guided = answer questions, we recommend a player. Advanced = pick exact models yourself.</div>
             <div class="mode-toggle" role="tablist" aria-label="Selection mode">
               <button type="button" id="mode-toggle-guided" class="mode-card-btn" role="tab" aria-selected="false" onclick="setSelectionMode('guided')">
                 <span class="mode-card-check" aria-hidden="true">
@@ -6222,7 +6373,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
       <div class="form-section">
         <div class="section-head"><div class="section-num">02</div><div><div class="section-title">Deployment & budget</div></div></div>
         <div class="spec-grid three-col" style="margin-bottom:24px;">
-          <div class="field"><label class="field-label">Number of players<span class="req">*</span></label><div class="number-input"><button onclick="adjustQty(-1)">−</button><input type="number" id="f-qty" value="1" min="1" max="10000"><button onclick="adjustQty(1)">+</button></div><div id="mixed-qty-wrap" style="display:none;margin-top:10px;padding:12px 14px;background:var(--surface-2);border-radius:10px;border:1px dashed var(--border-strong);"><div style="font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:8px;">Split for mixed deployment</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px;">Indoor qty</div><input type="number" id="f-qty-indoor" value="0" min="0" max="10000" style="width:100%;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;"></div><div><div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px;">Outdoor qty</div><input type="number" id="f-qty-outdoor" value="0" min="0" max="10000" style="width:100%;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;"></div></div><div style="font-size:11px;color:var(--ink-subtle);margin-top:6px;">Total above auto-updates to Indoor + Outdoor</div></div></div>
+          <div class="field"><label class="field-label">Number of BrightSign players<span class="req">*</span></label><div class="number-input"><button onclick="adjustQty(-1)">−</button><input type="number" id="f-qty" value="1" min="1" max="10000"><button onclick="adjustQty(1)">+</button></div><div id="mixed-qty-wrap" style="display:none;margin-top:10px;padding:12px 14px;background:var(--surface-2);border-radius:10px;border:1px dashed var(--border-strong);"><div style="font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:8px;">Split for mixed deployment</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px;">Indoor qty</div><input type="number" id="f-qty-indoor" value="0" min="0" max="10000" style="width:100%;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;"></div><div><div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px;">Outdoor qty</div><input type="number" id="f-qty-outdoor" value="0" min="0" max="10000" style="width:100%;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;"></div></div><div style="font-size:11px;color:var(--ink-subtle);margin-top:6px;">Total above auto-updates to Indoor + Outdoor</div></div></div>
           <div class="field"><label class="field-label">Deployment type<span class="req">*</span></label>
             <div class="choice-grid" data-input="environment">
               <button class="choice-card" data-v="indoor"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="choice-card-name">Indoor</span><span class="choice-card-sub">Standard signage</span></button>
@@ -6294,6 +6445,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         <!-- Optional toggle — only shown for Local + ≤25 players -->
         <div class="field" id="cms-optional-wrap" style="margin-bottom:14px;display:none;">
           <label class="field-label">Include CMS for this project?<span class="req">*</span></label>
+          <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;line-height:1.5;">A CMS lets you remotely push content updates, schedule playlists, and monitor displays. <strong>If unsure, pick No</strong> — you can always add CMS later.</div>
           <div class="pill-group" data-input="cms-include" id="cms-include-group">
             <button class="pill" data-v="no" type="button">No · Standalone playback</button>
             <button class="pill" data-v="yes" type="button">Yes · Add CMS</button>
@@ -6321,6 +6473,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
                 <button class="pill" data-v="4" type="button">4 yr</button>
                 <button class="pill" data-v="5" type="button">5 yr</button>
               </div>
+              <div style="font-size:11px;color:var(--ink-subtle);margin-top:6px;">How long the CMS license is paid up-front for.</div>
             </div>
           </div>
           <div id="cms-billing-hint" style="margin-top:14px;padding:12px 14px;background:var(--surface-2);border-radius:10px;border-left:3px solid var(--violet);font-family:var(--sans);font-size:12px;color:var(--ink-muted);line-height:1.5;">
@@ -6919,7 +7072,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         </div>
         <div id="bs-c3d-trend-body" style="background:var(--surface-1,#FAFAFA); border:1px solid var(--border,#E5E7EB); border-radius:8px; padding:14px;">
           <div style="height:220px; position:relative;"><canvas id="bs-c3d-trend-chart"></canvas></div>
-          <div id="bs-c3d-trend-empty" style="display:none; padding:28px 14px; text-align:center; color:var(--ink-subtle,#94A3B8); font-size:13px;">No snapshots yet. Run setupPipelineSnapshotTrigger() once from the Apps Script editor to install the weekly cron and capture the first snapshot.</div>
+          <div id="bs-c3d-trend-empty" style="display:none; padding:28px 14px; text-align:center; color:var(--ink-subtle,#94A3B8); font-size:13px;">Pipeline trend will appear here as weekly snapshots accumulate.</div>
         </div>
       </div>
     </div>
@@ -6946,7 +7099,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.14.0';
+const FRONTEND_VERSION = '24.14.4';
 
 
 // ============================================================================
@@ -9964,6 +10117,36 @@ async function loadErrorLogList(){
   }
 }
 
+/* v24.14.1: Wipe all entries from the Errors sheet (super-only). Confirms first. */
+async function clearErrorLog(){
+  if(!state.user || !state.user.isSuper){
+    showSync('Super admin only','warn');
+    return;
+  }
+  if(!confirm('Wipe ALL error log entries? This cannot be undone.\n\nUseful when stale errors from older versions are noisy and you want a clean slate to monitor v' + FRONTEND_VERSION + ' going forward.')) return;
+  try{
+    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const resp=await fetch(WEBHOOK_URL,{
+      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'error_log_clear',
+        requesterLoginName:state.user.loginName,
+        requesterPasswordHash:pwHash
+      })
+    });
+    const data=await resp.json();
+    if(data.status==='ok'){
+      showSync('Error log cleared ✓ (' + (data.cleared||0) + ' entries wiped)','success');
+      loadErrorLogList();  // refresh
+    } else {
+      showSync('Could not clear: ' + (data.message||'unknown error'),'warn');
+    }
+  }catch(e){
+    console.warn('clearErrorLog failed:',e);
+    showSync('Network error clearing log','warn');
+  }
+}
+
 function renderErrorLogList(host,entries,last24hCount){
   // Update badge
   const badgeWrap=document.getElementById('errors-badge-wrap');
@@ -9995,7 +10178,10 @@ function renderErrorLogList(host,entries,last24hCount){
   host.innerHTML=`<div class="errors-section">
     <div class="errors-head">
       <div style="display:flex;align-items:center;gap:10px;"><div class="errors-title">⚠️ Error log · ${entries.length} in 7 days</div>${badge}</div>
-      <button class="btn-secondary" onclick="loadErrorLogList()" style="font-size:11px;padding:4px 10px;">↻ Refresh</button>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button class="btn-secondary" onclick="loadErrorLogList()" style="font-size:11px;padding:4px 10px;">↻ Refresh</button>
+        <button class="btn-secondary" onclick="clearErrorLog()" style="font-size:11px;padding:4px 10px;color:#B91C1C;border-color:rgba(185,28,28,0.3);" title="Wipe all error log entries">🗑 Clear log</button>
+      </div>
     </div>
     ${entries.map((e,idx)=>`<div class="error-row" id="err-row-${idx}">
       <div>
@@ -11104,38 +11290,39 @@ function runSelector(){
   if(recBtn){recBtn.disabled=true;recBtn.dataset.origText=recBtn.textContent;recBtn.textContent='Processing…';recBtn.style.opacity='0.6';recBtn.style.cursor='not-allowed';}
   // Safety net — always release the lock after 10 seconds even if callback never fires
   window._runSelectorSafetyTimer=setTimeout(()=>{releaseRunSelectorLock();},10000);
-  state.form.project=document.getElementById('f-project').value.trim();
-  state.form.enduser=document.getElementById('f-enduser').value.trim();
+  // v24.14.1: null-safe read helper. If element doesn't exist (renamed/removed in a
+  // future schema), returns '' instead of crashing. Trim is opt-in.
+  const _v=(id,trim)=>{ const el=document.getElementById(id); if(!el)return ''; const v=el.value||''; return trim?v.trim():v; };
+  state.form.project=_v('f-project',true);
+  state.form.enduser=_v('f-enduser',true);
   // v24.12 F1 fix: f-venue element doesn't exist (replaced by f-venueType dropdown in v24.7).
   // Null-safe read + mirror venueType so downstream consumers (Excel col I, central log, email template) still populate.
-  const _legacyVenueEl=document.getElementById('f-venue');
-  const _venueTypeEl=document.getElementById('f-venueType');
-  state.form.venue=(_legacyVenueEl ? (_legacyVenueEl.value||'').trim() : '') || (_venueTypeEl ? _venueTypeEl.value||'' : '');
-  state.form.partner=document.getElementById('f-partner').value.trim();
-  state.form.consultant=document.getElementById('f-consultant').value.trim();
-  state.form.city=document.getElementById('f-city').value;
-  state.form.partnerContactName=document.getElementById('f-partnerContactName').value.trim();
-  state.form.partnerContactPhone=document.getElementById('f-partnerContactPhone').value.trim();
-  state.form.partnerContactEmail=document.getElementById('f-partnerContactEmail').value.trim();
+  state.form.venue=_v('f-venue',true) || _v('f-venueType',false);
+  state.form.partner=_v('f-partner',true);
+  state.form.consultant=_v('f-consultant',true);
+  state.form.city=_v('f-city',false);
+  state.form.partnerContactName=_v('f-partnerContactName',true);
+  state.form.partnerContactPhone=_v('f-partnerContactPhone',true);
+  state.form.partnerContactEmail=_v('f-partnerContactEmail',true);
   // v24.7.0: Legacy contact* fields kept populated for backward-compat
   state.form.contactname=state.form.partnerContactName;
   state.form.contactphone=state.form.partnerContactPhone;
   state.form.contactemail=state.form.partnerContactEmail;
   // New: venueType, state (from their dropdowns)
-  state.form.venueType=(document.getElementById('f-venueType')||{}).value||'';
-  state.form.state=(document.getElementById('f-state')||{}).value||'';
-  state.form.stage=document.getElementById('f-stage').value;
-  state.form.closemonth=document.getElementById('f-closemonth').value;
+  state.form.venueType=_v('f-venueType',false);
+  state.form.state=_v('f-state',false);
+  state.form.stage=_v('f-stage',false);
+  state.form.closemonth=_v('f-closemonth',false);
   // v24.4.0: channel review fields (v24.4.6: dealValue removed)
-  state.form.leadSource=document.getElementById('f-leadsource').value;
-  state.form.outcome=document.getElementById('f-outcome').value||'open';
+  state.form.leadSource=_v('f-leadsource',false);
+  state.form.outcome=_v('f-outcome',false)||'open';
   // v24.9.1: planOfAction DOM capture removed (element removed from form); state.form.planOfAction stays '' default
-  state.form.ssdCap=document.getElementById('f-ssd-cap').value;
+  state.form.ssdCap=_v('f-ssd-cap',false);
   // v15: capture indoor/outdoor split for mixed deployment
-  state.form.qtyIndoor=parseInt(document.getElementById('f-qty-indoor').value)||0;
-  state.form.qtyOutdoor=parseInt(document.getElementById('f-qty-outdoor').value)||0;
+  state.form.qtyIndoor=parseInt(_v('f-qty-indoor',false))||0;
+  state.form.qtyOutdoor=parseInt(_v('f-qty-outdoor',false))||0;
   // v20: capture CMS vendor (dropdown; pills auto-captured via handler)
-  state.form.cmsVendor=document.getElementById('f-cms-vendor').value;
+  state.form.cmsVendor=_v('f-cms-vendor',false);
   const f=state.form;const err=document.getElementById('form-error');
   clearFieldErrors();
 
@@ -11244,8 +11431,8 @@ function pickModel(f){
   if(parseInt(f.budget)===5){
     const xc4055=MODELS.find(m=>m.id==='XC4055' && m.available);
     if(xc4055 && xc4055.res.includes(f.resolution)){
-      // GPIO/touch/HDMI-in requirements still honoured
-      if(f.gpio==='yes' && !xc4055.gpio)return pickModelStandard(f);
+      // GPIO is now soft (warning banner) — only touch and HDMI-in remain hard requirements.
+      // XC4055 has GPIO so this branch is mostly defensive, but kept consistent.
       if(f.touch==='yes' && !xc4055.touch)return pickModelStandard(f);
       if(f.hdmiIn==='yes' && !xc4055.hdmiIn)return pickModelStandard(f);  // XC has no HDMI-in
       // Mixed/outdoor: XC is metal, not aluminium — outdoor still needs aluminium enclosure
@@ -11311,9 +11498,13 @@ function scoreModel(m,f,envOverride){
   if(m.outputs<parseInt(f.outputs))return -1000;
   if(f.hdmiIn==='yes' && !m.hdmiIn)return -1000;
   if(f.touch==='yes' && !m.touch)return -1000;
-  if(f.gpio==='yes' && !m.gpio)return -1000;
   if(env==='outdoor' && m.chassis!=='aluminium')return -1000;
-  return 100-m.rank;
+  // v24.14.3: GPIO is now a SOFT preference, not a hard requirement. Score penalty
+  // means non-GPIO models can still be recommended if they're otherwise best-fit.
+  // Result page shows a warning banner when this happens.
+  let score = 100 - m.rank;
+  if(f.gpio==='yes' && !m.gpio) score -= 50;
+  return score;
 }
 
 function renderResult(){
@@ -11377,6 +11568,26 @@ function renderResult(){
   if(concerns.length){
     html+=`<div class="glass-card"><div class="glass-card-title"><span class="glass-card-title-icon" style="background:linear-gradient(135deg,#F59E0B 0%,#D97706 100%);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>Deployment Notes</div><div class="glass-card-divider"></div>`;
     html+=`<ul class="concerns-list">${concerns.map(c=>`<li>${c}</li>`).join('')}</ul></div>`;
+  }
+
+  // v24.14.3: GPIO soft-warning banner — appears only when user picked GPIO=Yes
+  // but the recommended model lacks GPIO. Visual: amber banner above pricing callout.
+  if(f.gpio==='yes' && m && !m.gpio){
+    html += `<div class="gpio-warn-banner" role="alert">
+      <div class="gpio-warn-icon">⚠️</div>
+      <div class="gpio-warn-body">
+        <div class="gpio-warn-title">GPIO not available on ${m.id}</div>
+        <div class="gpio-warn-text">You selected GPIO Yes (12-pin Phoenix port for sensors/buttons/relays), but this recommended model doesn't have a GPIO port. If GPIO is essential, consider stepping up to an XT or XC series model that includes GPIO.</div>
+      </div>
+    </div>`;
+  }
+
+  // v24.14.4: XC4055 dual-OS choice card. Renders ONLY when XC4055 is the
+  // recommendation. Shows BrightSignOS vs Windows IoT side-by-side with cost
+  // difference visible. Whichever option is currently selected (from the form pills)
+  // gets highlighted; user can switch right here on Result page if they want.
+  if(m && m.id === 'XC4055'){
+    html += buildXcOsChoiceCard(f);
   }
 
   // v21.7: Pricing callout card — directs partner/SI to contact Dipenkumar for quote
@@ -11605,6 +11816,82 @@ function buildConcerns(m,f){
 /* v21.7: For Pricing & Quotation callout — indigo gradient glass card
    Directs partners/SI/end-users to contact Dipenkumar for firm quote.
    Blends with the BrightSign app's primary indigo/violet theme. */
+/* v24.14.4: XC4055 dual-OS choice card. Renders side-by-side cards:
+   - BrightSignOS (green/teal accent, included at no extra cost)
+   - Windows IoT (Microsoft blue accent, +₹27,083 per player)
+   Currently-selected OS (from f.os, default 'brightsign') is highlighted with
+   a checkmark. Clicking the other card calls advChangeXcOS() to swap selection
+   live and re-render the BOM. Brand logos are loaded from official URLs with
+   onerror fallback to plain text in case the URL changes.
+*/
+function buildXcOsChoiceCard(f){
+  const currentOs = (f.os || 'brightsign').toLowerCase();
+  const isBs = currentOs !== 'win';
+  const isWin = currentOs === 'win';
+  // Official brand asset URLs — Wikipedia hosts SVG logos that are stable + free-use
+  const bsLogoUrl = 'https://www.brightsign.biz/wp-content/uploads/2024/05/brightsign-logo-black.svg';
+  const winLogoUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Windows_logo_-_2021.svg/1024px-Windows_logo_-_2021.svg.png';
+
+  return `
+    <div class="xc-os-card-wrap">
+      <div class="xc-os-card-title">XC4055 supports two operating systems</div>
+      <div class="xc-os-card-sub">Pick the right OS for your project. You can switch here — your selection updates the BOM and Excel quote.</div>
+      <div class="xc-os-cards-grid">
+        <div class="xc-os-choice ${isBs?'selected':''}" onclick="advChangeXcOS('brightsign')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();advChangeXcOS('brightsign');}">
+          <div class="xc-os-choice-check" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="xc-os-choice-logo">
+            <img src="${bsLogoUrl}" alt="BrightSign" onerror="this.style.display='none';this.parentNode.innerHTML='<div class=&quot;xc-os-logo-fallback xc-os-logo-bs&quot;>BrightSign</div>';">
+          </div>
+          <div class="xc-os-choice-name">BrightSignOS</div>
+          <div class="xc-os-choice-tag">Native · Recommended</div>
+          <div class="xc-os-choice-pros">
+            <div class="xc-os-bullet">✓ Built for digital signage</div>
+            <div class="xc-os-bullet">✓ Free OS — no licensing</div>
+            <div class="xc-os-bullet">✓ Optimized for BSN.cloud + CMS partners</div>
+          </div>
+          <div class="xc-os-choice-cost xc-os-cost-included">No extra cost</div>
+        </div>
+        <div class="xc-os-choice ${isWin?'selected':''}" onclick="advChangeXcOS('win')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();advChangeXcOS('win');}">
+          <div class="xc-os-choice-check" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="xc-os-choice-logo">
+            <img src="${winLogoUrl}" alt="Windows" onerror="this.style.display='none';this.parentNode.innerHTML='<div class=&quot;xc-os-logo-fallback xc-os-logo-win&quot;>Windows</div>';">
+          </div>
+          <div class="xc-os-choice-name">Windows IoT</div>
+          <div class="xc-os-choice-tag">Win10 / Win11 IoT Enterprise</div>
+          <div class="xc-os-choice-pros">
+            <div class="xc-os-bullet">✓ Run any Windows desktop app</div>
+            <div class="xc-os-bullet">✓ Active Directory + GPO support</div>
+            <div class="xc-os-bullet">✓ For specialized signage workflows</div>
+          </div>
+          <div class="xc-os-choice-cost xc-os-cost-extra">+ ₹27,083 per player</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* v24.14.4: Switch XC OS choice from the Result page. Updates state, re-renders
+   the result so BOM and pricing reflect the new choice. Stage form pill in sync. */
+function advChangeXcOS(newOs){
+  if(!state.form) return;
+  state.form.os = newOs;
+  // Sync the Section 04 pill if visible
+  const pillGroup = document.querySelector('.pill-group[data-input="os"]');
+  if(pillGroup){
+    pillGroup.querySelectorAll('.pill').forEach(p => {
+      p.classList.toggle('selected', p.dataset.v === newOs);
+    });
+  }
+  // Re-render the result to update BOM line items + pricing
+  if(typeof renderResult === 'function' && state.result){
+    renderResult();
+  }
+  if(typeof showSync === 'function') showSync('OS choice updated ✓','success');
+}
+
 function buildPricingCallout(){
   return `<div class="glass-card pricing-callout-card">
     <div class="glass-card-title">
@@ -13842,7 +14129,7 @@ function renderLog(){
 
   if(!allVisible.length){
     if(searchWrap)searchWrap.style.display='none';
-    host.innerHTML=`<div class="log-empty"><svg class="log-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div class="log-empty-title">No selections yet</div><div>Run your first selection on the "New selection" tab.</div></div>`;
+    host.innerHTML=`<div class="log-empty"><svg class="log-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div class="log-empty-title">No selections yet</div><div>Welcome! Head to the <strong>"New selection"</strong> tab to log your first project — takes about a minute.</div></div>`;
     return;
   }
 
@@ -13924,7 +14211,7 @@ function renderDashboard(){
       empty=document.createElement('div');
       empty.id='dashboard-empty';
       empty.className='log-empty';
-      empty.innerHTML=`<svg class="log-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9v6M15 9v6"/></svg><div class="log-empty-title">No data to visualize yet</div><div>${isSuper?'Once your team logs some selections, charts will appear here.':'Run a few selections on "New selection" and your personal dashboard will populate.'}</div>`;
+      empty.innerHTML=`<svg class="log-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9v6M15 9v6"/></svg><div class="log-empty-title">Your analytics will appear here</div><div>${isSuper?'Once your team logs some selections, charts and KPIs will populate this view.':'Run your first few selections from the "New selection" tab and this dashboard will fill in.'}</div>`;
       const container=document.querySelector('#section-dashboard .container');
       if(container)container.appendChild(empty);
     }
@@ -16016,7 +16303,15 @@ window.bsC3dRenderTrend = async function(){
 
   if(snapshots.length === 0){
     canvas.style.display = 'none';
-    if(emptyEl) emptyEl.style.display = 'block';
+    if(emptyEl){
+      // v24.14.1: Differentiate empty-state message by role.
+      // Super sees the actionable technical hint; everyone else sees a friendly message.
+      const isSuper = state.user && state.user.isSuper;
+      emptyEl.textContent = isSuper
+        ? 'No snapshots yet. Run setupPipelineSnapshotTrigger() once from the Apps Script editor to install the weekly cron and capture the first snapshot.'
+        : 'Pipeline trend will appear here as weekly snapshots accumulate.';
+      emptyEl.style.display = 'block';
+    }
     if(captionEl) captionEl.textContent = '· no data';
     return;
   }
@@ -16144,7 +16439,7 @@ function setSelectionMode(mode){
     } else if(mode === 'guided'){
       hint.textContent = "Answer a few questions about your project. We'll recommend the right player.";
     } else {
-      hint.textContent = "How would you like to specify the players for this project?";
+      hint.textContent = "Guided = answer questions, we recommend a player. Advanced = pick exact models yourself.";
     }
   }
   // Lazy-init the Advanced table the first time we switch into Advanced mode
