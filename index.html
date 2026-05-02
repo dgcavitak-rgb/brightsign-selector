@@ -6098,7 +6098,7 @@ html[data-theme="dark"] .xc-os-cost-extra{
     <div class="login-desc">Enter your username and password to access the selector.</div>
     <div class="form-group">
       <label for="login-name">Username<span class="req">*</span></label>
-      <input type="text" id="login-name" placeholder="e.g. mohit (lowercase)" autocomplete="off">
+      <input type="text" id="login-name" placeholder="e.g. yourname (lowercase)" autocomplete="off">
     </div>
     <div class="form-group">
       <label for="login-password">Password<span class="req">*</span></label>
@@ -6212,10 +6212,10 @@ html[data-theme="dark"] .xc-os-cost-extra{
         <div class="section-head"><div class="section-num">01</div><div><div class="section-title">Project context</div></div></div>
         <div id="dup-project-banner" class="dup-banner" style="display:none;"></div>
         <div class="spec-grid two-col">
-          <div class="form-group" style="margin:0;"><label>Project Name<span class="req">*</span></label><input type="text" id="f-project" placeholder="e.g. Retail flagship — Chennai" oninput="checkDuplicateProject()"></div>
-          <div class="form-group" style="margin:0;"><label>End-user / Client<span class="req">*</span></label><input type="text" id="f-enduser" placeholder="e.g. Reliance Retail"></div>
-          <div class="form-group" style="margin:0;"><label>Partner / SI<span class="req">*</span></label><input type="text" id="f-partner" placeholder="e.g. Inviot AV Solutions"></div>
-          <div class="form-group" style="margin:0;"><label>Consultant<span class="req">*</span></label><input type="text" id="f-consultant" placeholder="e.g. AV-Technik / Direct"></div>
+          <div class="form-group" style="margin:0;"><label>Project Name<span class="req">*</span></label><input type="text" id="f-project" placeholder="e.g. Lobby LED Wall — City" oninput="checkDuplicateProject()"></div>
+          <div class="form-group" style="margin:0;"><label>End-user / Client<span class="req">*</span></label><input type="text" id="f-enduser" placeholder="e.g. End-user company name"></div>
+          <div class="form-group" style="margin:0;"><label>Partner / SI<span class="req">*</span></label><input type="text" id="f-partner" placeholder="e.g. SI / dealer company"></div>
+          <div class="form-group" style="margin:0;"><label>Consultant<span class="req">*</span></label><input type="text" id="f-consultant" placeholder="e.g. consultant firm or 'Direct'"></div>
           <!-- v24.7.0: Venue Type added (replaces Venue/Location text) · 34-option grouped list · matches tvONE -->
           <div class="form-group" style="margin:0;"><label>Venue Type<span class="req">*</span></label>
             <select id="f-venueType">
@@ -6324,7 +6324,7 @@ html[data-theme="dark"] .xc-os-cost-extra{
               <div class="closemonth-display" id="closemonth-display"></div>
             </div>
           </div>
-          <div class="form-group" style="margin:0;"><label>Partner Contact — Name<span class="req">*</span></label><input type="text" id="f-partnerContactName" placeholder="e.g. Rohit Sharma"></div>
+          <div class="form-group" style="margin:0;"><label>Partner Contact — Name<span class="req">*</span></label><input type="text" id="f-partnerContactName" placeholder="e.g. contact's full name"></div>
           <div class="form-group" style="margin:0;"><label>Partner Contact — Mobile<span class="req">*</span></label><input type="tel" id="f-partnerContactPhone" placeholder="10-digit mobile" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10);"></div>
           <div class="form-group" style="margin:0;"><label>Partner Contact — Email<span class="req">*</span></label><input type="email" id="f-partnerContactEmail" placeholder="name@company.com" autocomplete="off"></div>
         </div>
@@ -6883,7 +6883,7 @@ html[data-theme="dark"] .xc-os-cost-extra{
     <div class="dir-modal-body">
       <div id="customerModalError" class="dir-modal-err"></div>
       <input type="hidden" id="customerFormId">
-      <div class="form-group"><label>Customer Name *</label><input type="text" id="customerFormName" placeholder="e.g. Reliance Retail Ltd." autocomplete="off"></div>
+      <div class="form-group"><label>Customer Name *</label><input type="text" id="customerFormName" placeholder="e.g. End-user company name" autocomplete="off"></div>
       <div class="dir-grid-2">
         <div class="form-group"><label>Industry</label>
           <select id="customerFormIndustry">
@@ -7099,7 +7099,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.14.4';
+const FRONTEND_VERSION = '24.14.5';
 
 
 // ============================================================================
@@ -9443,8 +9443,8 @@ function showForgotPasswordModal(){
     <div class="pwd-modal" style="max-width:440px;">
       <div class="pwd-modal-title">🔑 Forgot password</div>
       <div class="pwd-modal-subtitle">Submit a request and the admin will reset your password to the default. You'll then be forced to set a new one on your next login.</div>
-      <div class="pwd-field"><label>Your login name</label><input type="text" id="forgot-loginname" value="${escapeHtml(loginGuess)}" placeholder="e.g. mohit, rahul"></div>
-      <div class="pwd-field"><label>Reason (optional)</label><textarea id="forgot-reason" placeholder="e.g. 'Forgot my password from last month'" rows="2" style="width:100%;padding:10px 14px;border:1px solid var(--border-soft);border-radius:8px;font-family:var(--sans);font-size:14px;color:var(--ink);background:var(--surface);resize:vertical;box-sizing:border-box;"></textarea></div>
+      <div class="pwd-field"><label>Your login name</label><input type="text" id="forgot-loginname" value="${escapeHtml(loginGuess)}" placeholder="your login name (lowercase)"></div>
+      <div class="pwd-field"><label>Reason (optional)</label><textarea id="forgot-reason" placeholder="e.g. forgot my password" rows="2" style="width:100%;padding:10px 14px;border:1px solid var(--border-soft);border-radius:8px;font-family:var(--sans);font-size:14px;color:var(--ink);background:var(--surface);resize:vertical;box-sizing:border-box;"></textarea></div>
       <div class="pwd-modal-error" id="forgot-error"></div>
       <div class="pwd-modal-actions">
         <button class="btn-secondary" onclick="closeForgotPasswordModal()">Cancel</button>
@@ -10455,10 +10455,10 @@ function showAddUserModal(){
     <div class="pwd-modal" style="max-width:460px;">
       <div class="pwd-modal-title">➕ Add new user</div>
       <div class="pwd-modal-subtitle">User will get default password "cavitak@123" and must change on first login.</div>
-      <div class="pwd-field"><label>Login name · lowercase, no spaces</label><input type="text" id="add-loginName" placeholder="e.g. priya, amit2" pattern="[a-z0-9_]+"></div>
-      <div class="pwd-field"><label>Full name</label><input type="text" id="add-fullName" placeholder="e.g. Priya Sharma"></div>
+      <div class="pwd-field"><label>Login name · lowercase, no spaces</label><input type="text" id="add-loginName" placeholder="lowercase, e.g. firstname or firstname1" pattern="[a-z0-9_]+"></div>
+      <div class="pwd-field"><label>Full name</label><input type="text" id="add-fullName" placeholder="First and last name"></div>
       <div class="pwd-field"><label>Role</label><select id="add-role"><option value="">— Choose role —</option>${roleOptions}</select></div>
-      <div class="pwd-field"><label>Email (optional)</label><input type="email" id="add-email" placeholder="priya@cavitak.com"></div>
+      <div class="pwd-field"><label>Email (optional)</label><input type="email" id="add-email" placeholder="name@cavitak.com"></div>
       <div class="pwd-field"><label>Phone (optional)</label><input type="tel" id="add-phone" placeholder="+91 98765 43210"></div>
       <div class="pwd-modal-error" id="add-user-error"></div>
       <div class="pwd-modal-actions">
