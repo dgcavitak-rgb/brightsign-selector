@@ -1227,6 +1227,18 @@ button{font-family:var(--sans);}
 }
 .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-light);}
 .form-group input::placeholder{color:var(--ink-subtle);}
+/* v24.14.8: Auto-set field lock — used when city auto-fills state */
+.form-group select.autoset-locked,.form-group input.autoset-locked{
+  opacity:0.55;
+  cursor:not-allowed;
+  background-color:#F1F5F9;
+  border-color:var(--border-soft) !important;
+}
+html[data-theme="dark"] .form-group select.autoset-locked,html[data-theme="dark"] .form-group input.autoset-locked{
+  opacity:0.55;
+  background-color:rgba(255,255,255,0.04);
+  border-color:rgba(255,255,255,0.08) !important;
+}
 .btn-primary:hover{background:var(--blue-dark);}
 .error-msg{
   background:var(--rose-light);color:var(--rose);
@@ -2592,6 +2604,21 @@ input:focus,select:focus,textarea:focus{
   margin-bottom:24px;
   max-width:560px;
   animation:fade-up 0.6s cubic-bezier(0.16,1,0.3,1) 0.45s backwards;
+}
+/* v24.14.6: GPIO auto-bump notice — sits under model notes, above pill row */
+.hero-tier-bump-note{
+  font-family:var(--sans);
+  font-size:12px;
+  font-weight:500;
+  color:rgba(255,255,255,0.75);
+  background:rgba(255,255,255,0.06);
+  border-left:2px solid rgba(252,211,77,0.7);
+  padding:8px 12px;
+  border-radius:6px;
+  margin-bottom:18px;
+  max-width:560px;
+  line-height:1.5;
+  animation:fade-up 0.6s cubic-bezier(0.16,1,0.3,1) 0.50s backwards;
 }
 @keyframes fade-up{
   from{opacity:0;transform:translateY(8px);}
@@ -5353,158 +5380,6 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   .dup-banner-action{align-self:stretch;}
   .dup-banner-link{width:100%;}
 }
-/* v24.14.3: GPIO soft-warning banner on Result page */
-.gpio-warn-banner{
-  display:flex;align-items:flex-start;gap:14px;
-  padding:14px 18px;margin:24px 0 0;
-  background:linear-gradient(135deg,#FEF3C7 0%,#FDE68A 100%);
-  border:1px solid #F59E0B;
-  border-radius:12px;
-  box-shadow:0 2px 8px rgba(245,158,11,0.12);
-}
-.gpio-warn-icon{font-size:22px;line-height:1;flex-shrink:0;margin-top:2px;}
-.gpio-warn-body{flex:1;min-width:0;}
-.gpio-warn-title{
-  font-family:var(--sans);font-size:14px;font-weight:700;
-  color:#78350F;margin-bottom:4px;
-}
-.gpio-warn-text{
-  font-family:var(--sans);font-size:13px;line-height:1.5;color:#92400E;
-}
-html[data-theme="dark"] .gpio-warn-banner{
-  background:linear-gradient(135deg,rgba(120,53,15,0.45) 0%,rgba(146,64,14,0.35) 100%);
-  border-color:rgba(245,158,11,0.6);box-shadow:0 2px 8px rgba(0,0,0,0.25);
-}
-html[data-theme="dark"] .gpio-warn-title{color:#FDE68A;}
-html[data-theme="dark"] .gpio-warn-text{color:#FCD34D;}
-
-/* v24.14.4: XC4055 dual-OS choice card */
-.xc-os-card-wrap{
-  margin:24px 0 0;padding:24px;
-  background:var(--surface-1);
-  border:1px solid var(--border);
-  border-radius:14px;
-}
-.xc-os-card-title{
-  font-family:var(--sans);font-size:15px;font-weight:700;
-  color:var(--ink);margin-bottom:6px;
-}
-.xc-os-card-sub{
-  font-family:var(--sans);font-size:12px;color:var(--ink-muted);
-  margin-bottom:18px;line-height:1.5;
-}
-.xc-os-cards-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:14px;
-}
-.xc-os-choice{
-  position:relative;
-  background:#fff;
-  border:2px solid var(--border-soft,#E2E8F0);
-  border-radius:12px;
-  padding:20px;
-  cursor:pointer;
-  transition:transform 180ms,border-color 180ms,box-shadow 180ms;
-  display:flex;flex-direction:column;align-items:center;text-align:center;
-  -webkit-tap-highlight-color:transparent;
-}
-.xc-os-choice:hover{
-  transform:translateY(-2px);
-  border-color:#94A3B8;
-  box-shadow:0 6px 16px rgba(15,23,42,0.08);
-}
-.xc-os-choice:focus-visible{
-  outline:none;box-shadow:0 0 0 3px rgba(79,70,229,0.25);
-}
-/* BrightSignOS card — green/teal accent */
-.xc-os-choice:nth-child(1).selected{
-  border-color:#10B981;background:linear-gradient(135deg,#ECFDF5 0%,#fff 100%);
-  box-shadow:0 6px 20px rgba(16,185,129,0.18);
-}
-.xc-os-choice:nth-child(1).selected .xc-os-choice-check{background:#10B981;opacity:1;transform:scale(1);}
-/* Windows IoT card — Microsoft blue accent */
-.xc-os-choice:nth-child(2).selected{
-  border-color:#0078D4;background:linear-gradient(135deg,#EFF6FF 0%,#fff 100%);
-  box-shadow:0 6px 20px rgba(0,120,212,0.18);
-}
-.xc-os-choice:nth-child(2).selected .xc-os-choice-check{background:#0078D4;opacity:1;transform:scale(1);}
-
-.xc-os-choice-check{
-  position:absolute;top:10px;right:10px;
-  width:22px;height:22px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  opacity:0;transform:scale(0.5);
-  transition:opacity 180ms ease,transform 180ms ease;
-}
-.xc-os-choice-check svg{width:13px;height:13px;}
-.xc-os-choice-logo{
-  height:44px;display:flex;align-items:center;justify-content:center;
-  margin-bottom:10px;
-}
-.xc-os-choice-logo img{max-height:32px;max-width:140px;object-fit:contain;}
-.xc-os-logo-fallback{
-  font-family:var(--sans);font-size:18px;font-weight:700;letter-spacing:-0.01em;
-}
-.xc-os-logo-fallback.xc-os-logo-bs{color:#10B981;}
-.xc-os-logo-fallback.xc-os-logo-win{color:#0078D4;}
-.xc-os-choice-name{
-  font-family:var(--sans);font-size:16px;font-weight:700;
-  color:var(--ink);margin-bottom:4px;
-}
-.xc-os-choice-tag{
-  font-family:var(--sans);font-size:11px;font-weight:600;
-  color:var(--ink-subtle);text-transform:uppercase;letter-spacing:0.06em;
-  margin-bottom:14px;
-}
-.xc-os-choice-pros{
-  display:flex;flex-direction:column;gap:6px;
-  width:100%;margin-bottom:14px;
-}
-.xc-os-bullet{
-  font-family:var(--sans);font-size:12px;color:var(--ink-muted);
-  text-align:left;line-height:1.4;
-}
-.xc-os-choice-cost{
-  font-family:var(--mono,'JetBrains Mono',monospace);
-  font-size:13px;font-weight:700;
-  padding:8px 14px;border-radius:8px;
-  margin-top:auto;
-}
-.xc-os-cost-included{
-  background:rgba(16,185,129,0.10);color:#047857;
-}
-.xc-os-cost-extra{
-  background:rgba(0,120,212,0.10);color:#0050A0;
-}
-
-@media (max-width:640px){
-  .xc-os-cards-grid{grid-template-columns:1fr;}
-  .xc-os-card-wrap{padding:18px;}
-}
-
-/* Dark mode */
-html[data-theme="dark"] .xc-os-card-wrap{
-  background:rgba(15,23,42,0.55);border-color:rgba(148,163,184,0.18);
-}
-html[data-theme="dark"] .xc-os-choice{
-  background:rgba(15,23,42,0.7);border-color:rgba(148,163,184,0.20);
-}
-html[data-theme="dark"] .xc-os-choice:hover{border-color:rgba(148,163,184,0.45);}
-html[data-theme="dark"] .xc-os-choice:nth-child(1).selected{
-  background:linear-gradient(135deg,rgba(6,78,59,0.50) 0%,rgba(15,23,42,0.7) 100%);
-  border-color:#10B981;
-}
-html[data-theme="dark"] .xc-os-choice:nth-child(2).selected{
-  background:linear-gradient(135deg,rgba(30,58,138,0.50) 0%,rgba(15,23,42,0.7) 100%);
-  border-color:#3B82F6;
-}
-html[data-theme="dark"] .xc-os-choice-name{color:#E0E7FF;}
-html[data-theme="dark"] .xc-os-bullet{color:#94A3B8;}
-html[data-theme="dark"] .xc-os-cost-included{
-  background:rgba(16,185,129,0.20);color:#6EE7B7;
-}
-html[data-theme="dark"] .xc-os-cost-extra{
-  background:rgba(59,130,246,0.20);color:#93C5FD;
-}
 /* v22.4: Pending sync badge on History tab */
 .pending-badge{
   display:inline-flex;
@@ -6274,10 +6149,120 @@ html[data-theme="dark"] .xc-os-cost-extra{
             </select>
           </div>
           <!-- v24.7.0: City (existing list) + State (new) — City, State composite UX with auto-fill -->
-          <div class="form-group" style="margin:0;"><label>City, State<span class="req">*</span></label><select id="f-city" onchange="autoFillStateFromCity()"><option value="">Select city…</option><option>Ahmedabad</option><option>Bangalore</option><option>Chennai</option><option>Delhi / NCR</option><option>Hyderabad</option><option>Kolkata</option><option>Mumbai</option><option>Pune</option><option>Jaipur</option><option>Kochi</option><option>Chandigarh</option><option>Lucknow</option><option>Indore</option><option>Bhubaneswar</option><option>Nagpur</option><option>Surat</option><option>Vadodara</option><option>Goa</option><option>Other</option></select></div>
-          <div class="form-group" style="margin:0;"><label>State<span class="req">*</span></label><select id="f-state"><option value="">Select state…</option><option>Andhra Pradesh</option><option>Arunachal Pradesh</option><option>Assam</option><option>Bihar</option><option>Chhattisgarh</option><option>Goa</option><option>Gujarat</option><option>Haryana</option><option>Himachal Pradesh</option><option>Jharkhand</option><option>Karnataka</option><option>Kerala</option><option>Madhya Pradesh</option><option>Maharashtra</option><option>Manipur</option><option>Meghalaya</option><option>Mizoram</option><option>Nagaland</option><option>Odisha</option><option>Punjab</option><option>Rajasthan</option><option>Sikkim</option><option>Tamil Nadu</option><option>Telangana</option><option>Tripura</option><option>Uttar Pradesh</option><option>Uttarakhand</option><option>West Bengal</option><option>Delhi</option><option>Chandigarh</option><option>Jammu &amp; Kashmir</option><option>Ladakh</option><option>Puducherry</option><option>Andaman &amp; Nicobar</option><option>Dadra &amp; Nagar Haveli and Daman &amp; Diu</option><option>Lakshadweep</option></select></div>
+          <div class="form-group" style="margin:0;"><label>City<span class="req">*</span></label><select id="f-city" onchange="autoFillStateFromCity()">
+            <option value="">Select city…</option>
+            <optgroup label="Metro (Tier 1)">
+              <option>Ahmedabad</option>
+              <option>Bengaluru</option>
+              <option>Chennai</option>
+              <option>Delhi</option>
+              <option>Hyderabad</option>
+              <option>Kolkata</option>
+              <option>Mumbai</option>
+              <option>Pune</option>
+            </optgroup>
+            <optgroup label="Tier 2 — North &amp; Central">
+              <option>Agra</option>
+              <option>Aligarh</option>
+              <option>Allahabad (Prayagraj)</option>
+              <option>Amritsar</option>
+              <option>Bareilly</option>
+              <option>Bhopal</option>
+              <option>Chandigarh</option>
+              <option>Dehradun</option>
+              <option>Faridabad</option>
+              <option>Ghaziabad</option>
+              <option>Gorakhpur</option>
+              <option>Gurugram</option>
+              <option>Gwalior</option>
+              <option>Haridwar</option>
+              <option>Indore</option>
+              <option>Jabalpur</option>
+              <option>Jaipur</option>
+              <option>Jalandhar</option>
+              <option>Jammu</option>
+              <option>Jhansi</option>
+              <option>Jodhpur</option>
+              <option>Kanpur</option>
+              <option>Kota</option>
+              <option>Lucknow</option>
+              <option>Ludhiana</option>
+              <option>Meerut</option>
+              <option>Moradabad</option>
+              <option>Noida</option>
+              <option>Patiala</option>
+              <option>Rohtak</option>
+              <option>Shimla</option>
+              <option>Srinagar</option>
+              <option>Udaipur</option>
+              <option>Varanasi</option>
+            </optgroup>
+            <optgroup label="Tier 2 — West">
+              <option>Ajmer</option>
+              <option>Aurangabad</option>
+              <option>Bhavnagar</option>
+              <option>Goa (Panaji)</option>
+              <option>Jamnagar</option>
+              <option>Kolhapur</option>
+              <option>Nagpur</option>
+              <option>Nashik</option>
+              <option>Navi Mumbai</option>
+              <option>Rajkot</option>
+              <option>Surat</option>
+              <option>Thane</option>
+              <option>Vadodara</option>
+              <option>Vasai-Virar</option>
+            </optgroup>
+            <optgroup label="Tier 2 — South">
+              <option>Belagavi</option>
+              <option>Coimbatore</option>
+              <option>Ernakulam</option>
+              <option>Hubballi-Dharwad</option>
+              <option>Kochi</option>
+              <option>Kozhikode</option>
+              <option>Madurai</option>
+              <option>Mangaluru</option>
+              <option>Mysuru</option>
+              <option>Nellore</option>
+              <option>Puducherry</option>
+              <option>Salem</option>
+              <option>Thiruvananthapuram</option>
+              <option>Tiruchirappalli</option>
+              <option>Tirunelveli</option>
+              <option>Tirupati</option>
+              <option>Vijayawada</option>
+              <option>Visakhapatnam</option>
+              <option>Warangal</option>
+            </optgroup>
+            <optgroup label="Tier 2 — East &amp; Northeast">
+              <option>Agartala</option>
+              <option>Aizawl</option>
+              <option>Asansol</option>
+              <option>Bhubaneswar</option>
+              <option>Cuttack</option>
+              <option>Dhanbad</option>
+              <option>Dibrugarh</option>
+              <option>Durgapur</option>
+              <option>Gangtok</option>
+              <option>Guwahati</option>
+              <option>Howrah</option>
+              <option>Imphal</option>
+              <option>Itanagar</option>
+              <option>Jamshedpur</option>
+              <option>Kohima</option>
+              <option>Patna</option>
+              <option>Raipur</option>
+              <option>Ranchi</option>
+              <option>Shillong</option>
+              <option>Siliguri</option>
+            </optgroup>
+            <optgroup label="Other">
+              <option>Other (not listed)</option>
+            </optgroup>
+          </select></div>
+          <div class="form-group" style="margin:0;"><label>State<span class="req">*</span></label><select id="f-state"><option value="">Select state…</option><option>Andhra Pradesh</option><option>Arunachal Pradesh</option><option>Assam</option><option>Bihar</option><option>Chhattisgarh</option><option>Goa</option><option>Gujarat</option><option>Haryana</option><option>Himachal Pradesh</option><option>Jharkhand</option><option>Karnataka</option><option>Kerala</option><option>Madhya Pradesh</option><option>Maharashtra</option><option>Manipur</option><option>Meghalaya</option><option>Mizoram</option><option>Nagaland</option><option>Odisha</option><option>Punjab</option><option>Rajasthan</option><option>Sikkim</option><option>Tamil Nadu</option><option>Telangana</option><option>Tripura</option><option>Uttar Pradesh</option><option>Uttarakhand</option><option>West Bengal</option><option>Delhi</option><option>Chandigarh</option><option>Jammu &amp; Kashmir</option><option>Ladakh</option><option>Puducherry</option><option>Andaman &amp; Nicobar</option><option>Dadra &amp; Nagar Haveli and Daman &amp; Diu</option><option>Lakshadweep</option><option value="International">International</option></select></div>
           <div class="form-group" style="margin:0;"><label>Deal Stage<span class="req">*</span></label><select id="f-stage"><option value="">Select stage…</option><option>Lead</option><option>Opportunity</option><option>Proposal</option><option>Negotiation</option><option>Order</option></select><div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Where this deal stands in your funnel right now.</div></div>
-          <div class="form-group" style="margin:0;"><label>Lead Source<span class="req">*</span></label><select id="f-leadsource"><option value="">Select source…</option><option value="OEM">OEM (BrightSign referral)</option><option value="Cavitak">Cavitak (self-sourced)</option></select><div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">OEM = passed to us by BrightSign. Cavitak = generated by your team.</div></div>
+          <div class="form-group" style="margin:0;"><label>Lead Source<span class="req">*</span></label><select id="f-leadsource"><option value="">Select source…</option><option value="BrightSign">BrightSign</option><option value="Cavitak">Cavitak</option></select><div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">BrightSign = Generated by BrightSign. Cavitak = Generated by Cavitak team.</div></div>
           <div class="form-group" style="margin:0;"><label>Outcome<span class="req">*</span></label><select id="f-outcome"><option value="open">Open (active)</option><option value="won">Won</option><option value="lost">Lost</option><option value="on-hold">On hold</option></select><div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Open = active deal. Won/Lost/On hold = final status.</div></div>
           <!-- v24.9.1: Per-deal Plan of Action textarea REMOVED — PoA now lives per-period on the Review tab -->
           <div class="form-group" style="margin:0;">
@@ -7099,7 +7084,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.14.5';
+const FRONTEND_VERSION = '24.14.8';
 
 
 // ============================================================================
@@ -7528,20 +7513,63 @@ async function submitMergeModal(){
 
 
 /* v24.7.0: City → State auto-fill for composite City, State UX */
+/* v24.14.8: Full 95-city → state map (synchronized with tvONE app).
+   95 mapped cities. 'Other (not listed)' deliberately excluded — it unlocks the
+   state field for manual entry. India only. */
 const CITY_TO_STATE_BS = {
-  'Ahmedabad':'Gujarat','Bangalore':'Karnataka','Chennai':'Tamil Nadu',
-  'Delhi / NCR':'Delhi','Hyderabad':'Telangana','Kolkata':'West Bengal',
-  'Mumbai':'Maharashtra','Pune':'Maharashtra','Jaipur':'Rajasthan',
-  'Kochi':'Kerala','Chandigarh':'Chandigarh','Lucknow':'Uttar Pradesh',
-  'Indore':'Madhya Pradesh','Bhubaneswar':'Odisha','Nagpur':'Maharashtra',
-  'Surat':'Gujarat','Vadodara':'Gujarat','Goa':'Goa'
+  'Ahmedabad':'Gujarat','Bengaluru':'Karnataka','Chennai':'Tamil Nadu',
+  'Delhi':'Delhi','Hyderabad':'Telangana','Kolkata':'West Bengal',
+  'Mumbai':'Maharashtra','Pune':'Maharashtra',
+  'Agra':'Uttar Pradesh','Aligarh':'Uttar Pradesh','Allahabad (Prayagraj)':'Uttar Pradesh',
+  'Amritsar':'Punjab','Bareilly':'Uttar Pradesh','Bhopal':'Madhya Pradesh',
+  'Chandigarh':'Chandigarh','Dehradun':'Uttarakhand','Faridabad':'Haryana',
+  'Ghaziabad':'Uttar Pradesh','Gorakhpur':'Uttar Pradesh','Gurugram':'Haryana',
+  'Gwalior':'Madhya Pradesh','Haridwar':'Uttarakhand','Indore':'Madhya Pradesh',
+  'Jabalpur':'Madhya Pradesh','Jaipur':'Rajasthan','Jalandhar':'Punjab',
+  'Jammu':'Jammu & Kashmir','Jhansi':'Uttar Pradesh','Jodhpur':'Rajasthan',
+  'Kanpur':'Uttar Pradesh','Kota':'Rajasthan','Lucknow':'Uttar Pradesh',
+  'Ludhiana':'Punjab','Meerut':'Uttar Pradesh','Moradabad':'Uttar Pradesh',
+  'Noida':'Uttar Pradesh','Patiala':'Punjab','Rohtak':'Haryana',
+  'Shimla':'Himachal Pradesh','Srinagar':'Jammu & Kashmir','Udaipur':'Rajasthan',
+  'Varanasi':'Uttar Pradesh',
+  'Ajmer':'Rajasthan','Aurangabad':'Maharashtra','Bhavnagar':'Gujarat',
+  'Goa (Panaji)':'Goa','Jamnagar':'Gujarat','Kolhapur':'Maharashtra',
+  'Nagpur':'Maharashtra','Nashik':'Maharashtra','Navi Mumbai':'Maharashtra',
+  'Rajkot':'Gujarat','Surat':'Gujarat','Thane':'Maharashtra',
+  'Vadodara':'Gujarat','Vasai-Virar':'Maharashtra',
+  'Belagavi':'Karnataka','Coimbatore':'Tamil Nadu','Ernakulam':'Kerala',
+  'Hubballi-Dharwad':'Karnataka','Kochi':'Kerala','Kozhikode':'Kerala',
+  'Madurai':'Tamil Nadu','Mangaluru':'Karnataka','Mysuru':'Karnataka',
+  'Nellore':'Andhra Pradesh','Puducherry':'Puducherry','Salem':'Tamil Nadu',
+  'Thiruvananthapuram':'Kerala','Tiruchirappalli':'Tamil Nadu',
+  'Tirunelveli':'Tamil Nadu','Tirupati':'Andhra Pradesh',
+  'Vijayawada':'Andhra Pradesh','Visakhapatnam':'Andhra Pradesh',
+  'Warangal':'Telangana',
+  'Agartala':'Tripura','Aizawl':'Mizoram','Asansol':'West Bengal',
+  'Bhubaneswar':'Odisha','Cuttack':'Odisha','Dhanbad':'Jharkhand',
+  'Dibrugarh':'Assam','Durgapur':'West Bengal','Gangtok':'Sikkim',
+  'Guwahati':'Assam','Howrah':'West Bengal','Imphal':'Manipur',
+  'Itanagar':'Arunachal Pradesh','Jamshedpur':'Jharkhand','Kohima':'Nagaland',
+  'Patna':'Bihar','Raipur':'Chhattisgarh','Ranchi':'Jharkhand',
+  'Shillong':'Meghalaya','Siliguri':'West Bengal'
 };
 function autoFillStateFromCity(){
   const c=document.getElementById('f-city');
   const s=document.getElementById('f-state');
   if(!c||!s)return;
   const m=CITY_TO_STATE_BS[c.value];
-  if(m)s.value=m;
+  if(m){
+    // Auto-fill + lock — user can't override the state when city is mapped
+    s.value=m;
+    s.disabled=true;
+    s.classList.add('autoset-locked');
+    s.title='State auto-set from selected city — change city to update.';
+  } else {
+    // No mapping ('Other (not listed)' or empty city) — unlock for manual entry
+    s.disabled=false;
+    s.classList.remove('autoset-locked');
+    s.title='';
+  }
 }
 
 /* v24.4.8: Feature flag.
@@ -9332,7 +9360,7 @@ async function handleLogin(){
     const reviewTab=document.getElementById('tab-review');
     if(reviewTab){
       const role=(state.user.role||'').trim();
-      const showReview=state.user.isSuper || role==='OEM';
+      const showReview=state.user.isSuper || role==='BrightSign';
       reviewTab.style.display=showReview?'inline-flex':'none';
     }
 
@@ -9564,6 +9592,17 @@ async function submitPasswordChange(forced){
     window._sessionPassword=newPwd;
     closeChangePasswordModal();
     showSync('Password updated ✓','success');
+    // v24.14.6: After a FORCED password change, auto-redirect to login.
+    // Without this, the user stays signed in on their old session and has to
+    // manually sign out + sign in. New users hit this confusion on first login.
+    if(forced){
+      setTimeout(function(){
+        try{
+          if(typeof handleLogout === 'function'){ handleLogout(); }
+          else { window.location.reload(); }
+        }catch(e){ window.location.reload(); }
+      }, 900); // small delay so the success toast is visible
+    }
   }catch(e){
     console.error(e);
     errEl.textContent='Network error. Try again.';
@@ -9575,7 +9614,7 @@ async function submitPasswordChange(forced){
 async function superResetUserPassword(){
   if(!state.user||!state.user.isSuper){alert('Super-user only.');return;}
   if(!(await requireAuth()))return;
-  const target=prompt('Enter login name of user to reset (e.g. mohit, rahul):');
+  const target=prompt('Enter login name of user to reset (lowercase):');
   if(!target)return;
   const targetLower=target.trim().toLowerCase();
   if(targetLower===state.user.loginName.toLowerCase()){alert('Cannot reset your own password this way. Use Change Password instead.');return;}
@@ -10439,7 +10478,7 @@ function formatRelativeTime(iso){
 }
 
 /* v24: Allowed roles — must match Apps Script ALLOWED_ROLES */
-const ALLOWED_ROLES=['OEM','Presales','Sales','Support'];
+const ALLOWED_ROLES=['BrightSign','Presales','Sales','Support'];
 // Note: 'Super' is deliberately not in the Add/Edit dropdown —
 // super status is hardcoded in Apps Script SUPER_LOGIN_NAMES and cannot be assigned via UI.
 
@@ -10863,9 +10902,9 @@ function showTab(which){
     if(typeof refreshCustomers==='function'){refreshCustomers();}
   }
   if(which==='review'){
-    // v24.4.9: Double-guard — only Super + OEM can render review
+    // v24.14.6: Double-guard — only Super + BrightSign-role can render review
     const role=state.user?(state.user.role||'').trim():'';
-    const canReview=state.user && (state.user.isSuper || role==='OEM');
+    const canReview=state.user && (state.user.isSuper || role==='BrightSign');
     if(canReview){renderReview();bsC2aRender();}
     else{showTab('log');return;}
   }
@@ -11194,6 +11233,9 @@ function resetForm(){
   const cmDisp=document.getElementById('closemonth-display');
   if(cmDisp){cmDisp.textContent='No month selected yet.';cmDisp.classList.remove('set');}
   ['f-city','f-stage','f-ssd-cap'].forEach(id=>document.getElementById(id).value='');
+  // v24.14.8: Reset f-state value AND its locked styling (city→state lock can leave it disabled)
+  const stEl=document.getElementById('f-state');
+  if(stEl){stEl.value='';stEl.disabled=false;stEl.classList.remove('autoset-locked');stEl.title='';}
   document.getElementById('f-qty').value=1;
   document.getElementById('f-qty-indoor').value='0';
   document.getElementById('f-qty-outdoor').value='0';
@@ -11450,10 +11492,31 @@ function pickModel(f){
 function pickModelStandard(f){
   // Standard scoring: respect all filters including environment
   const envForFilter = f.environment==='mixed' ? 'indoor' : f.environment;
-  const qualified=MODELS.filter(m=>m.available && !m.audio).map(m=>({m,score:scoreModel(m,f,envForFilter)})).filter(x=>x.score>-500).sort((a,b)=>a.m.rank-b.m.rank);
+  // v24.14.6: GPIO auto-bump. If user picked GPIO=Yes but their budget tier has
+  // no GPIO-capable model, escalate to next tier until we find one. We track
+  // the original tier so the Result page can show "Tier bumped from X to Y".
+  let currentBudget = parseInt(f.budget) || 2;
+  const originalBudget = currentBudget;
+  let qualified = MODELS.filter(m=>m.available && !m.audio).map(m=>({m,score:scoreModel(m,f,envForFilter)})).filter(x=>x.score>-500).sort((a,b)=>a.m.rank-b.m.rank);
+  if(f.gpio==='yes' && qualified.length){
+    // Within current zone, is there any GPIO-capable model?
+    while(currentBudget <= 5){
+      const zone = BUDGET_ZONES[currentBudget];
+      if(!zone) break;
+      const zoneTargetGroupForBump = zone.groups[zone.groups.length-1];
+      const zoneTargetIdxForBump = SERIES_LADDER.indexOf(zoneTargetGroupForBump);
+      const candidatesInOrUnderZone = qualified.filter(x => SERIES_LADDER.indexOf(x.m.group) <= zoneTargetIdxForBump);
+      const hasGpioInZone = candidatesInOrUnderZone.some(x => x.m.gpio === true);
+      if(hasGpioInZone) break;
+      currentBudget++;
+    }
+  }
+  // Apply the (possibly bumped) budget for downstream tier-climbing
+  const effectiveBudget = currentBudget <= 5 ? currentBudget : originalBudget;
+  const gpioBumped = effectiveBudget !== originalBudget;
   if(!qualified.length)return {model:null,alt_down:null,alt_up:null,noRec:true,budgetUpgraded:false};
   const minCompliant=qualified[0].m;
-  const zone=BUDGET_ZONES[f.budget];
+  const zone=BUDGET_ZONES[effectiveBudget];
   const minGroupIdx=SERIES_LADDER.indexOf(minCompliant.group);
   const zoneTargetGroup=zone.groups[zone.groups.length-1];
   const zoneTargetIdx=SERIES_LADDER.indexOf(zoneTargetGroup);
@@ -11470,7 +11533,15 @@ function pickModelStandard(f){
   const pricier=qualified.filter(x=>x.m.rank>primary.rank)[0];
   // Mixed environment: also compute an outdoor-only variant
   const outdoorVariant = (f.environment==='mixed') ? pickOutdoorOnly(f) : null;
-  return {model:primary,alt_down:cheaper?cheaper.m:null,alt_up:pricier?pricier.m:null,noRec:false,budgetUpgraded:budgetUpgraded,minCompliantId:minCompliant.id,climbPath:climbPath,outdoorVariant:outdoorVariant};
+  return {
+    model:primary,alt_down:cheaper?cheaper.m:null,alt_up:pricier?pricier.m:null,
+    noRec:false,budgetUpgraded:budgetUpgraded,minCompliantId:minCompliant.id,
+    climbPath:climbPath,outdoorVariant:outdoorVariant,
+    // v24.14.6 GPIO auto-bump metadata
+    gpioBumped: gpioBumped,
+    originalBudgetName: gpioBumped ? BUDGET_ZONES[originalBudget].name : null,
+    bumpedBudgetName:   gpioBumped ? BUDGET_ZONES[effectiveBudget].name : null
+  };
 }
 
 /* Mixed deployment helper — pick the best aluminium-chassis model for outdoor slice */
@@ -11499,12 +11570,12 @@ function scoreModel(m,f,envOverride){
   if(f.hdmiIn==='yes' && !m.hdmiIn)return -1000;
   if(f.touch==='yes' && !m.touch)return -1000;
   if(env==='outdoor' && m.chassis!=='aluminium')return -1000;
-  // v24.14.3: GPIO is now a SOFT preference, not a hard requirement. Score penalty
-  // means non-GPIO models can still be recommended if they're otherwise best-fit.
-  // Result page shows a warning banner when this happens.
-  let score = 100 - m.rank;
-  if(f.gpio==='yes' && !m.gpio) score -= 50;
-  return score;
+  // v24.14.6: GPIO is a HARD requirement again (was soft -50 in v24.14.3).
+  // If user picked GPIO=Yes but model lacks GPIO, exclude entirely.
+  // Auto-bump logic in pickModelStandard handles tier escalation when the
+  // user's budget tier has no GPIO-capable model.
+  if(f.gpio==='yes' && !m.gpio)return -1000;
+  return 100-m.rank;
 }
 
 function renderResult(){
@@ -11570,26 +11641,6 @@ function renderResult(){
     html+=`<ul class="concerns-list">${concerns.map(c=>`<li>${c}</li>`).join('')}</ul></div>`;
   }
 
-  // v24.14.3: GPIO soft-warning banner — appears only when user picked GPIO=Yes
-  // but the recommended model lacks GPIO. Visual: amber banner above pricing callout.
-  if(f.gpio==='yes' && m && !m.gpio){
-    html += `<div class="gpio-warn-banner" role="alert">
-      <div class="gpio-warn-icon">⚠️</div>
-      <div class="gpio-warn-body">
-        <div class="gpio-warn-title">GPIO not available on ${m.id}</div>
-        <div class="gpio-warn-text">You selected GPIO Yes (12-pin Phoenix port for sensors/buttons/relays), but this recommended model doesn't have a GPIO port. If GPIO is essential, consider stepping up to an XT or XC series model that includes GPIO.</div>
-      </div>
-    </div>`;
-  }
-
-  // v24.14.4: XC4055 dual-OS choice card. Renders ONLY when XC4055 is the
-  // recommendation. Shows BrightSignOS vs Windows IoT side-by-side with cost
-  // difference visible. Whichever option is currently selected (from the form pills)
-  // gets highlighted; user can switch right here on Result page if they want.
-  if(m && m.id === 'XC4055'){
-    html += buildXcOsChoiceCard(f);
-  }
-
   // v21.7: Pricing callout card — directs partner/SI to contact Dipenkumar for quote
   html+=buildPricingCallout();
 
@@ -11612,31 +11663,45 @@ function buildHeroCard(model,f,cms,deployLabel,deployShown,variant){
   const heroId=isOutdoor?'result-hero-v21-outdoor':'result-hero-v21';
   const photoId=isOutdoor?'result-hero-photo-outdoor':'result-hero-photo';
   const modelIdId=isOutdoor?'result-hero-model-id-outdoor':'result-hero-model-id';
-  const qtyForModel=isOutdoor?(f.qtyOutdoor||0):(f.environment==='mixed'?(f.qtyIndoor||0):(f.qty||0));
-  const qtyLabel=qtyForModel?` · ${qtyForModel} unit${qtyForModel===1?'':'s'}`:'';
   const eyebrowText=isOutdoor?'Outdoor variant · Paired with primary model':'Auto-selected · Best match for your requirements';
   let h='';
   h+=`<div class="${heroClass}" id="${heroId}">`;
   h+=`<div class="result-hero-layout">`;
   h+=`<div class="result-hero-left">`;
   h+=`<div class="result-hero-eyebrow"><span class="result-hero-eyebrow-dot"></span>${eyebrowText}</div>`;
-  // Model ID with deployment badge adjacent (badge now includes grade since Grade pill removed)
-  // v21.5.2 FIX: Only aluminium chassis = Outdoor Grade. Plastic + Metal = Indoor Grade.
-  // (XC metal chassis has active cooling for enterprise indoor — NOT weatherproof outdoor.)
-  const gradeSuffix=model.chassis==='aluminium'?' · Outdoor Grade':' · Indoor Grade';
   h+=`<div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:14px;"><div class="result-hero-model-id" id="${modelIdId}" style="margin-bottom:0;">${model.id}</div>`;
   if(deployShown){
-    h+=`<div style="font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:0.12em;background:rgba(255,255,255,0.14);color:#fff;padding:7px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.22);backdrop-filter:blur(10px);margin-top:14px;white-space:nowrap;">${deployShown}${qtyLabel}${gradeSuffix}</div>`;
+    // v24.14.6: Simplified deployment pill — just 'Indoor Model' or 'Outdoor Model'.
+    // Removed verbose 'INDOOR · 2 units · Indoor Grade' format.
+    const deployText = (model.chassis==='aluminium') ? 'Outdoor Model' : 'Indoor Model';
+    h+=`<div style="font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:0.12em;background:rgba(255,255,255,0.14);color:#fff;padding:7px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.22);backdrop-filter:blur(10px);margin-top:14px;white-space:nowrap;">${deployText}</div>`;
   }
   h+=`</div>`;
   h+=`<div class="result-hero-tag">${model.tag}</div>`;
   h+=`<div class="result-hero-notes">${model.notes}</div>`;
-  // Pills: Warranty → Power → Wi-Fi → CMS → Hero (Grade pill removed; deployment badge shows Indoor/Outdoor next to model ID)
+  // v24.14.6: GPIO auto-bump notice — only on primary (indoor) hero
+  if(!isOutdoor && state.result && state.result.gpioBumped){
+    h+=`<div class="hero-tier-bump-note">Tier bumped from ${state.result.originalBudgetName} to ${state.result.bumpedBudgetName} — ${state.result.originalBudgetName} players lack GPIO.</div>`;
+  }
+  // v24.14.6: Pill row — Warranty → Power → Wi-Fi → GPIO → CMS → Hero.
+  // GPIO and CMS pills always present (show user's actual choice, not placeholder).
   h+=`<div class="result-hero-badges">`;
   h+=`<span class="hero-pill hero-pill-emerald"><span class="hero-pill-dot"></span>5-year warranty</span>`;
   h+=model.poe?`<span class="hero-pill hero-pill-success"><span class="hero-pill-dot"></span>Power: PoE+ / DC</span>`:`<span class="hero-pill hero-pill-warning"><span class="hero-pill-dot"></span>Power: DC only</span>`;
   if(f.wifi==='yes')h+=`<span class="hero-pill"><span class="hero-pill-dot"></span>Wi-Fi enabled</span>`;
-  h+=`<span class="hero-pill hero-pill-indigo"><span class="hero-pill-dot"></span>${cms.badge}</span>`;
+  // GPIO pill — always show, simple Yes/No
+  const gpioPillText = f.gpio==='yes' ? 'GPIO: Yes' : 'GPIO: No';
+  h+=`<span class="hero-pill"><span class="hero-pill-dot"></span>${gpioPillText}</span>`;
+  // CMS pill — always show actual user choice. Vendor + term when included, "No" when standalone.
+  let cmsPillText;
+  if(f.cmsInclude === 'yes' && cms.vendor && cms.term){
+    cmsPillText = `CMS: ${cms.vendor} · ${cms.term}yr`;
+  } else if(f.cmsInclude === 'no'){
+    cmsPillText = 'CMS: No';
+  } else {
+    cmsPillText = cms.badge; // fallback for edge cases (e.g. cloud, large deployments forced)
+  }
+  h+=`<span class="hero-pill hero-pill-indigo"><span class="hero-pill-dot"></span>${cmsPillText}</span>`;
   if(model.hero)h+=`<span class="hero-pill hero-pill-gold"><span class="hero-pill-dot"></span>Hero product</span>`;
   h+=`</div></div>`;
   // Product photo right
@@ -11816,82 +11881,6 @@ function buildConcerns(m,f){
 /* v21.7: For Pricing & Quotation callout — indigo gradient glass card
    Directs partners/SI/end-users to contact Dipenkumar for firm quote.
    Blends with the BrightSign app's primary indigo/violet theme. */
-/* v24.14.4: XC4055 dual-OS choice card. Renders side-by-side cards:
-   - BrightSignOS (green/teal accent, included at no extra cost)
-   - Windows IoT (Microsoft blue accent, +₹27,083 per player)
-   Currently-selected OS (from f.os, default 'brightsign') is highlighted with
-   a checkmark. Clicking the other card calls advChangeXcOS() to swap selection
-   live and re-render the BOM. Brand logos are loaded from official URLs with
-   onerror fallback to plain text in case the URL changes.
-*/
-function buildXcOsChoiceCard(f){
-  const currentOs = (f.os || 'brightsign').toLowerCase();
-  const isBs = currentOs !== 'win';
-  const isWin = currentOs === 'win';
-  // Official brand asset URLs — Wikipedia hosts SVG logos that are stable + free-use
-  const bsLogoUrl = 'https://www.brightsign.biz/wp-content/uploads/2024/05/brightsign-logo-black.svg';
-  const winLogoUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Windows_logo_-_2021.svg/1024px-Windows_logo_-_2021.svg.png';
-
-  return `
-    <div class="xc-os-card-wrap">
-      <div class="xc-os-card-title">XC4055 supports two operating systems</div>
-      <div class="xc-os-card-sub">Pick the right OS for your project. You can switch here — your selection updates the BOM and Excel quote.</div>
-      <div class="xc-os-cards-grid">
-        <div class="xc-os-choice ${isBs?'selected':''}" onclick="advChangeXcOS('brightsign')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();advChangeXcOS('brightsign');}">
-          <div class="xc-os-choice-check" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div class="xc-os-choice-logo">
-            <img src="${bsLogoUrl}" alt="BrightSign" onerror="this.style.display='none';this.parentNode.innerHTML='<div class=&quot;xc-os-logo-fallback xc-os-logo-bs&quot;>BrightSign</div>';">
-          </div>
-          <div class="xc-os-choice-name">BrightSignOS</div>
-          <div class="xc-os-choice-tag">Native · Recommended</div>
-          <div class="xc-os-choice-pros">
-            <div class="xc-os-bullet">✓ Built for digital signage</div>
-            <div class="xc-os-bullet">✓ Free OS — no licensing</div>
-            <div class="xc-os-bullet">✓ Optimized for BSN.cloud + CMS partners</div>
-          </div>
-          <div class="xc-os-choice-cost xc-os-cost-included">No extra cost</div>
-        </div>
-        <div class="xc-os-choice ${isWin?'selected':''}" onclick="advChangeXcOS('win')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();advChangeXcOS('win');}">
-          <div class="xc-os-choice-check" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div class="xc-os-choice-logo">
-            <img src="${winLogoUrl}" alt="Windows" onerror="this.style.display='none';this.parentNode.innerHTML='<div class=&quot;xc-os-logo-fallback xc-os-logo-win&quot;>Windows</div>';">
-          </div>
-          <div class="xc-os-choice-name">Windows IoT</div>
-          <div class="xc-os-choice-tag">Win10 / Win11 IoT Enterprise</div>
-          <div class="xc-os-choice-pros">
-            <div class="xc-os-bullet">✓ Run any Windows desktop app</div>
-            <div class="xc-os-bullet">✓ Active Directory + GPO support</div>
-            <div class="xc-os-bullet">✓ For specialized signage workflows</div>
-          </div>
-          <div class="xc-os-choice-cost xc-os-cost-extra">+ ₹27,083 per player</div>
-        </div>
-      </div>
-    </div>`;
-}
-
-/* v24.14.4: Switch XC OS choice from the Result page. Updates state, re-renders
-   the result so BOM and pricing reflect the new choice. Stage form pill in sync. */
-function advChangeXcOS(newOs){
-  if(!state.form) return;
-  state.form.os = newOs;
-  // Sync the Section 04 pill if visible
-  const pillGroup = document.querySelector('.pill-group[data-input="os"]');
-  if(pillGroup){
-    pillGroup.querySelectorAll('.pill').forEach(p => {
-      p.classList.toggle('selected', p.dataset.v === newOs);
-    });
-  }
-  // Re-render the result to update BOM line items + pricing
-  if(typeof renderResult === 'function' && state.result){
-    renderResult();
-  }
-  if(typeof showSync === 'function') showSync('OS choice updated ✓','success');
-}
-
 function buildPricingCallout(){
   return `<div class="glass-card pricing-callout-card">
     <div class="glass-card-title">
@@ -12649,19 +12638,20 @@ function renderReviewCards(host,data,period,comparePeriod){
   </div>`);
 
   // Card 2: Business source split
-  const bySource=primary.bySource||{OEM:{count:0,value:0},Cavitak:{count:0,value:0}};
+  const bySource=primary.bySource||{BrightSign:{count:0,value:0},Cavitak:{count:0,value:0}};
+  // v24.14.6: BrightSign source (was 'OEM' in v24.x).
   // v24.4.8: when pricing is hidden, use deal COUNTS instead of ₹ values for the split
-  const oemMetric=SHOW_PRICING?bySource.OEM.value:bySource.OEM.count;
+  const bsMetric=SHOW_PRICING?bySource.BrightSign.value:bySource.BrightSign.count;
   const cavMetric=SHOW_PRICING?bySource.Cavitak.value:bySource.Cavitak.count;
-  const totalSrc=oemMetric+cavMetric;
-  const oemPct=totalSrc>0?Math.round((oemMetric/totalSrc)*100):0;
+  const totalSrc=bsMetric+cavMetric;
+  const bsPct=totalSrc>0?Math.round((bsMetric/totalSrc)*100):0;
   const cavPct=totalSrc>0?Math.round((cavMetric/totalSrc)*100):0;
   const compSrc=compare?compare.bySource:null;
-  const compOemMetric=compSrc?(SHOW_PRICING?compSrc.OEM.value:compSrc.OEM.count):0;
+  const compBsMetric=compSrc?(SHOW_PRICING?compSrc.BrightSign.value:compSrc.BrightSign.count):0;
   const compCavMetric=compSrc?(SHOW_PRICING?compSrc.Cavitak.value:compSrc.Cavitak.count):0;
-  const oemDelta=compSrc?computeDelta(oemMetric,compOemMetric,false):null;
+  const bsDelta=compSrc?computeDelta(bsMetric,compBsMetric,false):null;
   const cavDelta=compSrc?computeDelta(cavMetric,compCavMetric,false):null;
-  const compTotalSrc=compOemMetric+compCavMetric;
+  const compTotalSrc=compBsMetric+compCavMetric;
   const compCavPct=compTotalSrc>0?Math.round((compCavMetric/compTotalSrc)*100):0;
   const shareDelta=compSrc?computeDelta(cavPct,compCavPct,true):null;
   const valueLabel=(n)=>SHOW_PRICING?formatINR(n):(n+' '+(n===1?'deal':'deals'));
@@ -12673,9 +12663,9 @@ function renderReviewCards(host,data,period,comparePeriod){
       <div class="review-card-sub">${subLabel}</div>
     </div>
     <div class="source-row">
-      <div><div class="source-label">OEM-referred</div>${oemDelta?`<div class="source-delta ${oemDelta.cls}">${oemDelta.label}</div>`:''}</div>
-      <div class="source-bar-wrap"><div class="source-bar source-bar-oem" style="width:${Math.max(oemPct,4)}%"><span class="source-bar-pct">${oemPct}%</span></div></div>
-      <div class="source-value">${valueLabel(oemMetric)}</div>
+      <div><div class="source-label">BrightSign-generated</div>${bsDelta?`<div class="source-delta ${bsDelta.cls}">${bsDelta.label}</div>`:''}</div>
+      <div class="source-bar-wrap"><div class="source-bar source-bar-oem" style="width:${Math.max(bsPct,4)}%"><span class="source-bar-pct">${bsPct}%</span></div></div>
+      <div class="source-value">${valueLabel(bsMetric)}</div>
     </div>
     <div class="source-row">
       <div><div class="source-label">Cavitak-generated</div>${cavDelta?`<div class="source-delta ${cavDelta.cls}">${cavDelta.label}</div>`:''}</div>
@@ -14034,7 +14024,7 @@ function getVisibleEntries(){
   if(!state.user)return [];
   const isSuper=state.user.isSuper;
   const role=(state.user.role||'').trim();
-  const seesAll=isSuper || role==='OEM';  // v24: OEM gets team-wide read
+  const seesAll=isSuper || role==='BrightSign';  // v24.14.6: BrightSign role gets team-wide read
   // v24.4.5: trust empty server responses (no fallback to stale cache)
   const haveServerData=Array.isArray(window._centralLog);
   const rawEntries=haveServerData?window._centralLog:loadLocalLog();
@@ -14110,7 +14100,7 @@ function renderLog(){
 
   // Title text
   const role=(state.user.role||'').trim();
-  const seesAll=isSuper || role==='OEM';
+  const seesAll=isSuper || role==='BrightSign';
   if(isSuper){
     pageTitle.textContent='All-team selection history';
     pageSubtitle.textContent=WEBHOOK_URL?'All team entries. Tap Refresh to check for updates.':'All team entries.';
@@ -14183,7 +14173,7 @@ function renderDashboard(){
   if(!state.user)return;
   const isSuper=state.user.isSuper;
   const role=(state.user.role||'').trim();
-  const seesAll=isSuper || role==='OEM';  // v24: OEM also sees team-wide
+  const seesAll=isSuper || role==='BrightSign';  // v24.14.6: BrightSign role also sees team-wide
   const superCharts=document.getElementById('super-charts');
   const superChartsBody=document.getElementById('super-charts-body');
   const filterBar=document.getElementById('filter-bar');
@@ -14558,6 +14548,8 @@ function prefillFormUI(){
       try{pickCloseMonth(f.closemonth);}catch(e){console.warn('pickCloseMonth prefill failed:',e);}
     }
   });
+  // v24.14.8: Apply city→state lock after prefill so state is greyed out when mappable
+  try{ if(typeof autoFillStateFromCity === 'function') autoFillStateFromCity(); }catch(e){}
   // Quantity inputs
   const qEl=document.getElementById('f-qty');
   if(qEl)qEl.value=f.qty||1;
