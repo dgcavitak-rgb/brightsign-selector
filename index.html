@@ -7231,7 +7231,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.16.0';
+const FRONTEND_VERSION = '24.16.2';
 
 
 // ============================================================================
@@ -12675,7 +12675,9 @@ function renderResult(){
   // Primary hero — uses main recommended model
   html+=buildHeroCard(m,f,cms,deployLabel,om?'INDOOR':deployLabel,'primary');
   // Flagship override note
-  if(r.flagshipOverride)html+=`<div class="flagship-note-v21"><strong>Flagship tier override:</strong> When Flagship budget is selected, we recommend <strong>XC4055</strong> as the standard — full 8K, 4-screen capable, Intel Gen 11 i5, dual-OS — regardless of the display count needed. This is our highest-tier player for projects where performance headroom matters.</div>`;
+  // v24.16.2 — Flagship tier override explainer note removed (was verbose/redundant).
+  // The override logic still applies: flagship budget → XC4055 recommendation.
+  // Removed: if(r.flagshipOverride) html += '...';
   if(r.budgetUpgraded)html+=`<div class="flagship-note-v21" style="background:linear-gradient(135deg,rgba(79,70,229,0.08) 0%,rgba(124,58,237,0.05) 100%);border-color:rgba(79,70,229,0.25);color:#3730A3;"><strong>Series upgrade path:</strong> technical minimum is <strong>${r.minCompliantId}</strong> (${r.climbPath[0]}). Your <strong>${BUDGET_ZONES[f.budget].name}</strong> budget climbs <strong>${r.climbPath.join(' → ')}</strong>, landing on <strong>${m.id}</strong>.</div>`;
 
   // Alternates for primary model
@@ -12960,7 +12962,9 @@ function buildConcerns(m,f){
   if(m.chassis==='metal' && f.environment==='outdoor')list.push('<strong>XC metal chassis</strong> is indoor-rated. Consider XT series.');
   // v24.4.17: Removed HDCP-on-OS-roadmap and CMS-scaling notes per PM request
   if(f.update==='cloud' && f.wifi==='no')list.push('<strong>Remote cloud + no Wi-Fi</strong> — ensure wired Ethernet on site.');
-  if(f.ssd==='yes' && m.ssdCapable===null)list.push('<strong>SSD</strong> — verify M.2 NVMe compatibility with BrightSign rep.');
+  // v24.16.2 — removed verify-with-rep warning for ssdCapable=null models.
+  // Now that SSDs are priced and sold for HD/XD/XT/XC, that warning was misleading.
+  // The ssdCapable=false branch below remains (real hard exclusion for AU/LS).
   if(f.ssd==='yes' && m.ssdCapable===false)list.push(`<strong>SSD not supported</strong> on ${m.id}. 64 GB microSD included.`);
   return list;
 }
@@ -13157,8 +13161,13 @@ function buildAdvancedBOMCard(r, f){
   const rows = [];
   const selections = Array.isArray(r.advancedSelections) ? r.advancedSelections : [];
   const acc = r.advancedAccessories || {};
-  // XC OS variant — Advanced flow doesn't expose the OS picker yet; default to standard.
-  const xcOs = (document.getElementById('f-xc-os')||{}).value || 'std';
+  // v24.16.1 — total players across all selected models (used for accessory qty cap)
+  const totalPlayers = selections.reduce(function(s, x){ return s + (parseInt(x.qty,10)||0); }, 0);
+  // v24.16.1 — check if ANY selected model has ssdCapable=false (e.g., AU335/LS425/LS445)
+  const anyNoSsd = selections.some(function(sel){
+    const _m = MODELS.find(function(m){ return m.id === sel.id; });
+    return _m && _m.ssdCapable === false;
+  });
 
   // 1. Player lines — one per selected model
   selections.forEach(sel => {
@@ -13167,30 +13176,49 @@ function buildAdvancedBOMCard(r, f){
     if(qty <= 0) return;
     const model = MODELS.find(m => m.id === id);
     const tag = model ? model.tag : (sel.tag || '');
+    // v24.16.1 — per-model XC OS variant (was: global f-xc-os which doesn't exist in Advanced)
+    // Reads sel.xcOs from advancedSelections state. Defaults to 'std' for non-XC or unset.
+    const xcOs = (model && model.xc) ? (sel.xcOs || 'std') : 'std';
     const pp = getModelPrice(id, xcOs);
+    const osLabel = (model && model.xc && xcOs === 'win') ? ' (Windows IoT)' : '';
     rows.push({
       name: `BrightSign ${pp.sku}`,
       qty: qty,
       unitPrice: pp.unitPrice,
-      note: tag + ' · 64 GB microSD included'
+      note: tag + osLabel + ' · 64 GB microSD included'
     });
   });
 
-  // 2. SSD line — only if user picked capacity AND qty > 0
+  // 2. SSD line — v24.16.1 fix: use getSsdAccessory(), cap qty, skip if not supported
   const ssdCap = acc.ssdCap || '';
-  const ssdQty = parseInt(acc.ssdQty,10) || 0;
-  if(ssdCap && ssdQty > 0){
-    const capLabel = ssdCap === '1024' ? '1 TB' : (ssdCap + ' GB');
+  let ssdQty = parseInt(acc.ssdQty,10) || 0;
+  // Defense-in-depth: cap at totalPlayers even if input clamp was bypassed
+  if(totalPlayers > 0 && ssdQty > totalPlayers) ssdQty = totalPlayers;
+  if(ssdCap && ssdQty > 0 && !anyNoSsd){
+    const _ssdAcc = getSsdAccessory(ssdCap);
+    if(_ssdAcc){
+      // Have a real price → render row with price
+      rows.push({
+        name: _ssdAcc.name,
+        qty: ssdQty,
+        unitPrice: _ssdAcc.unitPriceINR,
+        note: 'Expanded storage'
+      });
+    }
+    // else: Option B — skip entirely if no price configured (frontend silently omits)
+  } else if(ssdCap && ssdQty > 0 && anyNoSsd){
+    // Surface as an inline warning row (no price, clear note)
     rows.push({
-      name: `M.2 NVMe SSD — ${capLabel}`,
+      name: `M.2 NVMe SSD — ${ssdCap === '1024' ? '1 TB' : (ssdCap + ' GB')}`,
       qty: ssdQty,
       unitPrice: null,
-      note: 'Verify M.2 NVMe compatibility · cost excluded'
+      note: 'Not supported on selected entry-level models — verify with rep'
     });
   }
 
-  // 3. WD105 Wi-Fi line — only if qty > 0
-  const wd105Qty = parseInt(acc.wd105Qty,10) || 0;
+  // 3. WD105 Wi-Fi line — only if qty > 0, capped at totalPlayers
+  let wd105Qty = parseInt(acc.wd105Qty,10) || 0;
+  if(totalPlayers > 0 && wd105Qty > totalPlayers) wd105Qty = totalPlayers;
   if(wd105Qty > 0){
     rows.push({
       name: `${WD105_NAME} (${WD105_SKU})`,
@@ -13258,8 +13286,13 @@ function buildBOMCard(m,f,cms){
   if(ssdActive){
     const pp=getModelPrice(m.id,xcOs);
     rows.push({name:`BrightSign ${pp.sku}`, qty:qtyIndoor, unitPrice:pp.unitPrice, note:m.tag+(isMixed?' · Indoor slice':'')});
-    const capLabel=f.ssdCap==='1024'?'1 TB':f.ssdCap+' GB';
-    rows.push({name:`M.2 NVMe SSD — ${capLabel}`, qty:qtyTotal, unitPrice:null, note:m.ssdCapable===null?'Verify M.2 NVMe compatibility · cost excluded':'Cost excluded'});
+    // v24.16.1 — use getSsdAccessory() lookup (was: unitPrice:null with "cost excluded" note)
+    const _ssdAcc = getSsdAccessory(f.ssdCap);
+    if(_ssdAcc){
+      rows.push({name:_ssdAcc.name, qty:qtyTotal, unitPrice:_ssdAcc.unitPriceINR, note:'Expanded storage'});
+    } else {
+      // Option B — skip line entirely when price is 0/unset; concern note still shown elsewhere
+    }
   } else {
     const pp=getModelPrice(m.id,xcOs);
     rows.push({name:`BrightSign ${pp.sku}`, qty:qtyIndoor, unitPrice:pp.unitPrice, note:`${m.tag}${isMixed?' · Indoor slice':''} · 64 GB microSD included`});
@@ -13421,27 +13454,46 @@ function buildProjectCardV21(){
 function buildProjectCard(){return buildProjectCardV21();}
 /* v24.15.0 — Clamp SSD/WD105 qty inputs to total player count.
    These are NOT sold separately as accessories; they're tied to specific players in the deal.
-   Total players = sum of indoor + outdoor qty fields (or just qty for non-Mixed). */
+   v24.16.1 — Properly compute totalPlayers for both Guided and Custom BOQ modes:
+     - Custom BOQ: read advanced model grid live OR state.lastAdvancedSelections
+     - Guided: read indoor + outdoor qty fields OR single qty field */
 function clampAccessoryQty(inputEl){
   if(!inputEl) return;
   const v = parseInt(inputEl.value, 10) || 0;
   if(v < 0){ inputEl.value = 0; return; }
-  // Compute current total players from form
+
   let totalPlayers = 0;
-  const advTotalEl = document.getElementById('adv-total-players');
-  if(advTotalEl){
-    totalPlayers = parseInt(advTotalEl.textContent || advTotalEl.value || '0', 10) || 0;
+
+  // Path 1: Custom BOQ mode — read live model grid state
+  const advQtyInputs = document.querySelectorAll('.adv-model-qty-input, [data-adv-model-qty]');
+  if(advQtyInputs && advQtyInputs.length){
+    advQtyInputs.forEach(function(inp){
+      totalPlayers += parseInt(inp.value, 10) || 0;
+    });
   }
+  // Path 2: read state if Custom BOQ has computed selections
+  if(totalPlayers === 0 && window.state && Array.isArray(state.lastAdvancedSelections)){
+    totalPlayers = state.lastAdvancedSelections.reduce(function(s, x){
+      return s + (parseInt(x.qty, 10) || 0);
+    }, 0);
+  }
+  // Path 3: Guided mode fallbacks — try the actual Guided form IDs
   if(totalPlayers === 0){
-    // Fallback: try to read from indoor + outdoor qty fields directly
-    const indoor  = parseInt((document.getElementById('adv-qty-indoor')||{}).value || '0', 10) || 0;
-    const outdoor = parseInt((document.getElementById('adv-qty-outdoor')||{}).value || '0', 10) || 0;
-    const single  = parseInt((document.getElementById('adv-qty')||{}).value || '0', 10) || 0;
+    const indoor  = parseInt((document.getElementById('f-qty-indoor')||{}).value || '0', 10) || 0;
+    const outdoor = parseInt((document.getElementById('f-qty-outdoor')||{}).value || '0', 10) || 0;
+    const single  = parseInt((document.getElementById('f-qty')||{}).value || '0', 10) || 0;
     totalPlayers = (indoor + outdoor) || single || 0;
   }
+  // Path 4: BOQ summary tile if rendered
+  if(totalPlayers === 0){
+    const advTotalEl = document.getElementById('adv-total-players');
+    if(advTotalEl){
+      totalPlayers = parseInt(advTotalEl.textContent || advTotalEl.value || '0', 10) || 0;
+    }
+  }
+
   if(totalPlayers > 0 && v > totalPlayers){
     inputEl.value = totalPlayers;
-    // Show inline note (best-effort, non-blocking)
     if(typeof showSync === 'function'){
       showSync('Capped to ' + totalPlayers + ' (cannot exceed total players)','info');
     }
@@ -15568,7 +15620,18 @@ function _restoreAdvancedFromEdit() {
     if (input) {
       input.value = String(qty);
       const tr = input.closest('tr');
-      if (tr) tr.classList.add('has-qty');
+      if (tr){
+        tr.classList.add('has-qty');
+        // v24.16.1 — restore XC OS choice from saved selection
+        const xcOs = (sel.xcOs === 'win') ? 'win' : 'std';
+        tr.setAttribute('data-xc-os', xcOs);
+        // Show OS toggle (only XC rows have one) and sync its visual state
+        const osToggle = tr.querySelector('.adv-xc-os-toggle');
+        if(osToggle){
+          osToggle.style.display = 'inline-flex';
+          if(typeof advSetXcOs === 'function') advSetXcOs(id, xcOs);
+        }
+      }
     }
   });
 
@@ -17608,9 +17671,25 @@ function setSelectionMode(mode){
 function populateAdvancedPlayerTable(){
   const tbody = document.getElementById('adv-player-tbody');
   if(!tbody) return;
-  tbody.innerHTML = ADV_PLAYER_CATALOG.map(p => `
-    <tr data-model="${p.id}">
-      <td><span class="adv-model-id">${p.id}</span></td>
+  tbody.innerHTML = ADV_PLAYER_CATALOG.map(p => {
+    // v24.16.1 — XC models get an inline OS toggle (Std / Win) that becomes visible when qty > 0
+    const isXc = (p.id === 'XC2055' || p.id === 'XC4055');
+    const osToggle = isXc ? `
+        <div class="adv-xc-os-toggle" data-model="${p.id}" style="display:none; margin-top:6px; gap:4px; align-items:center;">
+          <span style="font-size:10px; color:var(--ink-subtle, #94A3B8); text-transform:uppercase; letter-spacing:0.05em; font-weight:600;">OS</span>
+          <button type="button" class="adv-xc-os-btn active" data-os="std"
+            onclick="advSetXcOs('${p.id}', 'std')"
+            style="padding:3px 8px; font-size:11px; font-weight:600; border:1px solid var(--indigo, #4F46E5); background:var(--indigo, #4F46E5); color:#fff; border-radius:6px; cursor:pointer;">Std</button>
+          <button type="button" class="adv-xc-os-btn" data-os="win"
+            onclick="advSetXcOs('${p.id}', 'win')"
+            style="padding:3px 8px; font-size:11px; font-weight:600; border:1px solid var(--border-strong, #CBD5E1); background:#fff; color:var(--ink-muted, #64748B); border-radius:6px; cursor:pointer;">Win IoT</button>
+        </div>` : '';
+    return `
+    <tr data-model="${p.id}" data-xc-os="std">
+      <td>
+        <span class="adv-model-id">${p.id}</span>
+        ${osToggle}
+      </td>
       <td><span class="adv-tier ${p.tierClass}">${p.tier}</span></td>
       <td class="adv-highlights">${p.hl}</td>
       <td class="adv-qty-cell">
@@ -17621,9 +17700,35 @@ function populateAdvancedPlayerTable(){
         </div>
       </td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
   // v24.12.6: initialize the sticky total footer + auto-licenses readout
   advUpdateTotals();
+}
+
+/* v24.16.1 — Toggle the XC OS choice on a player row.
+   Stores selection on the <tr data-xc-os="std|win"> attribute, which _advReadSelections reads. */
+function advSetXcOs(modelId, os){
+  const tr = document.querySelector('#adv-player-tbody tr[data-model="' + modelId + '"]');
+  if(!tr) return;
+  tr.setAttribute('data-xc-os', os);
+  // Update button visual state
+  const wrap = tr.querySelector('.adv-xc-os-toggle');
+  if(wrap){
+    wrap.querySelectorAll('.adv-xc-os-btn').forEach(function(btn){
+      const isActive = btn.getAttribute('data-os') === os;
+      btn.classList.toggle('active', isActive);
+      if(isActive){
+        btn.style.background = 'var(--indigo, #4F46E5)';
+        btn.style.color = '#fff';
+        btn.style.borderColor = 'var(--indigo, #4F46E5)';
+      } else {
+        btn.style.background = '#fff';
+        btn.style.color = 'var(--ink-muted, #64748B)';
+        btn.style.borderColor = 'var(--border-strong, #CBD5E1)';
+      }
+    });
+  }
 }
 
 /* v24.12.8: Increment/decrement a player qty by ±1 from the stepper buttons.
@@ -17643,10 +17748,21 @@ function advOnQtyChange(inputEl){
   if(!tr) return;
   const v = parseInt(inputEl.value, 10);
   if(isNaN(v) || v < 0) inputEl.value = '0';
-  if((parseInt(inputEl.value,10) || 0) > 0) tr.classList.add('has-qty');
+  const q = parseInt(inputEl.value,10) || 0;
+  if(q > 0) tr.classList.add('has-qty');
   else tr.classList.remove('has-qty');
+  // v24.16.1 — show/hide XC OS toggle based on qty (only for XC rows)
+  const osToggle = tr.querySelector('.adv-xc-os-toggle');
+  if(osToggle){
+    osToggle.style.display = q > 0 ? 'inline-flex' : 'none';
+  }
   // v24.12.6: live-update the total-players footer + the auto-licenses readout
   advUpdateTotals();
+  // v24.16.1 — re-clamp SSD/WD105 qty if user lowers a player qty below current accessory qty
+  const ssdEl = document.getElementById('adv-ssd-qty');
+  const wd105El = document.getElementById('adv-wd105-qty');
+  if(ssdEl) clampAccessoryQty(ssdEl);
+  if(wd105El) clampAccessoryQty(wd105El);
 }
 
 /* v24.12.6: Refresh the player-table sticky total + the CMS auto-licenses field.
@@ -17679,14 +17795,18 @@ function advUpdateCmsFields(){
 }
 
 function _advReadSelections(){
-  // Returns array of { id, qty, model } — only rows where qty > 0
+  // Returns array of { id, qty, xcOs, model } — only rows where qty > 0
+  // v24.16.1 — xcOs is read from the row's data-xc-os attribute (set by inline OS toggle)
   const out = [];
   document.querySelectorAll('#adv-player-tbody .adv-qty-input').forEach(input => {
     const qty = parseInt(input.value, 10) || 0;
     if(qty <= 0) return;
     const id = input.getAttribute('data-model');
     const model = MODELS.find(m => m.id === id && m.available);
-    if(model) out.push({ id, qty, model });
+    if(!model) return;
+    const tr = input.closest('tr');
+    const xcOs = (tr && tr.getAttribute('data-xc-os')) || 'std';
+    out.push({ id, qty, xcOs, model });
   });
   return out;
 }
@@ -17859,7 +17979,7 @@ async function runAdvancedBOQ(){
       outdoorVariant: null,
       // Custom BOQ flags + payload
       isAdvanced: true,
-      advancedSelections: selections.map(s => ({ id: s.id, qty: s.qty, group: s.model.group, tag: s.model.tag, chassis: s.model.chassis })),
+      advancedSelections: selections.map(s => ({ id: s.id, qty: s.qty, xcOs: s.xcOs || 'std', group: s.model.group, tag: s.model.tag, chassis: s.model.chassis })),
       advancedAccessories: { cmsVendor, cmsTerm, cmsType, cmsLicenses: totalPlayers, ssdCap, ssdQty, wd105Qty }
     };
 
