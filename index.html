@@ -6786,13 +6786,14 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
     <div class="container">
       <div class="print-only-header">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-          <div><div style="font-family:var(--serif);font-size:14pt;font-weight:500;">Dipenkumar Gajjar</div><div style="font-size:9pt;color:#666;">National Product Manager · +91 8160 756 906 · dipen.g@cavitak.com</div></div>
+          <!-- v24.18.3: Print header populated from state.user via setPrintHeaderUser() — fallback baked in for unbooted state -->
+          <div><div style="font-family:var(--serif);font-size:14pt;font-weight:500;" id="print-user-name">Cavitak Marketing</div><div style="font-size:9pt;color:#666;" id="print-user-meta">—</div></div>
           <div style="text-align:right;font-size:9pt;color:#666;"><div>Quote generated: <span id="print-date"></span></div><div>Ref: <span id="print-ref"></span></div></div>
         </div>
       </div>
       <div class="page-header"><div class="page-eyebrow">Result</div><div class="page-title">Your recommendation</div></div>
       <div id="result-content"></div>
-      <div class="print-only-footer"><div>Dipenkumar Gajjar · National Product Manager · +91 8160 756 906 · dipen.g@cavitak.com</div><div>This document is for internal reference and customer discussion. Pricing subject to current price list, forex, and landed-cost variations.</div></div>
+      <div class="print-only-footer"><div id="print-footer-user">Cavitak Marketing</div><div>This document is for internal reference and customer discussion. Pricing subject to current price list, forex, and landed-cost variations.</div></div>
     </div>
     <div class="action-bar">
       <button class="btn-secondary" onclick="backToForm()">← Back</button>
@@ -7130,6 +7131,52 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   </div>
 </div>
 
+<!-- v24.19.0: Profile Setup gate modal — shown on first login or when required profile fields missing.
+     Cannot be dismissed (no close button, escape disabled, click-outside disabled).
+     User must save valid email + phone + professional title to proceed to the app. -->
+<div id="profile-gate-modal" class="dir-modal-overlay" style="display:none;z-index:99999;">
+  <div class="dir-modal" style="max-width:520px;">
+    <div class="dir-modal-head" style="background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%);color:#fff;padding:18px 24px;border-radius:14px 14px 0 0;">
+      <div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;opacity:0.9;font-weight:600;">Welcome aboard</div>
+        <div class="dir-modal-title" style="color:#fff;font-size:20px;margin-top:4px;">Complete your profile</div>
+      </div>
+    </div>
+    <div class="dir-modal-body" style="padding:22px 24px;">
+      <div style="background:var(--surface-2,#F5F3FF);border-left:3px solid var(--indigo,#4F46E5);padding:12px 14px;border-radius:6px;margin-bottom:18px;font-size:13px;color:var(--ink-muted,#475569);line-height:1.5;">
+        These details appear in your <strong>emails, WhatsApp messages, and quotes</strong> to partners. Please verify or fill them now — you can edit them anytime later from the Profile tab.
+      </div>
+      <div id="profile-gate-error" style="display:none;background:#FEE2E2;border:1px solid #DC2626;color:#991B1B;padding:10px 12px;border-radius:6px;margin-bottom:14px;font-size:13px;font-weight:500;"></div>
+
+      <div class="form-group" style="margin-bottom:14px;">
+        <label style="display:block;font-weight:600;font-size:13px;margin-bottom:5px;">Full Name <span style="color:#94A3B8;font-weight:400;font-size:11px;">(read-only — contact super to change)</span></label>
+        <input type="text" id="pgate-fullname" readonly disabled style="width:100%;padding:9px 11px;border:1px solid var(--border-soft,#E5E7EB);border-radius:6px;background:#F8FAFC;color:var(--ink-muted,#64748B);">
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px;">
+        <label style="display:block;font-weight:600;font-size:13px;margin-bottom:5px;">Professional Title <span style="color:#DC2626;">*</span></label>
+        <input type="text" id="pgate-title" placeholder="e.g., Account Manager, Solutions Architect, Sales Executive" maxlength="80" style="width:100%;padding:9px 11px;border:1px solid var(--border-strong,#CBD5E1);border-radius:6px;font-size:14px;">
+        <div style="font-size:11px;color:var(--ink-subtle,#94A3B8);margin-top:4px;">How partners see you. Examples: "Senior Account Manager", "Presales Engineer", "Business Development Manager"</div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px;">
+        <label style="display:block;font-weight:600;font-size:13px;margin-bottom:5px;">Email <span style="color:#DC2626;">*</span></label>
+        <input type="email" id="pgate-email" placeholder="name@cavitak.com" style="width:100%;padding:9px 11px;border:1px solid var(--border-strong,#CBD5E1);border-radius:6px;font-size:14px;">
+        <div style="font-size:11px;color:var(--ink-subtle,#94A3B8);margin-top:4px;">Outgoing emails will appear from this address (with dipen.g@cavitak.com auto-CC'd).</div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px;">
+        <label style="display:block;font-weight:600;font-size:13px;margin-bottom:5px;">Phone <span style="color:#DC2626;">*</span></label>
+        <input type="tel" id="pgate-phone" placeholder="+91 98765 43210" style="width:100%;padding:9px 11px;border:1px solid var(--border-strong,#CBD5E1);border-radius:6px;font-size:14px;">
+        <div style="font-size:11px;color:var(--ink-subtle,#94A3B8);margin-top:4px;">Shown to partners in your communications. WhatsApp uses this number for the 'from' field.</div>
+      </div>
+    </div>
+    <div class="dir-modal-foot" style="padding:14px 24px 18px;border-top:1px solid var(--border-soft,#E5E7EB);text-align:right;">
+      <button class="btn-primary" onclick="saveProfileGate()" id="profile-gate-save-btn" style="background:var(--indigo,#4F46E5);color:#fff;border:none;padding:10px 22px;font-size:14px;font-weight:600;border-radius:6px;cursor:pointer;">Save & Continue</button>
+    </div>
+  </div>
+</div>
+
 <!-- v24.18.0: Email-to-partner modal — sends PDF via backend MailApp -->
 <div id="emailModal" class="dir-modal-overlay" style="display:none;">
   <div class="dir-modal" style="max-width:640px;">
@@ -7386,7 +7433,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.18.2';
+const FRONTEND_VERSION = '24.19.2';
 
 
 // ============================================================================
@@ -10106,6 +10153,123 @@ async function getCurrentAuthHash(){
 
 /* v24.14.11: Apply all the post-login UI changes. Extracted from handleLogin so
    the rehydrate path can call the same code. Idempotent — reading from state.user. */
+/* ===== v24.19.0 — Profile Setup Gate =====
+   Runs after login + (forced password change if any) to ensure user has filled
+   the partner-facing identity fields (professionalTitle + email + phone).
+   Blocks app access until fields are valid. Allows graceful re-entry later via Profile tab. */
+function _profileGateNeeded(){
+  const u = state.user;
+  if(!u) return false;
+  // Skip gate if all required fields present and non-empty
+  const titleOk = (u.professionalTitle || '').trim().length >= 2;
+  const emailOk = (u.email || '').trim().length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((u.email || '').trim());
+  const phoneOk = (u.phone || '').trim().length >= 10;
+  return !(titleOk && emailOk && phoneOk);
+}
+function _showProfileGate(){
+  const u = state.user || {};
+  document.getElementById('pgate-fullname').value = u.fullName || '';
+  document.getElementById('pgate-title').value = u.professionalTitle || '';
+  document.getElementById('pgate-email').value = u.email || '';
+  document.getElementById('pgate-phone').value = u.phone || '';
+  document.getElementById('profile-gate-error').style.display = 'none';
+  const overlay = document.getElementById('profile-gate-modal');
+  overlay.style.display = 'flex';
+  // Lock body scroll while gate active
+  document.body.style.overflow = 'hidden';
+  // Focus the title field
+  setTimeout(function(){
+    const t = document.getElementById('pgate-title');
+    if(t) t.focus();
+  }, 100);
+  // Disable Esc dismissal — gate must be completed
+  if(!window._profileGateEscWired){
+    window._profileGateEscWired = true;
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && document.getElementById('profile-gate-modal').style.display === 'flex'){
+        e.preventDefault(); e.stopPropagation();
+      }
+    }, true);
+  }
+}
+function _hideProfileGate(){
+  document.getElementById('profile-gate-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+async function saveProfileGate(){
+  const errEl = document.getElementById('profile-gate-error');
+  const saveBtn = document.getElementById('profile-gate-save-btn');
+  errEl.style.display = 'none';
+  errEl.textContent = '';
+
+  const title = document.getElementById('pgate-title').value.trim();
+  const email = document.getElementById('pgate-email').value.trim();
+  const phone = document.getElementById('pgate-phone').value.trim();
+
+  // Client-side validation
+  if(!title || title.length < 2){
+    errEl.textContent = 'Professional Title is required (min 2 characters).';
+    errEl.style.display = 'block';
+    document.getElementById('pgate-title').focus();
+    return;
+  }
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    errEl.textContent = 'Valid email is required.';
+    errEl.style.display = 'block';
+    document.getElementById('pgate-email').focus();
+    return;
+  }
+  if(!phone || phone.replace(/\D/g, '').length < 10){
+    errEl.textContent = 'Phone is required (min 10 digits).';
+    errEl.style.display = 'block';
+    document.getElementById('pgate-phone').focus();
+    return;
+  }
+
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving…';
+  try {
+    const pwHash = await getCurrentAuthHash();
+    const resp = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'users_update',
+        requesterLoginName: state.user.loginName,
+        requesterPasswordHash: pwHash,
+        targetLoginName: state.user.loginName,
+        professionalTitle: title,
+        email: email,
+        phone: phone
+      })
+    });
+    const data = await resp.json();
+    if(data.status !== 'ok'){
+      throw new Error(data.message || 'Save failed');
+    }
+    // Mirror to local session state so all rendering uses fresh data
+    state.user.professionalTitle = title;
+    state.user.email = email;
+    state.user.phone = phone;
+    if(window._sessionUser){
+      window._sessionUser.professionalTitle = title;
+      window._sessionUser.email = email;
+      window._sessionUser.phone = phone;
+    }
+    _hideProfileGate();
+    if(typeof showSync === 'function'){
+      showSync('Profile saved — welcome ' + (state.user.fullName || '').split(' ')[0] + '!', 'success');
+    }
+  } catch(err) {
+    errEl.textContent = 'Save failed: ' + (err.message || err);
+    errEl.style.display = 'block';
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save & Continue';
+  }
+}
+
 function _applyPostLoginUI(){
   const u = state.user;
   if(!u) return;
@@ -10144,6 +10308,17 @@ function _applyPostLoginUI(){
       window._draftSkipSave = false;
     }catch(_){ /* never block app load */ }
   }, 50);
+  // v24.19.0: Profile Setup Gate — runs only if profile is incomplete.
+  // Defer 250ms so it appears AFTER any forced password change modal has had a chance
+  // to render. The forced password change modal handler will re-trigger this gate
+  // when it closes (see openChangePasswordModal completion path).
+  setTimeout(function(){
+    try{
+      if(typeof _profileGateNeeded === 'function' && _profileGateNeeded()){
+        _showProfileGate();
+      }
+    }catch(_){ /* never block app load */ }
+  }, 250);
 }
 
 /* v24.14.11: Page-load rehydrate. Returns true if session restored, false otherwise.
@@ -10699,21 +10874,27 @@ function renderUserProfileView(host){
     </div>
     <div class="profile-edit-card">
       <div class="profile-section-title">Contact details</div>
-      <div class="profile-section-subtitle">These details help the team reach you. Only you and the super-user can edit them.</div>
+      <div class="profile-section-subtitle">These details help the team reach you and appear in your communications with partners. Only you and the super-user can edit them.</div>
       <div class="profile-field">
         <label>Full name <span class="profile-field-lock" title="Only super-user can change your name">🔒</span></label>
         <input type="text" id="profile-fullname" value="${u.fullName||''}" readonly disabled class="locked-field">
       </div>
       <div class="profile-field">
-        <label>Role <span class="profile-field-lock" title="Only super-user can change your role">🔒</span></label>
+        <label>Internal Role <span class="profile-field-lock" title="Only super-user can change your role">🔒</span></label>
         <input type="text" id="profile-role" value="${u.role||''}" readonly disabled class="locked-field">
+        <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Used for permissions only — not shown to partners.</div>
       </div>
       <div class="profile-field">
-        <label>Email</label>
-        <input type="email" id="profile-email" value="${u.email||''}" placeholder="name@example.com">
+        <label>Professional Title <span style="color:#DC2626;">*</span></label>
+        <input type="text" id="profile-title" value="${u.professionalTitle||''}" placeholder="e.g., Account Manager, Solutions Architect, Sales Executive" maxlength="80">
+        <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">This is the title that appears in your emails, WhatsApp messages, and quotes to partners.</div>
       </div>
       <div class="profile-field">
-        <label>Phone</label>
+        <label>Email <span style="color:#DC2626;">*</span></label>
+        <input type="email" id="profile-email" value="${u.email||''}" placeholder="name@cavitak.com">
+      </div>
+      <div class="profile-field">
+        <label>Phone <span style="color:#DC2626;">*</span></label>
         <input type="tel" id="profile-phone" value="${u.phone||''}" placeholder="+91 98765 43210">
       </div>
       <div class="profile-actions">
@@ -10729,6 +10910,8 @@ async function saveOwnProfile(){
   const statusEl=document.getElementById('profile-status');
   const email=document.getElementById('profile-email').value.trim();
   const phone=document.getElementById('profile-phone').value.trim();
+  const title=(document.getElementById('profile-title')||{}).value;
+  const titleVal=title?title.trim():'';
   // Basic email validation
   if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
     statusEl.innerHTML='<span class="profile-err">Email does not look valid.</span>';
@@ -10745,14 +10928,20 @@ async function saveOwnProfile(){
         requesterPasswordHash:pwHash,
         targetLoginName:state.user.loginName,
         email:email,
-        phone:phone
+        phone:phone,
+        professionalTitle:titleVal  // v25.7.0
       })
     });
     const data=await resp.json();
     if(data.status==='ok'){
       state.user.email=email;
       state.user.phone=phone;
-      if(window._sessionUser){window._sessionUser.email=email;window._sessionUser.phone=phone;}
+      state.user.professionalTitle=titleVal;  // v25.7.0
+      if(window._sessionUser){
+        window._sessionUser.email=email;
+        window._sessionUser.phone=phone;
+        window._sessionUser.professionalTitle=titleVal;
+      }
       statusEl.innerHTML='<span class="profile-ok">Saved ✓</span>';
       setTimeout(()=>{statusEl.innerHTML='';},2500);
     } else {
@@ -12819,6 +13008,27 @@ function scoreModel(m,f,envOverride){
 function renderResult(){
   document.getElementById('print-date').textContent=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
   document.getElementById('print-ref').textContent='BS-'+Date.now().toString().slice(-8);
+  // v24.18.3 / v24.19.0: Populate print-only header + footer with logged-in user's identity.
+  // v24.19.0: switched from internal `role` to partner-facing `professionalTitle`.
+  // These elements are hidden on screen; only visible when user prints/saves as PDF via browser.
+  try{
+    const _u = state.user || {};
+    const _name = (_u.fullName || '').trim() || 'Cavitak Marketing';
+    const _title = (_u.professionalTitle || '').trim();
+    const _phone = (_u.phone || '').trim();
+    const _email = (_u.email || '').trim();
+    const _metaParts = [];
+    if(_title) _metaParts.push(_title);
+    if(_phone) _metaParts.push(_phone);
+    if(_email) _metaParts.push(_email);
+    const _meta = _metaParts.length ? _metaParts.join(' · ') : 'Cavitak Marketing Pvt Ltd';
+    const _nameEl = document.getElementById('print-user-name');
+    const _metaEl = document.getElementById('print-user-meta');
+    const _footEl = document.getElementById('print-footer-user');
+    if(_nameEl) _nameEl.textContent = _name;
+    if(_metaEl) _metaEl.textContent = _meta;
+    if(_footEl) _footEl.textContent = _name + (_metaParts.length ? ' · ' + _metaParts.join(' · ') : '') + ' · Cavitak Marketing Pvt Ltd';
+  }catch(_){ /* defensive — never block result render on print-header issue */ }
   const r=state.result;const host=document.getElementById('result-content');const f=state.form;
 
   // v24.12.6 Issue #1: Custom BOQ short-circuit. When the user generated a BOQ via Advanced mode,
@@ -13139,10 +13349,48 @@ function buildConcerns(m,f){
   if(f.ssd==='yes' && m.ssdCapable===false)list.push(`<strong>SSD not supported</strong> on ${m.id}. 64 GB microSD included.`);
   return list;
 }
-/* v21.7: For Pricing & Quotation callout — indigo gradient glass card
-   Directs partners/SI/end-users to contact Dipenkumar for firm quote.
-   Blends with the BrightSign app's primary indigo/violet theme. */
+/* v21.7: For Pricing & Quotation callout — indigo gradient glass card.
+   v24.18.3 — Personalized: shows the logged-in user's name + role + contact details
+   (so the partner contacts the rep who built the quote, not always Dipenkumar).
+   For users with missing email/phone, falls back gracefully. Super users see their
+   own card with no fallback; non-Super users always have Dipenkumar's
+   info baked in for escalation. */
 function buildPricingCallout(){
+  const u = state.user || {};
+  const userName  = (u.fullName || '').trim() || 'Cavitak Marketing';
+  // v24.19.0: Use partner-facing professionalTitle, NOT internal `role` (which is permissions: Super/Admin/Member).
+  // Falls back to fullName-only line if title not yet set.
+  const userTitle = (u.professionalTitle || '').trim();
+  const userEmail = (u.email || '').trim();
+  const userPhone = (u.phone || '').trim();
+  const isSuper   = u.isSuper === true;
+
+  // Strip non-digits for tel: link
+  const phoneTel = userPhone.replace(/[^\d+]/g, '');
+
+  // Email pill — always render (graceful empty fallback if missing)
+  const emailPill = userEmail
+    ? `<a href="mailto:${escapeHtml(userEmail)}" class="pricing-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>
+        ${escapeHtml(userEmail)}
+      </a>`
+    : '';
+
+  const phonePill = userPhone
+    ? `<a href="tel:${escapeHtml(phoneTel)}" class="pricing-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        ${escapeHtml(userPhone)}
+      </a>`
+    : '';
+
+  // Dipenkumar escalation strip — shown for non-Super users so partners can
+  // escalate. Suppressed when the logged-in user IS Dipenkumar (would be redundant).
+  const escalationStrip = !isSuper
+    ? `<div class="pricing-callout-escalation" style="margin-top:14px;padding-top:14px;border-top:1px dashed rgba(99,102,241,0.25);font-size:11px;color:var(--ink-muted,#64748B);line-height:1.55;">
+        <strong style="color:var(--indigo,#4F46E5);">Need volume rates or fast quote?</strong> Escalate to Dipenkumar Gajjar (National Product Manager) — <a href="mailto:dipen.g@cavitak.com" style="color:var(--indigo,#4F46E5);text-decoration:none;font-weight:600;">dipen.g@cavitak.com</a> · <a href="tel:+918160756906" style="color:var(--indigo,#4F46E5);text-decoration:none;font-weight:600;">+91 8160 756 906</a>
+      </div>`
+    : '';
+
   return `<div class="glass-card pricing-callout-card">
     <div class="glass-card-title">
       <span class="glass-card-title-icon" style="background:linear-gradient(135deg,#6366F1 0%,#4338CA 100%);">
@@ -13154,20 +13402,15 @@ function buildPricingCallout(){
     </div>
     <div class="glass-card-divider"></div>
     <div class="pricing-callout-inner">
-      <div class="pricing-callout-eyebrow">Call Dipenkumar for better pricing</div>
-      <div class="pricing-callout-name">Dipenkumar Gajjar</div>
-      <div class="pricing-callout-role">National Product Manager · BrightSign Portfolio</div>
+      <div class="pricing-callout-eyebrow">Contact ${escapeHtml(userName.split(' ')[0])} for better pricing</div>
+      <div class="pricing-callout-name">${escapeHtml(userName)}</div>
+      ${userTitle ? `<div class="pricing-callout-role">${escapeHtml(userTitle)} · Cavitak Marketing</div>` : `<div class="pricing-callout-role">Cavitak Marketing</div>`}
       <div class="pricing-callout-pills">
-        <a href="mailto:dipen.g@cavitak.com" class="pricing-pill">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>
-          dipen.g@cavitak.com
-        </a>
-        <a href="tel:+918160756906" class="pricing-pill">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-          +91 8160 756 906
-        </a>
+        ${emailPill}
+        ${phonePill}
       </div>
-      <div class="pricing-callout-note">Prices shown above are indicative. Contact Dipenkumar for volume rates, stock position, and PO placement.</div>
+      <div class="pricing-callout-note">Prices shown above are indicative. Contact ${escapeHtml(userName.split(' ')[0])} for volume rates, stock position, and PO placement.</div>
+      ${escalationStrip}
     </div>
   </div>`;
 }
@@ -13803,7 +14046,8 @@ function _showDraftBanner(){
   const proj = draft['f-project'] || '(unnamed project)';
   const summary = document.getElementById('draft-resume-summary');
   if(summary) summary.textContent = `${proj} — saved ${ago}`;
-  banner.style.display = '';
+  // v24.19.1: banner uses flex layout (align-items, gap, flex-wrap); '' falls back to block which broke layout
+  banner.style.display = 'flex';
 }
 function _humanAgo(ms){
   const m = Math.floor(ms / 60000);
@@ -15293,17 +15537,35 @@ function downloadQuoteExcel(returnWorkbook){
   qAoa.push([]);
   qAoa.push(['TERMS & CONDITIONS']);
   qAoa.push(['Payment Terms','100% advance along with purchase order','','','','','']);
-  qAoa.push(['Delivery','Ex-warehouse, 30 days from receipt of confirmed PO & advance payment','','','','','']);
-  qAoa.push(['Warranty','Standard 5-year OEM warranty (BrightSign Series 5)','','','','','']);
-  qAoa.push(['Validity',`15 days from quote date (${dateStr})`,'','','','','']);
-  qAoa.push(['Taxes','GST @ 18% included above. Additional levies, if any, extra at actuals.','','','','','']);
-  qAoa.push(['Freight & Insurance','Extra at actuals, unless specified otherwise','','','','','']);
-  qAoa.push(['Installation','Commissioning & integration quoted separately on request','','','','','']);
+  qAoa.push(['Lead Time','Standard 4–5 weeks from receipt of confirmed PO & advance payment, subject to stock availability','','','','','']);
+  qAoa.push(['Delivery','Ex-warehouse Ahmedabad. Outbound freight & in-transit insurance extra at actuals.','','','','','']);
+  qAoa.push(['Warranty',"Standard 5-year OEM warranty on BrightSign Series 5 players, subject to product registration on the BrightSign portal within 30 days of purchase. Without registration, default factory warranty applies. Faulty units must be returned to Cavitak's Ahmedabad office for warranty processing; outbound logistics are at the customer's cost.",'','','','','']);
+  qAoa.push(['Validity',`15 days from quote date (${dateStr}). Pricing subject to revision thereafter.`,'','','','','']);
+  qAoa.push(['Taxes','GST @ 18% included above. Any additional levies, cess or local duties extra at actuals.','','','','','']);
+  qAoa.push(['Forex','Pricing based on prevailing INR–USD rate on quote date. Material forex movement (>3%) before PO may revise pricing.','','','','','']);
+  qAoa.push(['Stock Validity','Stock subject to prior sale. Confirmation of availability at the time of PO placement.','','','','','']);
+  qAoa.push(['Installation',"Partner's scope.",'','','','','']);
+  qAoa.push(['Support','Onsite / Online support charges quoted extra on request.','','','','','']);
+  qAoa.push(['Cancellation','Orders once placed are non-cancellable. Advance payment is non-refundable for despatched/in-transit goods.','','','','','']);
+  qAoa.push(['Jurisdiction','All disputes subject to Ahmedabad jurisdiction. Indian law applies.','','','','','']);
   qAoa.push([]);
   qAoa.push(['FOR PRICING & QUOTATION QUERIES']);
-  qAoa.push([(state.user && state.user.fullName)||'Dipenkumar Gajjar','National Product Manager · BrightSign Portfolio','','','','','']);
-  qAoa.push(['Email: dipen.g@cavitak.com · Phone: +91 8160 756 906','','','','','','']);
-  qAoa.push(['Issued by: '+((state.user && state.user.fullName)||'Dipenkumar Gajjar')+' · Cavitak Marketing Pvt Ltd','','','','','','']);
+  // v24.19.2: Use logged-in user's identity in contact footer, with Dipenkumar as escalation for non-Super
+  (function(){
+    const _u = state.user || {};
+    const _name = (_u.fullName || '').trim() || 'Cavitak Marketing';
+    const _title = (_u.professionalTitle || '').trim() || 'Cavitak Marketing';
+    const _email = (_u.email || '').trim() || 'dipen.g@cavitak.com';
+    const _phone = (_u.phone || '').trim() || '+91 8160 756 906';
+    const _isSuper = _u.isSuper === true;
+    qAoa.push([_name, _title + ' · Cavitak Marketing','','','','','']);
+    qAoa.push(['Email: ' + _email + ' · Phone: ' + _phone,'','','','','','']);
+    if(!_isSuper){
+      // Escalation strip — only when user is not the Super (avoids "escalate to yourself")
+      qAoa.push(['For pricing escalation: Dipenkumar Gajjar · National Product Manager · dipen.g@cavitak.com · +91 8160 756 906','','','','','','']);
+    }
+    qAoa.push(['Issued by: ' + _name + ' · Cavitak Marketing Pvt Ltd','','','','','','']);
+  })();
 
   const qWs=XLSX.utils.aoa_to_sheet(qAoa);
   qWs['!cols']=[{wch:6},{wch:16},{wch:18},{wch:44},{wch:8},{wch:16},{wch:18},{wch:30}];  // v24.6.0: +SAP Code
@@ -15456,8 +15718,16 @@ function openEmailModal(){
 
   const greeting = (f.contactname || f.partnerContactName || '').trim() ? ('Dear ' + (f.contactname || f.partnerContactName) + ',') : 'Dear Partner,';
   const userName = (state.user && state.user.fullName) || 'Cavitak Team';
-  const userRole = (state.user && state.user.role) || '';
+  // v24.19.0: Use partner-facing professionalTitle, NOT internal role.
+  const userTitle = (state.user && state.user.professionalTitle) || '';
+  const userPhone = (state.user && state.user.phone) || '';
   const grandStr = state._bomTotals.grandTotal ? formatINR(state._bomTotals.grandTotal) : '—';
+
+  // Build sign-off lines, skipping empty
+  const signOffLines = [userName];
+  if(userTitle) signOffLines.push(userTitle);
+  if(userPhone) signOffLines.push('📞 ' + userPhone);
+  signOffLines.push('Cavitak Marketing Pvt Ltd');
 
   const body = [
     greeting,
@@ -15472,11 +15742,8 @@ function openEmailModal(){
     '',
     'For commercial terms, volume rates, stock position, or any clarifications, please reach out anytime.',
     '',
-    'Regards,',
-    userName,
-    userRole,
-    'Cavitak Marketing Pvt Ltd'
-  ].join('\n');
+    'Regards,'
+  ].concat(signOffLines).join('\n');
 
   document.getElementById('emailModalTo').value = toEmail;
   // v24.18.0: CC field is now optional/extra — backend force-adds dipen.g@cavitak.com always.
@@ -15593,9 +15860,19 @@ async function emailQuoteToPartner(){
   const subject=`Quote · ${f.project||'Project'} · ${m.id} · ${f.qty} unit${f.qty==1?'':'s'}`;
   const greeting=(f.contactname||'').trim()?`Dear ${f.contactname},`:'Dear Partner,';
   const userName=state.user?state.user.fullName:'Cavitak Team';
-  const userRole=state.user?state.user.role:'';
+  // v24.19.0: Use partner-facing professionalTitle, NOT internal role.
+  const userTitle=(state.user && state.user.professionalTitle)?state.user.professionalTitle:'';
+  const userPhone=(state.user && state.user.phone)?state.user.phone:'';
+  const isUserSuper = state.user && state.user.isSuper === true;
   const envStr=f.environment==='mixed'?`Mixed (${f.qtyIndoor} indoor + ${f.qtyOutdoor} outdoor)`:(f.environment||'—');
   const resStr=(f.resolution||'—').toUpperCase();
+
+  // Sign-off: name + title (if set) + phone (if set) + Cavitak. No hardcoded "Dipenkumar" block —
+  // the escalation contact only shows up for non-Super users (parity with pricing callout card).
+  const signOffLines=[userName];
+  if(userTitle) signOffLines.push(userTitle);
+  if(userPhone) signOffLines.push('📞 ' + userPhone);
+  signOffLines.push('Cavitak Marketing Pvt Ltd');
 
   const bodyLines=[
     greeting,
@@ -15614,17 +15891,16 @@ async function emailQuoteToPartner(){
     '',
     `The attached Excel has two sheets: Summary and Quotation (with BOQ line-items + indicative pricing).`,
     '',
-    `For commercial terms, volume rates, stock position, or any clarifications, please contact:`,
-    `Dipenkumar Gajjar — National Product Manager, BrightSign`,
-    `Cavitak Marketing Pvt Ltd · dipen.g@cavitak.com`,
+    `For commercial terms, volume rates, stock position, or any clarifications, please contact me directly.`,
+    ...(isUserSuper ? [] : [
+      '',
+      `For pricing escalation: Dipenkumar Gajjar — National Product Manager · dipen.g@cavitak.com`
+    ]),
     '',
     '-- IMPORTANT: Please attach the Excel file that just downloaded before sending --',
     '',
-    'Regards,',
-    userName,
-    userRole,
-    'Cavitak Marketing Pvt Ltd'
-  ];
+    'Regards,'
+  ].concat(signOffLines);
   const bodyText=bodyLines.join('\n');
 
   // Step 3: Open user's mail app with pre-filled mailto:
@@ -17252,7 +17528,18 @@ function shareViaWhatsApp(){
     ? 'Custom BOQ — multiple models'
     : (r.model ? r.model.id + ' (' + (r.model.tag || '') + ')' : 'Player');
   const greeting = (f.contactname || f.partnerContactName || '').trim() || 'team';
-  const userName = (state.user && state.user.fullName) || 'Cavitak Marketing';
+  // v24.19.0: Personalized WhatsApp sender block — uses partner-facing identity.
+  // Replaces v24.18.3 use of `role` (internal: Super/Admin/Member) with `professionalTitle`.
+  const u = state.user || {};
+  const userName  = (u.fullName || '').trim() || 'Cavitak Marketing';
+  const userTitle = (u.professionalTitle || '').trim();
+  const userPhone = (u.phone || '').trim();
+  const userEmail = (u.email || '').trim();
+  const senderBlock = userName +
+    (userTitle ? '\n' + userTitle : '') +
+    (userPhone ? '\n📞 ' + userPhone : '') +
+    (userEmail ? '\n✉ ' + userEmail : '') +
+    '\nCavitak Marketing Pvt Ltd';
   const validUntilStr = new Date(Date.now() + 15*24*60*60*1000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
 
   const defaultMsg =
@@ -17267,7 +17554,7 @@ function shareViaWhatsApp(){
     '*Valid until*: ' + validUntilStr + '\n\n' +
     'I will share the detailed PDF separately. Let me know if you need any changes.\n\n' +
     'Regards,\n' +
-    userName;
+    senderBlock;
 
   // Pre-format phone (auto-+91 for 10-digit Indian)
   let phoneFmt = '';
