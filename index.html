@@ -7116,7 +7116,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.14.12';
+const FRONTEND_VERSION = '24.14.14';
 
 
 // ============================================================================
@@ -11158,30 +11158,141 @@ function handleLogout(){
 
 /* v21.6: Hard 10-minute session limit for regular users.
    Super-users are exempt — stay logged in indefinitely per requirement. */
+/* v24.14.14 — Idle-based session timeout + daily 02:00 IST forced logout.
+
+   Replaces the previous fixed 10-min timer (and the rejected v24.14.13 phased schedule).
+   New behavior:
+
+   1. IDLE TIMEOUT — 30 min of inactivity → 60-sec warning popup → auto-logout.
+      Mouse/keyboard/scroll/touch on the document resets the 30-min timer
+      (throttled to once per 5 sec to avoid timer churn). Active users never
+      see the popup. Same threshold for Super and regular users — no role bypass.
+
+   2. DAILY FORCED LOGOUT — Once per day at 02:00 IST, force logout for everyone
+      (including Super) regardless of idle state. Catches:
+        - Tabs left open overnight where idle setTimeout was throttled by background
+        - End-of-day enforcement so nobody's session crosses days
+      The visibilitychange handler fires the cutoff if the tab was hidden through
+      02:00 and woke up afterward.
+
+   3. UNCHANGED LOGOUT TRIGGERS:
+        - Tab/browser close → sessionStorage auto-cleared
+        - Manual sign-out button
+        - Backend rejecting auth on rehydrate (password changed elsewhere)
+*/
+
+const IDLE_TIMEOUT_MS = 30 * 60 * 1000;          // 30 min of inactivity
+const IDLE_WARN_BEFORE_MS = 60 * 1000;           // popup shows 60s before logout
+const FORCED_LOGOUT_TIME_IST = '02:00';          // 24-hour IST clock — single daily cutoff
+const _IST_OFFSET_MS = 5.5 * 3600 * 1000;        // IST = UTC+5:30
+
+let _idleResetThrottleAt = 0;
+let _idleActivityHandlerAttached = false;
+let _forcedLogoutScheduledFor = 0;
+
+/* Compute next 02:00 IST cutoff strictly after fromMs (UTC ms). */
+function _nextIstCutoffMs(fromMs){
+  const istNow = new Date(fromMs + _IST_OFFSET_MS);
+  const [hh, mm] = FORCED_LOGOUT_TIME_IST.split(':').map(Number);
+  for(let dayOffset = 0; dayOffset <= 1; dayOffset++){
+    const utcMs = Date.UTC(
+      istNow.getUTCFullYear(),
+      istNow.getUTCMonth(),
+      istNow.getUTCDate() + dayOffset,
+      hh, mm
+    ) - _IST_OFFSET_MS;
+    if(utcMs > fromMs) return utcMs;
+  }
+  // Defensive: should never reach here, but return tomorrow's cutoff
+  return fromMs + 24*3600*1000;
+}
+
+function _scheduleForcedLogout(){
+  if(window._forcedLogoutTimer){ clearTimeout(window._forcedLogoutTimer); window._forcedLogoutTimer = null; }
+  if(!state.user) return;
+  _forcedLogoutScheduledFor = _nextIstCutoffMs(Date.now());
+  const ms = _forcedLogoutScheduledFor - Date.now();
+  console.log('[forced-logout] Next cutoff scheduled for', FORCED_LOGOUT_TIME_IST,
+              'IST (in', Math.round(ms/60000), 'min)');
+  window._forcedLogoutTimer = setTimeout(_fireForcedLogout, ms);
+}
+
+function _fireForcedLogout(){
+  if(!state.user) return;
+  closeSessionWarningModal();
+  showSync('Daily ' + FORCED_LOGOUT_TIME_IST + ' IST logout. Please sign in again.', 'error');
+  console.log('[forced-logout] Firing daily IST cutoff at', new Date().toISOString());
+  handleLogout();
+}
+
+/* visibilitychange catch-up: if the tab was hidden through 02:00 IST and only
+   wakes up afterward, the setTimeout may not have fired. Compare wall clock
+   against scheduled cutoff and fire immediately if past. */
+function _wireForcedLogoutVisibilityCatchup(){
+  if(window._forcedLogoutVisListenerAttached) return;
+  window._forcedLogoutVisListenerAttached = true;
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState !== 'visible') return;
+    if(!state.user || !_forcedLogoutScheduledFor) return;
+    if(Date.now() >= _forcedLogoutScheduledFor){
+      console.log('[forced-logout] visibilitychange caught up — cutoff was at',
+                  new Date(_forcedLogoutScheduledFor).toISOString(),
+                  '· firing now');
+      _fireForcedLogout();
+    }
+  });
+}
+
 function startSessionTimer(){
   stopSessionTimer();
-  if(state.user && state.user.isSuper)return;  // Super bypass
-  const SESSION_MS=10*60*1000;       // 10 minutes total
-  const WARN_BEFORE=60*1000;         // 60 seconds warning
-  // Schedule warning first, then final logout
-  window._sessionWarnTimer=setTimeout(()=>{
-    showSessionWarningModal();
-  },SESSION_MS-WARN_BEFORE);
-  window._sessionTimer=setTimeout(()=>{
-    closeSessionWarningModal();
-    showSync('Session expired. Please sign in again.','error');
-    handleLogout();
-  },SESSION_MS);
+  if(!state.user) return;
+  // v24.14.14: Super no longer bypassed — daily 02:00 IST cutoff applies to all.
+  // Idle timer applies to all too (active users never see popup).
+  _scheduleIdleTimers();
+  _attachActivityListener();
+  _scheduleForcedLogout();
+  _wireForcedLogoutVisibilityCatchup();
 }
+
 function stopSessionTimer(){
   if(window._sessionTimer){clearTimeout(window._sessionTimer);window._sessionTimer=null;}
   if(window._sessionWarnTimer){clearTimeout(window._sessionWarnTimer);window._sessionWarnTimer=null;}
   if(window._sessionCountdown){clearInterval(window._sessionCountdown);window._sessionCountdown=null;}
+  if(window._forcedLogoutTimer){clearTimeout(window._forcedLogoutTimer);window._forcedLogoutTimer=null;}
 }
 
-/* v24: 60-second pre-logout warning modal with countdown and "Stay signed in" button */
+function _scheduleIdleTimers(){
+  if(window._sessionWarnTimer){clearTimeout(window._sessionWarnTimer);window._sessionWarnTimer=null;}
+  if(window._sessionTimer){clearTimeout(window._sessionTimer);window._sessionTimer=null;}
+  window._sessionWarnTimer = setTimeout(showSessionWarningModal, IDLE_TIMEOUT_MS - IDLE_WARN_BEFORE_MS);
+  window._sessionTimer = setTimeout(()=>{
+    closeSessionWarningModal();
+    showSync('Signed out for inactivity. Please sign in again.','error');
+    handleLogout();
+  }, IDLE_TIMEOUT_MS);
+}
+
+function _attachActivityListener(){
+  if(_idleActivityHandlerAttached) return;
+  _idleActivityHandlerAttached = true;
+  const handler = function(){
+    if(!state.user) return;
+    const now = Date.now();
+    // Throttle to once per 5 sec to avoid resetting timers on every mousemove
+    if(now - _idleResetThrottleAt < 5000) return;
+    _idleResetThrottleAt = now;
+    // Don't reset while the warning modal is showing — user must click extend
+    if(document.getElementById('session-warn-modal')) return;
+    _scheduleIdleTimers();
+  };
+  ['mousemove','keydown','click','scroll','touchstart'].forEach(function(ev){
+    document.addEventListener(ev, handler, {capture:true, passive:true});
+  });
+}
+
+/* 60-sec pre-logout warning modal with countdown and "Stay signed in" button. */
 function showSessionWarningModal(){
-  closeSessionWarningModal();  // Ensure no stacking
+  closeSessionWarningModal();
   const modal=document.createElement('div');
   modal.id='session-warn-modal';
   modal.className='pwd-modal-overlay';
@@ -11195,13 +11306,12 @@ function showSessionWarningModal(){
       </div>
     </div>`;
   document.body.appendChild(modal);
-  // Start live countdown
-  let remaining=60;
+  let secs=60;
   window._sessionCountdown=setInterval(()=>{
-    remaining--;
+    secs--;
     const el=document.getElementById('session-countdown');
-    if(el)el.textContent=Math.max(0,remaining);
-    if(remaining<=0){
+    if(el)el.textContent=Math.max(0,secs);
+    if(secs<=0){
       clearInterval(window._sessionCountdown);
       window._sessionCountdown=null;
     }
@@ -11214,25 +11324,16 @@ function closeSessionWarningModal(){
   if(window._sessionCountdown){clearInterval(window._sessionCountdown);window._sessionCountdown=null;}
 }
 
-/* User clicked "Stay signed in" — restart the timer.
-   v24.12.11: Hardened — explicitly stop ALL timers first (including any in-flight
-   setTimeout that might already be racing), log for diagnostics, then start fresh.
-   This guarantees a full 10 more minutes regardless of when in the 60s warning the
-   user clicked. */
+/* User clicked "Stay signed in" — reset idle timers (forced-logout timer untouched). */
 function sessionExtend(){
-  // 1. Hard-stop every session timer + countdown
-  stopSessionTimer();
-  // 2. Close the modal
   closeSessionWarningModal();
-  // 3. Defensive: wipe any stale handles even if stopSessionTimer somehow missed
   if(window._sessionTimer){clearTimeout(window._sessionTimer);window._sessionTimer=null;}
   if(window._sessionWarnTimer){clearTimeout(window._sessionWarnTimer);window._sessionWarnTimer=null;}
   if(window._sessionCountdown){clearInterval(window._sessionCountdown);window._sessionCountdown=null;}
-  // 4. Now start a fresh 10-minute window
-  startSessionTimer();
-  // 5. Confirmation toast (after timer is armed, so feedback matches reality)
-  showSync('Session extended for another 10 minutes ✓','success');
-  console.log('[session] Extended at', new Date().toLocaleTimeString(), '— next warning in 9 min, logout in 10 min');
+  _idleResetThrottleAt = Date.now();
+  _scheduleIdleTimers();
+  showSync('Session extended ✓','success');
+  console.log('[session] Idle timer reset at', new Date().toLocaleTimeString());
 }
 
 /* User clicked "Sign out now" */
