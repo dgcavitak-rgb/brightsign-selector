@@ -6796,7 +6796,10 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
       <button class="btn-secondary" onclick="backToForm()">← Back</button>
       <button class="btn-action" onclick="confirmSelection()">Confirm ✓</button>
       <button class="btn-print" onclick="downloadQuoteExcel()">Download Excel ↓</button>
-      <button class="btn-email" onclick="emailQuoteToPartner()" title="Email Excel quote to partner with CC to Cavitak">✉ Email to partner</button>
+      <!-- v24.18.0: PDF export + WhatsApp share + redesigned Email modal -->
+      <button class="btn-print" onclick="exportQuotePDF()" title="Download a partner-ready PDF of this quote">📄 Download PDF</button>
+      <button class="btn-print" onclick="shareViaWhatsApp()" title="Share quote summary via WhatsApp">📱 WhatsApp</button>
+      <button class="btn-email" onclick="openEmailModal()" title="Email PDF quote to partner with CC to Cavitak">✉ Email to partner</button>
     </div>
   </div>
 
@@ -7125,6 +7128,47 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   </div>
 </div>
 
+<!-- v24.18.0: Email-to-partner modal — sends PDF via backend MailApp -->
+<div id="emailModal" class="dir-modal-overlay" style="display:none;">
+  <div class="dir-modal" style="max-width:640px;">
+    <div class="dir-modal-head">
+      <div class="dir-modal-title">✉ Email Quote to Partner</div>
+      <button class="dir-modal-close" onclick="closeEmailModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="dir-modal-body">
+      <div id="emailModalError" class="dir-modal-err"></div>
+      <div style="background:var(--surface-2,#F5F3FF);border:1px solid var(--border-soft,#E5E7EB);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--ink-muted,#475569);">
+        📎 The PDF quote will be auto-attached. CC'd to <strong>dipen.g@cavitak.com</strong> by default.
+      </div>
+      <div class="form-group">
+        <label>To <span class="req">*</span></label>
+        <input type="email" id="emailModalTo" placeholder="partner@example.com">
+      </div>
+      <div class="form-group">
+        <label>CC</label>
+        <input type="text" id="emailModalCc" placeholder="dipen.g@cavitak.com" value="dipen.g@cavitak.com">
+        <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Comma-separated for multiple recipients.</div>
+      </div>
+      <div class="form-group">
+        <label>Subject <span class="req">*</span></label>
+        <input type="text" id="emailModalSubject" placeholder="Quote · Project · Model · Qty">
+      </div>
+      <div class="form-group">
+        <label>Body</label>
+        <textarea id="emailModalBody" rows="10" style="width:100%;font-family:inherit;font-size:13px;resize:vertical;min-height:180px;"></textarea>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:6px;">
+        <input type="checkbox" id="emailModalIncludePdf" checked style="margin:0;">
+        <label for="emailModalIncludePdf" style="margin:0;font-size:13px;color:var(--ink-muted);cursor:pointer;">Attach PDF quote</label>
+      </div>
+    </div>
+    <div class="dir-modal-foot">
+      <button class="btn-secondary" onclick="closeEmailModal()">Cancel</button>
+      <button class="btn-primary" onclick="sendEmailViaBackend()" id="emailModalSendBtn">Send Email</button>
+    </div>
+  </div>
+</div>
+
 <!-- v24.8.0: Customer Merge modal (Super only) -->
 <div id="customerMergeModal" class="dir-modal-overlay" style="display:none;">
   <div class="dir-modal">
@@ -7304,7 +7348,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.17.0';
+const FRONTEND_VERSION = '24.18.0';
 
 
 // ============================================================================
@@ -15355,6 +15399,132 @@ function downloadQuoteExcel(returnWorkbook){
    - User attaches the just-downloaded file and clicks Send
    - Email sends from the USER's real email address (not dg.cavitak@gmail.com)
    - Dipen.g@cavitak.com is always on CC */
+/* v24.18.0 — Modal-based real email send.
+   Replaces the legacy mailto: flow. Uses backend `email_send` action which calls
+   Apps Script MailApp.sendEmail() with PDF attachment. */
+function openEmailModal(){
+  if(!state.result || state.result.noRec){ alert('No recommendation available to email.'); return; }
+  if(!state._bomTotals){ alert('BOM not built yet. Click Recommend / Generate BOQ first.'); return; }
+  const f = state.form, r = state.result;
+  const m = r.model;
+  const refId = r.refId || 'BS-' + Date.now().toString().slice(-8);
+
+  // Pre-fill values
+  const toEmail = (f.contactemail || f.partnerContactEmail || '').trim();
+  const ccDefault = 'dipen.g@cavitak.com';
+
+  const playerLine = r.isAdvanced ? 'Custom BOQ — multiple models' : (m ? (m.id + ' — ' + (m.tag || '')) : '');
+  const subject = 'Quote · ' + (f.project || 'Project') + ' · ' + (r.isAdvanced ? 'Custom BOQ' : (m ? m.id : '')) + ' · ' + (f.qty || 1) + ' unit' + ((f.qty||1)==1 ? '' : 's');
+
+  const greeting = (f.contactname || f.partnerContactName || '').trim() ? ('Dear ' + (f.contactname || f.partnerContactName) + ',') : 'Dear Partner,';
+  const userName = (state.user && state.user.fullName) || 'Cavitak Team';
+  const userRole = (state.user && state.user.role) || '';
+  const grandStr = state._bomTotals.grandTotal ? formatINR(state._bomTotals.grandTotal) : '—';
+
+  const body = [
+    greeting,
+    '',
+    'Please find attached the BrightSign product recommendation and quotation for your project "' + (f.project||'Project') + '"' + (f.enduser ? (' at ' + f.enduser) : '') + '.',
+    '',
+    'Quote ref: ' + refId,
+    'Player: ' + playerLine,
+    'Quantity: ' + (f.qty || 1) + ' unit' + ((f.qty||1)==1 ? '' : 's'),
+    'Indicative quotation: ' + grandStr + ' (incl. GST @ 18%)',
+    'Valid until: ' + new Date(Date.now() + 15*24*60*60*1000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
+    '',
+    'For commercial terms, volume rates, stock position, or any clarifications, please reach out anytime.',
+    '',
+    'Regards,',
+    userName,
+    userRole,
+    'Cavitak Marketing Pvt Ltd'
+  ].join('\n');
+
+  document.getElementById('emailModalTo').value = toEmail;
+  document.getElementById('emailModalCc').value = ccDefault;
+  document.getElementById('emailModalSubject').value = subject;
+  document.getElementById('emailModalBody').value = body;
+  document.getElementById('emailModalIncludePdf').checked = true;
+  document.getElementById('emailModalError').textContent = '';
+  document.getElementById('emailModalError').style.display = 'none';
+  document.getElementById('emailModal').style.display = 'flex';
+}
+function closeEmailModal(){
+  document.getElementById('emailModal').style.display = 'none';
+}
+async function sendEmailViaBackend(){
+  const errEl = document.getElementById('emailModalError');
+  const sendBtn = document.getElementById('emailModalSendBtn');
+  errEl.textContent = ''; errEl.style.display = 'none';
+
+  const to = document.getElementById('emailModalTo').value.trim();
+  const cc = document.getElementById('emailModalCc').value.trim();
+  const subject = document.getElementById('emailModalSubject').value.trim();
+  const body = document.getElementById('emailModalBody').value.trim();
+  const includePdf = document.getElementById('emailModalIncludePdf').checked;
+
+  // Validation
+  if(!to){ errEl.textContent = 'Recipient (To) is required.'; errEl.style.display = 'block'; return; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)){
+    errEl.textContent = 'Invalid email format for To: ' + to;
+    errEl.style.display = 'block'; return;
+  }
+  if(!subject){ errEl.textContent = 'Subject is required.'; errEl.style.display = 'block'; return; }
+  if(!WEBHOOK_URL){ errEl.textContent = 'Cannot send — webhook URL is not configured.'; errEl.style.display = 'block'; return; }
+
+  sendBtn.disabled = true;
+  sendBtn.textContent = 'Sending…';
+
+  try {
+    let pdfBase64 = null, pdfFilename = null;
+    if(includePdf){
+      const doc = exportQuotePDF(true);
+      if(!doc){ throw new Error('PDF generation failed'); }
+      const refId = (state.result && state.result.refId) || 'BS-' + Date.now().toString().slice(-8);
+      const safeProj = (state.form.project || 'project').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
+      pdfFilename = 'Quote_' + refId + '_' + safeProj + '.pdf';
+      // jsPDF.output('datauristring') returns 'data:application/pdf;base64,XXX' — strip the prefix
+      const dataUri = doc.output('datauristring');
+      pdfBase64 = dataUri.split(',')[1] || dataUri;
+    }
+
+    const pwHash = await getCurrentAuthHash();
+    const payload = {
+      action: 'email_send',
+      requesterLoginName: state.user.loginName,
+      requesterPasswordHash: pwHash,
+      to: to,
+      cc: cc,
+      subject: subject,
+      body: body,
+      attachmentBase64: pdfBase64,
+      attachmentFilename: pdfFilename,
+      attachmentMime: 'application/pdf'
+    };
+
+    const resp = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: {'Content-Type': 'text/plain'},
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+    if(data.status !== 'ok'){
+      throw new Error(data.message || 'Backend error');
+    }
+
+    closeEmailModal();
+    showSync('Email sent to ' + to + ' ✓','success');
+  } catch(err){
+    errEl.textContent = 'Send failed: ' + (err.message || err);
+    errEl.style.display = 'block';
+    console.error('[sendEmailViaBackend]', err);
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Send Email';
+  }
+}
+
 async function emailQuoteToPartner(){
   if(!state.result||state.result.noRec){alert('No recommendation available to email.');return;}
   if(typeof XLSX==='undefined'){alert('Excel library not loaded. Check internet and reload.');return;}
@@ -16792,6 +16962,256 @@ function exportXLSX(){
   const filename=`brightsign-selections-${new Date().toISOString().slice(0,10)}.xlsx`;
   XLSX.writeFile(wb,filename);
   showSync(`Excel exported: ${entries.length} entries ✓`,'success');
+}
+
+/* v24.18.0 — Single-quote PDF export.
+   Generates a clean partner-ready PDF of the current Result tab BOM.
+   Data source: state.form (project context) + state.result (recommendation) + state._bomTotals (rows + totals).
+   Works for both Guided (buildBOMCard) and Custom BOQ (buildAdvancedBOMCard) — both populate state._bomTotals.
+   Returns the jsPDF doc object if returnDoc=true (used by email_send), else triggers download. */
+function exportQuotePDF(returnDoc){
+  if(!state.result || state.result.noRec){
+    if(returnDoc===true) return null;
+    alert('No recommendation available to export.'); return;
+  }
+  if(!state._bomTotals || !state._bomTotals.rows || !state._bomTotals.rows.length){
+    if(returnDoc===true) return null;
+    alert('BOM not built yet. Click Recommend / Generate BOQ first.'); return;
+  }
+  if(typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF){
+    if(returnDoc===true) return null;
+    alert('PDF library not loaded. Refresh and try again.'); return;
+  }
+
+  const f = state.form, r = state.result;
+  const refId = r.refId || ('BS-' + Date.now().toString().slice(-8));
+  const dateStr = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  const validUntil = new Date(Date.now() + 15*24*60*60*1000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({orientation:'portrait', unit:'pt', format:'a4'});
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const M = 36;  // margin
+
+  // --- HEADER STRIP (indigo) ---
+  doc.setFillColor(49,46,129);
+  doc.rect(0,0,pageW,72,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(20);
+  doc.text('BrightSign Product Selector', M, 32);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(10);
+  doc.text('Signage that performs, effortlessly', M, 50);
+  doc.setFontSize(9);
+  doc.text('Quote · ' + refId, M, 64);
+  // Right-aligned date + valid-until
+  doc.setFontSize(9);
+  doc.text('Date: ' + dateStr, pageW - M, 32, {align:'right'});
+  doc.text('Valid until: ' + validUntil, pageW - M, 46, {align:'right'});
+  doc.text('Cavitak Marketing', pageW - M, 60, {align:'right'});
+
+  // --- PROJECT CONTEXT BLOCK ---
+  let y = 92;
+  doc.setTextColor(15,23,42);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.text('PROJECT CONTEXT', M, y);
+  y += 6;
+  doc.setDrawColor(226,232,240); doc.setLineWidth(0.5);
+  doc.line(M, y, pageW-M, y);
+  y += 14;
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(71,85,105);
+
+  // Two-column layout: label : value
+  const leftLabels = [
+    ['Project', f.project || '—'],
+    ['End-user', f.enduser || '—'],
+    ['Partner / SI', f.partner || '—'],
+    ['Consultant', f.consultant || '—']
+  ];
+  const rightLabels = [
+    ['Venue', f.venue || f.venueType || '—'],
+    ['Location', (f.city || '—') + (f.state ? ', ' + f.state : '')],
+    ['Stage', f.stage || '—'],
+    ['Expected Close', f.closemonth || '—']
+  ];
+  const colGap = (pageW - 2*M) / 2;
+  const labelX1 = M, valX1 = M + 80;
+  const labelX2 = M + colGap, valX2 = M + colGap + 80;
+  for(let i=0; i<Math.max(leftLabels.length, rightLabels.length); i++){
+    if(leftLabels[i]){
+      doc.setFont('helvetica','bold'); doc.setTextColor(100,116,139);
+      doc.text(leftLabels[i][0], labelX1, y);
+      doc.setFont('helvetica','normal'); doc.setTextColor(15,23,42);
+      doc.text(String(leftLabels[i][1]).slice(0,55), valX1, y);
+    }
+    if(rightLabels[i]){
+      doc.setFont('helvetica','bold'); doc.setTextColor(100,116,139);
+      doc.text(rightLabels[i][0], labelX2, y);
+      doc.setFont('helvetica','normal'); doc.setTextColor(15,23,42);
+      doc.text(String(rightLabels[i][1]).slice(0,55), valX2, y);
+    }
+    y += 14;
+  }
+  y += 6;
+
+  // --- RECOMMENDED PLAYER (skip for Custom BOQ — multi-model) ---
+  if(!r.isAdvanced && r.model){
+    const m = r.model;
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(15,23,42);
+    doc.text('RECOMMENDED PLAYER', M, y);
+    y += 6;
+    doc.setDrawColor(226,232,240);
+    doc.line(M, y, pageW-M, y);
+    y += 14;
+
+    doc.setFontSize(13); doc.setTextColor(49,46,129);
+    doc.text(m.id + (m.tag ? '  ·  ' + m.tag : ''), M, y);
+    y += 14;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(71,85,105);
+    if(m.notes){
+      const lines = doc.splitTextToSize(m.notes, pageW - 2*M);
+      doc.text(lines, M, y);
+      y += lines.length * 11;
+    }
+    y += 6;
+  }
+
+  // --- BILL OF QUANTITIES ---
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(15,23,42);
+  doc.text('BILL OF QUANTITIES', M, y);
+  y += 6;
+  doc.setDrawColor(226,232,240);
+  doc.line(M, y, pageW-M, y);
+  y += 8;
+
+  // BOM table via autotable
+  const rows = state._bomTotals.rows.map(row => [
+    String(row.name || ''),
+    (row.note || '').toString(),
+    String(row.qty || 0),
+    row.unitPrice != null ? formatINR(row.unitPrice) : '—',
+    row.lineTotal != null ? formatINR(row.lineTotal) : '—'
+  ]);
+
+  if(typeof doc.autoTable === 'function'){
+    doc.autoTable({
+      head: [['Item', 'Notes', 'Qty', 'Unit Price', 'Gross Total']],
+      body: rows,
+      startY: y,
+      margin: {left: M, right: M},
+      theme: 'grid',
+      headStyles: {fillColor:[79,70,229], textColor:[255,255,255], fontSize:9, fontStyle:'bold', halign:'left'},
+      bodyStyles: {fontSize:9, textColor:[30,41,59], cellPadding:5},
+      alternateRowStyles: {fillColor:[248,250,252]},
+      columnStyles: {
+        0: {cellWidth: 130, fontStyle: 'bold'},
+        1: {cellWidth: 200, textColor:[100,116,139], fontSize:8},
+        2: {cellWidth: 30, halign: 'right'},
+        3: {cellWidth: 80, halign: 'right'},
+        4: {cellWidth: 80, halign: 'right', fontStyle: 'bold'}
+      }
+    });
+    y = doc.lastAutoTable.finalY + 10;
+  }
+
+  // --- TOTALS BLOCK ---
+  const subtotal = state._bomTotals.subtotal || 0;
+  const gst      = state._bomTotals.gst      || 0;
+  const grand    = state._bomTotals.grandTotal || 0;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(71,85,105);
+  doc.text('Gross Total',     pageW - M - 110, y, {align:'left'});
+  doc.text(formatINR(subtotal), pageW - M, y, {align:'right'});
+  y += 14;
+  doc.text('GST @ 18%', pageW - M - 110, y, {align:'left'});
+  doc.text(formatINR(gst), pageW - M, y, {align:'right'});
+  y += 14;
+  doc.setDrawColor(79,70,229); doc.setLineWidth(0.8);
+  doc.line(pageW - M - 200, y, pageW - M, y);
+  y += 14;
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(49,46,129);
+  doc.text('Total with GST',  pageW - M - 110, y, {align:'left'});
+  doc.text(formatINR(grand),  pageW - M, y, {align:'right'});
+  y += 24;
+
+  // --- FOOTER (always anchored to page bottom of page 1, may overflow to subsequent pages) ---
+  const footerY = pageH - 50;
+  doc.setDrawColor(226,232,240); doc.setLineWidth(0.5);
+  doc.line(M, footerY, pageW-M, footerY);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,116,139);
+  const u = state.user || {};
+  doc.text(
+    (u.fullName || 'Cavitak Marketing') +
+    (u.role ? ' · ' + u.role : '') +
+    (u.phone ? ' · ' + u.phone : '') +
+    (u.email ? ' · ' + u.email : ''),
+    M, footerY + 14
+  );
+  doc.setFontSize(7); doc.setTextColor(148,163,184);
+  doc.text('This document is for internal reference and customer discussion. Pricing subject to current price list, forex, and landed-cost variations.', M, footerY + 28);
+  doc.text('Generated by BrightSign Product Selector · v' + (typeof FRONTEND_VERSION !== 'undefined' ? FRONTEND_VERSION : ''), pageW - M, footerY + 28, {align:'right'});
+
+  if(returnDoc === true) return doc;
+
+  // Sanitize filename — strip non-safe chars from project name
+  const safeProj = (f.project || 'project').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
+  doc.save('Quote_' + refId + '_' + safeProj + '.pdf');
+  if(typeof showSync === 'function') showSync('PDF downloaded','success');
+}
+
+/* v24.18.0 — WhatsApp share. Generates wa.me URL with prefilled message
+   summarizing the deal (project + ref + total). wa.me cannot carry attachments,
+   so the message includes a note that the partner should download the PDF separately. */
+function shareViaWhatsApp(){
+  if(!state.result || state.result.noRec){
+    alert('No quote available to share.'); return;
+  }
+  if(!state._bomTotals){
+    alert('BOM not built yet. Click Recommend / Generate BOQ first.'); return;
+  }
+  const f = state.form, r = state.result;
+  const refId = r.refId || 'BS-' + Date.now().toString().slice(-8);
+
+  // Pre-fill partner phone — auto-add +91 if 10-digit local number
+  let phoneRaw = (f.partnerContactPhone || '').replace(/\D/g, '');
+  let phoneFmt = '';
+  if(phoneRaw.length === 10) phoneFmt = '91' + phoneRaw;
+  else if(phoneRaw.length === 12 && phoneRaw.startsWith('91')) phoneFmt = phoneRaw;
+  else if(phoneRaw.length >= 10) phoneFmt = phoneRaw;
+  // If we couldn't get a valid phone, ask user
+  if(!phoneFmt || phoneFmt.length < 10){
+    const askedPhone = prompt('Enter partner WhatsApp number (10-digit Indian, or with +91):', phoneRaw || '');
+    if(!askedPhone) return;
+    const digits = askedPhone.replace(/\D/g, '');
+    phoneFmt = digits.length === 10 ? ('91' + digits) : digits;
+    if(phoneFmt.length < 10){ alert('Invalid phone number.'); return; }
+  }
+
+  // Compose message
+  const grand = state._bomTotals.grandTotal || 0;
+  const playerLine = r.isAdvanced
+    ? 'Custom BOQ — multiple models'
+    : (r.model ? r.model.id + ' (' + (r.model.tag || '') + ')' : 'Player');
+  const msg =
+    'Hi ' + (f.partnerContactName || 'team') + ',\n\n' +
+    'Here is the BrightSign quote summary:\n\n' +
+    '*Project*: ' + (f.project || '—') + '\n' +
+    '*End-user*: ' + (f.enduser || '—') + '\n' +
+    '*Player*: ' + playerLine + '\n' +
+    '*Qty*: ' + (f.qty || 1) + '\n' +
+    '*Total (incl. GST)*: ' + formatINR(grand) + '\n' +
+    '*Quote ref*: ' + refId + '\n' +
+    '*Valid until*: ' + new Date(Date.now() + 15*24*60*60*1000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) + '\n\n' +
+    'I will share the detailed PDF separately. Let me know if you need any changes.\n\n' +
+    'Regards,\n' +
+    ((state.user && state.user.fullName) || 'Cavitak Marketing');
+
+  const url = 'https://wa.me/' + phoneFmt + '?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+  if(typeof showSync === 'function') showSync('WhatsApp opened in new tab — review and send','info');
 }
 
 /* v24.2.12: PDF export — summary report with KPIs + tabular data */
