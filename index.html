@@ -1091,6 +1091,132 @@ button{font-family:var(--sans);}
   font-size:13px;font-weight:700;
 }
 .app-user-avatar.super{background:var(--gold-light);color:var(--gold);}
+
+/* v24.16.0 — Notification bell + dropdown panel (ported from tvONE v25.27)
+   BS-themed: indigo accent (not gold), light-surface (not dark) */
+.notif-bell {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  background: var(--surface-2, #F5F3FF);
+  border: 1px solid var(--border-strong, #CBD5E1);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--ink-muted, #64748B);
+  transition: all 140ms;
+}
+.notif-bell:hover {
+  background: var(--indigo-light, #EEF2FF);
+  border-color: var(--indigo, #4F46E5);
+  color: var(--indigo, #4F46E5);
+  transform: translateY(-1px);
+}
+.notif-bell .notif-badge {
+  position: absolute; top: -4px; right: -4px;
+  min-width: 18px; height: 18px;
+  padding: 0 5px;
+  background: linear-gradient(135deg, #DC2626, #B91C1C);
+  color: #fff;
+  font-family: var(--mono, monospace);
+  font-size: 10px; font-weight: 800;
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.4);
+}
+.notif-bell .notif-badge.hidden { display: none; }
+.notif-bell.has-new .notif-badge { animation: notifPulse 1.8s ease-in-out infinite; }
+@keyframes notifPulse {
+  0%, 100% { box-shadow: 0 2px 6px rgba(220, 38, 38, 0.4), 0 0 0 0 rgba(220, 38, 38, 0.45); }
+  50%      { box-shadow: 0 2px 6px rgba(220, 38, 38, 0.6), 0 0 0 6px rgba(220, 38, 38, 0); }
+}
+.notif-panel {
+  position: fixed;
+  top: 0; left: 0;  /* set dynamically by JS */
+  width: 360px;
+  max-height: 480px;
+  background: #FFFFFF;
+  border: 1.5px solid var(--indigo, #4F46E5);
+  border-radius: 14px;
+  box-shadow:
+    0 28px 70px rgba(15, 23, 42, 0.18),
+    0 0 0 1px rgba(15, 23, 42, 0.05),
+    0 0 24px rgba(79, 70, 229, 0.10);
+  overflow: hidden;
+  z-index: 99999;
+  display: none;
+}
+.notif-panel.open { display: flex; flex-direction: column; animation: notifSlideIn 0.22s ease; }
+@keyframes notifSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+[data-theme="dark"] .notif-panel {
+  background: #1E293B;
+  border-color: rgba(99, 102, 241, 0.55);
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 24px rgba(99, 102, 241, 0.18);
+}
+.notif-panel-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border, #E5E7EB);
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.notif-panel-title {
+  font-family: var(--serif, Georgia, serif); font-size: 16px; font-weight: 600;
+  color: var(--ink, #1F2937);
+}
+.notif-mark-all {
+  background: transparent; border: none; cursor: pointer;
+  font-family: var(--mono, monospace); font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--indigo, #4F46E5);
+  padding: 4px 8px; border-radius: 6px;
+  transition: background 140ms;
+}
+.notif-mark-all:hover { background: var(--indigo-light, #EEF2FF); }
+.notif-panel-body { flex: 1; overflow-y: auto; padding: 6px 0; }
+.notif-item {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border, #E5E7EB);
+  cursor: pointer;
+  transition: background 140ms;
+  display: flex; gap: 12px;
+}
+.notif-item:hover { background: var(--surface-2, #F5F3FF); }
+.notif-item:last-child { border-bottom: none; }
+.notif-item.unread { background: var(--indigo-light, #EEF2FF); }
+.notif-item.unread::before {
+  content: '';
+  display: inline-block;
+  width: 6px; height: 6px;
+  margin-top: 7px;
+  background: var(--indigo, #4F46E5);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.notif-item-body { flex: 1; min-width: 0; }
+.notif-item-title {
+  font-family: var(--sans, sans-serif); font-size: 13px; font-weight: 600;
+  color: var(--ink, #1F2937); line-height: 1.35;
+  margin-bottom: 3px;
+}
+.notif-item-sub { font-size: 11.5px; color: var(--ink-muted, #64748B); line-height: 1.4; }
+.notif-item-time {
+  font-family: var(--mono, monospace);
+  font-size: 10px; color: var(--ink-subtle, #94A3B8);
+  margin-top: 4px; letter-spacing: 0.05em;
+}
+.notif-empty {
+  padding: 40px 20px; text-align: center;
+  font-size: 13px; color: var(--ink-subtle, #94A3B8);
+}
+@media (max-width: 640px) {
+  .notif-panel { position: fixed; top: auto; bottom: 0; right: 0; left: 0; width: 100%; max-height: 70vh; border-radius: 16px 16px 0 0; }
+}
+
 .app-user button{
   background:transparent;border:1px solid var(--border-strong);color:var(--ink-muted);
   padding:7px 14px;border-radius:8px;
@@ -4296,7 +4422,7 @@ html[data-theme="dark"] .export-menu button:hover{background:rgba(124,58,237,0.2
 /* v24.2.12: History change log + soft delete UI */
 .log-entry-top{display:grid;grid-template-columns:180px 1fr auto;gap:24px;align-items:center;}
 .log-meta-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
-.log-history-btn,.log-delete-btn{
+.log-history-btn,.log-revisions-btn,.log-delete-btn{
   padding:5px 10px;
   font-family:var(--sans);
   font-size:10px;
@@ -4313,6 +4439,11 @@ html[data-theme="dark"] .export-menu button:hover{background:rgba(124,58,237,0.2
   border-color:#7C3AED;
   color:#7C3AED;
   background:rgba(124,58,237,0.05);
+}
+.log-revisions-btn:hover{
+  border-color:#4F46E5;
+  color:#4F46E5;
+  background:rgba(79,70,229,0.05);
 }
 .log-delete-btn:hover{
   border-color:#DC2626;
@@ -6036,6 +6167,20 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         <button class="theme-pill" data-mode="auto" onclick="setThemeMode('auto')" title="Auto (follow device)" aria-label="Auto theme"><span class="theme-pill-icon">A</span></button>
         <button class="theme-pill" data-mode="dark" onclick="setThemeMode('dark')" title="Dark" aria-label="Dark mode"><span class="theme-pill-icon">☾</span></button>
       </div>
+      <!-- v24.16.0 — Notification bell (ported from tvONE v25.27) -->
+      <div style="position:relative;">
+        <button id="notifBell" class="notif-bell" onclick="toggleNotifPanel(event)" title="Notifications" aria-label="Notifications">
+          🔔
+          <span id="notifBadge" class="notif-badge hidden">0</span>
+        </button>
+        <div id="notifPanel" class="notif-panel">
+          <div class="notif-panel-header">
+            <div class="notif-panel-title">Notifications</div>
+            <button class="notif-mark-all" onclick="markAllNotificationsRead()">Mark all read</button>
+          </div>
+          <div id="notifPanelBody" class="notif-panel-body"></div>
+        </div>
+      </div>
       <div class="app-user-avatar" id="user-avatar">?</div>
       <button onclick="handleLogout()">Sign out</button>
     </div>
@@ -6542,12 +6687,12 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
               <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Storage size per drive</div>
             </div>
             <div class="field" style="margin-bottom:0;"><label class="field-label">SSD (qty)</label>
-              <input type="number" id="adv-ssd-qty" min="0" step="1" value="0" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;">
-              <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">How many drives to include</div>
+              <input type="number" id="adv-ssd-qty" min="0" step="1" value="0" oninput="clampAccessoryQty(this)" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;">
+              <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">How many drives to include · cannot exceed total players</div>
             </div>
             <div class="field" style="margin-bottom:0;"><label class="field-label">WD105 Wi-Fi module (qty)</label>
-              <input type="number" id="adv-wd105-qty" min="0" step="1" value="0" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;">
-              <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Wireless connectivity</div>
+              <input type="number" id="adv-wd105-qty" min="0" step="1" value="0" oninput="clampAccessoryQty(this)" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;">
+              <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Wireless connectivity · cannot exceed total players</div>
             </div>
           </div>
         </div>
@@ -7001,42 +7146,12 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
     </div>
     <!-- /v24.14.9 KPI dashboard -->
 
-    <!-- v24.9 Cycle 2a — Comparison dropdown, 2-column card, Plan of Action textarea -->
+    <!-- v24.16.0 — SAP/C2a Actuals KPI widget removed.
+         Was previously: comparison dropdown + Actuals/Pipeline KPI cards (Cycle 2a).
+         Backend sales_history_aggregate became a stub in v25.0.5 — UI showed "—" for everyone.
+         Plan of Action, drilldown, velocity, and trend below are unaffected. -->
     <div id="bs-c2a-wrap" style="margin:18px 0 12px; padding:16px 18px; background:var(--surface-2,#F5F3FF); border:1px solid var(--border,#E5E7EB); border-radius:12px;">
-      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px;">
-        <div>
-          <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600; margin-bottom:4px;">Comparison</div>
-          <select id="bs-c2a-mode" onchange="bsC2aRender()" style="padding:8px 12px; border:1px solid var(--border-strong,#CBD5E1); border-radius:8px; font-size:13px; min-width:240px;">
-            <option value="qoq_yoy">Quarter vs same quarter last year</option>
-            <option value="qoq_seq">Quarter vs previous quarter</option>
-            <option value="yoy">Year-to-date vs last year YTD</option>
-            <option value="half">Half-year vs same half last year</option>
-            <option value="ytd">Year-to-date (no comparison)</option>
-          </select>
-        </div>
-        <div style="flex:1; min-width:180px; font-size:11px; color:var(--ink-subtle,#94A3B8);" id="bs-c2a-asof">As of: —</div>
-      </div>
-      <div id="bs-c2a-card" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-        <div class="kpi-card" style="background:#FFF; border:1px solid var(--border,#E5E7EB); border-radius:10px; padding:14px;">
-          <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Current</div>
-          <div id="bs-c2a-cur-label" style="font-size:12px; color:var(--ink-muted,#64748B); margin:4px 0 10px; min-height:16px;">—</div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <div><div style="font-size:10px; color:var(--ink-subtle,#94A3B8); text-transform:uppercase; letter-spacing:0.05em;">Actuals</div><div id="bs-c2a-cur-actuals" style="font-size:22px; font-weight:700; color:var(--indigo,#4F46E5); font-family:var(--serif,Georgia,serif); margin-top:2px;">—</div></div>
-            <div><div style="font-size:10px; color:var(--ink-subtle,#94A3B8); text-transform:uppercase; letter-spacing:0.05em;">Pipeline (open)</div><div id="bs-c2a-cur-pipeline" style="font-size:22px; font-weight:700; color:var(--indigo,#4F46E5); font-family:var(--serif,Georgia,serif); margin-top:2px;">—</div></div>
-          </div>
-          <div id="bs-c2a-cur-tx" style="font-size:11px; color:var(--ink-subtle,#94A3B8); margin-top:8px;">—</div>
-        </div>
-        <div class="kpi-card" id="bs-c2a-cmp-card" style="background:#FFF; border:1px solid var(--border,#E5E7EB); border-radius:10px; padding:14px;">
-          <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Comparison</div>
-          <div id="bs-c2a-cmp-label" style="font-size:12px; color:var(--ink-muted,#64748B); margin:4px 0 10px; min-height:16px;">—</div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <div><div style="font-size:10px; color:var(--ink-subtle,#94A3B8); text-transform:uppercase; letter-spacing:0.05em;">Actuals</div><div id="bs-c2a-cmp-actuals" style="font-size:22px; font-weight:700; color:var(--ink,#1F2937); font-family:var(--serif,Georgia,serif); margin-top:2px;">—</div></div>
-            <div><div style="font-size:10px; color:var(--ink-subtle,#94A3B8); text-transform:uppercase; letter-spacing:0.05em;">Δ Actuals</div><div id="bs-c2a-delta" style="font-size:22px; font-weight:700; margin-top:2px; font-family:var(--serif,Georgia,serif);">—</div></div>
-          </div>
-          <div id="bs-c2a-cmp-tx" style="font-size:11px; color:var(--ink-subtle,#94A3B8); margin-top:8px;">—</div>
-        </div>
-      </div>
-      <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border,#E5E7EB);">
+      <div style="margin-top:0; padding-top:0;">
         <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
           <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Plan of Action <span id="bs-c2a-poa-period" style="font-weight:500; text-transform:none; letter-spacing:0; color:var(--ink-muted,#64748B);"></span></div>
           <div id="bs-c2a-poa-status" style="font-size:11px; color:var(--ink-subtle,#94A3B8);"></div>
@@ -7116,7 +7231,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.14.14';
+const FRONTEND_VERSION = '24.16.0';
 
 
 // ============================================================================
@@ -7223,7 +7338,7 @@ function buildDerivedDirectory_(type){
     // 3-name pattern used elsewhere. The bare 'r.dealValue' missed any record
     // saved under the modern field name 'dealValueINR', causing the Customer
     // Directory totalValueINR column to undercount.
-    entry.totalValueINR += (parseFloat(r.dealValueINR || r.dealValue || r.dealvalueinr || 0) || 0);
+    entry.totalValueINR += _readDealValue(r);
     if(r.city) entry.cities.add(r.city);
     if(r.enduser) entry.endUsers.add(r.enduser);
     const when = r.ts ? new Date(r.ts).getTime() : 0;
@@ -7375,6 +7490,14 @@ async function deleteCustomer(customerId, customerName){
     const data = await resp.json();
     if(data.status === 'ok'){
       showSync && showSync('Customer removed', 'success');
+      // v24.16.0 — notification on customer delete
+      if(typeof pushNotification === 'function'){
+        pushNotification({
+          title: 'Customer removed',
+          sub: customerName + ' deleted from master list',
+          type: 'info'
+        });
+      }
       refreshCustomers();
     } else {
       alert('Could not delete: ' + (data.message || 'unknown error'));
@@ -7537,6 +7660,15 @@ async function submitMergeModal(){
     if(data.status === 'ok'){
       closeMergeModal();
       showSync && showSync('Merged · ' + data.submissionsUpdated + ' deals reassigned', 'success');
+      // v24.16.0 — notification on customer merge
+      if(typeof pushNotification === 'function'){
+        const n = data.submissionsUpdated || 0;
+        pushNotification({
+          title: 'Customers merged',
+          sub: n + ' deal' + (n === 1 ? '' : 's') + ' moved under target customer',
+          type: 'info'
+        });
+      }
       refreshCustomers();
     } else {
       showErr(data.message || 'Merge failed');
@@ -8077,14 +8209,32 @@ async function fetchPriceBook(loginName, passwordHash){
     PRICING = newPricing;
     SAP_CODES = newSap;
     XC_WIN_SURCHARGE = newXcWinSurcharge;
-    // Apply accessories — currently only WD105
+    // v24.15.0 — Generic accessories map. Replaces hardcoded WD105-only handling.
+    // Lookup pattern: window._accessoriesMap['SSD-256'] → {sku, unitPriceINR, sapCode, ...}
+    // WD105 still also writes to legacy globals (WD105_PRICE/SKU/NAME) for backwards compat
+    // with existing call sites that haven't been migrated yet.
+    window._accessoriesMap = {};
     if(Array.isArray(data.accessories)){
       data.accessories.forEach(function(a){
+        if(!a || !a.accessoryId) return;
+        window._accessoriesMap[a.accessoryId] = {
+          name: a.name || a.accessoryId,
+          sku: a.sku || a.accessoryId,
+          unitPriceINR: parseFloat(a.unitPriceINR) || 0,
+          sapCode: a.sapCode || '',
+          autoIncludeRule: a.autoIncludeRule || '',
+          note: a.note || ''
+        };
+        // Backwards-compat: WD105 also writes to legacy globals
         if(a.accessoryId === 'WD105'){
           WD105_PRICE = a.unitPriceINR;
           WD105_SKU   = a.sku || 'WD105';
           WD105_NAME  = a.name || 'WD105 Wi-Fi module';
           if(a.sapCode) SAP_CODES['WD105'] = a.sapCode;
+        }
+        // SSD: also stamp SAP code into SAP_CODES map keyed on SKU (so Excel quote can look up)
+        if(a.accessoryId && a.accessoryId.indexOf('SSD-') === 0 && a.sapCode){
+          SAP_CODES[a.sku] = a.sapCode;
         }
       });
     }
@@ -8177,6 +8327,84 @@ async function ensureFreshCmsPriceBook(){
   }catch(_){ /* keep stale CMS price book on refresh failure */ }
 }
 
+/* v24.15.0 — Catalog fetch.
+   Mirrors fetchPriceBook pattern. Loads model specs from Catalog tab.
+   On success: replaces MODELS array contents in-place (preserves array
+   identity for any code that captured a reference). On failure: keeps
+   hardcoded fallback MODELS array from source. */
+window._catalogFetchedAt = 0;
+window._catalogCacheMaxAgeMs = 10800000;
+
+async function fetchCatalog(loginName, passwordHash){
+  if(!WEBHOOK_URL || !loginName || !passwordHash) return null;
+  try{
+    const res = await fetch(WEBHOOK_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        action: 'catalog_get',
+        requesterLoginName: loginName,
+        requesterPasswordHash: passwordHash
+      })
+    });
+    if(!res.ok){
+      console.warn('[fetchCatalog] HTTP', res.status, '— keeping fallback MODELS from source');
+      return null;
+    }
+    const data = await res.json();
+    if(!data || !data.ok){
+      console.warn('[fetchCatalog] backend returned not-ok:', data && data.message,
+                   data && data.hint ? '· ' + data.hint : '');
+      return null;
+    }
+    if(!Array.isArray(data.models) || data.models.length === 0){
+      console.warn('[fetchCatalog] empty catalog — Super needs to run catalog_seed_ONESHOT(). Keeping fallback MODELS.');
+      return null;
+    }
+    // Replace MODELS array contents in-place (preserves array identity for cached refs)
+    if(typeof MODELS !== 'undefined' && Array.isArray(MODELS)){
+      MODELS.length = 0;
+      data.models.forEach(function(m){ MODELS.push(m); });
+    }
+    window._catalogFetchedAt = Date.now();
+    window._catalogCacheMaxAgeMs = (data.cacheMaxAgeSec || 10800) * 1000;
+    console.log('[fetchCatalog] ✓ Loaded', data.modelCount, 'catalog rows from Catalog tab');
+    return data;
+  }catch(err){
+    console.warn('[fetchCatalog] fetch failed:', err && err.message ? err.message : err,
+                 '— keeping fallback MODELS');
+    return null;
+  }
+}
+
+async function ensureFreshCatalog(){
+  if(!window.state || !window.state.user) return;
+  if(!window._sessionPassword && !window._sessionPasswordHash) return;
+  const age = Date.now() - (window._catalogFetchedAt || 0);
+  const max = window._catalogCacheMaxAgeMs || 10800000;
+  if(age < max) return;
+  try{
+    const pwHash = await getCurrentAuthHash();
+    if(!pwHash) return;
+    await fetchCatalog(window.state.user.loginName, pwHash);
+  }catch(_){ /* keep stale catalog on refresh failure */ }
+}
+
+/* v24.15.0 — SSD accessory lookup.
+   Returns the accessory record for given capacity (128/256/512/1024).
+   Returns null if no row OR if unitPriceINR is 0 (placeholder).
+   Frontend uses this to decide whether to show SSD line in BOM (Option B:
+   skip line entirely if price not configured). */
+function getSsdAccessory(capGB){
+  const capKey = String(capGB || '').trim();
+  if(!capKey) return null;
+  const id = 'SSD-' + capKey;
+  const acc = (window._accessoriesMap || {})[id];
+  if(!acc) return null;
+  if(!acc.unitPriceINR || acc.unitPriceINR === 0) return null;  // Option B: skip if not priced
+  return acc;
+}
+
 /* Look up CMS price for (vendor, priceType, term).
    - For priceType='installation', `term` is ignored (installation rows have empty termYears).
    - Returns { unitPriceINR, sapCode, source: 'exact'|'extrapolated'|null, note }
@@ -8224,6 +8452,173 @@ function getCmsPrice(vendor, priceType, term){
    v24.4.20: Force style:decimal + notation:standard to prevent browsers from auto-compacting
    large numbers to "1.27 L" / "8.41 L" using the Indian short-scale.
    Want explicit rupee amounts like "₹1,27,000" / "₹8,41,244" — always full, never abbreviated. */
+/* v24.16.0 — Notification center (ported from tvONE v25.27).
+   Bell + dropdown panel in header. localStorage-backed, per-user.
+   Other code adds items via pushNotification({title, sub, type}).
+   Triggers wired in BS at: deal save, deal update, reset request flows,
+   customer delete, customer merge.
+   Storage: bs-notifications-v1__<loginName>, max 50 items, 7-day retention.
+   Types: info, success, warn, error. */
+(function(){
+  const NOTIF_STORAGE_KEY_PREFIX = 'bs-notifications-v1__';
+  const NOTIF_MAX_ITEMS = 50;
+  const NOTIF_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+
+  function _notifKey_() {
+    const loginName = (typeof state !== 'undefined' && state && state.user && state.user.loginName) ? state.user.loginName : 'anon';
+    return NOTIF_STORAGE_KEY_PREFIX + loginName;
+  }
+
+  function _loadNotifs_() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(_notifKey_()) || '[]');
+      const cutoff = Date.now() - NOTIF_RETENTION_MS;
+      return raw.filter(function(n) {
+        const ts = n && n.ts ? Date.parse(n.ts) : 0;
+        return ts >= cutoff;
+      });
+    } catch (e) { return []; }
+  }
+
+  function _saveNotifs_(arr) {
+    try { localStorage.setItem(_notifKey_(), JSON.stringify(arr.slice(0, NOTIF_MAX_ITEMS))); }
+    catch (e) { /* storage full or disabled */ }
+  }
+
+  window.pushNotification = function(n) {
+    if (!n || !n.title) return;
+    const list = _loadNotifs_();
+    list.unshift({
+      id: 'N-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+      title: n.title,
+      sub: n.sub || '',
+      type: n.type || 'info',
+      ts: new Date().toISOString(),
+      read: false
+    });
+    _saveNotifs_(list);
+    renderNotifBell();
+  };
+
+  window.markAllNotificationsRead = function() {
+    const list = _loadNotifs_();
+    list.forEach(function(n) { n.read = true; });
+    _saveNotifs_(list);
+    renderNotifBell();
+    renderNotifPanel();
+  };
+
+  window.markNotificationRead = function(id) {
+    const list = _loadNotifs_();
+    const item = list.find(function(n) { return n.id === id; });
+    if (item) { item.read = true; _saveNotifs_(list); renderNotifBell(); }
+  };
+
+  function renderNotifBell() {
+    const bell = document.getElementById('notifBell');
+    const badge = document.getElementById('notifBadge');
+    if (!bell || !badge) return;
+    const list = _loadNotifs_();
+    const unread = list.filter(function(n) { return !n.read; }).length;
+    if (unread > 0) {
+      badge.classList.remove('hidden');
+      badge.textContent = unread > 99 ? '99+' : String(unread);
+      bell.classList.add('has-new');
+    } else {
+      badge.classList.add('hidden');
+      bell.classList.remove('has-new');
+    }
+  }
+  window.renderNotifBell = renderNotifBell;
+
+  window.toggleNotifPanel = function(ev) {
+    if (ev) ev.stopPropagation();
+    const panel = document.getElementById('notifPanel');
+    const bell = document.getElementById('notifBell');
+    if (!panel || !bell) return;
+    const isOpen = panel.classList.contains('open');
+    if (isOpen) { closeNotifPanel(); return; }
+    if (panel.parentNode !== document.body) document.body.appendChild(panel);
+    const rect = bell.getBoundingClientRect();
+    const panelWidth = 360;
+    panel.style.top = (rect.bottom + 10) + 'px';
+    let left = rect.right - panelWidth;
+    if (left < 8) left = 8;
+    if (left + panelWidth > window.innerWidth - 8) left = window.innerWidth - panelWidth - 8;
+    panel.style.left = left + 'px';
+    panel.classList.add('open');
+    renderNotifPanel();
+    window.addEventListener('scroll', closeNotifPanel, { once: true });
+    window.addEventListener('resize', closeNotifPanel, { once: true });
+  };
+
+  function closeNotifPanel() {
+    const panel = document.getElementById('notifPanel');
+    if (panel) panel.classList.remove('open');
+  }
+  window.closeNotifPanel = closeNotifPanel;
+
+  document.addEventListener('click', function(e) {
+    const panel = document.getElementById('notifPanel');
+    const bell = document.getElementById('notifBell');
+    if (panel && panel.classList.contains('open')) {
+      if (!panel.contains(e.target) && bell && !bell.contains(e.target)) closeNotifPanel();
+    }
+  });
+
+  function _relativeNotifTime_(iso) {
+    try {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      const diff = (Date.now() - d.getTime()) / 60000;
+      if (diff < 1) return 'just now';
+      if (diff < 60) return Math.floor(diff) + 'm ago';
+      if (diff < 24 * 60) return Math.floor(diff / 60) + 'h ago';
+      const days = Math.floor(diff / 1440);
+      if (days === 1) return 'yesterday';
+      if (days < 7) return days + ' days ago';
+      return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+    } catch (e) { return ''; }
+  }
+
+  function renderNotifPanel() {
+    const body = document.getElementById('notifPanelBody');
+    if (!body) return;
+    const list = _loadNotifs_();
+    if (list.length === 0) {
+      body.innerHTML = '<div class="notif-empty">No notifications yet.<br><span style="font-size:11px;opacity:0.7">You\'ll see alerts about your deals and team activity here.</span></div>';
+      return;
+    }
+    const E = (typeof escapeHtml === 'function') ? escapeHtml : function(s) {
+      return String(s || '').replace(/[&<>"']/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+      });
+    };
+    body.innerHTML = list.map(function(n) {
+      return '<div class="notif-item ' + (n.read ? '' : 'unread') + '" onclick="markNotificationRead(\'' + E(n.id) + '\'); renderNotifPanel();">' +
+        '<div class="notif-item-body">' +
+          '<div class="notif-item-title">' + E(n.title) + '</div>' +
+          (n.sub ? '<div class="notif-item-sub">' + E(n.sub) + '</div>' : '') +
+          '<div class="notif-item-time">' + _relativeNotifTime_(n.ts) + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+  window.renderNotifPanel = renderNotifPanel;
+
+  setTimeout(renderNotifBell, 200);
+  window.addEventListener('load', function() { setTimeout(renderNotifBell, 500); });
+})();
+
+/* v24.16.0 — _readDealValue helper hoist.
+   Centralizes the 3-name fallback for legacy data: dealValueINR (current), dealValue,
+   dealvalueinr. Returns a finite number ≥ 0. Replaces 5 inline copies of this pattern. */
+function _readDealValue(r){
+  if(!r) return 0;
+  const v = parseFloat(r.dealValueINR || r.dealValue || r.dealvalueinr || 0);
+  return (isFinite(v) && v > 0) ? v : 0;
+}
+
 function formatINR(amount){
   if(amount==null||isNaN(amount))return '—';
   try{
@@ -9637,6 +10032,7 @@ async function _attemptRehydrate(){
     try{
       fetchPriceBook(state.user.loginName, stored.passwordHash);  // intentional no-await
       fetchCmsPriceBook(state.user.loginName, stored.passwordHash);  // v24.14.12 — same pattern
+      fetchCatalog(state.user.loginName, stored.passwordHash);  // v24.15.0 — same pattern
     }catch(_){ /* never block */ }
 
     updateLoginSplash(75, 'Almost there…');
@@ -9769,6 +10165,7 @@ async function handleLogin(){
       const pwHash = await sha256Hex(password);
       fetchPriceBook(state.user.loginName, pwHash);  // intentional no-await
       fetchCmsPriceBook(state.user.loginName, pwHash);  // v24.14.12 — same pattern
+      fetchCatalog(state.user.loginName, pwHash);  // v24.15.0 — same pattern
     }catch(_){ /* never block login on price-book fetch */ }
 
     const nameEl=document.getElementById('user-label-name');
@@ -10248,6 +10645,24 @@ async function loadResetRequests(){
       return;
     }
     window._resetRequests=data.requests||[];
+    // v24.16.0 — notify Super of any fresh (not previously seen) reset requests
+    try {
+      if (state.user && state.user.isSuper && typeof pushNotification === 'function') {
+        const seenKey = 'bs-seen-reset-reqs__' + state.user.loginName;
+        const seen = JSON.parse(localStorage.getItem(seenKey) || '[]');
+        const pending = (data.requests || []).filter(function(r){ return r.status === 'pending'; });
+        const fresh = pending.filter(function(r){ return seen.indexOf(r.requestId) === -1; });
+        fresh.forEach(function(r) {
+          pushNotification({
+            title: 'Password reset request',
+            sub: '@' + (r.loginName || '—') + (r.reason ? ' · ' + String(r.reason).substring(0, 60) : ''),
+            type: 'warn'
+          });
+        });
+        const updated = seen.concat(fresh.map(function(r){ return r.requestId; }));
+        localStorage.setItem(seenKey, JSON.stringify(updated.slice(-200)));
+      }
+    } catch (e) { /* non-fatal */ }
     renderResetRequests(host,window._resetRequests);
     updateResetReqBadge(window._resetRequests);
   }catch(e){
@@ -10341,6 +10756,14 @@ async function approveResetRequest(requestId,loginName){
     const data=await resp.json();
     if(data.status==='ok'){
       showSync(`Approved ${loginName} ✓`,'success');
+      // v24.16.0 — notification confirms approval action
+      if(typeof pushNotification === 'function'){
+        pushNotification({
+          title: 'Password reset approved',
+          sub: '@' + loginName + " · they'll use cavitak@123 on next login",
+          type: 'success'
+        });
+      }
       loadResetRequests();
     } else {
       alert(`Approve failed: ${data.message||'Unknown error'}`);
@@ -10368,6 +10791,14 @@ async function denyResetRequest(requestId,loginName){
     const data=await resp.json();
     if(data.status==='ok'){
       showSync(`Denied ${loginName} ✓`,'success');
+      // v24.16.0 — notification confirms deny action
+      if(typeof pushNotification === 'function'){
+        pushNotification({
+          title: 'Password reset denied',
+          sub: '@' + loginName + ' · request rejected',
+          type: 'info'
+        });
+      }
       loadResetRequests();
     } else {
       alert(`Deny failed: ${data.message||'Unknown error'}`);
@@ -10414,6 +10845,87 @@ function prettifyFieldName(f){
 }
 
 /* v24.2.12: Toggle inline history panel, fetches audit log on first open */
+/* v24.16.0 — Revisions modal viewer.
+   Fetches up to 3 archived snapshots for a deal (per refId) from the Revisions
+   sheet. Backend route: revisions_list. Shows side-by-side comparison cards
+   stacked vertically, newest first. Each card highlights: project, model, stage,
+   outcome, dealValue, ts, archivedAt, archivedBy. */
+async function openRevisionsModal(refId){
+  // Build modal scaffolding if not already present
+  let m = document.getElementById('revisions-modal');
+  if(!m){
+    m = document.createElement('div');
+    m.id = 'revisions-modal';
+    m.className = 'pwd-modal-overlay';
+    m.innerHTML = `
+      <div class="pwd-modal" style="max-width:680px;max-height:80vh;overflow-y:auto;">
+        <div class="pwd-modal-title">📋 Revisions <span id="revisions-modal-ref" style="font-size:13px;font-weight:500;color:var(--ink-muted);"></span></div>
+        <div class="pwd-modal-subtitle" style="margin-bottom:14px;">Up to 3 most recent archived snapshots of this deal.</div>
+        <div id="revisions-modal-body" style="font-size:13px;line-height:1.5;">Loading…</div>
+        <div class="pwd-modal-actions" style="margin-top:16px;justify-content:flex-end;">
+          <button class="btn-secondary" onclick="closeRevisionsModal()">Close</button>
+        </div>
+      </div>`;
+    document.body.appendChild(m);
+  }
+  document.getElementById('revisions-modal-ref').textContent = '· ' + refId;
+  document.getElementById('revisions-modal-body').innerHTML = '<div style="padding:24px;text-align:center;color:var(--ink-subtle);">Loading revisions…</div>';
+
+  if(!WEBHOOK_URL){
+    document.getElementById('revisions-modal-body').innerHTML = '<div style="padding:24px;text-align:center;color:var(--ink-subtle);">Offline — revisions unavailable.</div>';
+    return;
+  }
+  try{
+    const resp = await fetch(WEBHOOK_URL, {
+      method:'POST', mode:'cors', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({ action:'revisions_list', refId: refId })
+    });
+    const data = await resp.json();
+    if(data.status !== 'ok'){
+      document.getElementById('revisions-modal-body').innerHTML =
+        '<div style="padding:24px;text-align:center;color:#DC2626;">Failed to load: ' + escapeHtml(data.message || 'unknown error') + '</div>';
+      return;
+    }
+    const revs = (data.revisions || []).slice().reverse();  // newest first
+    if(!revs.length){
+      document.getElementById('revisions-modal-body').innerHTML =
+        '<div style="padding:24px;text-align:center;color:var(--ink-subtle);">No revisions archived yet.<br><span style="font-size:11px;opacity:0.7;">Revisions are auto-archived when an entry is edited.</span></div>';
+      return;
+    }
+    document.getElementById('revisions-modal-body').innerHTML = revs.map(function(r, i){
+      const archivedAt = r.archivedAt ? new Date(r.archivedAt).toLocaleString('en-IN', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '—';
+      const dealVal = r.dealValue ? formatINR(r.dealValue) : '—';
+      const outcomeBadge = r.outcome ? `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:${
+        r.outcome==='won'?'var(--emerald-light)':(r.outcome==='lost'?'#FEE2E2':(r.outcome==='on-hold'?'#FEF3C7':'var(--surface-2)'))
+      };color:${
+        r.outcome==='won'?'var(--emerald)':(r.outcome==='lost'?'#DC2626':(r.outcome==='on-hold'?'#92400E':'var(--ink-muted)'))
+      };margin-left:6px;">${escapeHtml(r.outcome.toUpperCase())}</span>` : '';
+      return `
+        <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+            <div style="font-weight:700;font-size:14px;color:var(--ink);">Revision #${r.revNum || (i+1)}</div>
+            <div style="font-size:11px;color:var(--ink-subtle);">${escapeHtml(archivedAt)} · by ${escapeHtml(r.archivedBy || 'unknown')}</div>
+          </div>
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:12px;">
+            <div style="color:var(--ink-subtle);">Project</div><div style="color:var(--ink);font-weight:500;">${escapeHtml(r.project || '—')}</div>
+            <div style="color:var(--ink-subtle);">Model</div><div style="color:var(--ink);font-weight:500;font-family:var(--mono);">${escapeHtml(r.model || '—')}</div>
+            <div style="color:var(--ink-subtle);">Stage</div><div style="color:var(--ink);">${escapeHtml(r.stage || '—')}${outcomeBadge}</div>
+            <div style="color:var(--ink-subtle);">Deal value</div><div style="color:var(--ink);font-weight:600;">${dealVal}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }catch(err){
+    console.error('[openRevisionsModal] fetch failed:', err);
+    document.getElementById('revisions-modal-body').innerHTML =
+      '<div style="padding:24px;text-align:center;color:#DC2626;">Couldn\'t load revisions. Try again later.</div>';
+  }
+}
+
+function closeRevisionsModal(){
+  const m = document.getElementById('revisions-modal');
+  if(m) m.remove();
+}
+
 async function toggleHistoryPanel(refId,idx){
   const panel=document.getElementById('log-history-panel-'+idx);
   if(!panel)return;
@@ -11460,7 +11972,7 @@ function showTab(which){
     // v24.14.6: Double-guard — only Super + BrightSign-role can render review
     const role=state.user?(state.user.role||'').trim():'';
     const canReview=state.user && (state.user.isSuper || role==='BrightSign');
-    if(canReview){renderReview();bsC2aRender();}
+    if(canReview){renderReview();bsC2aRender();}  // v24.16.0: bsC2aRender now only drives drilldown+velocity+trend
     else{showTab('log');return;}
   }
   window.scrollTo(0,0);
@@ -12907,6 +13419,35 @@ function buildProjectCardV21(){
 }
 /* Legacy alias kept for any other callers */
 function buildProjectCard(){return buildProjectCardV21();}
+/* v24.15.0 — Clamp SSD/WD105 qty inputs to total player count.
+   These are NOT sold separately as accessories; they're tied to specific players in the deal.
+   Total players = sum of indoor + outdoor qty fields (or just qty for non-Mixed). */
+function clampAccessoryQty(inputEl){
+  if(!inputEl) return;
+  const v = parseInt(inputEl.value, 10) || 0;
+  if(v < 0){ inputEl.value = 0; return; }
+  // Compute current total players from form
+  let totalPlayers = 0;
+  const advTotalEl = document.getElementById('adv-total-players');
+  if(advTotalEl){
+    totalPlayers = parseInt(advTotalEl.textContent || advTotalEl.value || '0', 10) || 0;
+  }
+  if(totalPlayers === 0){
+    // Fallback: try to read from indoor + outdoor qty fields directly
+    const indoor  = parseInt((document.getElementById('adv-qty-indoor')||{}).value || '0', 10) || 0;
+    const outdoor = parseInt((document.getElementById('adv-qty-outdoor')||{}).value || '0', 10) || 0;
+    const single  = parseInt((document.getElementById('adv-qty')||{}).value || '0', 10) || 0;
+    totalPlayers = (indoor + outdoor) || single || 0;
+  }
+  if(totalPlayers > 0 && v > totalPlayers){
+    inputEl.value = totalPlayers;
+    // Show inline note (best-effort, non-blocking)
+    if(typeof showSync === 'function'){
+      showSync('Capped to ' + totalPlayers + ' (cannot exceed total players)','info');
+    }
+  }
+}
+
 function selectOS(os){
   state.osChoice=os;
   // v24.14.12 — flip state.form.xcOs so BOM construction picks up the right SKU/price.
@@ -13966,13 +14507,25 @@ function confirmSelection(){
     // v21.6: After confirmation success → reset form and navigate to blank form tab
     // Small delay lets user see the "Confirmed ✓" feedback before the reset
     setTimeout(()=>{
+      // v24.16.0 — capture edit mode state for notification BEFORE the flag is reset below
+      window._editModeAtSave = !!window._editMode;
       // v22.3: Exit edit mode if we were editing (clears locks + banner)
       if(window._editMode){window._editMode=false;applyEditLocks(false);}
+      const _wasEditing = window._editModeAtSave || false;  // captured below before the edit mode flip
+      const _projectName = state.result && state.result.formData ? (state.result.formData.project || 'Untitled') : 'Untitled';
       resetForm();
       state.result=null;
       document.getElementById('tab-result').style.display='none';
       showTab('form');
       showSync('Saved. Ready for next selection.','success');
+      // v24.16.0 — Notification on deal save (different sub for edit vs new)
+      if(typeof pushNotification === 'function'){
+        if(_wasEditing){
+          pushNotification({title:'Deal updated', sub: _projectName, type:'info'});
+        } else {
+          pushNotification({title:'Deal registered', sub: _projectName + ' · saved to history', type:'success'});
+        }
+      }
     },800);
   });
   // Safety net for confirm
@@ -14314,7 +14867,16 @@ function downloadQuoteExcel(returnWorkbook){
       const _pp = getModelPrice(m.id, f.xcOs);
       bomRows.push({sku:_pp.sku||m.id,desc:`BrightSign ${m.id}${_osLabel} — ${m.tag}`,qty:qtyTotal,unitPrice:_pp.unitPrice,notes:m.chassis==='aluminium'?'Outdoor Grade':'Indoor Grade'});
     }
-    if(f.ssd==='yes')bomRows.push({sku:'BS-SSD-'+(f.ssdCap||'256'),desc:`BrightSign SSD ${f.ssdCap==='1024'?'1TB':(f.ssdCap||'256')+'GB'} M.2 NVMe`,qty:qtyTotal,unitPrice:null,notes:'Expanded storage — price on request'});
+    if(f.ssd==='yes' && m.ssdCapable!==false){
+      // v24.15.0 — Skip if model doesn't support SSD (was previously inconsistent: result page
+      // showed "SSD not supported" concern but BOM still added the line).
+      // Look up actual SSD price; skip line entirely if not configured (Option B).
+      const _ssdAcc = getSsdAccessory(f.ssdCap || '256');
+      if(_ssdAcc){
+        bomRows.push({sku:_ssdAcc.sku, desc:_ssdAcc.name, qty:qtyTotal, unitPrice:_ssdAcc.unitPriceINR, notes:'Expanded storage'});
+      }
+      // else: silently skip (no row added). Concern note still appears via buildConcerns().
+    }
     if(f.wifi==='yes')bomRows.push({sku:WD105_SKU,desc:WD105_NAME+' (M.2 E-Key)',qty:qtyTotal,unitPrice:WD105_PRICE,notes:'Wi-Fi + BT connectivity'});
     const excelCmsQ=computeCMS(f);
     // v24.14.12 — CMS rows now carry resolved unitPrice + sku from price book lookup.
@@ -14774,8 +15336,10 @@ function renderLog(){
     // v24.2.12: History expand button + super-only Delete button
     const isSuperUser=state.user && state.user.isSuper;
     const historyBtn=`<button class="log-history-btn" onclick="event.stopPropagation();toggleHistoryPanel('${e.refId}',${idx});" title="View change history">↻ History</button>`;
+    // v24.16.0 — Revisions modal button (full row snapshots, up to last 3 per refId)
+    const revisionsBtn=`<button class="log-revisions-btn" onclick="event.stopPropagation();openRevisionsModal('${e.refId}');" title="View past revisions (full snapshots)">📋 Revisions</button>`;
     const deleteBtn=isSuperUser?`<button class="log-delete-btn" onclick="event.stopPropagation();softDeleteEntry('${e.refId}','${(e.project||'').replace(/'/g,"\\'")}');" title="Move to trash (super only)">🗑 Delete</button>`:'';
-    const metaRow=`<div class="log-meta-row">${historyBtn}${deleteBtn}</div>`;
+    const metaRow=`<div class="log-meta-row">${historyBtn}${revisionsBtn}${deleteBtn}</div>`;
     const historyPanel=`<div class="log-history-panel" id="log-history-panel-${idx}" style="display:none;"></div>`;
     return `<div class="log-entry"${canEdit?` data-entry-idx="${idx}"`:''}><div class="log-entry-top"><div class="log-date">${dateStr}<br>${timeStr}<br><span style="color:var(--ink-muted);">${e.user}</span>${e.refId?`<br><span style="font-size:10px;opacity:0.7;">${e.refId}</span>`:''}</div><div class="log-main"><div class="log-project">${e.project} <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:${statusBg};color:${statusColor};margin-left:6px;vertical-align:middle;">${statusLabel}</span></div><div class="log-detail">${e.enduser} · ${e.venue} · ${e.city} · ${e.partner}</div><div class="log-detail">${e.qty} × ${e.model} · ${resStr} · ${e.environment} · ${e.update} · ${e.stage} · ${e.budget}${e.os&&e.os!=='—'?' · '+(e.os==='brightsignos'?'BSOS':'Win IoT'):''}</div>${metaRow}</div><div class="log-model">${e.model}${editBtn}</div></div>${historyPanel}</div>`;
   }).join('');
@@ -16173,7 +16737,7 @@ window.showTab=function(which){
       if(outcome !== 'open') continue;
       const stage = (r.stage || '').toString();
       if(!OPEN_STAGES[stage]) continue;
-      const v = parseFloat(r.dealValueINR || r.dealValue || r.dealvalueinr || 0);
+      const v = _readDealValue(r);
       if(!isNaN(v)) { total += v; n++; }
     }
     return {total:total, count:n};
@@ -16379,24 +16943,9 @@ window.showTab=function(which){
   }
 
   window.bsC2aRender = async function(){
-    const sel = document.getElementById('bs-c2a-mode');
-    if(!sel) return;
-    // Restore last mode from localStorage
-    try{
-      const saved = localStorage.getItem(LS_KEY);
-      if(saved && sel.querySelector('option[value="' + saved + '"]')) sel.value = saved;
-      else if(!sel.value) sel.value = MODE_DEFAULT;
-    } catch(e){ /* ignore */ }
-    try{ localStorage.setItem(LS_KEY, sel.value); } catch(e){}
-
+    // v24.16.0: SAP/C2a Actuals comparison removed (sales_history_aggregate became
+    // a stub in v25.0.5). This function now only drives drilldown + velocity + trend.
     wirePoaBlur();
-
-    const agg = await fetchAggregate(sel.value);
-    renderCard(agg);
-
-    if(agg && agg.periodKey){
-      await loadAndRenderNote(agg.periodKey, agg.fy, agg.scope, agg.quarterOrHalf);
-    }
     // v24.10 Cycle 2b — refresh drilldown table on every Review render
     // v24.12 Cycle 3A: fetch stage transitions FIRST so drilldown daysInStage is accurate
     if(typeof window._bsC2bFetchTransitions === 'function'){
@@ -16411,8 +16960,6 @@ window.showTab=function(which){
     if(typeof window.bsC3dRenderTrend === 'function'){
       window.bsC3dRenderTrend();
     }
-    // Cache latest aggregate for the Excel export
-    window._bsC2aLastAgg = agg;
   };
 })();
 /* END v24.9 Cycle 2a block */
@@ -16489,7 +17036,7 @@ window.showTab=function(which){
         enduser:      r.enduser || '—',
         partner:      r.partner || '—',
         stage:        stage,
-        dealValueINR: parseFloat(r.dealValueINR || r.dealValue || r.dealvalueinr || 0) || 0,
+        dealValueINR: _readDealValue(r),
         closemonth:   r.closemonth || '—',
         daysInStage:  daysInStage,
         daysReconstructed: daysReconstructed,
@@ -16676,7 +17223,7 @@ window.renderSuperProfileHeader_c2c = function(){
   const totalDeals = log.length;
   const openPipe = log
     .filter(function(r){ return (r.outcome||'open').toString().toLowerCase()==='open'; })
-    .reduce(function(s,r){ return s + (parseFloat(r.dealValueINR || r.dealValue || r.dealvalueinr || 0) || 0); }, 0);
+    .reduce(function(s,r){ return s + _readDealValue(r); }, 0);
   const pendingResets = resets.filter(function(r){ return r.status==='pending'; }).length;
 
   // Last login
@@ -17400,7 +17947,7 @@ if(document.readyState==='loading'){
   // v24.14.9: Single source of truth for dealValue parsing — fixes the inconsistency
   // surfaced in the QA audit (4 sites, 3 different coverage patterns).
   function _readDealValue(r){
-    return parseFloat(r.dealValueINR || r.dealValue || r.dealvalueinr || 0) || 0;
+    return _readDealValue(r);
   }
   function _readOutcome(r){ return String(r.outcome || 'open').toLowerCase(); }
   function _entryCreatedMs(r){ return r.ts ? Date.parse(r.ts) : 0; }
