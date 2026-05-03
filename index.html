@@ -11,6 +11,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
+<!-- v24.18.1: html2canvas for ₹-faithful PDF rendering (browser fonts contain U+20B9; jsPDF fonts don't) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{
   --bg:#F6F8FC;--surface:#FFFFFF;--surface-2:#F1F5F9;
@@ -7138,16 +7140,16 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
     <div class="dir-modal-body">
       <div id="emailModalError" class="dir-modal-err"></div>
       <div style="background:var(--surface-2,#F5F3FF);border:1px solid var(--border-soft,#E5E7EB);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--ink-muted,#475569);">
-        📎 The PDF quote will be auto-attached. CC'd to <strong>dipen.g@cavitak.com</strong> by default.
+        📤 Sent <strong>from your email</strong> (<span id="emailModalFromHint">—</span>) · 📎 PDF auto-attached · <strong>dipen.g@cavitak.com</strong> always CC'd
       </div>
       <div class="form-group">
         <label>To <span class="req">*</span></label>
         <input type="email" id="emailModalTo" placeholder="partner@example.com">
       </div>
       <div class="form-group">
-        <label>CC</label>
-        <input type="text" id="emailModalCc" placeholder="dipen.g@cavitak.com" value="dipen.g@cavitak.com">
-        <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Comma-separated for multiple recipients.</div>
+        <label>CC <span style="font-weight:400;font-size:11px;color:var(--ink-subtle);">(additional, optional)</span></label>
+        <input type="text" id="emailModalCc" placeholder="other.cc@example.com — comma-separated">
+        <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">dipen.g@cavitak.com is automatically CC'd — no need to add it here.</div>
       </div>
       <div class="form-group">
         <label>Subject <span class="req">*</span></label>
@@ -7165,6 +7167,42 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
     <div class="dir-modal-foot">
       <button class="btn-secondary" onclick="closeEmailModal()">Cancel</button>
       <button class="btn-primary" onclick="sendEmailViaBackend()" id="emailModalSendBtn">Send Email</button>
+    </div>
+  </div>
+</div>
+
+<!-- v24.18.1: WhatsApp share modal — uses real <a target="_blank"> to bypass popup blockers -->
+<div id="whatsappModal" class="dir-modal-overlay" style="display:none;">
+  <div class="dir-modal" style="max-width:560px;">
+    <div class="dir-modal-head">
+      <div class="dir-modal-title">📱 Share via WhatsApp</div>
+      <button class="dir-modal-close" onclick="closeWhatsAppModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="dir-modal-body">
+      <div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#166534;">
+        💡 wa.me opens WhatsApp Web/app with the message pre-filled. PDF cannot be auto-attached — share it separately if needed.
+      </div>
+      <div class="form-group">
+        <label>Partner WhatsApp Number <span class="req">*</span></label>
+        <input type="tel" id="whatsappModalPhone" placeholder="10-digit Indian number, or with country code"
+               oninput="_updateWhatsAppLink()">
+        <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Will dial: <strong id="whatsappModalPhoneFmt">—</strong></div>
+      </div>
+      <div class="form-group">
+        <label>Message</label>
+        <textarea id="whatsappModalMessage" rows="10" oninput="_updateWhatsAppLink()"
+                  style="width:100%;font-family:inherit;font-size:13px;resize:vertical;min-height:200px;"></textarea>
+        <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Edit before opening WhatsApp. Markdown bold (*text*) renders in WhatsApp.</div>
+      </div>
+    </div>
+    <div class="dir-modal-foot">
+      <button class="btn-secondary" onclick="closeWhatsAppModal()">Cancel</button>
+      <a id="whatsappModalOpenLink" href="#" target="_blank" rel="noopener noreferrer"
+         onclick="setTimeout(closeWhatsAppModal, 100);"
+         class="btn-primary"
+         style="background:#25D366;border-color:#25D366;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+        <span style="font-size:15px;line-height:1;">📱</span> Open in WhatsApp
+      </a>
     </div>
   </div>
 </div>
@@ -7348,7 +7386,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.18.0';
+const FRONTEND_VERSION = '24.18.1';
 
 
 // ============================================================================
@@ -15441,12 +15479,17 @@ function openEmailModal(){
   ].join('\n');
 
   document.getElementById('emailModalTo').value = toEmail;
-  document.getElementById('emailModalCc').value = ccDefault;
+  // v24.18.0: CC field is now optional/extra — backend force-adds dipen.g@cavitak.com always.
+  // We pre-fill empty so user can add OTHER cc recipients without seeing dipen.g duplicated.
+  document.getElementById('emailModalCc').value = '';
   document.getElementById('emailModalSubject').value = subject;
   document.getElementById('emailModalBody').value = body;
   document.getElementById('emailModalIncludePdf').checked = true;
   document.getElementById('emailModalError').textContent = '';
   document.getElementById('emailModalError').style.display = 'none';
+  // v24.18.0: Show user's own email as the sender hint
+  const fromHintEl = document.getElementById('emailModalFromHint');
+  if(fromHintEl) fromHintEl.textContent = (state.user && state.user.email) || '(your email — set it in Profile)';
   document.getElementById('emailModal').style.display = 'flex';
 }
 function closeEmailModal(){
@@ -15478,7 +15521,7 @@ async function sendEmailViaBackend(){
   try {
     let pdfBase64 = null, pdfFilename = null;
     if(includePdf){
-      const doc = exportQuotePDF(true);
+      const doc = await exportQuotePDF(true);
       if(!doc){ throw new Error('PDF generation failed'); }
       const refId = (state.result && state.result.refId) || 'BS-' + Date.now().toString().slice(-8);
       const safeProj = (state.form.project || 'project').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
@@ -16964,12 +17007,17 @@ function exportXLSX(){
   showSync(`Excel exported: ${entries.length} entries ✓`,'success');
 }
 
-/* v24.18.0 — Single-quote PDF export.
-   Generates a clean partner-ready PDF of the current Result tab BOM.
-   Data source: state.form (project context) + state.result (recommendation) + state._bomTotals (rows + totals).
-   Works for both Guided (buildBOMCard) and Custom BOQ (buildAdvancedBOMCard) — both populate state._bomTotals.
+/* v24.18.1 — Single-quote PDF export via HTML rendering.
+   Earlier jsPDF text-based approach couldn't render the ₹ Unicode symbol (U+20B9)
+   because Helvetica/jsPDF default fonts lack that glyph. Switching to html2canvas:
+   we build a hidden DOM block that mirrors the on-screen BOM, render with browser
+   fonts (which DO have ₹), then embed the resulting image into a jsPDF page.
+   Trade-off: PDF text is non-selectable, but ₹ renders perfectly and layout is
+   pixel-faithful to the on-screen card. Multi-page slicing handled automatically.
+
+   Data source: state.form (project context) + state.result (recommendation) + state._bomTotals.
    Returns the jsPDF doc object if returnDoc=true (used by email_send), else triggers download. */
-function exportQuotePDF(returnDoc){
+async function exportQuotePDF(returnDoc){
   if(!state.result || state.result.noRec){
     if(returnDoc===true) return null;
     alert('No recommendation available to export.'); return;
@@ -16982,177 +17030,193 @@ function exportQuotePDF(returnDoc){
     if(returnDoc===true) return null;
     alert('PDF library not loaded. Refresh and try again.'); return;
   }
+  if(typeof window.html2canvas !== 'function'){
+    if(returnDoc===true) return null;
+    alert('PDF rendering library not loaded. Refresh and try again.'); return;
+  }
 
   const f = state.form, r = state.result;
   const refId = r.refId || ('BS-' + Date.now().toString().slice(-8));
   const dateStr = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
   const validUntil = new Date(Date.now() + 15*24*60*60*1000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  const playerLine = r.isAdvanced ? null : (r.model || null);
 
-  const {jsPDF} = window.jspdf;
-  const doc = new jsPDF({orientation:'portrait', unit:'pt', format:'a4'});
-  const pageW = doc.internal.pageSize.getWidth();
-  const pageH = doc.internal.pageSize.getHeight();
-  const M = 36;  // margin
+  // Build BOM rows HTML
+  const bomRowsHtml = state._bomTotals.rows.map((row, idx) => {
+    const rowBg = idx % 2 === 1 ? '#F8FAFC' : '#FFFFFF';
+    return `
+      <tr style="background:${rowBg};">
+        <td style="padding:9px 10px;border:1px solid #E2E8F0;font-weight:600;color:#0F172A;font-size:11px;width:24%;vertical-align:top;">${escapeHtml(String(row.name||''))}</td>
+        <td style="padding:9px 10px;border:1px solid #E2E8F0;color:#64748B;font-size:10px;width:36%;vertical-align:top;">${escapeHtml(String(row.note||''))}</td>
+        <td style="padding:9px 10px;border:1px solid #E2E8F0;color:#1E293B;font-size:11px;text-align:right;width:8%;vertical-align:top;">${row.qty||0}</td>
+        <td style="padding:9px 10px;border:1px solid #E2E8F0;color:#1E293B;font-size:11px;text-align:right;width:16%;vertical-align:top;">${row.unitPrice!=null?formatINR(row.unitPrice):'—'}</td>
+        <td style="padding:9px 10px;border:1px solid #E2E8F0;color:#0F172A;font-size:11px;font-weight:700;text-align:right;width:16%;vertical-align:top;">${row.lineTotal!=null?formatINR(row.lineTotal):'—'}</td>
+      </tr>`;
+  }).join('');
 
-  // --- HEADER STRIP (indigo) ---
-  doc.setFillColor(49,46,129);
-  doc.rect(0,0,pageW,72,'F');
-  doc.setTextColor(255,255,255);
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(20);
-  doc.text('BrightSign Product Selector', M, 32);
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(10);
-  doc.text('Signage that performs, effortlessly', M, 50);
-  doc.setFontSize(9);
-  doc.text('Quote · ' + refId, M, 64);
-  // Right-aligned date + valid-until
-  doc.setFontSize(9);
-  doc.text('Date: ' + dateStr, pageW - M, 32, {align:'right'});
-  doc.text('Valid until: ' + validUntil, pageW - M, 46, {align:'right'});
-  doc.text('Cavitak Marketing', pageW - M, 60, {align:'right'});
-
-  // --- PROJECT CONTEXT BLOCK ---
-  let y = 92;
-  doc.setTextColor(15,23,42);
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(11);
-  doc.text('PROJECT CONTEXT', M, y);
-  y += 6;
-  doc.setDrawColor(226,232,240); doc.setLineWidth(0.5);
-  doc.line(M, y, pageW-M, y);
-  y += 14;
-
-  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(71,85,105);
-
-  // Two-column layout: label : value
-  const leftLabels = [
-    ['Project', f.project || '—'],
-    ['End-user', f.enduser || '—'],
-    ['Partner / SI', f.partner || '—'],
-    ['Consultant', f.consultant || '—']
-  ];
-  const rightLabels = [
-    ['Venue', f.venue || f.venueType || '—'],
-    ['Location', (f.city || '—') + (f.state ? ', ' + f.state : '')],
-    ['Stage', f.stage || '—'],
-    ['Expected Close', f.closemonth || '—']
-  ];
-  const colGap = (pageW - 2*M) / 2;
-  const labelX1 = M, valX1 = M + 80;
-  const labelX2 = M + colGap, valX2 = M + colGap + 80;
-  for(let i=0; i<Math.max(leftLabels.length, rightLabels.length); i++){
-    if(leftLabels[i]){
-      doc.setFont('helvetica','bold'); doc.setTextColor(100,116,139);
-      doc.text(leftLabels[i][0], labelX1, y);
-      doc.setFont('helvetica','normal'); doc.setTextColor(15,23,42);
-      doc.text(String(leftLabels[i][1]).slice(0,55), valX1, y);
-    }
-    if(rightLabels[i]){
-      doc.setFont('helvetica','bold'); doc.setTextColor(100,116,139);
-      doc.text(rightLabels[i][0], labelX2, y);
-      doc.setFont('helvetica','normal'); doc.setTextColor(15,23,42);
-      doc.text(String(rightLabels[i][1]).slice(0,55), valX2, y);
-    }
-    y += 14;
-  }
-  y += 6;
-
-  // --- RECOMMENDED PLAYER (skip for Custom BOQ — multi-model) ---
-  if(!r.isAdvanced && r.model){
-    const m = r.model;
-    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(15,23,42);
-    doc.text('RECOMMENDED PLAYER', M, y);
-    y += 6;
-    doc.setDrawColor(226,232,240);
-    doc.line(M, y, pageW-M, y);
-    y += 14;
-
-    doc.setFontSize(13); doc.setTextColor(49,46,129);
-    doc.text(m.id + (m.tag ? '  ·  ' + m.tag : ''), M, y);
-    y += 14;
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(71,85,105);
-    if(m.notes){
-      const lines = doc.splitTextToSize(m.notes, pageW - 2*M);
-      doc.text(lines, M, y);
-      y += lines.length * 11;
-    }
-    y += 6;
-  }
-
-  // --- BILL OF QUANTITIES ---
-  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(15,23,42);
-  doc.text('BILL OF QUANTITIES', M, y);
-  y += 6;
-  doc.setDrawColor(226,232,240);
-  doc.line(M, y, pageW-M, y);
-  y += 8;
-
-  // BOM table via autotable
-  const rows = state._bomTotals.rows.map(row => [
-    String(row.name || ''),
-    (row.note || '').toString(),
-    String(row.qty || 0),
-    row.unitPrice != null ? formatINR(row.unitPrice) : '—',
-    row.lineTotal != null ? formatINR(row.lineTotal) : '—'
-  ]);
-
-  if(typeof doc.autoTable === 'function'){
-    doc.autoTable({
-      head: [['Item', 'Notes', 'Qty', 'Unit Price', 'Gross Total']],
-      body: rows,
-      startY: y,
-      margin: {left: M, right: M},
-      theme: 'grid',
-      headStyles: {fillColor:[79,70,229], textColor:[255,255,255], fontSize:9, fontStyle:'bold', halign:'left'},
-      bodyStyles: {fontSize:9, textColor:[30,41,59], cellPadding:5},
-      alternateRowStyles: {fillColor:[248,250,252]},
-      columnStyles: {
-        0: {cellWidth: 130, fontStyle: 'bold'},
-        1: {cellWidth: 200, textColor:[100,116,139], fontSize:8},
-        2: {cellWidth: 30, halign: 'right'},
-        3: {cellWidth: 80, halign: 'right'},
-        4: {cellWidth: 80, halign: 'right', fontStyle: 'bold'}
-      }
-    });
-    y = doc.lastAutoTable.finalY + 10;
-  }
-
-  // --- TOTALS BLOCK ---
   const subtotal = state._bomTotals.subtotal || 0;
   const gst      = state._bomTotals.gst      || 0;
   const grand    = state._bomTotals.grandTotal || 0;
-  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(71,85,105);
-  doc.text('Gross Total',     pageW - M - 110, y, {align:'left'});
-  doc.text(formatINR(subtotal), pageW - M, y, {align:'right'});
-  y += 14;
-  doc.text('GST @ 18%', pageW - M - 110, y, {align:'left'});
-  doc.text(formatINR(gst), pageW - M, y, {align:'right'});
-  y += 14;
-  doc.setDrawColor(79,70,229); doc.setLineWidth(0.8);
-  doc.line(pageW - M - 200, y, pageW - M, y);
-  y += 14;
-  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(49,46,129);
-  doc.text('Total with GST',  pageW - M - 110, y, {align:'left'});
-  doc.text(formatINR(grand),  pageW - M, y, {align:'right'});
-  y += 24;
-
-  // --- FOOTER (always anchored to page bottom of page 1, may overflow to subsequent pages) ---
-  const footerY = pageH - 50;
-  doc.setDrawColor(226,232,240); doc.setLineWidth(0.5);
-  doc.line(M, footerY, pageW-M, footerY);
-  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,116,139);
   const u = state.user || {};
-  doc.text(
-    (u.fullName || 'Cavitak Marketing') +
-    (u.role ? ' · ' + u.role : '') +
-    (u.phone ? ' · ' + u.phone : '') +
-    (u.email ? ' · ' + u.email : ''),
-    M, footerY + 14
-  );
-  doc.setFontSize(7); doc.setTextColor(148,163,184);
-  doc.text('This document is for internal reference and customer discussion. Pricing subject to current price list, forex, and landed-cost variations.', M, footerY + 28);
-  doc.text('Generated by BrightSign Product Selector · v' + (typeof FRONTEND_VERSION !== 'undefined' ? FRONTEND_VERSION : ''), pageW - M, footerY + 28, {align:'right'});
+
+  // Project context fields with safe fallbacks
+  const ctxLeft = [
+    ['Project',     f.project   || '—'],
+    ['End-user',    f.enduser   || '—'],
+    ['Partner / SI',f.partner   || '—'],
+    ['Consultant',  f.consultant|| '—']
+  ];
+  const ctxRight = [
+    ['Venue',          f.venue || f.venueType || '—'],
+    ['Location',       (f.city || '—') + (f.state ? ', ' + f.state : '')],
+    ['Stage',          f.stage || '—'],
+    ['Expected Close', f.closemonth || '—']
+  ];
+  const ctxRowsHtml = (col) => col.map(([k,v]) =>
+    `<tr><td style="padding:3px 8px 3px 0;color:#64748B;font-size:11px;font-weight:600;width:90px;vertical-align:top;">${escapeHtml(k)}</td>` +
+    `<td style="padding:3px 0;color:#0F172A;font-size:11px;vertical-align:top;">${escapeHtml(String(v))}</td></tr>`
+  ).join('');
+
+  // Recommended player block (Guided only)
+  const playerBlock = (!r.isAdvanced && playerLine) ? `
+    <div style="margin-top:18px;">
+      <div style="font-size:12px;font-weight:700;color:#0F172A;letter-spacing:0.5px;margin-bottom:8px;">RECOMMENDED PLAYER</div>
+      <div style="height:1px;background:#E2E8F0;margin-bottom:10px;"></div>
+      <div style="font-size:14px;font-weight:700;color:#312E81;margin-bottom:6px;">
+        ${escapeHtml(playerLine.id || '')}${playerLine.tag ? '  ·  ' + escapeHtml(playerLine.tag) : ''}
+      </div>
+      ${playerLine.notes ? `<div style="font-size:10.5px;color:#475569;line-height:1.5;">${escapeHtml(playerLine.notes)}</div>` : ''}
+    </div>` : '';
+
+  // Build the print container — A4 width at 96 DPI is ~794px, render at 794 for crisp 1:1
+  const printHtml = `
+    <div id="pdf-print-host" style="position:fixed;left:-99999px;top:0;width:794px;background:#FFFFFF;font-family:'Helvetica Neue',Arial,sans-serif;color:#0F172A;padding:0;">
+      <!-- Header strip -->
+      <div style="background:#312E81;color:#FFFFFF;padding:18px 32px;display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div style="font-size:18px;font-weight:700;letter-spacing:-0.3px;">BrightSign Product Selector</div>
+          <div style="font-size:10px;opacity:0.85;margin-top:3px;">Signage that performs, effortlessly</div>
+          <div style="font-size:9px;opacity:0.75;margin-top:6px;">Quote · ${escapeHtml(refId)}</div>
+        </div>
+        <div style="text-align:right;font-size:9px;line-height:1.55;opacity:0.92;">
+          <div>Date: ${escapeHtml(dateStr)}</div>
+          <div>Valid until: ${escapeHtml(validUntil)}</div>
+          <div style="margin-top:4px;font-weight:600;">Cavitak Marketing</div>
+        </div>
+      </div>
+
+      <div style="padding:22px 32px 26px;">
+        <!-- Project context -->
+        <div style="font-size:12px;font-weight:700;color:#0F172A;letter-spacing:0.5px;margin-bottom:8px;">PROJECT CONTEXT</div>
+        <div style="height:1px;background:#E2E8F0;margin-bottom:12px;"></div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:6px;">
+          <tr>
+            <td style="width:50%;vertical-align:top;padding-right:18px;">
+              <table style="width:100%;border-collapse:collapse;">${ctxRowsHtml(ctxLeft)}</table>
+            </td>
+            <td style="width:50%;vertical-align:top;padding-left:18px;border-left:1px solid #F1F5F9;">
+              <table style="width:100%;border-collapse:collapse;">${ctxRowsHtml(ctxRight)}</table>
+            </td>
+          </tr>
+        </table>
+
+        ${playerBlock}
+
+        <!-- Bill of Quantities -->
+        <div style="margin-top:22px;font-size:12px;font-weight:700;color:#0F172A;letter-spacing:0.5px;margin-bottom:8px;">BILL OF QUANTITIES</div>
+        <div style="height:1px;background:#E2E8F0;margin-bottom:10px;"></div>
+        <table style="width:100%;border-collapse:collapse;font-family:'Helvetica Neue',Arial,sans-serif;">
+          <thead>
+            <tr style="background:#4F46E5;color:#FFFFFF;">
+              <th style="padding:10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.4px;border:1px solid #4F46E5;">ITEM</th>
+              <th style="padding:10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.4px;border:1px solid #4F46E5;">NOTES</th>
+              <th style="padding:10px;text-align:right;font-size:10px;font-weight:700;letter-spacing:0.4px;border:1px solid #4F46E5;">QTY</th>
+              <th style="padding:10px;text-align:right;font-size:10px;font-weight:700;letter-spacing:0.4px;border:1px solid #4F46E5;">UNIT PRICE</th>
+              <th style="padding:10px;text-align:right;font-size:10px;font-weight:700;letter-spacing:0.4px;border:1px solid #4F46E5;">GROSS TOTAL</th>
+            </tr>
+          </thead>
+          <tbody>${bomRowsHtml}</tbody>
+        </table>
+
+        <!-- Totals -->
+        <div style="margin-top:14px;display:flex;justify-content:flex-end;">
+          <table style="border-collapse:collapse;min-width:280px;">
+            <tr>
+              <td style="padding:6px 16px 6px 0;color:#475569;font-size:11px;text-align:right;">Gross Total</td>
+              <td style="padding:6px 0;color:#0F172A;font-size:12px;font-weight:600;text-align:right;min-width:140px;">${formatINR(subtotal)}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 16px 6px 0;color:#475569;font-size:11px;text-align:right;">GST @ 18%</td>
+              <td style="padding:6px 0;color:#0F172A;font-size:12px;font-weight:600;text-align:right;">${formatINR(gst)}</td>
+            </tr>
+            <tr><td colspan="2" style="border-top:2px solid #4F46E5;padding:0;"></td></tr>
+            <tr>
+              <td style="padding:8px 16px 6px 0;color:#312E81;font-size:13px;font-weight:700;text-align:right;">Total with GST</td>
+              <td style="padding:8px 0 6px;color:#312E81;font-size:14px;font-weight:800;text-align:right;">${formatINR(grand)}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="border-top:1px solid #E2E8F0;padding:14px 32px 18px;font-family:'Helvetica Neue',Arial,sans-serif;">
+        <div style="font-size:10px;color:#475569;font-weight:600;">
+          ${escapeHtml(u.fullName || 'Cavitak Marketing')}${u.role ? ' · ' + escapeHtml(u.role) : ''}${u.phone ? ' · ' + escapeHtml(u.phone) : ''}${u.email ? ' · ' + escapeHtml(u.email) : ''}
+        </div>
+        <div style="font-size:9px;color:#94A3B8;margin-top:6px;line-height:1.5;">
+          This document is for internal reference and customer discussion. Pricing subject to current price list, forex, and landed-cost variations.
+        </div>
+        <div style="font-size:9px;color:#94A3B8;margin-top:4px;text-align:right;">
+          Generated by BrightSign Product Selector · v${typeof FRONTEND_VERSION !== 'undefined' ? FRONTEND_VERSION : ''}
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Mount, render, capture, unmount
+  const wrap = document.createElement('div');
+  wrap.innerHTML = printHtml;
+  document.body.appendChild(wrap);
+  const host = wrap.querySelector('#pdf-print-host');
+
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({orientation:'portrait', unit:'pt', format:'a4'});
+  const pageW = doc.internal.pageSize.getWidth();   // 595.28
+  const pageH = doc.internal.pageSize.getHeight();  // 841.89
+
+  try {
+    const canvas = await html2canvas(host, {
+      scale: 2,        // 2x for crisp output (file size still reasonable)
+      backgroundColor: '#FFFFFF',
+      useCORS: true,
+      logging: false,
+      windowWidth: 794
+    });
+
+    // Convert canvas to image and slice into pages if needed
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    const imgW = pageW;  // fit to page width
+    const imgH = canvas.height * (imgW / canvas.width);
+
+    if(imgH <= pageH){
+      // Single page
+      doc.addImage(imgData, 'JPEG', 0, 0, imgW, imgH, undefined, 'FAST');
+    } else {
+      // Multi-page slicing — paste full image, shifted upward each page
+      let heightLeft = imgH;
+      let position = 0;
+      doc.addImage(imgData, 'JPEG', 0, position, imgW, imgH, undefined, 'FAST');
+      heightLeft -= pageH;
+      while(heightLeft > 0){
+        position = heightLeft - imgH;  // negative offset moves image up
+        doc.addPage();
+        doc.addImage(imgData, 'JPEG', 0, position, imgW, imgH, undefined, 'FAST');
+        heightLeft -= pageH;
+      }
+    }
+  } finally {
+    document.body.removeChild(wrap);
+  }
 
   if(returnDoc === true) return doc;
 
@@ -17162,9 +17226,11 @@ function exportQuotePDF(returnDoc){
   if(typeof showSync === 'function') showSync('PDF downloaded','success');
 }
 
-/* v24.18.0 — WhatsApp share. Generates wa.me URL with prefilled message
-   summarizing the deal (project + ref + total). wa.me cannot carry attachments,
-   so the message includes a note that the partner should download the PDF separately. */
+/* v24.18.1 — WhatsApp share via modal with real anchor link.
+   v24.18.0's `prompt() + window.open()` chain was popup-blocked in Chrome because
+   the prompt() resolution counts as breaking the user-gesture chain — even though
+   the ORIGINAL click was a gesture. Switching to a modal with an actual <a target="_blank">
+   button: anchor-clicks are always allowed, no popup blocker problems. */
 function shareViaWhatsApp(){
   if(!state.result || state.result.noRec){
     alert('No quote available to share.'); return;
@@ -17175,28 +17241,22 @@ function shareViaWhatsApp(){
   const f = state.form, r = state.result;
   const refId = r.refId || 'BS-' + Date.now().toString().slice(-8);
 
-  // Pre-fill partner phone — auto-add +91 if 10-digit local number
-  let phoneRaw = (f.partnerContactPhone || '').replace(/\D/g, '');
-  let phoneFmt = '';
-  if(phoneRaw.length === 10) phoneFmt = '91' + phoneRaw;
-  else if(phoneRaw.length === 12 && phoneRaw.startsWith('91')) phoneFmt = phoneRaw;
-  else if(phoneRaw.length >= 10) phoneFmt = phoneRaw;
-  // If we couldn't get a valid phone, ask user
-  if(!phoneFmt || phoneFmt.length < 10){
-    const askedPhone = prompt('Enter partner WhatsApp number (10-digit Indian, or with +91):', phoneRaw || '');
-    if(!askedPhone) return;
-    const digits = askedPhone.replace(/\D/g, '');
-    phoneFmt = digits.length === 10 ? ('91' + digits) : digits;
-    if(phoneFmt.length < 10){ alert('Invalid phone number.'); return; }
-  }
+  // v24.18.1: read partner phone from multiple legacy keys for robustness
+  const phoneRaw = String(
+    f.partnerContactPhone || f.contactphone || f.contactPhone || f.partnerPhone || ''
+  ).replace(/\D/g, '');
 
-  // Compose message
+  // Compose default message — fully editable in modal
   const grand = state._bomTotals.grandTotal || 0;
   const playerLine = r.isAdvanced
     ? 'Custom BOQ — multiple models'
     : (r.model ? r.model.id + ' (' + (r.model.tag || '') + ')' : 'Player');
-  const msg =
-    'Hi ' + (f.partnerContactName || 'team') + ',\n\n' +
+  const greeting = (f.contactname || f.partnerContactName || '').trim() || 'team';
+  const userName = (state.user && state.user.fullName) || 'Cavitak Marketing';
+  const validUntilStr = new Date(Date.now() + 15*24*60*60*1000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+
+  const defaultMsg =
+    'Hi ' + greeting + ',\n\n' +
     'Here is the BrightSign quote summary:\n\n' +
     '*Project*: ' + (f.project || '—') + '\n' +
     '*End-user*: ' + (f.enduser || '—') + '\n' +
@@ -17204,14 +17264,45 @@ function shareViaWhatsApp(){
     '*Qty*: ' + (f.qty || 1) + '\n' +
     '*Total (incl. GST)*: ' + formatINR(grand) + '\n' +
     '*Quote ref*: ' + refId + '\n' +
-    '*Valid until*: ' + new Date(Date.now() + 15*24*60*60*1000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) + '\n\n' +
+    '*Valid until*: ' + validUntilStr + '\n\n' +
     'I will share the detailed PDF separately. Let me know if you need any changes.\n\n' +
     'Regards,\n' +
-    ((state.user && state.user.fullName) || 'Cavitak Marketing');
+    userName;
 
-  const url = 'https://wa.me/' + phoneFmt + '?text=' + encodeURIComponent(msg);
-  window.open(url, '_blank');
-  if(typeof showSync === 'function') showSync('WhatsApp opened in new tab — review and send','info');
+  // Pre-format phone (auto-+91 for 10-digit Indian)
+  let phoneFmt = '';
+  if(phoneRaw.length === 10) phoneFmt = '91' + phoneRaw;
+  else if(phoneRaw.length === 12 && phoneRaw.startsWith('91')) phoneFmt = phoneRaw;
+  else if(phoneRaw.length === 13 && phoneRaw.startsWith('091')) phoneFmt = phoneRaw.slice(1);
+  else if(phoneRaw.length >= 10) phoneFmt = phoneRaw;
+
+  // Populate fields
+  document.getElementById('whatsappModalPhone').value = phoneFmt || phoneRaw || '';
+  document.getElementById('whatsappModalMessage').value = defaultMsg;
+  _updateWhatsAppLink();
+  document.getElementById('whatsappModal').style.display = 'flex';
+}
+function closeWhatsAppModal(){
+  document.getElementById('whatsappModal').style.display = 'none';
+}
+function _updateWhatsAppLink(){
+  const phone = String(document.getElementById('whatsappModalPhone').value || '').replace(/\D/g, '');
+  const msg = document.getElementById('whatsappModalMessage').value || '';
+  let phoneFmt = phone;
+  if(phone.length === 10) phoneFmt = '91' + phone;
+  const link = document.getElementById('whatsappModalOpenLink');
+  const previewEl = document.getElementById('whatsappModalPhoneFmt');
+  if(phoneFmt && phoneFmt.length >= 10){
+    link.href = 'https://wa.me/' + phoneFmt + '?text=' + encodeURIComponent(msg);
+    link.style.opacity = '1';
+    link.style.pointerEvents = 'auto';
+    if(previewEl) previewEl.textContent = '+' + phoneFmt;
+  } else {
+    link.removeAttribute('href');
+    link.style.opacity = '0.45';
+    link.style.pointerEvents = 'none';
+    if(previewEl) previewEl.textContent = '(enter valid number first)';
+  }
 }
 
 /* v24.2.12: PDF export — summary report with KPIs + tabular data */
