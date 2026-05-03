@@ -7386,7 +7386,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.18.1';
+const FRONTEND_VERSION = '24.18.2';
 
 
 // ============================================================================
@@ -18699,6 +18699,74 @@ async function runAdvancedBOQ(){
       if(err){ err.textContent = 'Pick at least one player by setting its quantity above zero.'; err.classList.add('show'); }
       return;
     }
+
+    // 2b. v24.18.2: Accessory consistency validation — Custom BOQ previously silently
+    //     dropped SSDs when qty>0 but capacity not picked. Now blocks save with a clear error
+    //     and scrolls to the offending field.
+    const _advSsdCapEl = document.getElementById('adv-ssd-cap');
+    const _advSsdQtyEl = document.getElementById('adv-ssd-qty');
+    const _advCmsVendorEl = document.getElementById('adv-cms-vendor');
+    const _advCmsTermEl = document.getElementById('adv-cms-term');
+    const _advCmsTypeEl = document.getElementById('adv-cms-type');
+    const _ssdCapVal = _advSsdCapEl ? (_advSsdCapEl.value || '') : '';
+    const _ssdQtyVal = _advSsdQtyEl ? (parseInt(_advSsdQtyEl.value, 10) || 0) : 0;
+    const _cmsVendorVal = _advCmsVendorEl ? (_advCmsVendorEl.value || '') : '';
+    const _cmsTermVal = _advCmsTermEl ? (_advCmsTermEl.value || '') : '';
+    const _cmsTypeVal = _advCmsTypeEl ? (_advCmsTypeEl.value || '') : '';
+
+    const _accessoryErrors = [];
+    if(_ssdQtyVal > 0 && !_ssdCapVal){
+      _accessoryErrors.push({
+        field: 'adv-ssd-cap',
+        msg: 'You set SSD quantity to ' + _ssdQtyVal + ' but didn\'t pick a storage capacity. Choose 128 GB / 256 GB / 512 GB / 1 TB or set SSD quantity to 0.'
+      });
+    }
+    if(_ssdCapVal && _ssdQtyVal === 0){
+      _accessoryErrors.push({
+        field: 'adv-ssd-qty',
+        msg: 'You picked an SSD capacity (' + _ssdCapVal + ' GB) but quantity is 0. Set a quantity or clear the capacity.'
+      });
+    }
+    // Same logic for CMS — vendor without term/type, or term/type without vendor
+    if(_cmsVendorVal && (!_cmsTermVal || !_cmsTypeVal)){
+      _accessoryErrors.push({
+        field: !_cmsTermVal ? 'adv-cms-term' : 'adv-cms-type',
+        msg: 'CMS vendor "' + _cmsVendorVal + '" picked but ' + (!_cmsTermVal ? 'subscription term not chosen.' : 'hosting type (cloud/on-prem) not chosen.')
+      });
+    }
+    if(!_cmsVendorVal && (_cmsTermVal || _cmsTypeVal)){
+      _accessoryErrors.push({
+        field: 'adv-cms-vendor',
+        msg: 'CMS settings configured but no vendor selected. Pick a vendor or clear the term/type.'
+      });
+    }
+    if(_accessoryErrors.length > 0){
+      const err = document.getElementById('form-error');
+      if(err){
+        err.textContent = _accessoryErrors[0].msg;
+        err.classList.add('show');
+      }
+      // Scroll to the first offending field + focus it
+      const firstField = document.getElementById(_accessoryErrors[0].field);
+      if(firstField){
+        try {
+          firstField.scrollIntoView({ behavior:'smooth', block:'center' });
+          setTimeout(function(){
+            firstField.focus();
+            // Briefly highlight the offending field with a red ring so it's visually obvious
+            const _origBorder = firstField.style.border;
+            firstField.style.border = '2px solid #DC2626';
+            firstField.style.boxShadow = '0 0 0 3px rgba(220,38,38,0.15)';
+            setTimeout(function(){
+              firstField.style.border = _origBorder;
+              firstField.style.boxShadow = '';
+            }, 2400);
+          }, 350);
+        } catch(_){}
+      }
+      return;
+    }
+
     // 3. Capture Project Context into state.form (mirrors what Section 01 does in runSelector)
     _advCaptureProjectContextToState();
 
