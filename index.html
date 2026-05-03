@@ -6626,13 +6626,14 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
                   <th>Model</th>
                   <th>Tier</th>
                   <th>Highlights</th>
+                  <th style="text-align:center;">OS</th>
                   <th style="text-align:center;">Qty</th>
                 </tr>
               </thead>
               <tbody id="adv-player-tbody"></tbody>
               <tfoot>
                 <tr id="adv-player-total-row" class="adv-player-total-row">
-                  <td colspan="3" style="text-align:right;"><span class="adv-player-total-label">Total selected</span></td>
+                  <td colspan="4" style="text-align:right;"><span class="adv-player-total-label">Total selected</span></td>
                   <td style="text-align:center;"><span id="adv-player-total" class="adv-player-total">0</span></td>
                 </tr>
               </tfoot>
@@ -7231,7 +7232,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.16.2';
+const FRONTEND_VERSION = '24.16.3';
 
 
 // ============================================================================
@@ -13464,32 +13465,28 @@ function clampAccessoryQty(inputEl){
 
   let totalPlayers = 0;
 
-  // Path 1: Custom BOQ mode — read live model grid state
-  const advQtyInputs = document.querySelectorAll('.adv-model-qty-input, [data-adv-model-qty]');
-  if(advQtyInputs && advQtyInputs.length){
-    advQtyInputs.forEach(function(inp){
+  // v24.16.3 — DETECT MODE FIRST. We're in Custom BOQ if the advanced panel is visible
+  // OR if the advanced player table has any qty>0 row. Otherwise we're in Guided.
+  const advPanel = document.getElementById('advanced-only');
+  const inAdvanced = advPanel && advPanel.style.display !== 'none';
+
+  if(inAdvanced){
+    // Path 1: Custom BOQ — read live model grid (FIX: correct class name .adv-qty-input)
+    document.querySelectorAll('#adv-player-tbody .adv-qty-input').forEach(function(inp){
       totalPlayers += parseInt(inp.value, 10) || 0;
     });
-  }
-  // Path 2: read state if Custom BOQ has computed selections
-  if(totalPlayers === 0 && window.state && Array.isArray(state.lastAdvancedSelections)){
-    totalPlayers = state.lastAdvancedSelections.reduce(function(s, x){
-      return s + (parseInt(x.qty, 10) || 0);
-    }, 0);
-  }
-  // Path 3: Guided mode fallbacks — try the actual Guided form IDs
-  if(totalPlayers === 0){
+    // Path 1b: state fallback if grid not yet rendered (edge case during edit-from-history)
+    if(totalPlayers === 0 && window.state && Array.isArray(state.lastAdvancedSelections)){
+      totalPlayers = state.lastAdvancedSelections.reduce(function(s, x){
+        return s + (parseInt(x.qty, 10) || 0);
+      }, 0);
+    }
+  } else {
+    // Path 2: Guided mode — read from f-qty / f-qty-indoor / f-qty-outdoor
     const indoor  = parseInt((document.getElementById('f-qty-indoor')||{}).value || '0', 10) || 0;
     const outdoor = parseInt((document.getElementById('f-qty-outdoor')||{}).value || '0', 10) || 0;
     const single  = parseInt((document.getElementById('f-qty')||{}).value || '0', 10) || 0;
     totalPlayers = (indoor + outdoor) || single || 0;
-  }
-  // Path 4: BOQ summary tile if rendered
-  if(totalPlayers === 0){
-    const advTotalEl = document.getElementById('adv-total-players');
-    if(advTotalEl){
-      totalPlayers = parseInt(advTotalEl.textContent || advTotalEl.value || '0', 10) || 0;
-    }
   }
 
   if(totalPlayers > 0 && v > totalPlayers){
@@ -13610,14 +13607,27 @@ function parseDealValueClient(v){
   return isNaN(n)?0:Math.max(0,Math.round(n));
 }
 
-/* v24.4.0: Format rupees nicely for display: 12500000 → "₹1.25 Cr" */
+/* v24.16.3: Full Indian comma format — no K/L/Cr abbreviations.
+   12500000 → "₹1,25,00,000" (was: "₹1.25 Cr"). User feedback: abbreviations
+   are misleading on a quote partner sees. Function name kept for compatibility. */
 function formatINR(n){
   n=parseFloat(n)||0;
   if(n===0)return '—';
-  if(n>=10000000)return '₹'+(n/10000000).toFixed(n%10000000===0?0:2)+' Cr';
-  if(n>=100000)return '₹'+(n/100000).toFixed(n%100000===0?0:2)+' L';
-  if(n>=1000)return '₹'+(n/1000).toFixed(0)+' K';
-  return '₹'+n;
+  try{
+    return '₹'+Math.round(n).toLocaleString('en-IN',{
+      maximumFractionDigits:0,
+      minimumFractionDigits:0,
+      useGrouping:true
+    });
+  }catch(e){
+    // Fallback if browser lacks en-IN — manual Indian grouping (every 2 digits after first comma)
+    const v=Math.round(n);
+    const s=String(v);
+    if(s.length<=3)return '₹'+s;
+    const last3=s.slice(-3);
+    const rest=s.slice(0,-3).replace(/\B(?=(\d{2})+(?!\d))/g,',');
+    return '₹'+rest+','+last3;
+  }
 }
 
 /* ============================================================
@@ -17672,26 +17682,27 @@ function populateAdvancedPlayerTable(){
   const tbody = document.getElementById('adv-player-tbody');
   if(!tbody) return;
   tbody.innerHTML = ADV_PLAYER_CATALOG.map(p => {
-    // v24.16.1 — XC models get an inline OS toggle (Std / Win) that becomes visible when qty > 0
+    // v24.16.3 — XC OS toggle moved to its own column (right of highlights, before qty).
+    // Labels renamed: Std → BrightOS, Win IoT → Windows OS for clarity.
+    // Non-XC rows render an empty <td> to maintain 5-column table alignment.
     const isXc = (p.id === 'XC2055' || p.id === 'XC4055');
-    const osToggle = isXc ? `
-        <div class="adv-xc-os-toggle" data-model="${p.id}" style="display:none; margin-top:6px; gap:4px; align-items:center;">
-          <span style="font-size:10px; color:var(--ink-subtle, #94A3B8); text-transform:uppercase; letter-spacing:0.05em; font-weight:600;">OS</span>
+    const osCell = isXc ? `
+      <td class="adv-os-cell" style="text-align:center; vertical-align:middle;">
+        <div class="adv-xc-os-toggle" data-model="${p.id}" style="display:none; gap:4px; align-items:center; justify-content:center;">
           <button type="button" class="adv-xc-os-btn active" data-os="std"
             onclick="advSetXcOs('${p.id}', 'std')"
-            style="padding:3px 8px; font-size:11px; font-weight:600; border:1px solid var(--indigo, #4F46E5); background:var(--indigo, #4F46E5); color:#fff; border-radius:6px; cursor:pointer;">Std</button>
+            style="padding:5px 10px; font-size:11px; font-weight:600; border:1px solid var(--indigo, #4F46E5); background:var(--indigo, #4F46E5); color:#fff; border-radius:6px; cursor:pointer; white-space:nowrap;">BrightOS</button>
           <button type="button" class="adv-xc-os-btn" data-os="win"
             onclick="advSetXcOs('${p.id}', 'win')"
-            style="padding:3px 8px; font-size:11px; font-weight:600; border:1px solid var(--border-strong, #CBD5E1); background:#fff; color:var(--ink-muted, #64748B); border-radius:6px; cursor:pointer;">Win IoT</button>
-        </div>` : '';
+            style="padding:5px 10px; font-size:11px; font-weight:600; border:1px solid var(--border-strong, #CBD5E1); background:#fff; color:var(--ink-muted, #64748B); border-radius:6px; cursor:pointer; white-space:nowrap;">Windows OS</button>
+        </div>
+      </td>` : `<td class="adv-os-cell"></td>`;
     return `
     <tr data-model="${p.id}" data-xc-os="std">
-      <td>
-        <span class="adv-model-id">${p.id}</span>
-        ${osToggle}
-      </td>
+      <td><span class="adv-model-id">${p.id}</span></td>
       <td><span class="adv-tier ${p.tierClass}">${p.tier}</span></td>
       <td class="adv-highlights">${p.hl}</td>
+      ${osCell}
       <td class="adv-qty-cell">
         <div class="qty-stepper" role="group" aria-label="Quantity for ${p.id}">
           <button type="button" class="qty-step-btn qty-step-minus" aria-label="Decrease quantity" onclick="advStepQty('${p.id}', -1)">−</button>
