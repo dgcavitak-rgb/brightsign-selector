@@ -7116,7 +7116,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.14.11';
+const FRONTEND_VERSION = '24.14.12';
 
 
 // ============================================================================
@@ -8115,6 +8115,109 @@ async function ensureFreshPriceBook(){
     if(!pwHash) return;
     await fetchPriceBook(window.state.user.loginName, pwHash);
   }catch(_){ /* keep stale price book on refresh failure */ }
+}
+
+/* v24.14.12 — CMS price book.
+   - Lives in CmsPricing tab (separate from Pricing/Accessories).
+   - Rows keyed on (vendor, priceType, termYears).
+   - priceType ∈ { installation, onpremise_subscription, cloud_subscription }.
+   - termYears: blank for installation; integer for subscriptions.
+   - getCmsPrice(vendor, priceType, term) does:
+       1. Exact (vendor, priceType, term) match → use that row's price directly.
+       2. No match → look up term=1 row → multiply by `term`.
+       3. Still nothing → return null (renders "—" in BOM).
+*/
+window._cmsPriceBookRows = [];           // raw rows from server
+window._cmsPriceBookFetchedAt = 0;
+window._cmsPriceBookCacheMaxAgeMs = 10800000;
+
+async function fetchCmsPriceBook(loginName, passwordHash){
+  if(!WEBHOOK_URL || !loginName || !passwordHash) return null;
+  try{
+    const res = await fetch(WEBHOOK_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        action: 'cms_pricing_get',
+        requesterLoginName: loginName,
+        requesterPasswordHash: passwordHash
+      })
+    });
+    if(!res.ok){
+      console.warn('[fetchCmsPriceBook] HTTP', res.status, '— CMS prices will render as "—"');
+      return null;
+    }
+    const data = await res.json();
+    if(!data || !data.ok){
+      console.warn('[fetchCmsPriceBook] backend returned not-ok:', data && data.message,
+                   data && data.hint ? '· ' + data.hint : '');
+      return null;
+    }
+    window._cmsPriceBookRows = Array.isArray(data.rows) ? data.rows : [];
+    window._cmsPriceBookFetchedAt = Date.now();
+    window._cmsPriceBookCacheMaxAgeMs = (data.cacheMaxAgeSec || 10800) * 1000;
+    console.log('[fetchCmsPriceBook] ✓ Loaded', window._cmsPriceBookRows.length, 'CMS pricing rows');
+    return data;
+  }catch(err){
+    console.warn('[fetchCmsPriceBook] fetch failed:', err && err.message ? err.message : err);
+    return null;
+  }
+}
+
+async function ensureFreshCmsPriceBook(){
+  if(!window.state || !window.state.user) return;
+  if(!window._sessionPassword && !window._sessionPasswordHash) return;
+  const age = Date.now() - (window._cmsPriceBookFetchedAt || 0);
+  const max = window._cmsPriceBookCacheMaxAgeMs || 10800000;
+  if(age < max) return;
+  try{
+    const pwHash = await getCurrentAuthHash();
+    if(!pwHash) return;
+    await fetchCmsPriceBook(window.state.user.loginName, pwHash);
+  }catch(_){ /* keep stale CMS price book on refresh failure */ }
+}
+
+/* Look up CMS price for (vendor, priceType, term).
+   - For priceType='installation', `term` is ignored (installation rows have empty termYears).
+   - Returns { unitPriceINR, sapCode, source: 'exact'|'extrapolated'|null, note }
+     OR null if no match at all (frontend renders "—"). */
+function getCmsPrice(vendor, priceType, term){
+  const rows = window._cmsPriceBookRows || [];
+  if(!rows.length) return null;
+  const v = String(vendor || '').trim();
+  const pt = String(priceType || '').trim();
+  const t = (priceType === 'installation') ? null : parseInt(term || 1, 10);
+  // 1. Exact match
+  for(const r of rows){
+    if(r.vendor !== v || r.priceType !== pt) continue;
+    if(priceType === 'installation' && (r.termYears == null || r.termYears === '')){
+      if(r.unitPriceINR > 0){
+        return { unitPriceINR:r.unitPriceINR, sapCode:r.sapCode||'', source:'exact', note:r.note||'' };
+      }
+      return null;  // row exists but is placeholder (price=0)
+    }
+    if(priceType !== 'installation' && r.termYears === t){
+      if(r.unitPriceINR > 0){
+        return { unitPriceINR:r.unitPriceINR, sapCode:r.sapCode||'', source:'exact', note:r.note||'' };
+      }
+      return null;
+    }
+  }
+  // 2. Extrapolate from 1-year row (subscriptions only)
+  if(priceType !== 'installation' && t > 1){
+    for(const r of rows){
+      if(r.vendor !== v || r.priceType !== pt) continue;
+      if(r.termYears === 1 && r.unitPriceINR > 0){
+        return {
+          unitPriceINR: r.unitPriceINR * t,
+          sapCode: r.sapCode || '',
+          source: 'extrapolated',
+          note: `${t}-year rate extrapolated from 1-year base × ${t}`
+        };
+      }
+    }
+  }
+  return null;
 }
 
 /* v24.4.19: INR currency formatter — Indian grouping (1,23,456)
@@ -9239,9 +9342,19 @@ function cmPickerToggle(){
   // Initialize displayed year from current selection or from this year
   const sel = _cmPickerCurrentSelection();
   cmPickerRender(sel.year || (new Date()).getFullYear());
+  // v24.14.12 — Reposition popover as position:fixed with high z-index so it
+  // escapes the parent .form-section stacking context (created by backdrop-filter).
+  // Without this, the next form-section renders on top of the popover.
+  const r = btn.getBoundingClientRect();
+  pop.style.position = 'fixed';
+  pop.style.top = (r.bottom + 6) + 'px';
+  pop.style.left = r.left + 'px';
+  pop.style.zIndex = '99999';
   pop.hidden = false;
   btn.setAttribute('aria-expanded','true');
   _cmPickerOpen = true;
+  // v24.14.12 — Close on scroll (re-positioning is messy, closing is cleaner UX)
+  window.addEventListener('scroll', cmPickerClose, {once:true, capture:true});
   // Bind outside-click-to-close handler ONCE while open
   setTimeout(()=>{
     document.addEventListener('click', cmPickerOutsideClick, {once:false, capture:true});
@@ -9523,6 +9636,7 @@ async function _attemptRehydrate(){
     // v24.14.10 carried over: fetch price book on rehydrate too
     try{
       fetchPriceBook(state.user.loginName, stored.passwordHash);  // intentional no-await
+      fetchCmsPriceBook(state.user.loginName, stored.passwordHash);  // v24.14.12 — same pattern
     }catch(_){ /* never block */ }
 
     updateLoginSplash(75, 'Almost there…');
@@ -9654,6 +9768,7 @@ async function handleLogin(){
     try{
       const pwHash = await sha256Hex(password);
       fetchPriceBook(state.user.loginName, pwHash);  // intentional no-await
+      fetchCmsPriceBook(state.user.loginName, pwHash);  // v24.14.12 — same pattern
     }catch(_){ /* never block login on price-book fetch */ }
 
     const nameEl=document.getElementById('user-label-name');
@@ -12162,7 +12277,8 @@ function showAnalysisOverlay(onComplete){
 
 function computeCMS(f){
   // v21.2 CMS logic — respects user's Yes/No toggle for Local ≤25, mandatory otherwise.
-  // No pricing language anywhere — just vendor + term + structure.
+  // v24.14.12: rows now carry unitPrice + sku + sapCode resolved from CMS price book.
+  // Fallback to null when rate not configured (renders as "—" in BOM).
   const qty=parseInt(f.qty)||1;
   const rows=[];
   let badge='';
@@ -12176,27 +12292,45 @@ function computeCMS(f){
   // For Local ≤25, CMS only added if user explicitly picked Yes
   const cmsOptedIn=(isLocalSmall && f.cmsInclude==='yes');
 
+  // v24.14.12 helper — wrap a row with priced fields
+  function _addPricedRow(name, qtyVal, baseNote, priceType){
+    const lookup = getCmsPrice(vendor, priceType, term);
+    const note = baseNote + (lookup && lookup.source === 'extrapolated' ? ` · ${lookup.note}` : '');
+    rows.push({
+      name: name,
+      qty: qtyVal,
+      note: note,
+      unitPrice: lookup ? lookup.unitPriceINR : null,
+      sapCode: lookup ? lookup.sapCode : '',
+      sku: priceType === 'installation' ? 'CMS-INSTALL' :
+           (priceType === 'cloud_subscription' ? 'CMS-CLOUD-SUB' : 'CMS-ONPREM-SUB')
+    });
+  }
+
   if(isLocalLarge || cmsOptedIn){
     // On-premise: 2 line items (Subscription + Installation)
     badge=`${vendor} · On-premise · ${termLabel}`;
-    rows.push({
-      name:`CMS Subscription — ${vendor}`,
-      qty:qty,
-      note:`On-premise · ${termLabel} term · per-player subscription`
-    });
-    rows.push({
-      name:`CMS Installation — ${vendor}`,
-      qty:1,
-      note:'One-time on-premise installation & deployment'
-    });
+    _addPricedRow(
+      `CMS Subscription — ${vendor}`,
+      qty,
+      `On-premise · ${termLabel} term · per-player subscription`,
+      'onpremise_subscription'
+    );
+    _addPricedRow(
+      `CMS Installation — ${vendor}`,
+      1,
+      'One-time on-premise installation & deployment',
+      'installation'
+    );
   } else if(isCloud){
     // Cloud: 1 line item (Subscription only)
     badge=`${vendor} · Cloud · ${termLabel}`;
-    rows.push({
-      name:`CMS Cloud Subscription — ${vendor}`,
-      qty:qty,
-      note:`Cloud-hosted · ${termLabel} term · per-player subscription (from first player)`
-    });
+    _addPricedRow(
+      `CMS Cloud Subscription — ${vendor}`,
+      qty,
+      `Cloud-hosted · ${termLabel} term · per-player subscription (from first player)`,
+      'cloud_subscription'
+    );
   } else if(isLocalSmall && f.cmsInclude==='no'){
     badge='Standalone playback · No CMS';
   } else if(isLocalSmall){
@@ -12672,7 +12806,16 @@ function buildProjectCardV21(){
 }
 /* Legacy alias kept for any other callers */
 function buildProjectCard(){return buildProjectCardV21();}
-function selectOS(os){state.osChoice=os;document.querySelectorAll('.os-pill').forEach(p=>p.classList.toggle('selected',p.getAttribute('data-os')===os));}
+function selectOS(os){
+  state.osChoice=os;
+  // v24.14.12 — flip state.form.xcOs so BOM construction picks up the right SKU/price.
+  // Previously selectOS only updated state.osChoice, so getModelPrice was always
+  // called with f.xcOs='std' regardless of which pill was selected.
+  state.form.xcOs = (os==='windows') ? 'win' : 'std';
+  document.querySelectorAll('.os-pill').forEach(p=>p.classList.toggle('selected',p.getAttribute('data-os')===os));
+  // Re-render result so BOM, Excel quote, and pricing card all reflect new OS
+  if(typeof renderResult === 'function') renderResult();
+}
 
 /* ===== LOG / SYNC ===== */
 function showSync(msg,type){
@@ -14055,16 +14198,27 @@ function downloadQuoteExcel(returnWorkbook){
     });
   } else {
     // Legacy fallback
+    // v24.14.12 — show OS label in BOM desc for XC models, and use SKU from
+    // getModelPrice so Win10/Win11 variant gets its proper "XC2055 - Win10/Win11" SKU.
+    const _osLabel = (m.xc) ? (f.xcOs==='win' ? ' — Win10/Win11' : ' — BrightSign OS') : '';
     if(isMixed){
-      bomRows.push({sku:m.id,desc:`BrightSign ${m.id} — ${m.tag} (Indoor)`,qty:qtyIndoor,unitPrice:(getModelPrice(m.id,f.xcOs).unitPrice),notes:'Indoor deployment'});
-      if(om){bomRows.push({sku:om.id,desc:`BrightSign ${om.id} — ${om.tag} (Outdoor)`,qty:qtyOutdoor,unitPrice:(getModelPrice(om.id,f.xcOs).unitPrice),notes:'Outdoor deployment · aluminium chassis'});}
+      const _pp = getModelPrice(m.id, f.xcOs);
+      bomRows.push({sku:_pp.sku||m.id,desc:`BrightSign ${m.id}${_osLabel} — ${m.tag} (Indoor)`,qty:qtyIndoor,unitPrice:_pp.unitPrice,notes:'Indoor deployment'});
+      if(om){
+        // outdoor variant is always aluminium chassis — never an XC, so no OS label
+        const _ppo = getModelPrice(om.id, f.xcOs);
+        bomRows.push({sku:_ppo.sku||om.id,desc:`BrightSign ${om.id} — ${om.tag} (Outdoor)`,qty:qtyOutdoor,unitPrice:_ppo.unitPrice,notes:'Outdoor deployment · aluminium chassis'});
+      }
     } else {
-      bomRows.push({sku:m.id,desc:`BrightSign ${m.id} — ${m.tag}`,qty:qtyTotal,unitPrice:(getModelPrice(m.id,f.xcOs).unitPrice),notes:m.chassis==='aluminium'?'Outdoor Grade':'Indoor Grade'});
+      const _pp = getModelPrice(m.id, f.xcOs);
+      bomRows.push({sku:_pp.sku||m.id,desc:`BrightSign ${m.id}${_osLabel} — ${m.tag}`,qty:qtyTotal,unitPrice:_pp.unitPrice,notes:m.chassis==='aluminium'?'Outdoor Grade':'Indoor Grade'});
     }
     if(f.ssd==='yes')bomRows.push({sku:'BS-SSD-'+(f.ssdCap||'256'),desc:`BrightSign SSD ${f.ssdCap==='1024'?'1TB':(f.ssdCap||'256')+'GB'} M.2 NVMe`,qty:qtyTotal,unitPrice:null,notes:'Expanded storage — price on request'});
     if(f.wifi==='yes')bomRows.push({sku:WD105_SKU,desc:WD105_NAME+' (M.2 E-Key)',qty:qtyTotal,unitPrice:WD105_PRICE,notes:'Wi-Fi + BT connectivity'});
     const excelCmsQ=computeCMS(f);
-    if(excelCmsQ.rows){excelCmsQ.rows.forEach(row=>bomRows.push({sku:'SVC-CMS',desc:row.name,qty:row.qty,unitPrice:null,notes:row.note||'CMS service'}));}
+    // v24.14.12 — CMS rows now carry resolved unitPrice + sku from price book lookup.
+    // Falls back to null if rate not configured (renders as "—" in Excel).
+    if(excelCmsQ.rows){excelCmsQ.rows.forEach(row=>bomRows.push({sku:row.sku||'SVC-CMS',desc:row.name,qty:row.qty,unitPrice:(row.unitPrice!=null?row.unitPrice:null),notes:row.note||'CMS service'}));}
   }
 
   const bomStartRow=qAoa.length+1;
