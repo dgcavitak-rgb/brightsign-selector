@@ -5984,6 +5984,8 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
     <div class="login-forgot"><a href="#" onclick="event.preventDefault();showForgotPasswordModal();">Forgot password?</a></div>
   </div>
   <div class="login-footer">Dipenkumar Gajjar · National Product Manager · +91 8160 756 906 · dipen.g@cavitak.com</div>
+  <!-- v24.14.10 P3-6 fix: version footer element. updateVersionFooter() populates this on load. -->
+  <div id="app-version-footer" class="app-version-footer"></div>
 </div>
 
 <!-- APP -->
@@ -7114,7 +7116,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.14.9';
+const FRONTEND_VERSION = '24.14.11';
 
 
 // ============================================================================
@@ -7153,7 +7155,7 @@ async function refreshCustomers(){
   }
 
   try{
-    const pwHash = await sha256Hex(window._sessionPassword || '');
+    const pwHash = await getCurrentAuthHash();
     const resp = await fetch(WEBHOOK_URL, {
       method: 'POST', mode: 'cors',
       headers: {'Content-Type': 'text/plain'},
@@ -7217,7 +7219,11 @@ function buildDerivedDirectory_(type){
     }
     const entry = byName.get(key);
     entry.dealsCount++;
-    entry.totalValueINR += (parseFloat(r.dealValue) || 0);
+    // v24.14.10 P1-2 fix: extend field-name fallback to match the canonical
+    // 3-name pattern used elsewhere. The bare 'r.dealValue' missed any record
+    // saved under the modern field name 'dealValueINR', causing the Customer
+    // Directory totalValueINR column to undercount.
+    entry.totalValueINR += (parseFloat(r.dealValueINR || r.dealValue || r.dealvalueinr || 0) || 0);
     if(r.city) entry.cities.add(r.city);
     if(r.enduser) entry.endUsers.add(r.enduser);
     const when = r.ts ? new Date(r.ts).getTime() : 0;
@@ -7355,7 +7361,7 @@ async function deleteCustomer(customerId, customerName){
   );
   if(!ok) return;
   try{
-    const pwHash = await sha256Hex(window._sessionPassword || '');
+    const pwHash = await getCurrentAuthHash();
     const resp = await fetch(WEBHOOK_URL, {
       method: 'POST', mode: 'cors',
       headers: {'Content-Type': 'text/plain'},
@@ -7453,7 +7459,7 @@ async function submitCustomerForm(){
 
   if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
   try{
-    const pwHash = await sha256Hex(window._sessionPassword || '');
+    const pwHash = await getCurrentAuthHash();
     const resp = await fetch(WEBHOOK_URL, {
       method: 'POST', mode: 'cors',
       headers: {'Content-Type': 'text/plain'},
@@ -7516,7 +7522,7 @@ async function submitMergeModal(){
   const targetId = document.getElementById('mergeTargetSelect').value;
   if(!sourceId || !targetId){ showErr('Pick a target customer.'); return; }
   try{
-    const pwHash = await sha256Hex(window._sessionPassword || '');
+    const pwHash = await getCurrentAuthHash();
     const resp = await fetch(WEBHOOK_URL, {
       method: 'POST', mode: 'cors',
       headers: {'Content-Type': 'text/plain'},
@@ -7947,22 +7953,31 @@ const BUDGET_ZONES = {
 };
 const SERIES_LADDER = ['AU','LS','HD','XD','XT','XC'];
 
-/* v24.4.19: Indian rupee pricing for BrightSign Series 5 SKUs.
-   These are FINAL quoted prices (already negotiated), not MRP — no discount applied.
-   Update this map (and bump FRONTEND_VERSION) to change prices.
+/* v24.14.10: PRICING MIGRATED TO BACKEND.
+   These constants now hold FALLBACK values matching the last-known-good production
+   prices. They get overwritten at login by fetchPriceBook() pulling from the Pricing
+   tab in Google Sheets (Apps Script v25.3.0+).
 
-   XC variants: base price is "Standard" (BrightSignOS). Selecting Win10/Win11 adds a
-   surcharge that brings the total to the Windows variant price from the rate card.
+   Why fallback values stay here: if the price book endpoint fails or returns empty
+   (e.g. before pricing_seed_ONESHOT has been run), the app keeps working with the
+   last known prices instead of breaking. After a successful fetch they're replaced.
 
-   Series 6 SKUs (HD226/HD1026/XD236/XD1036) map to the same prices as their Series 5
-   predecessors (HD225/HD1025/XD235/XD1035) plus a small uplift, since Dipenkumar's rate
-   card shows the Series 6 prices. Adjust if the rate card diverges further. */
-const PRICING = {
-  // Series 5 — audio + HD + 4K
+   Why these are `let` not `const`: they MUST be mutable so fetchPriceBook can update
+   them. Every existing consumption site keeps working unchanged.
+
+   Mutation flow:
+     login → fetchPriceBook() → REST call pricing_get → mutate PRICING/SAP_CODES/etc.
+     in place → log "Price book loaded" with model count.
+
+   Audit/security: actual prices live in the Pricing sheet, which requires auth to
+   read. Source HTML carries fallback prices only — they're known to be the publicly
+   acceptable starting point and not commercially sensitive at a granularity beyond
+   what the rate card already reveals. */
+let PRICING = {
   'AU335'  : 25729,
   'LS425'  : 47396,
   'LS445'  : 61615,
-  'HD225'  : 74479,   // Dipenkumar: rate card shows HD226 at this price; HD225 ≈ same
+  'HD225'  : 74479,
   'HD1025' : 88021,
   'XD235'  : 90729,
   'XD1035' : 104271,
@@ -7971,20 +7986,13 @@ const PRICING = {
   'XT2145' : 167240,
   'XC2055' : 174688,
   'XC4055' : 242396,
-  // Series 6 — use rate-card prices directly (mapped from price list provided Apr 2026)
   'HD226'  : 74479,
   'HD1026' : 88021,
   'XD236'  : 90729,
   'XD1036' : 104271
 };
 
-/* v24.6.0: SAP item codes for Series 5 SKUs + XC Win10/Win11 variants + WD105.
-   Displayed as column B in the Excel Quotation sheet — lets Cavitak ERP drop
-   the BOQ straight into a purchase order without SKU translation.
-   Source: Cavitak SAP master price list (image shared by Dipenkumar, Apr 2026).
-   Series 6 (HD226/HD1026/XD236/XD1036) deliberately absent — per Dipenkumar:
-   "SAP is for Series 5 only & as of now do not consider 6 Series player." */
-const SAP_CODES = {
+let SAP_CODES = {
   'AU335'  : 'SI0010195',
   'LS425'  : 'SI0010158',
   'LS445'  : 'SI0010157',
@@ -8002,24 +8010,112 @@ const SAP_CODES = {
   'WD105'  : 'SI0010159'
 };
 
-/* Returns SAP code for a SKU. Empty string if not in the catalog (services, custom items). */
 function getSapCode(sku){
   if(!sku)return '';
   return SAP_CODES[String(sku).trim()] || '';
 }
 
-/* v24.4.19: XC Windows IoT variant surcharge.
-   When user selects Win10/Win11 as OS on an XC model, add this delta to the base price
-   to arrive at the Windows variant price from the rate card.
-   XC2055 base ₹174,688 + delta ₹27,083 = ₹201,771 (Win10/Win11)
-   XC4055 base ₹242,396 + delta ₹27,083 = ₹269,479 (Win10/Win11) */
-const XC_WIN_SURCHARGE = 27083;
+let XC_WIN_SURCHARGE = 27083;
 
-/* v24.4.19: WD105 — Wi-Fi dongle/module. Auto-added as accessory line item when
-   form selects Wi-Fi = Yes. One WD105 per player is assumed. */
-const WD105_PRICE = 16000;
-const WD105_SKU   = 'WD105';
-const WD105_NAME  = 'WD105 Wi-Fi module';
+let WD105_PRICE = 16000;
+let WD105_SKU   = 'WD105';
+let WD105_NAME  = 'WD105 Wi-Fi module';
+
+/* v24.14.10: Fetch the price book from backend. Called on login.
+   - Auth-gated (uses requesterLoginName + requesterPasswordHash, BS backend convention).
+   - Re-fetches if cache is older than cacheMaxAgeSec (default 3hr from backend).
+   - Mutates PRICING / SAP_CODES / XC_WIN_SURCHARGE / WD105_* in place.
+   - On failure, logs and continues with fallback values — does NOT block login. */
+window._priceBookFetchedAt = 0;
+async function fetchPriceBook(loginName, passwordHash){
+  if(!WEBHOOK_URL || !loginName || !passwordHash) return null;
+  try{
+    const res = await fetch(WEBHOOK_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        action: 'pricing_get',
+        requesterLoginName: loginName,
+        requesterPasswordHash: passwordHash
+      })
+    });
+    if(!res.ok){
+      console.warn('[fetchPriceBook] HTTP', res.status, '— keeping fallback prices');
+      return null;
+    }
+    const data = await res.json();
+    if(!data || !data.ok){
+      console.warn('[fetchPriceBook] backend returned not-ok:', data && data.error,
+                   '— keeping fallback prices', data && data.hint ? '· ' + data.hint : '');
+      return null;
+    }
+    if(!data.models || data.modelCount === 0){
+      console.warn('[fetchPriceBook] empty price book — Super needs to run pricing_seed_ONESHOT() in Apps Script. Keeping fallback prices.');
+      return null;
+    }
+    // Rebuild PRICING + SAP_CODES + XC win-variant prices from server data.
+    const newPricing = {};
+    const newSap = {};
+    let newXcWinSurcharge = XC_WIN_SURCHARGE;  // keep fallback unless we can derive
+    Object.keys(data.models).forEach(function(modelId){
+      const variants = data.models[modelId];
+      // Default variant
+      if(variants['default']){
+        newPricing[modelId] = variants['default'].unitPriceINR;
+        newSap[modelId] = variants['default'].sapCode || '';
+      }
+      // XC Win10/Win11 variant — store SKU mapping in SAP_CODES, derive surcharge
+      if(variants['win']){
+        const winSku = variants['win'].sku;
+        newSap[winSku] = variants['win'].sapCode || '';
+        // Derive surcharge from XC2055 if we have both default and win
+        if(modelId === 'XC2055' && variants['default']){
+          newXcWinSurcharge = variants['win'].unitPriceINR - variants['default'].unitPriceINR;
+        }
+      }
+    });
+    PRICING = newPricing;
+    SAP_CODES = newSap;
+    XC_WIN_SURCHARGE = newXcWinSurcharge;
+    // Apply accessories — currently only WD105
+    if(Array.isArray(data.accessories)){
+      data.accessories.forEach(function(a){
+        if(a.accessoryId === 'WD105'){
+          WD105_PRICE = a.unitPriceINR;
+          WD105_SKU   = a.sku || 'WD105';
+          WD105_NAME  = a.name || 'WD105 Wi-Fi module';
+          if(a.sapCode) SAP_CODES['WD105'] = a.sapCode;
+        }
+      });
+    }
+    window._priceBookFetchedAt = Date.now();
+    window._priceBookCacheMaxAgeMs = (data.cacheMaxAgeSec || 10800) * 1000;
+    console.log('[fetchPriceBook] ✓ Loaded', data.modelCount, 'models +',
+                data.accessoryCount || 0, 'accessories. XC win surcharge: ₹' + XC_WIN_SURCHARGE);
+    return data;
+  }catch(err){
+    console.warn('[fetchPriceBook] fetch failed:', err && err.message ? err.message : err,
+                 '— keeping fallback prices');
+    return null;
+  }
+}
+
+/* v24.14.10: Re-fetch if cache stale. Called opportunistically before any quote render.
+   No-op if cache is fresh or if we haven't logged in yet. */
+async function ensureFreshPriceBook(){
+  if(!window.state || !window.state.user) return;
+  // v24.14.11: After rehydrate, _sessionPassword is null but _sessionPasswordHash is set.
+  // getCurrentAuthHash() handles both cases. Bail only if we have NEITHER.
+  if(!window._sessionPassword && !window._sessionPasswordHash) return;
+  const age = Date.now() - (window._priceBookFetchedAt || 0);
+  const max = window._priceBookCacheMaxAgeMs || 10800000;
+  if(age < max) return;
+  try{
+    const pwHash = await getCurrentAuthHash();
+    if(!pwHash) return;
+    await fetchPriceBook(window.state.user.loginName, pwHash);
+  }catch(_){ /* keep stale price book on refresh failure */ }
+}
 
 /* v24.4.19: INR currency formatter — Indian grouping (1,23,456)
    v24.4.20: Force style:decimal + notation:standard to prevent browsers from auto-compacting
@@ -9277,6 +9373,184 @@ async function sha256Hex(str){
   return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
+/* ============================================================================
+ * v24.14.11 — Session rehydrate
+ * ============================================================================
+ * Refresh-safe session via sessionStorage. Survives: page refresh, tab freeze,
+ * accidental F5. Dies on: tab close, browser close, manual logout, idle timeout,
+ * password change elsewhere (backend rejects → frontend wipes).
+ *
+ * Storage key: `bs-session-v1`
+ * Stored shape: { loginName, passwordHash, user, savedAt }
+ * TTL: 8 hours (hard cap regardless of activity — prevents stale sessions)
+ *
+ * Why sessionStorage over localStorage:
+ *   - sessionStorage dies on tab/browser close (preserves v21.6's intent that
+ *     closing tab = signing out)
+ *   - localStorage would survive across all that, which is a bigger UX win
+ *     but moves the risk profile. sessionStorage is the smaller, safer change.
+ *
+ * Why store passwordHash not raw password:
+ *   - Reduces blast radius if XSS reads sessionStorage
+ *   - The salted backend hash means even if exfiltrated, the value alone is
+ *     useless to an attacker without the salt + a live backend
+ * ============================================================================ */
+
+const _SESSION_STORAGE_KEY = 'bs-session-v1';
+const _SESSION_REHYDRATE_TTL_MS = 8 * 60 * 60 * 1000;  // 8h hard cap
+
+function _persistSession(loginName, passwordHash, userRecord){
+  try{
+    sessionStorage.setItem(_SESSION_STORAGE_KEY, JSON.stringify({
+      loginName: loginName,
+      passwordHash: passwordHash,
+      user: userRecord,
+      savedAt: Date.now()
+    }));
+  }catch(e){ /* sessionStorage may be disabled in strict-privacy modes; non-fatal */ }
+}
+
+function _clearPersistedSession(){
+  try{ sessionStorage.removeItem(_SESSION_STORAGE_KEY); }catch(e){}
+}
+
+function _readPersistedSession(){
+  try{
+    const raw = sessionStorage.getItem(_SESSION_STORAGE_KEY);
+    if(!raw) return null;
+    const obj = JSON.parse(raw);
+    if(!obj || !obj.loginName || !obj.passwordHash || !obj.user) return null;
+    if(Date.now() - (obj.savedAt || 0) > _SESSION_REHYDRATE_TTL_MS){
+      _clearPersistedSession();
+      return null;
+    }
+    return obj;
+  }catch(e){ return null; }
+}
+
+/* v24.14.11: Single accessor for the current auth hash. Replaces 33 instances of
+   `await getCurrentAuthHash()` so rehydrated sessions
+   (which only have the hash, not raw password) still work for every API call. */
+async function getCurrentAuthHash(){
+  if(window._sessionPasswordHash) return window._sessionPasswordHash;
+  if(window._sessionPassword){
+    const h = await sha256Hex(window._sessionPassword);
+    window._sessionPasswordHash = h;  // memoize so we don't re-hash every call
+    return h;
+  }
+  return '';
+}
+
+/* v24.14.11: Apply all the post-login UI changes. Extracted from handleLogin so
+   the rehydrate path can call the same code. Idempotent — reading from state.user. */
+function _applyPostLoginUI(){
+  const u = state.user;
+  if(!u) return;
+  const nameEl = document.getElementById('user-label-name');
+  if(nameEl) nameEl.innerHTML = u.fullName + (u.isSuper?' <span class="super-pill">Super</span>':'');
+  const roleEl = document.getElementById('user-label-role');
+  if(roleEl) roleEl.textContent = u.role || '';
+  const initials = (u.fullName || u.loginName || '').split(' ').map(s=>s[0]||'').slice(0,2).join('').toUpperCase();
+  const avatar = document.getElementById('user-avatar');
+  if(avatar){ avatar.textContent = initials; avatar.classList.toggle('super', u.isSuper); }
+  const logTabLabel = document.getElementById('log-tab-label');
+  if(logTabLabel) logTabLabel.textContent = 'History';
+  const teamTab = document.getElementById('tab-team');
+  const teamTabLabel = document.getElementById('team-tab-label');
+  if(teamTab) teamTab.style.display = 'inline-flex';
+  if(teamTabLabel) teamTabLabel.textContent = u.isSuper ? 'Team' : 'Profile';
+  const dirTab = document.getElementById('tab-directory');
+  if(dirTab) dirTab.style.display = '';
+  const dashTab = document.getElementById('tab-dashboard');
+  if(dashTab) dashTab.style.display = 'inline-flex';
+  const reviewTab = document.getElementById('tab-review');
+  if(reviewTab){
+    const role = (u.role || '').trim();
+    const showReview = u.isSuper || role === 'BrightSign';
+    reviewTab.style.display = showReview ? 'inline-flex' : 'none';
+  }
+  document.getElementById('page-login').classList.remove('active');
+  document.getElementById('page-app').classList.add('active');
+}
+
+/* v24.14.11: Page-load rehydrate. Returns true if session restored, false otherwise.
+   Called from DOMContentLoaded BEFORE the login screen renders, so user goes
+   straight into the app instead of seeing a login flash. */
+async function _attemptRehydrate(){
+  const stored = _readPersistedSession();
+  if(!stored) return false;
+  if(!WEBHOOK_URL){
+    _clearPersistedSession();
+    return false;
+  }
+  // Show the splash immediately so the user sees activity, not a blank login flash
+  try{ showLoginSplash(); updateLoginSplash(15, 'Restoring your session…'); }catch(_){}
+  try{
+    const resp = await fetch(WEBHOOK_URL, {
+      method:'POST', mode:'cors', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        action:'auth_check',
+        loginName: stored.loginName,
+        passwordHash: stored.passwordHash
+      })
+    });
+    const data = await resp.json();
+    if(data.status !== 'ok'){
+      // Backend rejected — likely password changed elsewhere or account disabled.
+      // Clear sessionStorage and fall through to normal login.
+      console.info('[rehydrate] backend rejected:', data.message || data.status, '— falling back to login');
+      _clearPersistedSession();
+      try{ hideLoginSplash(); }catch(_){}
+      return false;
+    }
+    // Reseat in-memory session. Note: raw password not available; only the hash.
+    state.user = data.user || stored.user;
+    window._sessionUser = state.user;
+    window._sessionPasswordHash = stored.passwordHash;
+    window._sessionPassword = null;  // raw password not recoverable; getCurrentAuthHash uses the hash directly
+    window._formOwner = {
+      loginName: state.user.loginName,
+      fullName: state.user.fullName,
+      role: state.user.role,
+      capturedAt: Date.now()
+    };
+    // Refresh the persisted session timestamp + latest user record from server
+    _persistSession(stored.loginName, stored.passwordHash, state.user);
+
+    updateLoginSplash(50, 'Loading your data…');
+    _applyPostLoginUI();
+
+    // v24.14.10 carried over: fetch price book on rehydrate too
+    try{
+      fetchPriceBook(state.user.loginName, stored.passwordHash);  // intentional no-await
+    }catch(_){ /* never block */ }
+
+    updateLoginSplash(75, 'Almost there…');
+    if(typeof renderLog === 'function') renderLog();
+    if(typeof startSessionTimer === 'function') startSessionTimer();
+    if(typeof refreshLog === 'function'){
+      try{ refreshLog(); }catch(_){}
+    }
+
+    updateLoginSplash(100, 'Welcome back');
+    setTimeout(function(){ try{ hideLoginSplash(); }catch(_){} }, 500);
+
+    // Honor mustChange flag if backend says so (e.g. Super reset password since last login)
+    if(data.mustChange === true){
+      setTimeout(function(){
+        try{ hideLoginSplash(); showChangePasswordModal(true); }catch(_){}
+      }, 600);
+    }
+
+    return true;
+  }catch(err){
+    console.warn('[rehydrate] auth_check failed:', err && err.message ? err.message : err);
+    // Network error — keep sessionStorage so next refresh can retry. Just show login.
+    try{ hideLoginSplash(); }catch(_){}
+    return false;
+  }
+}
+
 /* v22.6: Sheet-backed auth check. Returns { ok, mustChange } or throws. */
 async function authCheckAgainstSheet(loginName,password){
   if(!WEBHOOK_URL)throw new Error('Webhook not configured');
@@ -9358,6 +9632,15 @@ async function handleLogin(){
     };
     window._sessionUser=userRecord;
     window._sessionPassword=password;
+    // v24.14.11: Cache the hash so getCurrentAuthHash() doesn't need to recompute,
+    // and persist a refresh-survivable session.
+    try{
+      const _pwHash = await sha256Hex(password);
+      window._sessionPasswordHash = _pwHash;
+      _persistSession(state.user.loginName, _pwHash, userRecord);
+    }catch(persistErr){
+      console.warn('[session-persist] failed (non-fatal — refresh will need re-login):', persistErr);
+    }
     // v24.2.10: Baseline form-owner snapshot right at login — ensures any submit has identity.
     window._formOwner={
       loginName:state.user.loginName,
@@ -9365,6 +9648,13 @@ async function handleLogin(){
       role:state.user.role,
       capturedAt:Date.now()
     };
+
+    // v24.14.10: Fetch price book from backend Pricing tab. Fire-and-forget —
+    // never blocks login. On failure, hardcoded fallback prices keep the app working.
+    try{
+      const pwHash = await sha256Hex(password);
+      fetchPriceBook(state.user.loginName, pwHash);  // intentional no-await
+    }catch(_){ /* never block login on price-book fetch */ }
 
     const nameEl=document.getElementById('user-label-name');
     nameEl.innerHTML=state.user.fullName+(state.user.isSuper?' <span class="super-pill">Super</span>':'');
@@ -9620,6 +9910,13 @@ async function submitPasswordChange(forced){
     }
     // Success — update cached password
     window._sessionPassword=newPwd;
+    // v24.14.11: refresh hash cache + persisted session so next page refresh uses the new password
+    try{
+      window._sessionPasswordHash = await sha256Hex(newPwd);
+      if(state.user && state.user.loginName){
+        _persistSession(state.user.loginName, window._sessionPasswordHash, state.user);
+      }
+    }catch(_){ /* non-fatal */ }
     closeChangePasswordModal();
     showSync('Password updated ✓','success');
     // v24.14.6: After a FORCED password change, auto-redirect to login.
@@ -9662,7 +9959,7 @@ async function superResetUserPassword(){
   if(!confirm(`Reset password for ${targetUser.fullName} back to the default "cavitak@123"?\n\nThey will be forced to change it on next login.`))return;
 
   try{
-    const requesterHash=await sha256Hex(window._sessionPassword||'');
+    const requesterHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -9762,7 +10059,7 @@ async function saveOwnProfile(){
   }
   statusEl.innerHTML='<span class="profile-info">Saving…</span>';
   try{
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -9821,7 +10118,7 @@ async function loadResetRequests(){
   const host=document.getElementById('reset-requests-host');
   if(!host)return;
   try{
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -9916,7 +10213,7 @@ async function approveResetRequest(requestId,loginName){
   if(!(await requireAuth()))return;
   if(!confirm(`Approve password reset for @${loginName}?\n\nTheir password will be reset to "cavitak@123" and they'll be forced to change it on next login.`))return;
   try{
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -9943,7 +10240,7 @@ async function denyResetRequest(requestId,loginName){
   if(!(await requireAuth()))return;
   if(!confirm(`Deny password reset request from @${loginName}?`))return;
   try{
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -10054,7 +10351,7 @@ async function softDeleteEntry(refId,projectName){
   if(!(await requireAuth()))return;
   if(!confirm(`Move "${projectName}" (${refId}) to Trash?\n\nIt will be hidden from History but kept in the Sheet with status=deleted. You can restore it from Team → Trash.`))return;
   try{
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -10083,7 +10380,7 @@ async function loadTrashList(){
   if(!host)return;
   host.innerHTML='<div class="trash-loading">Loading trash…</div>';
   try{
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -10133,7 +10430,7 @@ async function restoreTrashEntry(refId,projectName){
   if(!(await requireAuth()))return;
   if(!confirm(`Restore "${projectName}" (${refId}) from trash?\n\nIt will return to History with status=viewed.`))return;
   try{
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -10164,7 +10461,7 @@ async function loadErrorLogList(){
   if(!host)return;
   host.innerHTML='<div class="errors-section"><div class="errors-head"><div class="errors-title">⚠️ Error log</div></div><div class="errors-loading">Loading recent errors…</div></div>';
   try{
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -10194,7 +10491,7 @@ async function clearErrorLog(){
   }
   if(!confirm('Wipe ALL error log entries? This cannot be undone.\n\nUseful when stale errors from older versions are noisy and you want a clean slate to monitor v' + FRONTEND_VERSION + ' going forward.')) return;
   try{
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -10274,7 +10571,7 @@ async function loadBackupList(){
   if(!host)return;
   host.innerHTML='<div class="backup-section"><div class="backup-head"><div class="backup-title">💾 Backups</div></div><div class="backup-loading">Loading backups…</div></div>';
   try{
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -10341,7 +10638,7 @@ async function runManualBackup(){
   if(!confirm('Create a safety backup of all entries right now?\n\nBackups older than 30 days are auto-pruned. A nightly auto-backup already runs at 2 AM.'))return;
   try{
     showSync('Creating backup…');
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -10375,7 +10672,7 @@ async function restoreBackup(backupName,rowCount){
   }
   try{
     showSync('Restoring backup…');
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -10405,7 +10702,7 @@ async function deleteBackup(backupName){
   const dateLabel=isNaN(d.getTime())?backupName:d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
   if(!confirm(`Delete the backup from ${dateLabel}?\n\nThis cannot be undone. Other backups are not affected.`))return;
   try{
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -10432,7 +10729,7 @@ async function loadTeamTab(){
   const listHost=document.getElementById('team-list-host');
   if(!listHost)return;
   try{
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -10561,7 +10858,7 @@ async function submitAddUser(){
   if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){errEl.textContent='Email does not look valid.';return;}
 
   try{
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -10637,7 +10934,7 @@ async function submitEditUser(targetLogin){
   if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){errEl.textContent='Email does not look valid.';return;}
 
   try{
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const payload={
       action:'users_update',
       requesterLoginName:state.user.loginName,
@@ -10675,7 +10972,7 @@ async function resetUserFromTeam(loginName){
     : `Reset password for @${loginName} to the default "cavitak@123"?\n\nThey will be forced to change it on next login.`;
   if(!confirm(confirmMsg))return;
   try{
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -10706,7 +11003,7 @@ async function deleteUserFromTeam(loginName){
   if(!(await requireAuth()))return;
   if(!confirm(`DELETE user @${loginName}?\n\nThis cannot be undone. Their past selections in the History tab are preserved (attributed to their login name).\n\nProceed?`))return;
   try{
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -10733,6 +11030,8 @@ function handleLogout(){
   stopSessionTimer();  // v21.6: clear any pending session timer
   stopAutoSync();  // v22.4: stop background sync
   window._sessionPassword=null;  // v22.6: clear cached password
+  window._sessionPasswordHash=null;  // v24.14.11: clear cached hash
+  _clearPersistedSession();  // v24.14.11: kill the refresh-survivable session
   state.user=null;
   document.getElementById('page-login').classList.add('active');
   document.getElementById('page-app').classList.remove('active');
@@ -10866,6 +11165,11 @@ async function requireAuth(){
       try{
         await authCheckAgainstSheet(state.user.loginName,pwd);
         window._sessionPassword=pwd;
+        // v24.14.11: refresh hash cache + persisted session
+        try{
+          window._sessionPasswordHash = await sha256Hex(pwd);
+          _persistSession(state.user.loginName, window._sessionPasswordHash, state.user);
+        }catch(_){ /* non-fatal */ }
         finish(true);
       }catch(e){
         errEl.textContent=e.message||'Incorrect password';
@@ -10877,11 +11181,16 @@ async function requireAuth(){
   });
 }
 
-/* v21.6: Auto-logout when user closes tab, closes browser, or navigates away.
-   sessionStorage/localStorage is NOT used — closing tab = killing session by design. */
+/* v21.6 → v24.14.11: Tab close = sign out, refresh = stay signed in.
+   sessionStorage stores {loginName, hash, user} — survives refresh but the
+   browser auto-clears it on tab close, which preserves the v21.6 intent that
+   closing tab = signing out. We DO NOT manually clear sessionStorage here:
+   - User refreshes → beforeunload fires → page reloads → sessionStorage still
+     present → _attemptRehydrate restores session → user stays in.
+   - User closes tab → beforeunload fires → tab dies → sessionStorage auto-
+     cleared by browser → next time they open the app, login screen.
+   The in-memory wipe below is harmless (JS dies anyway) but kept for clarity. */
 window.addEventListener('beforeunload',function(){
-  // Fire-and-forget: clear any in-memory session state.
-  // Since nothing is persisted to localStorage, closing the tab effectively logs out.
   stopSessionTimer();
   state.user=null;
 });
@@ -12387,6 +12696,8 @@ function buildEntryPayload(status){
     console.error('buildEntryPayload: no user identity available (no state.user, no _formOwner). Entry NOT saved.');
     alert('Please sign in to save this entry.');
     state.user=null;
+    window._sessionPasswordHash=null;
+    _clearPersistedSession();  // v24.14.11: full reset — don't let refresh restore stale state
     document.getElementById('page-app').classList.remove('active');
     document.getElementById('page-login').classList.add('active');
     return null;
@@ -12611,7 +12922,7 @@ async function renderReview(){
     return;
   }
   try{
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -13064,7 +13375,7 @@ async function clearTestData(){
   }
   try{
     showSync('Clearing…');
-    const pwHash=await sha256Hex(window._sessionPassword||'');
+    const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
@@ -13118,7 +13429,7 @@ async function logEntry(status,onDone){
     // Inject auth fields at POST time, NOT at queue time, so retries pick up the current hash even after password changes.
     let postBody;
     try{
-      const pwHash=await sha256Hex(window._sessionPassword||'');
+      const pwHash=await getCurrentAuthHash();
       postBody=JSON.stringify(Object.assign({}, entry, {
         requesterLoginName: state.user.loginName,
         requesterPasswordHash: pwHash
@@ -13127,8 +13438,24 @@ async function logEntry(status,onDone){
       console.warn('logEntry: hash compute failed, falling back to bare entry (will likely 401):',hashErr);
       postBody=JSON.stringify(entry);
     }
-    fetch(WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:postBody})
-      .then(()=>{
+    // v24.14.10 P0-1 fix: switch from mode:'no-cors' to mode:'cors' so we can READ
+    // the actual response. With no-cors, the response is opaque and .then() always
+    // fires regardless of whether backend accepted the data — same bug pattern that
+    // bit tvONE in v25.17 (showing "Saved ✓" while backend silently rejected).
+    // The verifyPendingSync() 4s safety net stays as a defence-in-depth check.
+    // Apps Script + Content-Type:text/plain is a "simple request", so cors mode does
+    // NOT trigger preflight — clean swap, no backend changes needed.
+    fetch(WEBHOOK_URL,{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:postBody})
+      .then(async (res)=>{
+        let data=null;
+        try{ data=await res.json(); }catch(_){ /* tolerate missing/malformed JSON */ }
+        if(data && data.ok===false){
+          // Backend explicitly rejected. Surface the real error instead of false-success.
+          console.warn('logEntry: backend rejected:', data.error);
+          showSync('Save failed: '+(data.error||'backend rejected')+' · will retry','error');
+          if(onDone)onDone();
+          return;
+        }
         showSync(status==='saved'?'Saved ✓':'Saved ✓','success');
         // v22.4: Schedule a verification sweep in 4 seconds to confirm server received it
         setTimeout(()=>verifyPendingSync(),4000);
@@ -13167,7 +13494,7 @@ async function sendAuditLogDiff(current,snapshot){
   if(!changes.length)return;  // nothing changed, don't bother
   // v24.12.1 fix: include auth fields — backend's audit_log_append requires them
   let pwHash='';
-  try{ pwHash=await sha256Hex(window._sessionPassword||''); }catch(_){}
+  try{ pwHash=await getCurrentAuthHash(); }catch(_){}
   // Fire and forget — audit log failing shouldn't block the save
   fetch(WEBHOOK_URL,{
     method:'POST',
@@ -13267,7 +13594,7 @@ async function retryPendingSync(manualTrigger){
   // v24.12.1 fix: compute auth hash ONCE per retry cycle, inject into each POST so backend accepts.
   // Using current session hash (not cached at queue time) so password changes don't invalidate the queue.
   let pwHash='';
-  try{ pwHash=await sha256Hex(window._sessionPassword||''); }catch(_){}
+  try{ pwHash=await getCurrentAuthHash(); }catch(_){}
   const reqLogin=(state.user && state.user.loginName) || '';
   for(const item of queue){
     if(item.attempts>=MAX_ATTEMPTS){failCount++;continue;}
@@ -15600,7 +15927,7 @@ window.showTab=function(which){
   async function fetchAggregate(mode){
     if(!WEBHOOK_URL || !state.user){return null;}
     try{
-      const pwHash = await sha256Hex(window._sessionPassword || '');
+      const pwHash = await getCurrentAuthHash();
       const resp = await fetch(WEBHOOK_URL, {
         method:'POST', mode:'cors',
         headers:{'Content-Type':'text/plain'},
@@ -15625,7 +15952,7 @@ window.showTab=function(which){
   async function fetchNote(periodKey){
     if(!WEBHOOK_URL || !state.user){return null;}
     try{
-      const pwHash = await sha256Hex(window._sessionPassword || '');
+      const pwHash = await getCurrentAuthHash();
       const resp = await fetch(WEBHOOK_URL, {
         method:'POST', mode:'cors',
         headers:{'Content-Type':'text/plain'},
@@ -15651,7 +15978,7 @@ window.showTab=function(which){
     const statusEl = document.getElementById('bs-c2a-poa-status');
     if(statusEl) statusEl.textContent = 'Saving…';
     try{
-      const pwHash = await sha256Hex(window._sessionPassword || '');
+      const pwHash = await getCurrentAuthHash();
       const resp = await fetch(WEBHOOK_URL, {
         method:'POST', mode:'cors',
         headers:{'Content-Type':'text/plain'},
@@ -16094,7 +16421,7 @@ window.renderSuperProfileHeader_c2c = function(){
   const totalDeals = log.length;
   const openPipe = log
     .filter(function(r){ return (r.outcome||'open').toString().toLowerCase()==='open'; })
-    .reduce(function(s,r){ return s + (parseFloat(r.dealValueINR || r.dealValue || 0) || 0); }, 0);
+    .reduce(function(s,r){ return s + (parseFloat(r.dealValueINR || r.dealValue || r.dealvalueinr || 0) || 0); }, 0);
   const pendingResets = resets.filter(function(r){ return r.status==='pending'; }).length;
 
   // Last login
@@ -16308,7 +16635,7 @@ window.bsC3dRenderTrend = async function(){
 
   let snapshots = [];
   try {
-    const pwHash = await sha256Hex(window._sessionPassword || '');
+    const pwHash = await getCurrentAuthHash();
     const resp = await fetch(WEBHOOK_URL, {
       method:'POST', mode:'cors',
       headers:{'Content-Type':'text/plain'},
@@ -17153,6 +17480,45 @@ if(document.readyState==='loading'){
   })();
 })();
 /* /v24.14.9 KPI dashboard */
+
+/* ============================================================================
+ * v24.14.11 — Rehydrate trigger
+ * ============================================================================
+ * On page load, before the login screen has visually rendered, attempt to
+ * restore a session from sessionStorage. If successful, we go straight into
+ * the app. If not (no stored session, expired, or backend rejected), the login
+ * screen renders normally.
+ *
+ * Wrapped in DOMContentLoaded because we need DOM elements (page-login,
+ * page-app, splash) to exist. Kept at the END of the script so all helpers
+ * (_attemptRehydrate, _applyPostLoginUI, fetchPriceBook, etc.) are defined.
+ * ============================================================================ */
+(function(){
+  function _runRehydrate(){
+    // Skip the brief login flash by hiding it ONLY if we have stored session data.
+    // No stored session = no rehydrate attempt = normal login flow with no flicker.
+    try{
+      if(!sessionStorage.getItem(_SESSION_STORAGE_KEY)) return;
+    }catch(_){ return; }
+    // We have a stored session — hide login screen immediately, splash will take over
+    const loginEl = document.getElementById('page-login');
+    if(loginEl) loginEl.classList.remove('active');
+    _attemptRehydrate().then(function(success){
+      if(!success){
+        // Rehydrate failed — show login screen normally
+        if(loginEl) loginEl.classList.add('active');
+      }
+    }).catch(function(err){
+      console.warn('[rehydrate] uncaught error:', err);
+      if(loginEl) loginEl.classList.add('active');
+    });
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', _runRehydrate, {once: true});
+  } else {
+    _runRehydrate();  // DOM already ready
+  }
+})();
 
 </script>
 </body>
