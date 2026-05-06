@@ -7435,7 +7435,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.19.7';
+const FRONTEND_VERSION = '24.19.8';
 
 
 // ============================================================================
@@ -11406,7 +11406,7 @@ function renderTrashList(host,entries){
       <div class="trash-body">
         <div class="trash-project">${escapeHtml(e.project||'(unnamed)')}</div>
         <div class="trash-meta">${escapeHtml(e.enduser||'—')} · ${escapeHtml(e.venue||'—')} · ${escapeHtml(e.city||'—')}</div>
-        <div class="trash-meta">${e.qty||'—'} × ${escapeHtml(e.model||'—')} · by ${escapeHtml(e.user||'—')} · ${fmt(e.ts)}</div>
+        <div class="trash-meta">${escapeHtml(_formatQtyModelDisplay(e))} · by ${escapeHtml(e.user||'—')} · ${fmt(e.ts)}</div>
         <div class="trash-meta" style="color:var(--ink-subtle);">${escapeHtml(e.refId||'')}</div>
       </div>
       <div class="trash-actions">
@@ -14908,7 +14908,7 @@ function showBriefing(userName,period){
       <td>${escapeHtml(e.city||'—')}</td>
       <td>${escapeHtml(e.stage||'—')}</td>
       <td><span class="briefing-outcome ${outcomeClass}">${escapeHtml(outcomeLabel)}</span></td>
-      <td class="num">${(e.qty||0)} × ${escapeHtml(e.model||'—')}</td>
+      <td class="num">${escapeHtml(_formatQtyModelDisplay(e))}</td>
     </tr>`;
   }).join('');
 
@@ -16259,6 +16259,64 @@ function filterEntriesBySearch(entries,query){
   });
 }
 
+/* v24.19.8 — Helper: format qty × model display for both Guided (single model) and Custom BOQ (multi-model) deals.
+   Guided deal returns "4 × XC2055". Custom BOQ deal with breakdown returns "2×XC2055 + 2×XC4055".
+   Falls back to single-model display if advancedSelectionsJson is missing or unparseable. */
+function _formatQtyModelDisplay(e){
+  // Try to read multi-model breakdown from advancedSelectionsJson (Custom BOQ only)
+  const advJson = e && (e.advancedSelectionsJson || e.advancedSelectionsJSON);
+  if(advJson && typeof advJson === 'string' && advJson.length > 2){
+    try {
+      const arr = JSON.parse(advJson);
+      if(Array.isArray(arr) && arr.length > 0){
+        // Aggregate by model id (in case same model appears twice with different XC OS)
+        const aggregate = {};
+        arr.forEach(function(s){
+          if(!s || !s.id) return;
+          const q = parseInt(s.qty, 10) || 0;
+          if(q <= 0) return;
+          aggregate[s.id] = (aggregate[s.id] || 0) + q;
+        });
+        const parts = Object.keys(aggregate).map(function(id){
+          return aggregate[id] + '×' + id;
+        });
+        if(parts.length > 0){
+          return parts.join(' + ');
+        }
+      }
+    } catch(_){ /* fall through to single-model display */ }
+  }
+  // Fallback: single-model display (Guided deals or Custom BOQ deals without JSON)
+  const qty = (e && e.qty != null) ? e.qty : '—';
+  const model = (e && e.model) ? e.model : '—';
+  return qty + ' × ' + model;
+}
+
+/* v24.19.8 — Helper: short model badge for the right-side display. For multi-model Custom BOQ deals,
+   show "2 models" instead of just the first model id (which would be misleading). */
+function _formatModelBadgeDisplay(e){
+  const advJson = e && (e.advancedSelectionsJson || e.advancedSelectionsJSON);
+  if(advJson && typeof advJson === 'string' && advJson.length > 2){
+    try {
+      const arr = JSON.parse(advJson);
+      if(Array.isArray(arr)){
+        const ids = {};
+        arr.forEach(function(s){
+          if(s && s.id && (parseInt(s.qty,10) || 0) > 0) ids[s.id] = true;
+        });
+        const idList = Object.keys(ids);
+        if(idList.length > 1){
+          return idList.length + ' models';
+        }
+        if(idList.length === 1){
+          return idList[0];
+        }
+      }
+    } catch(_){ /* fall through */ }
+  }
+  return (e && e.model) ? e.model : '—';
+}
+
 function renderLog(){
   if(!state.user)return;
   const isSuper=state.user.isSuper;
@@ -16340,7 +16398,7 @@ function renderLog(){
     const deleteBtn=isSuperUser?`<button class="log-delete-btn" onclick="event.stopPropagation();softDeleteEntry('${e.refId}','${(e.project||'').replace(/'/g,"\\'")}');" title="Move to trash (super only)">🗑 Delete</button>`:'';
     const metaRow=`<div class="log-meta-row">${historyBtn}${revisionsBtn}${deleteBtn}</div>`;
     const historyPanel=`<div class="log-history-panel" id="log-history-panel-${idx}" style="display:none;"></div>`;
-    return `<div class="log-entry"${canEdit?` data-entry-idx="${idx}"`:''}><div class="log-entry-top"><div class="log-date">${dateStr}<br>${timeStr}<br><span style="color:var(--ink-muted);">${e.user}</span>${e.refId?`<br><span style="font-size:10px;opacity:0.7;">${e.refId}</span>`:''}</div><div class="log-main"><div class="log-project">${e.project} <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:${statusBg};color:${statusColor};margin-left:6px;vertical-align:middle;">${statusLabel}</span></div><div class="log-detail">${e.enduser} · ${e.venue} · ${e.city} · ${e.partner}</div><div class="log-detail">${e.qty} × ${e.model} · ${resStr} · ${e.environment} · ${e.update} · ${e.stage} · ${e.budget}${e.os&&e.os!=='—'?' · '+(e.os==='brightsignos'?'BSOS':'Win IoT'):''}</div>${metaRow}</div><div class="log-model">${e.model}${editBtn}</div></div>${historyPanel}</div>`;
+    return `<div class="log-entry"${canEdit?` data-entry-idx="${idx}"`:''}><div class="log-entry-top"><div class="log-date">${dateStr}<br>${timeStr}<br><span style="color:var(--ink-muted);">${e.user}</span>${e.refId?`<br><span style="font-size:10px;opacity:0.7;">${e.refId}</span>`:''}</div><div class="log-main"><div class="log-project">${e.project} <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:${statusBg};color:${statusColor};margin-left:6px;vertical-align:middle;">${statusLabel}</span></div><div class="log-detail">${e.enduser} · ${e.venue} · ${e.city} · ${e.partner}</div><div class="log-detail">${_formatQtyModelDisplay(e)} · ${resStr} · ${e.environment} · ${e.update} · ${e.stage} · ${e.budget}${e.os&&e.os!=='—'?' · '+(e.os==='brightsignos'?'BSOS':'Win IoT'):''}</div>${metaRow}</div><div class="log-model">${_formatModelBadgeDisplay(e)}${editBtn}</div></div>${historyPanel}</div>`;
   }).join('');
   window._currentLogEntries=entries;
 }
