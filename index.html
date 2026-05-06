@@ -7435,7 +7435,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.19.3';
+const FRONTEND_VERSION = '24.19.4';
 
 
 // ============================================================================
@@ -12559,7 +12559,31 @@ function updateGuidedCmsAvailability(){
 
   // Cascade: if Standalone is currently selected, disable CMS Type/Term/License fields visually
   _applyStandaloneCascade('f-cms-vendor', ['cms-term','cms-billing-type']);
-  _applyStandaloneCascade('adv-cms-vendor', ['adv-cms-term','adv-cms-type']);
+  _applyStandaloneCascade('adv-cms-vendor', ['adv-cms-term','adv-cms-type','adv-cms-licenses']);
+  // v24.19.4 — show / hide helper notice for Standalone state
+  _toggleStandaloneNotice('f-cms-vendor', 'cms-standalone-notice');
+  _toggleStandaloneNotice('adv-cms-vendor', 'adv-cms-standalone-notice');
+}
+
+/* v24.19.4 — Show a soft notice banner explaining why CMS fields are disabled */
+function _toggleStandaloneNotice(vendorSelId, noticeId){
+  const sel = document.getElementById(vendorSelId);
+  if(!sel) return;
+  const isStandalone = (sel.value === 'standalone');
+  let notice = document.getElementById(noticeId);
+  if(isStandalone && !notice){
+    // Inject notice after the dropdown's parent .field
+    const parentField = sel.closest('.field') || sel.parentElement;
+    if(parentField && parentField.parentElement){
+      notice = document.createElement('div');
+      notice.id = noticeId;
+      notice.style.cssText = 'grid-column:1/-1;margin-top:-8px;margin-bottom:14px;padding:10px 14px;background:rgba(79,70,229,0.06);border-left:3px solid var(--violet,#7C3AED);border-radius:6px;font-size:12px;color:var(--ink-muted,#475569);line-height:1.5;';
+      notice.innerHTML = '<strong>📡 Standalone mode active</strong> — CMS Term, Type, and License fields are disabled. The BOM will not include CMS subscription or installation lines.';
+      parentField.parentElement.insertBefore(notice, parentField.nextSibling);
+    }
+  } else if(!isStandalone && notice){
+    notice.remove();
+  }
 }
 
 /* When CMS vendor is "standalone", grey out + disable the dependent CMS inputs (Q3 = Option B). */
@@ -12568,26 +12592,32 @@ function _applyStandaloneCascade(vendorSelId, dependentIds){
   if(!sel) return;
   const isStandalone = (sel.value === 'standalone');
   dependentIds.forEach(function(id){
-    // Container can be a pill-group, a select, or a number input — handle uniformly
     const el = document.getElementById(id);
     if(el){
-      el.style.opacity = isStandalone ? '0.4' : '';
+      // v24.19.4: stronger visual treatment so disabled state is unmistakable
+      el.style.opacity = isStandalone ? '0.35' : '';
       el.style.pointerEvents = isStandalone ? 'none' : '';
-      // Disable any selects/inputs inside or matching the id
+      el.style.background = isStandalone ? 'var(--surface-2,#F1F5F9)' : '';
+      el.style.cursor = isStandalone ? 'not-allowed' : '';
+      // Disable any selects/inputs that match the id directly
       if(el.tagName === 'SELECT' || el.tagName === 'INPUT'){
         el.disabled = isStandalone;
       }
-      // For pill-groups, disable buttons inside
+      // For wrapper containers (e.g., pill-groups), disable nested form controls
       el.querySelectorAll('button, select, input').forEach(function(child){
         child.disabled = isStandalone;
       });
     }
-    // Also handle pill-group lookup by data-input attribute (Guided uses this)
+    // Also handle pill-group lookup by data-input attribute (Guided uses this pattern)
     const pillGroup = document.querySelector('.pill-group[data-input="' + id + '"]');
     if(pillGroup && pillGroup !== el){
-      pillGroup.style.opacity = isStandalone ? '0.4' : '';
+      pillGroup.style.opacity = isStandalone ? '0.35' : '';
       pillGroup.style.pointerEvents = isStandalone ? 'none' : '';
-      pillGroup.querySelectorAll('button').forEach(function(btn){ btn.disabled = isStandalone; });
+      pillGroup.style.cursor = isStandalone ? 'not-allowed' : '';
+      pillGroup.querySelectorAll('button').forEach(function(btn){
+        btn.disabled = isStandalone;
+        if(isStandalone) btn.classList.remove('selected');
+      });
     }
   });
 }
@@ -12598,6 +12628,18 @@ function _applyStandaloneCascade(vendorSelId, dependentIds){
   if(sel){
     sel.addEventListener('change', function(){
       _applyStandaloneCascade('f-cms-vendor', ['cms-term','cms-billing-type']);
+      // v24.19.4 — toggle explanatory notice banner
+      if(typeof _toggleStandaloneNotice === 'function'){
+        _toggleStandaloneNotice('f-cms-vendor', 'cms-standalone-notice');
+      }
+      // v24.19.3 — clear stale form-error if Standalone now resolves it
+      if(sel.value === 'standalone'){
+        const errEl = document.getElementById('form-error');
+        if(errEl && errEl.textContent && errEl.textContent.indexOf('CMS') !== -1){
+          errEl.textContent = '';
+          errEl.classList.remove('show');
+        }
+      }
     });
   }
 })();
@@ -18999,8 +19041,23 @@ function advUpdateTotals(){
 /* v24.12.6: When CMS vendor changes, ensure CMS Type + licenses are visually meaningful.
    We always render the fields; if the user picks "None" we just leave them at defaults. */
 function advUpdateCmsFields(){
-  // Currently a no-op stub — CMS Type stays visible. If we later want to grey it out
-  // when vendor=None, we'd toggle a class here.
+  // v24.19.3 — when vendor changes, refresh cascade-disable state for dependent fields
+  if(typeof _applyStandaloneCascade === 'function'){
+    _applyStandaloneCascade('adv-cms-vendor', ['adv-cms-term','adv-cms-type','adv-cms-licenses']);
+  }
+  // v24.19.4 — toggle the explanatory notice banner
+  if(typeof _toggleStandaloneNotice === 'function'){
+    _toggleStandaloneNotice('adv-cms-vendor', 'adv-cms-standalone-notice');
+  }
+  // v24.19.3 — also clear stale form-error if Standalone now resolves a previous validation block
+  const sel = document.getElementById('adv-cms-vendor');
+  if(sel && sel.value === 'standalone'){
+    const errEl = document.getElementById('form-error');
+    if(errEl && errEl.textContent && errEl.textContent.indexOf('CMS') !== -1){
+      errEl.textContent = '';
+      errEl.classList.remove('show');
+    }
+  }
 }
 
 function _advReadSelections(){
