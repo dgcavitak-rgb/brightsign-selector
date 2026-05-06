@@ -6663,7 +6663,8 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         <div id="cms-details-wrap">
           <div class="spec-grid two-col">
             <div class="field" style="margin-bottom:0;"><label class="field-label">CMS vendor<span class="req">*</span></label>
-              <select id="f-cms-vendor" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;background:#fff;">
+              <select id="f-cms-vendor" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;background:#fff;" oninput="updateGuidedCmsAvailability()">
+                <option value="standalone" data-standalone="true">Standalone (no CMS)</option>
                 <option value="BrightSign CMS" selected>BrightSign CMS</option>
                 <option value="Pickcel CMS">Pickcel CMS</option>
                 <option value="Korbyt CMS">Korbyt CMS</option>
@@ -6721,6 +6722,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
             <div class="field" style="margin-bottom:0;"><label class="field-label">CMS vendor</label>
               <select id="adv-cms-vendor" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;background:#fff;" oninput="advUpdateCmsFields()">
                 <option value="">— None —</option>
+                <option value="standalone" data-standalone="true">Standalone (no CMS)</option>
                 <option value="BrightSign CMS">BrightSign CMS</option>
                 <option value="Pickcel CMS">Pickcel CMS</option>
                 <option value="Korbyt CMS">Korbyt CMS</option>
@@ -7433,7 +7435,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.19.2';
+const FRONTEND_VERSION = '24.19.3';
 
 
 // ============================================================================
@@ -10319,6 +10321,12 @@ function _applyPostLoginUI(){
       }
     }catch(_){ /* never block app load */ }
   }, 250);
+  // v24.19.3 — initial check for Standalone option availability based on default qty (1)
+  setTimeout(function(){
+    try{
+      if(typeof updateGuidedCmsAvailability === 'function') updateGuidedCmsAvailability();
+    }catch(_){ /* defensive */ }
+  }, 100);
 }
 
 /* v24.14.11: Page-load rehydrate. Returns true if session restored, false otherwise.
@@ -12450,11 +12458,13 @@ function adjustQty(delta){
   let v=parseInt(inp.value||'1')+delta;
   if(v<1)v=1;if(v>10000)v=10000;
   inp.value=v;state.form.qty=v;
+  if(typeof updateGuidedCmsAvailability==='function')updateGuidedCmsAvailability();
 }
 document.getElementById('f-qty').addEventListener('input',e=>{
   let v=parseInt(e.target.value||'1');
   if(isNaN(v)||v<1)v=1;state.form.qty=v;
   toggleCmsSection();  // v20: qty change may cross 25-player threshold
+  if(typeof updateGuidedCmsAvailability==='function')updateGuidedCmsAvailability();  // v24.19.3
 });
 // v17: Mixed deployment auto-calc — total = indoor + outdoor
 function recalcMixedTotal(){
@@ -12468,6 +12478,7 @@ function recalcMixedTotal(){
   state.form.qtyIndoor=indoor;
   state.form.qtyOutdoor=outdoor;
   toggleCmsSection();  // v20
+  if(typeof updateGuidedCmsAvailability==='function')updateGuidedCmsAvailability();  // v24.19.3
 }
 document.getElementById('f-qty-indoor').addEventListener('input',recalcMixedTotal);
 document.getElementById('f-qty-outdoor').addEventListener('input',recalcMixedTotal);
@@ -12477,6 +12488,120 @@ document.getElementById('f-qty-outdoor').addEventListener('input',recalcMixedTot
    - Local + >25 players  → show with on-prem billing hint (2 line items)
    - Cloud + any qty      → show with cloud billing hint (1 line item)
    - Audio content        → still show (AU335 still needs some CMS) */
+/* ============================================================
+   v24.19.3 — Standalone (no CMS) option
+   Standalone is ONLY enabled when total players < 25.
+   When selected, CMS Type/Term/License inputs cascade-disable.
+   ============================================================ */
+const STANDALONE_PLAYER_THRESHOLD = 25;
+
+/* Determine current total player count from whichever form is active.
+   Guided uses f-qty (single value) or f-qty-indoor + f-qty-outdoor (mixed).
+   Custom BOQ aggregates from row qty inputs (.adv-qty-input). */
+function _currentTotalPlayers(){
+  // Custom BOQ path — sum all .adv-qty-input
+  const advInputs = document.querySelectorAll('.adv-qty-input');
+  if(advInputs.length > 0){
+    let sum = 0;
+    advInputs.forEach(function(el){
+      const v = parseInt(el.value, 10);
+      if(!isNaN(v) && v > 0) sum += v;
+    });
+    if(sum > 0) return sum;
+  }
+  // Guided path
+  const qtyEl = document.getElementById('f-qty');
+  if(qtyEl){
+    const v = parseInt(qtyEl.value, 10);
+    if(!isNaN(v) && v > 0) return v;
+  }
+  return 0;
+}
+
+/* Toggle Standalone option enabled/disabled in BOTH dropdowns based on total count.
+   Also cascade-disables CMS Type/Term/License inputs when Standalone is the current selection. */
+function updateGuidedCmsAvailability(){
+  const total = _currentTotalPlayers();
+  const standaloneAllowed = (total > 0 && total < STANDALONE_PLAYER_THRESHOLD);
+
+  // ----- Guided form (f-cms-vendor) -----
+  const guidedSel = document.getElementById('f-cms-vendor');
+  if(guidedSel){
+    const opt = guidedSel.querySelector('option[data-standalone="true"]');
+    if(opt){
+      opt.disabled = !standaloneAllowed;
+      opt.text = standaloneAllowed
+        ? 'Standalone (no CMS)'
+        : 'Standalone (no CMS) — only for projects under ' + STANDALONE_PLAYER_THRESHOLD + ' players';
+      // If user had Standalone selected but qty crossed threshold, fall back to BrightSign CMS
+      if(!standaloneAllowed && guidedSel.value === 'standalone'){
+        guidedSel.value = 'BrightSign CMS';
+      }
+    }
+  }
+
+  // ----- Custom BOQ form (adv-cms-vendor) -----
+  const advSel = document.getElementById('adv-cms-vendor');
+  if(advSel){
+    const opt = advSel.querySelector('option[data-standalone="true"]');
+    if(opt){
+      opt.disabled = !standaloneAllowed;
+      opt.text = standaloneAllowed
+        ? 'Standalone (no CMS)'
+        : 'Standalone (no CMS) — only for projects under ' + STANDALONE_PLAYER_THRESHOLD + ' players';
+      if(!standaloneAllowed && advSel.value === 'standalone'){
+        advSel.value = '';  // fall back to None in Custom BOQ
+        // Trigger cascade refresh
+        if(typeof advUpdateCmsFields === 'function') advUpdateCmsFields();
+      }
+    }
+  }
+
+  // Cascade: if Standalone is currently selected, disable CMS Type/Term/License fields visually
+  _applyStandaloneCascade('f-cms-vendor', ['cms-term','cms-billing-type']);
+  _applyStandaloneCascade('adv-cms-vendor', ['adv-cms-term','adv-cms-type']);
+}
+
+/* When CMS vendor is "standalone", grey out + disable the dependent CMS inputs (Q3 = Option B). */
+function _applyStandaloneCascade(vendorSelId, dependentIds){
+  const sel = document.getElementById(vendorSelId);
+  if(!sel) return;
+  const isStandalone = (sel.value === 'standalone');
+  dependentIds.forEach(function(id){
+    // Container can be a pill-group, a select, or a number input — handle uniformly
+    const el = document.getElementById(id);
+    if(el){
+      el.style.opacity = isStandalone ? '0.4' : '';
+      el.style.pointerEvents = isStandalone ? 'none' : '';
+      // Disable any selects/inputs inside or matching the id
+      if(el.tagName === 'SELECT' || el.tagName === 'INPUT'){
+        el.disabled = isStandalone;
+      }
+      // For pill-groups, disable buttons inside
+      el.querySelectorAll('button, select, input').forEach(function(child){
+        child.disabled = isStandalone;
+      });
+    }
+    // Also handle pill-group lookup by data-input attribute (Guided uses this)
+    const pillGroup = document.querySelector('.pill-group[data-input="' + id + '"]');
+    if(pillGroup && pillGroup !== el){
+      pillGroup.style.opacity = isStandalone ? '0.4' : '';
+      pillGroup.style.pointerEvents = isStandalone ? 'none' : '';
+      pillGroup.querySelectorAll('button').forEach(function(btn){ btn.disabled = isStandalone; });
+    }
+  });
+}
+
+/* Wire Guided CMS vendor dropdown change to refresh cascade */
+(function _wireGuidedCmsVendorListener(){
+  const sel = document.getElementById('f-cms-vendor');
+  if(sel){
+    sel.addEventListener('change', function(){
+      _applyStandaloneCascade('f-cms-vendor', ['cms-term','cms-billing-type']);
+    });
+  }
+})();
+
 function toggleCmsSection(){
   const section=document.getElementById('section-cms');
   const hint=document.getElementById('cms-billing-structure');
@@ -13275,9 +13400,14 @@ function computeCMS(f){
   // v21.2 CMS logic — respects user's Yes/No toggle for Local ≤25, mandatory otherwise.
   // v24.14.12: rows now carry unitPrice + sku + sapCode resolved from CMS price book.
   // Fallback to null when rate not configured (renders as "—" in BOM).
+  // v24.19.3: explicit Standalone selection in CMS Vendor dropdown → no CMS rows at all.
   const qty=parseInt(f.qty)||1;
   const rows=[];
   let badge='';
+  // v24.19.3 — user explicitly chose Standalone → return empty BOM, no CMS lines
+  if(f.cmsVendor==='standalone'){
+    return { rows: [], badge: 'Standalone (no CMS)' };
+  }
   const vendor=f.cmsVendor||'BrightSign CMS';
   const term=f.cmsTerm||'1';
   const termLabel=`${term} year${parseInt(term)>1?'s':''}`;
@@ -14103,10 +14233,13 @@ function buildEntryPayload(status){
     return null;
   }
   // v21.2: Compute CMS billing type based on update + qty + user's Yes/No choice
+  // v24.19.3: explicit Standalone selection in CMS Vendor dropdown overrides everything
   const qtyForCms=parseInt(f.qty)||1;
   let cmsBillingType='—';
   const isSmallLocal=(f.update==='local' && qtyForCms<=25);
-  if(isSmallLocal && f.cmsInclude==='no')cmsBillingType='Standalone (no CMS)';
+  const isExplicitStandalone=(f.cmsVendor==='standalone');
+  if(isExplicitStandalone) cmsBillingType='Standalone (no CMS)';  // v24.19.3 — user-chosen
+  else if(isSmallLocal && f.cmsInclude==='no')cmsBillingType='Standalone (no CMS)';
   else if(isSmallLocal && f.cmsInclude==='yes')cmsBillingType='On-premise (opted in)';
   else if(f.update==='local' && qtyForCms>25)cmsBillingType='On-premise';
   else if(f.update==='cloud')cmsBillingType='Cloud';
@@ -18837,6 +18970,8 @@ function advOnQtyChange(inputEl){
   const wd105El = document.getElementById('adv-wd105-qty');
   if(ssdEl) clampAccessoryQty(ssdEl);
   if(wd105El) clampAccessoryQty(wd105El);
+  // v24.19.3 — total players may have crossed the 25 threshold; refresh Standalone option availability
+  if(typeof updateGuidedCmsAvailability === 'function') updateGuidedCmsAvailability();
 }
 
 /* v24.12.6: Refresh the player-table sticky total + the CMS auto-licenses field.
@@ -19014,14 +19149,16 @@ async function runAdvancedBOQ(){
         msg: 'You picked an SSD capacity (' + _ssdCapVal + ' GB) but quantity is 0. Set a quantity or clear the capacity.'
       });
     }
-    // Same logic for CMS — vendor without term/type, or term/type without vendor
-    if(_cmsVendorVal && (!_cmsTermVal || !_cmsTypeVal)){
+    // v24.19.3: Standalone is a valid "no CMS" choice — skip vendor/term/type validation entirely
+    const _isStandalone = (_cmsVendorVal === 'standalone');
+    // Same logic for CMS — vendor without term/type, or term/type without vendor (skipped for Standalone)
+    if(!_isStandalone && _cmsVendorVal && (!_cmsTermVal || !_cmsTypeVal)){
       _accessoryErrors.push({
         field: !_cmsTermVal ? 'adv-cms-term' : 'adv-cms-type',
         msg: 'CMS vendor "' + _cmsVendorVal + '" picked but ' + (!_cmsTermVal ? 'subscription term not chosen.' : 'hosting type (cloud/on-prem) not chosen.')
       });
     }
-    if(!_cmsVendorVal && (_cmsTermVal || _cmsTypeVal)){
+    if(!_isStandalone && !_cmsVendorVal && (_cmsTermVal || _cmsTypeVal)){
       _accessoryErrors.push({
         field: 'adv-cms-vendor',
         msg: 'CMS settings configured but no vendor selected. Pick a vendor or clear the term/type.'
