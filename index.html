@@ -16688,13 +16688,15 @@ function getVisibleEntries(){
   });
 }
 
-// v24.19.9 (#12): Wrap getVisibleEntries to also exclude test-mode entries from
-// Dashboard. History keeps showing them (with 🧪 marker) by reading raw _centralLog.
-window._getVisibleEntriesRaw = getVisibleEntries;
-function getVisibleEntries(){
-  const all = window._getVisibleEntriesRaw();
+// v24.20.0 hotfix: hoisting bug fix — function declarations hoist, so
+// `window._getVisibleEntriesRaw = getVisibleEntries` was capturing the wrapper
+// itself, causing infinite recursion. Use a function expression assigned to
+// the variable explicitly.
+const _getVisibleEntriesOriginal = getVisibleEntries;
+window.getVisibleEntries = function(){
+  const all = _getVisibleEntriesOriginal();
   return _filterTestData(all, window._reviewIncludeTest === true);
-}
+};
 
 /* v23.1: renderLog — ONLY the log list + action bar. Dashboard lives on its own tab now. */
 /* v24.2: History search state + helper */
