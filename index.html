@@ -7435,7 +7435,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.19.5';
+const FRONTEND_VERSION = '24.19.6';
 
 
 // ============================================================================
@@ -10163,17 +10163,17 @@ function _profileGateNeeded(){
   const u = state.user;
   if(!u) return false;
   // Skip gate if all required fields present and non-empty
-  const titleOk = (u.professionalTitle || '').trim().length >= 2;
-  const emailOk = (u.email || '').trim().length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((u.email || '').trim());
-  const phoneOk = (u.phone || '').trim().length >= 10;
+  const titleOk = String(u.professionalTitle || '').trim().length >= 2;
+  const emailOk = String(u.email || '').trim().length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(u.email || '').trim());
+  const phoneOk = String(u.phone || '').trim().replace(/\D/g,'').length >= 10;
   return !(titleOk && emailOk && phoneOk);
 }
 function _showProfileGate(){
   const u = state.user || {};
-  document.getElementById('pgate-fullname').value = u.fullName || '';
-  document.getElementById('pgate-title').value = u.professionalTitle || '';
-  document.getElementById('pgate-email').value = u.email || '';
-  document.getElementById('pgate-phone').value = u.phone || '';
+  document.getElementById('pgate-fullname').value = String(u.fullName || '');
+  document.getElementById('pgate-title').value = String(u.professionalTitle || '');
+  document.getElementById('pgate-email').value = String(u.email || '');
+  document.getElementById('pgate-phone').value = String(u.phone || '');
   document.getElementById('profile-gate-error').style.display = 'none';
   const overlay = document.getElementById('profile-gate-modal');
   overlay.style.display = 'flex';
@@ -13201,10 +13201,11 @@ function renderResult(){
   // These elements are hidden on screen; only visible when user prints/saves as PDF via browser.
   try{
     const _u = state.user || {};
-    const _name = (_u.fullName || '').trim() || 'Cavitak Marketing';
-    const _title = (_u.professionalTitle || '').trim();
-    const _phone = (_u.phone || '').trim();
-    const _email = (_u.email || '').trim();
+    // v24.19.5 — coerce to string before .trim() because phone column in Users sheet is numeric (not text)
+    const _name = String(_u.fullName || '').trim() || 'Cavitak Marketing';
+    const _title = String(_u.professionalTitle || '').trim();
+    const _phone = String(_u.phone || '').trim();
+    const _email = String(_u.email || '').trim();
     const _metaParts = [];
     if(_title) _metaParts.push(_title);
     if(_phone) _metaParts.push(_phone);
@@ -13550,12 +13551,12 @@ function buildConcerns(m,f){
    info baked in for escalation. */
 function buildPricingCallout(){
   const u = state.user || {};
-  const userName  = (u.fullName || '').trim() || 'Cavitak Marketing';
+  const userName  = String(u.fullName || '').trim() || 'Cavitak Marketing';
   // v24.19.0: Use partner-facing professionalTitle, NOT internal `role` (which is permissions: Super/Admin/Member).
   // Falls back to fullName-only line if title not yet set.
-  const userTitle = (u.professionalTitle || '').trim();
-  const userEmail = (u.email || '').trim();
-  const userPhone = (u.phone || '').trim();
+  const userTitle = String(u.professionalTitle || '').trim();
+  const userEmail = String(u.email || '').trim();
+  const userPhone = String(u.phone || '').trim();
   const isSuper   = u.isSuper === true;
 
   // Strip non-digits for tel: link
@@ -15749,10 +15750,10 @@ function downloadQuoteExcel(returnWorkbook){
   // v24.19.2: Use logged-in user's identity in contact footer, with Dipenkumar as escalation for non-Super
   (function(){
     const _u = state.user || {};
-    const _name = (_u.fullName || '').trim() || 'Cavitak Marketing';
-    const _title = (_u.professionalTitle || '').trim() || 'Cavitak Marketing';
-    const _email = (_u.email || '').trim() || 'dipen.g@cavitak.com';
-    const _phone = (_u.phone || '').trim() || '+91 8160 756 906';
+    const _name = String(_u.fullName || '').trim() || 'Cavitak Marketing';
+    const _title = String(_u.professionalTitle || '').trim() || 'Cavitak Marketing';
+    const _email = String(_u.email || '').trim() || 'dipen.g@cavitak.com';
+    const _phone = String(_u.phone || '').trim() || '+91 8160 756 906';
     const _isSuper = _u.isSuper === true;
     qAoa.push([_name, _title + ' · Cavitak Marketing','','','','','']);
     qAoa.push(['Email: ' + _email + ' · Phone: ' + _phone,'','','','','','']);
@@ -17727,10 +17728,10 @@ function shareViaWhatsApp(){
   // v24.19.0: Personalized WhatsApp sender block — uses partner-facing identity.
   // Replaces v24.18.3 use of `role` (internal: Super/Admin/Member) with `professionalTitle`.
   const u = state.user || {};
-  const userName  = (u.fullName || '').trim() || 'Cavitak Marketing';
-  const userTitle = (u.professionalTitle || '').trim();
-  const userPhone = (u.phone || '').trim();
-  const userEmail = (u.email || '').trim();
+  const userName  = String(u.fullName || '').trim() || 'Cavitak Marketing';
+  const userTitle = String(u.professionalTitle || '').trim();
+  const userPhone = String(u.phone || '').trim();
+  const userEmail = String(u.email || '').trim();
   const senderBlock = userName +
     (userTitle ? '\n' + userTitle : '') +
     (userPhone ? '\n📞 ' + userPhone : '') +
