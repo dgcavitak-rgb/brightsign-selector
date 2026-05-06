@@ -7435,7 +7435,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.19.4';
+const FRONTEND_VERSION = '24.19.5';
 
 
 // ============================================================================
@@ -13053,11 +13053,29 @@ function runSelector(){
   state.result.confirmed=false;
   logEntry('viewed',function(){
     // v21: Theatrical overlay → then renderResult with cinematic hero reveal
+    // v24.19.5 — Defensive try/catch surfaces silent rendering bugs that previously caused bounce-back
     showAnalysisOverlay(()=>{
-      renderResult();
-      document.getElementById('tab-result').style.display='inline-flex';
-      showTab('result');
-      releaseRunSelectorLock();
+      try {
+        console.log('[v24.19.5] Post-analysis: about to renderResult()', { refId: state.result && state.result.refId, hasResult: !!state.result });
+        renderResult();
+        console.log('[v24.19.5] renderResult() completed successfully');
+        const tr = document.getElementById('tab-result');
+        if(tr) tr.style.display='inline-flex';
+        showTab('result');
+        console.log('[v24.19.5] showTab("result") completed — should be visible now');
+      } catch(err) {
+        console.error('[v24.19.5] FATAL: renderResult or showTab threw:', err);
+        console.error('[v24.19.5] Stack:', err && err.stack);
+        console.error('[v24.19.5] state.result snapshot:', state.result);
+        const errEl = document.getElementById('form-error');
+        if(errEl){
+          errEl.textContent = 'Could not render BOM page: ' + (err.message || err) + ' — full details in browser console (F12)';
+          errEl.classList.add('show');
+          errEl.scrollIntoView({behavior:'smooth', block:'center'});
+        }
+      } finally {
+        releaseRunSelectorLock();
+      }
     });
   });
 }
@@ -13173,8 +13191,11 @@ function scoreModel(m,f,envOverride){
 }
 
 function renderResult(){
-  document.getElementById('print-date').textContent=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
-  document.getElementById('print-ref').textContent='BS-'+Date.now().toString().slice(-8);
+  // v24.19.5 — Defensive null-checks. Previously these throw TypeError when elements missing
+  const _pdEl = document.getElementById('print-date');
+  if(_pdEl) _pdEl.textContent = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  const _prEl = document.getElementById('print-ref');
+  if(_prEl) _prEl.textContent = 'BS-'+Date.now().toString().slice(-8);
   // v24.18.3 / v24.19.0: Populate print-only header + footer with logged-in user's identity.
   // v24.19.0: switched from internal `role` to partner-facing `professionalTitle`.
   // These elements are hidden on screen; only visible when user prints/saves as PDF via browser.
@@ -19330,21 +19351,35 @@ async function runAdvancedBOQ(){
     state.result.confirmed = false;
 
     // 7. Log + render — same path as Guided mode
+    // v24.19.5 — Defensive try/catch + diagnostic logs for bounce-back debugging
     logEntry('viewed', function(){
-      if(typeof showAnalysisOverlay === 'function'){
-        showAnalysisOverlay(()=>{
+      const _doRender = function(){
+        try {
+          console.log('[v24.19.5 Custom] Post-analysis: about to renderResult()', { refId: state.result && state.result.refId });
           if(typeof renderResult === 'function') renderResult();
+          console.log('[v24.19.5 Custom] renderResult() completed');
           const tabResult = document.getElementById('tab-result');
           if(tabResult) tabResult.style.display = 'inline-flex';
           if(typeof showTab === 'function') showTab('result');
+          console.log('[v24.19.5 Custom] showTab("result") completed');
+        } catch(err) {
+          console.error('[v24.19.5 Custom] FATAL: renderResult or showTab threw:', err);
+          console.error('[v24.19.5 Custom] Stack:', err && err.stack);
+          console.error('[v24.19.5 Custom] state.result snapshot:', state.result);
+          const errEl = document.getElementById('form-error');
+          if(errEl){
+            errEl.textContent = 'Could not render BOM page: ' + (err.message || err) + ' — open browser console (F12) for full error details';
+            errEl.classList.add('show');
+            errEl.scrollIntoView({behavior:'smooth', block:'center'});
+          }
+        } finally {
           window._runSelectorBusy = false;
-        });
+        }
+      };
+      if(typeof showAnalysisOverlay === 'function'){
+        showAnalysisOverlay(_doRender);
       } else {
-        if(typeof renderResult === 'function') renderResult();
-        const tabResult = document.getElementById('tab-result');
-        if(tabResult) tabResult.style.display = 'inline-flex';
-        if(typeof showTab === 'function') showTab('result');
-        window._runSelectorBusy = false;
+        _doRender();
       }
     });
   } catch(err){
