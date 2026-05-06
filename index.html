@@ -7435,7 +7435,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.19.6';
+const FRONTEND_VERSION = '24.19.7';
 
 
 // ============================================================================
@@ -10261,7 +10261,7 @@ async function saveProfileGate(){
     }
     _hideProfileGate();
     if(typeof showSync === 'function'){
-      showSync('Profile saved — welcome ' + (state.user.fullName || '').split(' ')[0] + '!', 'success');
+      showSync('Profile saved — welcome ' + (String(state.user.fullName || '')).split(' ')[0] + '!', 'success');
     }
   } catch(err) {
     errEl.textContent = 'Save failed: ' + (err.message || err);
@@ -10294,7 +10294,7 @@ function _applyPostLoginUI(){
   if(dashTab) dashTab.style.display = 'inline-flex';
   const reviewTab = document.getElementById('tab-review');
   if(reviewTab){
-    const role = (u.role || '').trim();
+    const role = (String(u.role || '')).trim();
     const showReview = u.isSuper || role === 'BrightSign';
     reviewTab.style.display = showReview ? 'inline-flex' : 'none';
   }
@@ -10539,7 +10539,7 @@ async function handleLogin(){
     // Presales/Sales/Support have their own Dashboard tab — Review would be redundant for them.
     const reviewTab=document.getElementById('tab-review');
     if(reviewTab){
-      const role=(state.user.role||'').trim();
+      const role=(String(state.user.role || '')).trim();
       const showReview=state.user.isSuper || role==='BrightSign';
       reviewTab.style.display=showReview?'inline-flex':'none';
     }
@@ -10570,9 +10570,9 @@ async function handleLogin(){
     setTimeout(()=>{
       updateLoginSplash(90,'Almost there…');
       const queueBefore=loadPendingQueue();
-      const myLogin=(state.user.loginName||'').toLowerCase();
+      const myLogin=(String(state.user.loginName || '')).toLowerCase();
       const mine=queueBefore.filter(q=>{
-        const qLogin=(q.payload && q.payload.loginName||'').toLowerCase();
+        const qLogin=(String((q.payload && q.payload.loginName) || '')).toLowerCase();
         return qLogin===myLogin;
       });
       if(queueBefore.length>0){
@@ -10580,7 +10580,7 @@ async function handleLogin(){
         if(mine.length>0){
           setTimeout(()=>{
             const queueAfter=loadPendingQueue();
-            const stillMine=queueAfter.filter(q=>(q.payload && q.payload.loginName||'').toLowerCase()===myLogin);
+            const stillMine=queueAfter.filter(q=>(String((q.payload && q.payload.loginName) || '')).toLowerCase()===myLogin);
             const synced=mine.length-stillMine.length;
             if(synced>0){
               showSync(`${synced} offline entr${synced===1?'y':'ies'} now saved ✓`,'success');
@@ -10875,7 +10875,7 @@ function renderUserProfileView(host){
   const u=state.user;
   host.innerHTML=`
     <div class="profile-card">
-      <div class="profile-avatar-large">${(u.fullName||'?').split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase()}</div>
+      <div class="profile-avatar-large">${(String(u.fullName || '?')).split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase()}</div>
       <div class="profile-name">${u.fullName||'—'}</div>
       <div class="profile-role">${u.role||'—'}</div>
       <div class="profile-login-chip">${u.loginName}</div>
@@ -11746,7 +11746,7 @@ function renderTeamList(host,users){
     return;
   }
   const rows=users.map(u=>{
-    const initials=(u.fullName||'?').split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase();
+    const initials=(String(u.fullName || '?')).split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase();
     const statusChip=u.isActive===false
       ?'<span class="team-status inactive">INACTIVE</span>'
       :'<span class="team-status active">ACTIVE</span>';
@@ -12291,7 +12291,9 @@ function showTab(which){
   if(which==='form' && state.result){
     resetForm();
     state.result=null;
-    document.getElementById('tab-result').style.display='none';
+    // v24.19.7: defensive — element may not exist in some flows
+    const _trEl = document.getElementById('tab-result');
+    if(_trEl) _trEl.style.display='none';
   }
   // v24.2.10: Snapshot current user identity when form opens — persists even if session dies later.
   // This ensures entries saved after session timeout still get correct user attribution.
@@ -12332,7 +12334,7 @@ function showTab(which){
   }
   if(which==='review'){
     // v24.14.6: Double-guard — only Super + BrightSign-role can render review
-    const role=state.user?(state.user.role||'').trim():'';
+    const role=state.user?(String(state.user.role || '')).trim():'';
     const canReview=state.user && (state.user.isSuper || role==='BrightSign');
     if(canReview){renderReview();bsC2aRender();}  // v24.16.0: bsC2aRender now only drives drilldown+velocity+trend
     else{showTab('log');return;}
@@ -13202,7 +13204,7 @@ function renderResult(){
   try{
     const _u = state.user || {};
     // v24.19.5 — coerce to string before .trim() because phone column in Users sheet is numeric (not text)
-    const _name = String(_u.fullName || '').trim() || 'Cavitak Marketing';
+    const _name = String(String(_u.fullName || '')).trim() || 'Cavitak Marketing';
     const _title = String(_u.professionalTitle || '').trim();
     const _phone = String(_u.phone || '').trim();
     const _email = String(_u.email || '').trim();
@@ -13551,7 +13553,7 @@ function buildConcerns(m,f){
    info baked in for escalation. */
 function buildPricingCallout(){
   const u = state.user || {};
-  const userName  = String(u.fullName || '').trim() || 'Cavitak Marketing';
+  const userName  = String(String(u.fullName || '')).trim() || 'Cavitak Marketing';
   // v24.19.0: Use partner-facing professionalTitle, NOT internal `role` (which is permissions: Super/Admin/Member).
   // Falls back to fullName-only line if title not yet set.
   const userTitle = String(u.professionalTitle || '').trim();
@@ -13670,7 +13672,7 @@ function buildAdvancedBOQSummaryCard(r, f){
   // (Advanced mode now exposes adv-cms-type; older deals fall back to cloud/heuristic).
   let cmsBillingLabel = '';
   if(cmsVendor){
-    const explicitType = (acc.cmsType || '').toLowerCase();
+    const explicitType = String(acc.cmsType || '').toLowerCase();
     if(explicitType === 'onprem' || explicitType === 'on-prem' || explicitType === 'local'){
       cmsBillingLabel = 'On-Prem';
     } else if(explicitType === 'cloud' || explicitType === 'remote'){
@@ -14848,8 +14850,8 @@ function showBriefing(userName,period){
   const userLower=(userName||'').toLowerCase();
   const entries=allEntries.filter(e=>{
     if(!e||typeof e!=='object')return false;
-    const eUser=(e.user||'').toLowerCase();
-    const eLogin=(e.loginName||'').toLowerCase();
+    const eUser=(String(e.user || '')).toLowerCase();
+    const eLogin=(String(e.loginName || '')).toLowerCase();
     if(eUser!==userLower && eLogin!==userLower)return false;
     // Skip ghost rows
     const tsStr=(e.ts||'').toString();
@@ -15750,7 +15752,7 @@ function downloadQuoteExcel(returnWorkbook){
   // v24.19.2: Use logged-in user's identity in contact footer, with Dipenkumar as escalation for non-Super
   (function(){
     const _u = state.user || {};
-    const _name = String(_u.fullName || '').trim() || 'Cavitak Marketing';
+    const _name = String(String(_u.fullName || '')).trim() || 'Cavitak Marketing';
     const _title = String(_u.professionalTitle || '').trim() || 'Cavitak Marketing';
     const _email = String(_u.email || '').trim() || 'dipen.g@cavitak.com';
     const _phone = String(_u.phone || '').trim() || '+91 8160 756 906';
@@ -16196,7 +16198,7 @@ window._filters={city:'',user:'',project:'',partner:'',consultant:'',dateRange:'
 function getVisibleEntries(){
   if(!state.user)return [];
   const isSuper=state.user.isSuper;
-  const role=(state.user.role||'').trim();
+  const role=(String(state.user.role || '')).trim();
   const seesAll=isSuper || role==='BrightSign';  // v24.14.6: BrightSign role gets team-wide read
   // v24.4.5: trust empty server responses (no fallback to stale cache)
   const haveServerData=Array.isArray(window._centralLog);
@@ -16217,11 +16219,11 @@ function getVisibleEntries(){
     return false;
   });
   if(seesAll)return allEntries;
-  const myLogin=(state.user.loginName||'').toLowerCase();
-  const myFullName=(state.user.fullName||'').toLowerCase();
+  const myLogin=(String(state.user.loginName || '')).toLowerCase();
+  const myFullName=(String(state.user.fullName || '')).toLowerCase();
   return allEntries.filter(e=>{
-    const elogin=(e.loginName||'').toLowerCase();
-    const euser=(e.user||'').toLowerCase();
+    const elogin=(String(e.loginName || '')).toLowerCase();
+    const euser=(String(e.user || '')).toLowerCase();
     return (elogin && elogin===myLogin) || (euser && euser===myFullName);
   });
 }
@@ -16272,7 +16274,7 @@ function renderLog(){
   const allVisible=getVisibleEntries();
 
   // Title text
-  const role=(state.user.role||'').trim();
+  const role=(String(state.user.role || '')).trim();
   const seesAll=isSuper || role==='BrightSign';
   if(isSuper){
     pageTitle.textContent='All-team selection history';
@@ -16347,7 +16349,7 @@ function renderLog(){
 function renderDashboard(){
   if(!state.user)return;
   const isSuper=state.user.isSuper;
-  const role=(state.user.role||'').trim();
+  const role=(String(state.user.role || '')).trim();
   const seesAll=isSuper || role==='BrightSign';  // v24.14.6: BrightSign role also sees team-wide
   const superCharts=document.getElementById('super-charts');
   const superChartsBody=document.getElementById('super-charts-body');
@@ -17375,11 +17377,11 @@ function closeExportMenuOutside(e){
 function getExportEntries(){
   let entries=(Array.isArray(window._centralLog)?window._centralLog:loadLocalLog());
   if(state.user && !state.user.isSuper){
-    const myLogin=(state.user.loginName||'').toLowerCase();
-    const myFullName=(state.user.fullName||'').toLowerCase();
+    const myLogin=(String(state.user.loginName || '')).toLowerCase();
+    const myFullName=(String(state.user.fullName || '')).toLowerCase();
     entries=entries.filter(e=>{
-      const elogin=(e.loginName||'').toLowerCase();
-      const euser=(e.user||'').toLowerCase();
+      const elogin=(String(e.loginName || '')).toLowerCase();
+      const euser=(String(e.user || '')).toLowerCase();
       return (elogin && elogin===myLogin) || (euser && euser===myFullName);
     });
   }
@@ -17728,7 +17730,7 @@ function shareViaWhatsApp(){
   // v24.19.0: Personalized WhatsApp sender block — uses partner-facing identity.
   // Replaces v24.18.3 use of `role` (internal: Super/Admin/Member) with `professionalTitle`.
   const u = state.user || {};
-  const userName  = String(u.fullName || '').trim() || 'Cavitak Marketing';
+  const userName  = String(String(u.fullName || '')).trim() || 'Cavitak Marketing';
   const userTitle = String(u.professionalTitle || '').trim();
   const userPhone = String(u.phone || '').trim();
   const userEmail = String(u.email || '').trim();
@@ -17943,11 +17945,11 @@ function exportCSV(){
   let entries=(Array.isArray(window._centralLog)?window._centralLog:loadLocalLog());
   // v22.3: Defensive filter — regular users only export their own entries
   if(state.user && !state.user.isSuper){
-    const myLogin=(state.user.loginName||'').toLowerCase();
-    const myFullName=(state.user.fullName||'').toLowerCase();
+    const myLogin=(String(state.user.loginName || '')).toLowerCase();
+    const myFullName=(String(state.user.fullName || '')).toLowerCase();
     entries=entries.filter(e=>{
-      const elogin=(e.loginName||'').toLowerCase();
-      const euser=(e.user||'').toLowerCase();
+      const elogin=(String(e.loginName || '')).toLowerCase();
+      const euser=(String(e.user || '')).toLowerCase();
       return (elogin && elogin===myLogin) || (euser && euser===myFullName);
     });
   }
@@ -18565,7 +18567,7 @@ window.renderSuperProfileHeader_c2c = function(){
     try { lastLoginTxt = new Date(u.lastLogin).toLocaleString(); } catch(e) { lastLoginTxt = String(u.lastLogin); }
   }
 
-  const initials = (u.fullName||'?').split(' ').map(function(s){return s[0];}).slice(0,2).join('').toUpperCase();
+  const initials = (String(u.fullName || '?')).split(' ').map(function(s){return s[0];}).slice(0,2).join('').toUpperCase();
   const fmtINR = function(n){
     if(!n) return '₹0';
     if(n >= 10000000) return '₹' + (n/10000000).toFixed(2) + ' Cr';
@@ -19627,7 +19629,7 @@ if(document.readyState==='loading'){
       if(_readOutcome(r) !== 'open') continue;
       const s = String(r.stage||'').trim();
       if(!OPEN_STAGES_SET[s]) continue;
-      const owner = (String(r.user||'').trim() || String(r.loginName||'').trim() || 'Unattributed');
+      const owner = (String(r.user||'').trim() || String(String(r.loginName || '')).trim() || 'Unattributed');
       if(!byOwner[owner]) byOwner[owner] = {count:0, value:0};
       byOwner[owner].count++;
       byOwner[owner].value += _readDealValue(r);
