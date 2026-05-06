@@ -8681,16 +8681,28 @@ function _populateSalesPresalesDropdowns(){
   const currentSales = salesSel.value;
   const currentPresales = presalesSel.value;
 
-  // Build options
+  // v24.20.1: Filter by role.
+  //   Sales dropdown    = Sales role + BU Head role + Super (Super appears in both per spec)
+  //   Presales dropdown = Presales role + Super
+  //   Excluded everywhere else: Support, OEM, anything that doesn't match.
+  const salesEligible = active.filter(function(u){
+    const r = String(u.role || '').toLowerCase();
+    return /sale/i.test(r) || /bu.?head/i.test(r) || u.isSuper === true;
+  });
+  const presalesEligible = active.filter(function(u){
+    const r = String(u.role || '').toLowerCase();
+    return /presale/i.test(r) || u.isSuper === true;
+  });
+
+  // v24.20.1: Clean label — name only, no role suffix, no parentheses.
+  // Selected value still uses loginName (lowercased) for backend storage.
   const buildOpt = function(u){
-    const label = (u.fullName || u.loginName) +
-      (u.role ? ' · ' + u.role : '') +
-      (u.isSuper ? ' (Super)' : '');
+    const label = u.fullName || u.loginName;
     return '<option value="' + escapeHtml(String(u.loginName).toLowerCase()) + '">' +
            escapeHtml(label) + '</option>';
   };
-  salesSel.innerHTML = '<option value="">Select sales owner…</option>' + active.map(buildOpt).join('');
-  presalesSel.innerHTML = '<option value="">— None —</option>' + active.map(buildOpt).join('');
+  salesSel.innerHTML = '<option value="">Select sales owner…</option>' + salesEligible.map(buildOpt).join('');
+  presalesSel.innerHTML = '<option value="">— None —</option>' + presalesEligible.map(buildOpt).join('');
 
   // Determine smart defaults from current user's role (only if NO selection yet)
   const me = (state && state.user) ? state.user : null;
