@@ -800,6 +800,10 @@ html[data-theme="dark"] .mode-card-check{background:#7F77DD;}
   padding:8px 4px;
   background:transparent;
   -moz-appearance:textfield;
+  /* v24.25.3 — explicit centering + height to match qty-step-btn (36px / 44px mobile) */
+  text-align:center;
+  height:36px;
+  line-height:1;
 }
 .qty-stepper .adv-qty-input::-webkit-outer-spin-button,
 .qty-stepper .adv-qty-input::-webkit-inner-spin-button{
@@ -815,11 +819,12 @@ html[data-theme="dark"] .mode-card-check{background:#7F77DD;}
 .qty-stepper[style*="width:100%"] .adv-qty-input{
   width:auto;flex:1;min-width:0;
   font-family:var(--mono,monospace);font-size:14px;font-weight:700;
+  text-align:center;
 }
 /* Mobile — bigger tap targets per WCAG 2.2 (44×44 minimum) */
 @media (max-width:640px){
   .qty-step-btn{width:44px;height:44px;font-size:20px;}
-  .qty-stepper .adv-qty-input{width:60px;font-size:15px;}
+  .qty-stepper .adv-qty-input{width:60px;font-size:15px;height:44px;}
 }
 html[data-theme="dark"] .qty-stepper{
   background:rgba(15,23,42,0.7);
@@ -6274,9 +6279,12 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
 <!-- APP -->
 <div id="page-app" class="page">
 <!-- v24.19.9 (#12): Test-mode banner — sticky orange strip when user has test mode on. -->
-<div id="test-mode-banner" style="display:none;background:linear-gradient(90deg,#F59E0B,#D97706);color:#fff;padding:7px 16px;font-size:12.5px;font-weight:600;letter-spacing:0.04em;text-align:center;position:sticky;top:0;z-index:50;box-shadow:0 1px 4px rgba(245,158,11,0.35);">
-  🧪 TEST MODE — submissions made now are flagged <code style="background:rgba(255,255,255,0.2);padding:1px 6px;border-radius:3px;font-family:monospace;">isTest=TRUE</code> and excluded from Dashboard + Review.
-  <button onclick="setTestMode(false)" style="margin-left:14px;background:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.4);color:#fff;padding:3px 12px;border-radius:4px;font-size:11.5px;font-weight:600;cursor:pointer;">Turn off</button>
+<!-- v24.25.3: Made screaming-obvious — bigger, animated stripe, more visual weight. Owners thinking app is broken because test data filters out are now warned at every page. -->
+<div id="test-mode-banner" style="display:none;background:repeating-linear-gradient(45deg,#F59E0B 0,#F59E0B 12px,#D97706 12px,#D97706 24px);color:#fff;padding:11px 16px;font-size:13.5px;font-weight:700;letter-spacing:0.04em;text-align:center;position:sticky;top:0;z-index:60;box-shadow:0 2px 10px rgba(245,158,11,0.40);border-bottom:2px solid #B45309;">
+  <span style="font-size:16px;animation:tm-flash 1.6s ease-in-out infinite;display:inline-block;">🧪</span>
+  <span style="margin-left:8px;">TEST MODE ACTIVE — every submission is flagged <code style="background:rgba(0,0,0,0.20);padding:2px 8px;border-radius:4px;font-family:monospace;font-size:12px;">isTest=TRUE</code> and HIDDEN from Dashboard + Review analytics.</span>
+  <button onclick="setTestMode(false)" style="margin-left:14px;background:#fff;color:#B45309;border:none;padding:5px 14px;border-radius:6px;font-size:12px;font-weight:800;cursor:pointer;letter-spacing:0.03em;text-transform:uppercase;box-shadow:0 2px 4px rgba(0,0,0,0.20);">Turn off</button>
+  <style>@keyframes tm-flash{0%,100%{opacity:1}50%{opacity:0.5}}</style>
 </div>
 <!-- v24.2: Branded loading splash shown during login transition -->
 <div id="login-splash" class="login-splash">
@@ -7024,6 +7032,10 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           <div class="cockpit-filter-cell cockpit-filter-meta">
             <span id="cockpit-window-label">—</span>
           </div>
+          <label class="cockpit-test-toggle" id="cockpit-test-toggle-wrap" title="Include test-mode data in cockpit views">
+            <input type="checkbox" id="cockpit-include-test" onchange="onCockpitTestToggle()">
+            <span>Include test data</span>
+          </label>
           <div class="cockpit-countdown" id="cockpit-countdown" title="Days remaining in this period">
             <span class="cockpit-countdown-num" id="cockpit-countdown-num">—</span>
             <span class="cockpit-countdown-lbl" id="cockpit-countdown-lbl">days left</span>
@@ -7446,6 +7458,24 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         html[data-theme="dark"] .cockpit-filters{background:linear-gradient(135deg, rgba(99,102,241,0.10) 0%, rgba(124,58,237,0.07) 100%), var(--surface,#141937);}
 
         /* ============ v24.25.2 — Owner-grade additions ============ */
+        /* v24.25.3 — Cockpit test-data include toggle */
+        .cockpit-test-toggle{
+          display:inline-flex; align-items:center; gap:8px;
+          padding:6px 12px;
+          background:var(--surface-2,#F8FAFC);
+          border:1px solid var(--border,#E5E7EB);
+          border-radius:8px;
+          font-size:11.5px; font-weight:600; color:var(--ink-muted,#64748B);
+          cursor:pointer; user-select:none;
+          transition:background 140ms, border-color 140ms;
+        }
+        .cockpit-test-toggle:hover{border-color:#F59E0B;}
+        .cockpit-test-toggle input[type="checkbox"]{
+          width:14px; height:14px; accent-color:#F59E0B; cursor:pointer; margin:0;
+        }
+        .cockpit-test-toggle:has(input:checked){
+          background:rgba(245,158,11,0.10); color:#B45309; border-color:#F59E0B;
+        }
         /* Quarter close countdown (in filter bar) */
         .cockpit-countdown{
           display:inline-flex; flex-direction:column; align-items:flex-end;
@@ -7704,6 +7734,149 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           font-variant-numeric:tabular-nums; font-weight:700;
           color:#0F766E;
         }
+
+        /* ============ v24.25.3 — Detailed Analytics v2 ============ */
+        /* Split leaderboard (sales / presales) — Won ₹ + Open ₹ side-by-side */
+        .leaderboard-v2{display:flex; flex-direction:column; gap:8px; padding:4px 0;}
+        .lb-v2-empty{
+          padding:24px 20px; text-align:center;
+          color:var(--ink-subtle,#94A3B8); font-size:12.5px; font-style:italic;
+        }
+        .lb-v2-row{
+          display:grid; grid-template-columns:28px minmax(0,1.5fr) 1fr 1fr;
+          align-items:center; gap:10px;
+          padding:8px 12px;
+          background:var(--surface,#FFF);
+          border:1px solid var(--border-soft,#E2E8F0);
+          border-radius:10px;
+          transition:border-color 140ms, transform 140ms, box-shadow 140ms;
+        }
+        .lb-v2-row:hover{
+          border-color:var(--indigo,#4F46E5);
+          transform:translateY(-1px);
+          box-shadow:0 4px 10px rgba(15,23,42,0.06);
+        }
+        .lb-v2-rank{
+          display:inline-flex; align-items:center; justify-content:center;
+          width:24px; height:24px; border-radius:7px;
+          color:#fff; font-size:11px; font-weight:800;
+          background:linear-gradient(135deg,var(--ink-muted,#64748B),var(--slate,#334155));
+        }
+        .lb-v2-row[data-rank="1"] .lb-v2-rank{background:linear-gradient(135deg,#D97706,#F59E0B); box-shadow:0 2px 6px rgba(217,119,6,0.30);}
+        .lb-v2-row[data-rank="2"] .lb-v2-rank{background:linear-gradient(135deg,#64748B,#94A3B8);}
+        .lb-v2-row[data-rank="3"] .lb-v2-rank{background:linear-gradient(135deg,#92400E,#B45309);}
+        .lb-v2-name-block{min-width:0;}
+        .lb-v2-name{
+          font-weight:700; font-size:13px; color:var(--ink,#0F172A);
+          overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+        }
+        .lb-v2-meta{
+          font-size:10.5px; color:var(--ink-muted,#64748B);
+          margin-top:1px; font-weight:500;
+        }
+        .lb-v2-cell{display:flex; flex-direction:column; gap:1px; min-width:0;}
+        .lb-v2-cell-label{
+          font-size:9px; letter-spacing:0.08em; text-transform:uppercase;
+          color:var(--ink-muted,#64748B); font-weight:700;
+        }
+        .lb-v2-cell-val{
+          font-size:13px; font-weight:700; line-height:1.1;
+          font-variant-numeric:tabular-nums;
+        }
+        .lb-v2-cell[data-tone="won"] .lb-v2-cell-val{
+          background:linear-gradient(135deg,#059669,#10B981);
+          -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+        }
+        .lb-v2-cell[data-tone="open"] .lb-v2-cell-val{
+          background:linear-gradient(135deg,#4F46E5,#7C3AED);
+          -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+        }
+        .lb-v2-cell-sub{
+          font-size:10px; color:var(--ink-muted,#64748B);
+          font-weight:500;
+        }
+
+        /* Model Performance — sortable bars + tier color + sparkline */
+        .model-perf-sort-btn{
+          padding:4px 10px; font-size:11px; font-weight:700;
+          background:transparent; border:1px solid var(--border-strong,#CBD5E1);
+          color:var(--ink-muted,#64748B);
+          border-radius:6px; cursor:pointer; letter-spacing:0.04em;
+          transition:all 140ms;
+        }
+        .model-perf-sort-btn:hover{border-color:var(--indigo,#4F46E5);color:var(--indigo,#4F46E5);}
+        .model-perf-sort-btn.active{
+          background:var(--indigo,#4F46E5); color:#fff; border-color:var(--indigo,#4F46E5);
+          box-shadow:0 2px 4px rgba(79,70,229,0.25);
+        }
+        .mp-empty{
+          padding:32px 20px; text-align:center;
+          color:var(--ink-subtle,#94A3B8); font-size:13px; font-style:italic;
+        }
+        .mp-row{
+          display:grid;
+          grid-template-columns:64px 70px minmax(0,1fr) 110px 90px;
+          align-items:center; gap:12px;
+          padding:10px 14px;
+          border-bottom:1px solid var(--border-soft,#E2E8F0);
+          transition:background 120ms;
+        }
+        .mp-row:hover{background:var(--surface-2,#F8FAFC);}
+        .mp-row:last-child{border-bottom:none;}
+        .mp-model{
+          font-weight:800; font-size:13px;
+          color:var(--ink,#0F172A); font-family:var(--mono,monospace);
+        }
+        .mp-tier{
+          display:inline-block; padding:3px 9px; border-radius:999px;
+          font-size:10px; font-weight:700; letter-spacing:0.04em;
+          text-align:center;
+        }
+        .mp-tier[data-tier="Basic"]{background:rgba(100,116,139,0.12);color:#475569;}
+        .mp-tier[data-tier="Standard"]{background:rgba(79,70,229,0.12);color:#4338CA;}
+        .mp-tier[data-tier="Performance"]{background:rgba(124,58,237,0.12);color:#6D28D9;}
+        .mp-tier[data-tier="Flagship"]{background:rgba(219,39,119,0.12);color:#BE185D;}
+        .mp-tier[data-tier="Other"]{background:rgba(100,116,139,0.10);color:#64748B;}
+        .mp-bar-track{
+          position:relative;
+          height:8px; background:var(--surface-2,#F1F5F9);
+          border-radius:4px; overflow:hidden;
+        }
+        .mp-bar-fill{
+          position:absolute; left:0; top:0; bottom:0;
+          border-radius:4px;
+          transition:width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .mp-bar-fill[data-tier="Basic"]      {background:linear-gradient(90deg,#64748B,#94A3B8);}
+        .mp-bar-fill[data-tier="Standard"]   {background:linear-gradient(90deg,#4F46E5,#7C3AED);}
+        .mp-bar-fill[data-tier="Performance"]{background:linear-gradient(90deg,#7C3AED,#A855F7);}
+        .mp-bar-fill[data-tier="Flagship"]   {background:linear-gradient(90deg,#DB2777,#F472B6);}
+        .mp-bar-fill[data-tier="Other"]      {background:linear-gradient(90deg,#64748B,#94A3B8);}
+        .mp-bar-meta{
+          display:flex; justify-content:space-between; align-items:center;
+          font-size:11px; color:var(--ink-muted,#64748B); margin-bottom:3px;
+          font-variant-numeric:tabular-nums;
+        }
+        .mp-bar-meta b{color:var(--ink,#0F172A); font-weight:700;}
+        .mp-revenue{
+          font-size:12.5px; font-weight:700; font-variant-numeric:tabular-nums;
+          background:linear-gradient(135deg,#059669,#10B981);
+          -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+          text-align:right;
+        }
+        .mp-spark{width:90px; height:28px;}
+        .mp-spark-line{stroke:var(--indigo,#4F46E5); stroke-width:1.5; fill:none;}
+        .mp-spark-fill{fill:rgba(79,70,229,0.12); stroke:none;}
+        .mp-spark-dot{fill:var(--indigo,#4F46E5);}
+
+        @media (max-width:720px){
+          .mp-row{grid-template-columns:60px minmax(0,1fr) 90px; gap:8px;}
+          .mp-tier{display:none;}
+          .mp-bar-track{display:none;}
+          .mp-spark{display:none;}
+        }
+        html[data-theme="dark"] .lb-v2-row{background:rgba(20,25,55,0.50);}
+        html[data-theme="dark"] .mp-row{border-bottom-color:rgba(148,163,184,0.10);}
       </style>
 
       <!-- v24.25.2 — DETAILED ANALYTICS EXPANDER
@@ -7805,88 +7978,102 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
       <div id="filter-count" class="filter-result-count" style="display:none;"></div>
 
       <!-- v18 Premium charts — separate container rendered after filters -->
+      <!-- v24.25.3 — Detailed Analytics consolidation:
+           · Stage funnel uses real stages (Lead/Opportunity/Proposal/Negotiation/Order)
+           · Model Distribution donut + Top Models Monthly line REMOVED (duplicated Model Demand)
+           · User Leaderboard split: Sales (Won ₹ + Open ₹) | Presales
+           · Top Partners shows ₹ + sort + placeholder filter
+           · All charts apply pipeline cutoff (Apr 1 2026) -->
       <div id="super-charts-body" class="dashboard-v18" style="display:none;">
-        <!-- Row 1: Conversion funnel + Model distribution + Pipeline stages -->
+        <!-- Row 1: Conversion funnel + Pipeline stages (Model Distribution removed — was duplicate of Model Demand) -->
         <div class="dash-section-head"><div class="dash-section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 12 13 21 6"/><path d="M3 6v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6"/></svg></div><div class="dash-section-title">Performance & Mix</div><div class="dash-section-line"></div></div>
-        <div class="charts-row">
+        <div class="charts-row-2">
           <div class="chart-card-v18">
             <div class="chart-v18-head">
-              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-emerald"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 17 9 11 13 15 21 7"/></svg></span>Deal Stage Funnel</div>
+              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-emerald"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 17 9 11 13 15 21 7"/></svg></span>Number of cases per stage</div>
             </div>
-            <div class="chart-v18-subtitle">Lead → Qualified → Proposal → Won/Lost</div>
-            <div class="chart-v18-body"><canvas id="chart-dealstage"></canvas></div>
+            <div class="chart-v18-subtitle">Lead → Opportunity → Proposal → Negotiation → Order · post Apr 1, 2026</div>
+            <div class="chart-v18-body" style="height:280px;"><canvas id="chart-dealstage"></canvas></div>
           </div>
           <div class="chart-card-v18">
             <div class="chart-v18-head">
-              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-indigo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="2" x2="12" y2="12"/><line x1="12" y1="12" x2="20" y2="8"/></svg></span>Model Distribution</div>
+              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3h18v18H3z"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg></span>Open pipeline by stage · ₹</div>
             </div>
-            <div class="chart-v18-subtitle">Share by individual model</div>
-            <div class="chart-v18-body"><canvas id="chart-groups"></canvas></div>
-          </div>
-          <div class="chart-card-v18">
-            <div class="chart-v18-head">
-              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3h18v18H3z"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg></span>Deal Stage Pipeline</div>
-            </div>
-            <div class="chart-v18-subtitle">By current deal stage</div>
+            <div class="chart-v18-subtitle">Funnel-depth view of where money is sitting</div>
             <div class="chart-v18-body"><div id="chart-pipeline" class="funnel-container"></div></div>
           </div>
         </div>
+        <!-- Hidden duplicate: Model Distribution donut (data is in Model Performance below) -->
+        <div style="display:none;"><canvas id="chart-groups"></canvas></div>
 
-        <!-- Row 2: User leaderboard + Top partners -->
+        <!-- Row 2: User leaderboard (split into Sales + Presales) + Top partners -->
         <div class="dash-section-head"><div class="dash-section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div class="dash-section-title">Team & Channel</div><div class="dash-section-line"></div></div>
         <div class="charts-row-2">
           <div class="chart-card-v18">
             <div class="chart-v18-head">
-              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-indigo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3 6 6 1-4.5 4.5 1 6.5L12 17l-5.5 3 1-6.5L3 9l6-1z"/></svg></span>User Leaderboard</div>
+              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-indigo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3 6 6 1-4.5 4.5 1 6.5L12 17l-5.5 3 1-6.5L3 9l6-1z"/></svg></span>Sales reps · ranked by ₹</div>
             </div>
-            <div class="chart-v18-subtitle">Top contributors · ranked by total selections</div>
-            <div class="chart-v18-body" style="height:auto;min-height:240px;"><div id="chart-leaderboard" class="leaderboard"></div></div>
+            <div class="chart-v18-subtitle">Won ₹ (closed) + Open ₹ (driving) per sales rep</div>
+            <div class="chart-v18-body" style="height:auto;min-height:280px;"><div id="chart-leaderboard" class="leaderboard-v2"></div></div>
           </div>
           <div class="chart-card-v18">
             <div class="chart-v18-head">
-              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-rose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></span>Top Partners / SI</div>
+              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-rose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></span>Top Partners / SI · by ₹</div>
             </div>
-            <div class="chart-v18-subtitle">Selections by channel partner</div>
-            <div class="chart-v18-body"><canvas id="chart-partners"></canvas></div>
+            <div class="chart-v18-subtitle">Channel partners ranked by total deal ₹ (open + won), high to low</div>
+            <div class="chart-v18-body" style="height:320px;"><canvas id="chart-partners"></canvas></div>
           </div>
         </div>
 
-        <!-- Row 3: City heatmap + Activity timeline -->
+        <!-- Row 2b: Presales reps (separate row so doesn't squish leaderboard column) -->
+        <div class="charts-row-2">
+          <div class="chart-card-v18">
+            <div class="chart-v18-head">
+              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/></svg></span>Presales reps · ranked by ₹</div>
+            </div>
+            <div class="chart-v18-subtitle">Won ₹ + Open ₹ per presales rep</div>
+            <div class="chart-v18-body" style="height:auto;min-height:240px;"><div id="chart-presales-leaderboard" class="leaderboard-v2"></div></div>
+          </div>
+          <div class="chart-card-v18" style="visibility:hidden;"></div>
+        </div>
+
+        <!-- Row 3: City heatmap + Activity timeline (kept as-is — these have unique value) -->
         <div class="dash-section-head"><div class="dash-section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div class="dash-section-title">Geography & Velocity</div><div class="dash-section-line"></div></div>
         <div class="charts-row-2">
           <div class="chart-card-v18">
             <div class="chart-v18-head">
               <div class="chart-v18-title"><span class="chart-v18-title-icon ci-slate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="9" y2="21"/></svg></span>City Distribution</div>
             </div>
-            <div class="chart-v18-subtitle">Selections by city/state</div>
+            <div class="chart-v18-subtitle">Selections by city/state · post-cutoff</div>
             <div class="chart-v18-body" style="height:auto;min-height:200px;"><div id="chart-cities" class="city-heatmap"></div></div>
           </div>
           <div class="chart-card-v18">
             <div class="chart-v18-head">
               <div class="chart-v18-title"><span class="chart-v18-title-icon ci-emerald"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Activity Timeline</div>
             </div>
-            <div class="chart-v18-subtitle">Daily volume · last 30 days</div>
+            <div class="chart-v18-subtitle">Daily deal-creation volume · last 30 days</div>
             <div class="chart-v18-body"><canvas id="chart-activity"></canvas></div>
           </div>
         </div>
 
-        <!-- Row 4: Product Demand (v22.1) -->
+        <!-- Row 4: Product Demand — ONE consolidated Model Performance card (replaces 2 prior charts) -->
         <div class="dash-section-head"><div class="dash-section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3h18v18H3z"/><path d="M9 17V7"/><path d="M13 17v-5"/><path d="M17 17V9"/></svg></div><div class="dash-section-title">Product Demand</div><div class="dash-section-line"></div></div>
-        <div class="charts-row-2">
-          <div class="chart-card-v18">
-            <div class="chart-v18-head">
-              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-indigo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>Model Demand</div>
+        <div class="chart-card-v18">
+          <div class="chart-v18-head">
+            <div class="chart-v18-title"><span class="chart-v18-title-icon ci-indigo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>Model Performance</div>
+            <div style="margin-left:auto;display:flex;gap:6px;align-items:center;font-size:11.5px;">
+              <span style="color:var(--ink-subtle,#94A3B8);">Sort:</span>
+              <button type="button" id="model-perf-sort-count" class="model-perf-sort-btn active" onclick="setModelPerfSort('count')">Count</button>
+              <button type="button" id="model-perf-sort-rev" class="model-perf-sort-btn" onclick="setModelPerfSort('rev')">₹</button>
             </div>
-            <div class="chart-v18-subtitle">Most-recommended models · ranked by selections</div>
-            <div class="chart-v18-body" style="height:320px;"><canvas id="chart-models"></canvas></div>
           </div>
-          <div class="chart-card-v18">
-            <div class="chart-v18-head">
-              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>Top Models · Monthly</div>
-            </div>
-            <div class="chart-v18-subtitle">Demand pattern for top 3 models · last 6 months</div>
-            <div class="chart-v18-body" style="height:320px;"><canvas id="chart-models-timeline"></canvas></div>
-          </div>
+          <div class="chart-v18-subtitle">All models quoted post Apr 1, 2026 · count + ₹ + 6-month sparkline · sortable · color-coded by tier</div>
+          <div class="chart-v18-body" id="model-perf-body" style="height:auto;min-height:240px;padding:8px 0;">Loading…</div>
+        </div>
+        <!-- Hidden originals -->
+        <div style="display:none;">
+          <canvas id="chart-models"></canvas>
+          <canvas id="chart-models-timeline"></canvas>
         </div>
       </div>
         </div><!-- /.dash-expander-body -->
@@ -8213,7 +8400,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         <button type="button" class="btn-secondary" onclick="clearAllReviewFilters()" style="font-size:12px; padding:6px 12px;">Clear all</button>
       </div>
       <div class="rf-grid">
-        <div class="rf-cell" style="flex:1.5 1 220px;">
+        <div class="rf-cell">
           <label class="rf-label" for="rf-search">Search</label>
           <input type="text" id="rf-search" placeholder="project, customer, partner…" oninput="onReviewSearchChange()" autocomplete="off">
         </div>
@@ -8289,8 +8476,8 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         content:"";position:absolute;top:0;left:0;right:0;height:3px;
         background:linear-gradient(90deg,#4F46E5 0%,#7C3AED 50%,#DB2777 100%);
       }
-      #review-filters-wrap .rf-grid{display:flex; flex-wrap:wrap; gap:10px;}
-      #review-filters-wrap .rf-cell{flex:1 1 150px; display:flex; flex-direction:column; min-width:0;}
+      #review-filters-wrap .rf-grid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px;}
+      #review-filters-wrap .rf-cell{display:flex; flex-direction:column; min-width:0;}
       #review-filters-wrap .rf-label{
         font-size:10px; letter-spacing:0.06em; text-transform:uppercase;
         color:var(--ink-muted,#64748B); font-weight:700; margin-bottom:5px;
@@ -8316,11 +8503,14 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         background:linear-gradient(0deg, rgba(79,70,229,0.04), rgba(79,70,229,0.04)), var(--surface,#FFF);
         font-weight:600;
       }
+      @media (max-width:1024px){
+        #review-filters-wrap .rf-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+      }
       @media (max-width:720px){
-        #review-filters-wrap .rf-cell{flex:1 1 calc(50% - 5px); min-width:0;}
+        #review-filters-wrap .rf-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
       }
       @media (max-width:480px){
-        #review-filters-wrap .rf-cell{flex:1 1 100%;}
+        #review-filters-wrap .rf-grid{grid-template-columns:1fr;}
       }
 
       /* ============ v24.25.1 — Region + Sales card, polished ============ */
@@ -8570,29 +8760,26 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
       </div>
     </div>
     <!-- v24.14.9: Bi-monthly Review KPI dashboard — pure frontend, reads window._centralLog -->
-    <div id="bs-kpi-wrap" style="margin:18px 0; padding:18px; background:var(--surface,#FFF); border:1px solid var(--border,#E5E7EB); border-radius:14px; box-shadow:var(--shadow-sm,0 1px 2px rgba(0,0,0,0.04));">
-      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px;">
-        <div>
-          <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600; margin-bottom:4px;">Pipeline operations</div>
-          <div style="font-size:18px; font-weight:600; color:var(--ink,#0F172A); font-family:var(--serif,Georgia,serif); line-height:1.2;">Plan of Action · Drilldown · Velocity · Trend</div>
-          <div style="font-size:12px; color:var(--ink-muted,#64748B); margin-top:2px;">Working tools — KPI tiles moved to Dashboard cockpit. Filter the underlying data using the dropdowns above.</div>
-        </div>
-        <div style="margin-left:auto; display:none; gap:8px; align-items:center; flex-wrap:wrap;">
-          <select id="bs-kpi-period" onchange="bsKpiOnPeriodChange()" style="padding:8px 12px; border:1px solid var(--border-strong,#CBD5E1); border-radius:8px; font-size:13px; background:var(--surface,#FFF); color:var(--ink,#0F172A);">
-            <option value="currentFY">Current FY (default)</option>
-            <option value="thisBimonth">This bi-month</option>
-            <option value="thisQuarter">This quarter</option>
-            <option value="last6m">Last 6 months</option>
-            <option value="custom">Custom range…</option>
-          </select>
-          <input type="month" id="bs-kpi-custom-start" style="display:none; padding:7px 10px; border:1px solid var(--border-strong,#CBD5E1); border-radius:8px; font-size:13px; background:var(--surface,#FFF); color:var(--ink,#0F172A);" onchange="bsRenderReviewKPIs()" aria-label="Custom range start month">
-          <input type="month" id="bs-kpi-custom-end" style="display:none; padding:7px 10px; border:1px solid var(--border-strong,#CBD5E1); border-radius:8px; font-size:13px; background:var(--surface,#FFF); color:var(--ink,#0F172A);" onchange="bsRenderReviewKPIs()" aria-label="Custom range end month">
-          <span id="bs-kpi-period-label" style="font-size:11px; color:var(--ink-subtle,#94A3B8); padding:6px 10px; min-width:80px;">—</span>
-        </div>
+    <div id="bs-kpi-wrap" style="margin:18px 0 8px; padding:0; background:transparent; border:none; box-shadow:none;">
+      <div style="display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:6px; padding:0 4px;">
+        <div style="font-size:11px; letter-spacing:0.10em; text-transform:uppercase; color:var(--ink-muted,#64748B); font-weight:700;">Pipeline operations</div>
+        <div style="flex:1;height:1px;background:var(--border,#E5E7EB);min-width:30px;"></div>
+        <div style="font-size:12px; color:var(--ink-subtle,#94A3B8);">Plan of Action · Drilldown · Velocity · Trend</div>
       </div>
-      <!-- v24.25.2 — KPI strip + grid hidden. The 5 tiles + 4 cards (stage/owner/aging/models) duplicated cockpit. Pipeline Operations now focuses on Plan of Action + drilldown table + velocity + trend below. -->
-      <div id="bs-kpi-strip" style="display:none; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; margin-bottom:14px;"></div>
-      <div id="bs-kpi-grid" style="display:none; grid-template-columns:1fr 1fr; gap:12px;">
+      <div style="display:none; gap:8px; align-items:center; flex-wrap:wrap;">
+        <select id="bs-kpi-period" onchange="bsKpiOnPeriodChange()" style="padding:8px 12px; border:1px solid var(--border-strong,#CBD5E1); border-radius:8px; font-size:13px; background:var(--surface,#FFF); color:var(--ink,#0F172A);">
+          <option value="currentFY">Current FY (default)</option>
+          <option value="thisBimonth">This bi-month</option>
+          <option value="thisQuarter">This quarter</option>
+          <option value="last6m">Last 6 months</option>
+          <option value="custom">Custom range…</option>
+        </select>
+        <input type="month" id="bs-kpi-custom-start" style="display:none;" onchange="bsRenderReviewKPIs()" aria-label="Custom range start month">
+        <input type="month" id="bs-kpi-custom-end" style="display:none;" onchange="bsRenderReviewKPIs()" aria-label="Custom range end month">
+        <span id="bs-kpi-period-label" style="font-size:11px; color:var(--ink-subtle,#94A3B8);">—</span>
+      </div>
+      <div id="bs-kpi-strip" style="display:none;"></div>
+      <div id="bs-kpi-grid" style="display:none;">
         <div id="bs-kpi-card-stage"></div>
         <div id="bs-kpi-card-owner"></div>
         <div id="bs-kpi-card-aging"></div>
@@ -8775,7 +8962,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.25.2';  // v24.25.2 — Duplication cleanup (Dashboard collapses v18 charts into "Detailed analytics" expander, Review tab Bi-monthly KPI strip hidden + section renamed to "Pipeline Operations", Custom BOQ sections gated to Advanced path). Owner-grade cockpit: Top Wins ribbon, Quarter close countdown, Commit/Early Pipeline split, Risk tile (6th KPI), Run-rate vs target. Engagement layer: Active customers + Repeat ratio + Partner engagement + Consultant engagement tiles, Top Repeat Customers panel, Partner/Consultant Relationship board (Active vs Dormant), Region table upgraded with active-customers + engagement score. BRAND_CONFIG constant added for future tvONE/Green Hippo merge. Pairs with backend v25.13.0.
+const FRONTEND_VERSION = '24.25.3';  // v24.25.3 — Header name fix · Test mode strip + cockpit toggle · Sales Person auto-default · Notification fallback in all paths · SSD/WD105 stepper alignment · Pipeline Operations trim · Review filter row balance · Region/Sales empty state actionable · Detailed Analytics: real stages (Lead→Order), stage bars colored with counts, Top Partners with ₹ + dark-mode fix, User Leaderboard split (Sales/Presales × Won-₹/Open-₹ columns), 3 model charts consolidated into 1 Model Performance card with cutoff applied. All Detailed Analytics charts honor pipeline cutoff. Pairs with backend v25.13.0.
+// v24.25.2 — Duplication cleanup (Dashboard collapses v18 charts into "Detailed analytics" expander, Review tab Bi-monthly KPI strip hidden + section renamed to "Pipeline Operations", Custom BOQ sections gated to Advanced path). Owner-grade cockpit: Top Wins ribbon, Quarter close countdown, Commit/Early Pipeline split, Risk tile (6th KPI), Run-rate vs target. Engagement layer: Active customers + Repeat ratio + Partner engagement + Consultant engagement tiles, Top Repeat Customers panel, Partner/Consultant Relationship board (Active vs Dormant), Region table upgraded with active-customers + engagement score. BRAND_CONFIG constant added for future tvONE/Green Hippo merge. Pairs with backend v25.13.0.
 // v24.25.1 — Visual polish on Review filter row + Region card + Sales card (gradients, glass surfaces, color-tinted KPI tiles, animated stage bars). + Full Dashboard cockpit build: 5 vibrant KPI tiles, stage-wise breakdown with funnel-depth color progression, funnel + trend chart pair, region performance table, source split, aging spotlight, what's-moving stream. Time window + Region filter persist. Pairs with backend v25.13.0 (no backend changes needed).
 // v24.25.0 — Pipeline cutoff (PIPELINE_DATA_START='2026-04-01') applied to all aggregations + trend chart. YoY badges stripped from Cards 1/2/4. Card 6 replaced with cutoff explainer. UI uniformity tokens. Mobile stepper REMOVED — single responsive form. SSD + WD105 ± stepper. BOM horizontal scroll fix. Excel signature block at BOM bottom. Notification fix uses entry.project. Items 5+6+7: Review tab chip-filter panel replaced with inline dropdown row (search/Source/FY/Region/State/Sales/Presales/Outcome), plus Region card + Sales-person card with KPI tiles + top reps/customers + deal list. Pairs with backend v25.13.0.
 // v24.23.0 — features #19 Customer 360 modal + #18 server-side handoff notifications.
@@ -10043,11 +10231,14 @@ function _populateSalesPresalesDropdowns(){
   // current user's role qualifies. Critical fix: ALSO mirror to state.form so the value
   // survives any subsequent re-render of the dropdowns. Previously only set the DOM value;
   // a later re-population call could overwrite it because state.form was still empty.
+  // v24.25.3 — Super users are now auto-defaulted into salesPerson too. Without this,
+  // Super submissions saved with blank salesPerson (caused by required-validation hole),
+  // making deals invisible to the Sales card pivot. Super can still change the value.
   const me = (state && state.user) ? state.user : null;
   if(me && me.loginName){
     const myLogin = String(me.loginName).toLowerCase();
     const myRole = String(me.role || '').toLowerCase().trim();
-    const isSalesRole = (myRole === 'sales') || /bu.?head/i.test(myRole);
+    const isSalesRole = (myRole === 'sales') || /bu.?head/i.test(myRole) || me.isSuper === true;
     const isPresalesRole = (myRole === 'presales');
 
     if(!currentSales && isSalesRole){
@@ -10208,10 +10399,24 @@ function getCmsPrice(vendor, priceType, term){
     try {
       const raw = JSON.parse(localStorage.getItem(_notifKey_()) || '[]');
       const cutoff = Date.now() - NOTIF_RETENTION_MS;
-      return raw.filter(function(n) {
+      // v24.25.3 — backfill old "Untitled" subs (left over from pre-v24.25.0 entries
+      // which didn't enforce project name). Cosmetic relabel only — actual deal
+      // record on the sheet is unchanged. We keep the original ts so order is preserved.
+      let mutated = false;
+      const fixed = raw.filter(function(n) {
         const ts = n && n.ts ? Date.parse(n.ts) : 0;
         return ts >= cutoff;
+      }).map(function(n){
+        if(n && (n.sub === 'Untitled' || n.sub === 'Untitled deal' || n.sub === 'Untitled · saved to history')){
+          mutated = true;
+          return Object.assign({}, n, {sub: '(deal name not recorded — pre-v24.25.0)'});
+        }
+        return n;
       });
+      if(mutated){
+        try { localStorage.setItem(_notifKey_(), JSON.stringify(fixed.slice(0, NOTIF_MAX_ITEMS))); } catch(_){}
+      }
+      return fixed;
     } catch (e) { return []; }
   }
 
@@ -12074,8 +12279,13 @@ function _applyPostLoginUI(){
   // v24.20.1 (Bug #3): Use textContent for fullName, then append badge as a separate element.
   // Previous innerHTML approach occasionally double-rendered when _applyPostLoginUI was called
   // twice during a slow login sequence (rehydrate + login race). textContent is atomic.
+  // v24.25.3: Defensive — if fullName is empty, dash, or whitespace, fall back to loginName.
   if(nameEl){
-    nameEl.textContent = u.fullName;
+    let displayName = String(u.fullName || '').trim();
+    if(!displayName || displayName === '—' || displayName === '-'){
+      displayName = String(u.loginName || '').trim() || 'User';
+    }
+    nameEl.textContent = displayName;
     // Remove any existing super-pill (defensive against re-entry)
     const existing = nameEl.parentElement && nameEl.parentElement.querySelectorAll('.super-pill');
     if(existing && existing.length) existing.forEach(function(el){ el.remove(); });
@@ -23574,7 +23784,10 @@ if(document.readyState==='loading'){
     if(card) card.setAttribute('data-region', regionName || '');
     if(!regionName){
       body.className = 'rs-empty-strong';
-      body.innerHTML = '<div class="rs-empty-strong-icon">◉</div><div>Pick a region above to see deal count, pipeline value, win rate, top reps and the deal list.</div>';
+      body.innerHTML = '<div class="rs-empty-strong-icon">◉</div>' +
+        '<div style="font-weight:600;color:var(--ink,#0F172A);margin-bottom:6px;font-size:13px;">Pick a region above</div>' +
+        '<div style="font-size:12px;line-height:1.5;">Selecting a region populates deal count · pipeline ₹ · win rate · top reps · top customers · deal list.</div>' +
+        '<div style="margin-top:10px;font-size:11px;color:var(--ink-subtle,#94A3B8);">Tip: For all-region rollup, see the <strong>Dashboard cockpit</strong>.</div>';
       return;
     }
     body.className = 'rs-body';
@@ -23685,7 +23898,10 @@ if(document.readyState==='loading'){
     if(!body) return;
     if(!salesLoginName){
       body.className = 'rs-empty-strong';
-      body.innerHTML = '<div class="rs-empty-strong-icon">☰</div><div>Pick a sales person above to see tagged deals, pipeline value, win rate and stage breakdown.</div>';
+      body.innerHTML = '<div class="rs-empty-strong-icon">☰</div>' +
+        '<div style="font-weight:600;color:var(--ink,#0F172A);margin-bottom:6px;font-size:13px;">Pick a sales person above</div>' +
+        '<div style="font-size:12px;line-height:1.5;">Selecting a rep shows their tagged deals · pipeline ₹ · win rate · stage breakdown.</div>' +
+        '<div style="margin-top:10px;font-size:11px;color:var(--ink-subtle,#94A3B8);">Tip: For team-wide ranking, see <strong>User Leaderboard</strong> in Dashboard → Detailed analytics.</div>';
       return;
     }
     body.className = 'rs-body';
@@ -24789,6 +25005,553 @@ if(document.readyState==='loading'){
     _saveFilters({window: w ? w.value : 'thisQuarter', region: r ? r.value : ''});
     window.renderCockpit();
   };
+
+  // v24.25.3 — Include/exclude test data toggle. Sets the global flag used by
+  // every cockpit/review filter path. Persists in localStorage.
+  window.onCockpitTestToggle = function(){
+    const cb = document.getElementById('cockpit-include-test');
+    const v = !!(cb && cb.checked);
+    window._reviewIncludeTest = v;
+    try { localStorage.setItem('bs-cockpit-include-test', v ? '1' : '0'); } catch(_){}
+    window.renderCockpit();
+    // Also refresh review-tab aggregations so the toggle has cross-tab effect
+    try { if(typeof window.bsRenderReviewKPIs === 'function') window.bsRenderReviewKPIs(); } catch(_){}
+    try { if(typeof window._renderRegionCardForCurrentPick === 'function') window._renderRegionCardForCurrentPick(); } catch(_){}
+    try { if(typeof window._renderSalesCardForCurrentPick === 'function') window._renderSalesCardForCurrentPick(); } catch(_){}
+  };
+  // Restore the toggle state on load
+  (function _restoreTestToggle(){
+    try {
+      const v = localStorage.getItem('bs-cockpit-include-test') === '1';
+      window._reviewIncludeTest = v;
+      const cb = document.getElementById('cockpit-include-test');
+      if(cb) cb.checked = v;
+    } catch(_){}
+  })();
+})();
+
+/* ============================================================================
+ * v24.25.3 — Detailed Analytics v2
+ * Wraps renderDashboard so AFTER the original v18 chart code runs, we override
+ * the four charts that were broken or duplicated:
+ *   (1) chart-dealstage — use real stages (Lead/Opp/Proposal/Negotiation/Order)
+ *       NOT the legacy Lead/Qualified/Proposal/Won/Lost mix
+ *   (2) chart-partners — sort by ₹ desc, filter placeholder names, show ₹ tooltips
+ *   (3) #chart-leaderboard — Sales reps with Won ₹ + Open ₹ side-by-side
+ *   (4) #chart-presales-leaderboard — Presales reps with same dual columns
+ *   (5) #model-perf-body — consolidated Model Performance card replacing 3 prior
+ *       model charts (donut + bar + monthly line)
+ * All renderers respect pipeline cutoff (Apr 1 2026) so legacy SAP data does not
+ * pollute. All renderers respect the cockpit's include-test toggle.
+ * ============================================================================ */
+(function(){
+  const STAGE_ORDER_V2 = ['Lead','Opportunity','Proposal','Negotiation','Order'];
+  const STAGE_GRAD = {
+    Lead:        ['#6366F1','#818CF8'],
+    Opportunity: ['#5B21B6','#7C3AED'],
+    Proposal:    ['#7C3AED','#A855F7'],
+    Negotiation: ['#C026D3','#E879F9'],
+    Order:       ['#DB2777','#F472B6']
+  };
+  const PIPELINE_CUTOFF_MS = (function(){
+    try { return new Date('2026-04-01T00:00:00').getTime(); }
+    catch(_){ return 0; }
+  })();
+  const DORMANT_PARTNER_PATTERNS = [
+    /^asdf+$/i, /^test+$/i, /^xxx+$/i, /^abc+$/i, /^foo+$/i, /^na$/i, /^n\/a$/i,
+    /^placeholder/i, /^[a-z]{1,2}$/i  // single/double letter junk
+  ];
+
+  function _isPlaceholder(name){
+    const s = String(name || '').trim();
+    if(!s) return true;
+    return DORMANT_PARTNER_PATTERNS.some(function(re){ return re.test(s); });
+  }
+  function _entryTs(e){
+    if(!e) return 0;
+    if(typeof window._entryCreatedMs === 'function'){
+      try { const v = window._entryCreatedMs(e); if(v != null) return v; } catch(_){}
+    }
+    const candidates = [e.timestamp, e.ts, e.created, e.createdAt];
+    for(let i = 0; i < candidates.length; i++){
+      const v = candidates[i];
+      if(v == null || v === '') continue;
+      const d = (v instanceof Date) ? v : new Date(v);
+      if(!isNaN(d.getTime())) return d.getTime();
+    }
+    return 0;
+  }
+  function _afterCutoff(e){
+    if(typeof window._entryAfterPipelineCutoff === 'function'){
+      try { return window._entryAfterPipelineCutoff(e); } catch(_){}
+    }
+    const ts = _entryTs(e);
+    return ts > 0 && ts >= PIPELINE_CUTOFF_MS;
+  }
+  function _readVal(e){
+    if(typeof window._readDealValue === 'function'){
+      try { return window._readDealValue(e); } catch(_){}
+    }
+    const v = e && (e.dealValueINR || e.dealValue || e.dealvalueinr);
+    const n = parseFloat(v);
+    return isFinite(n) ? n : 0;
+  }
+  function _fmtINR(n){
+    if(typeof window.formatINR === 'function') return window.formatINR(n);
+    return '₹' + (Math.round(n||0)).toLocaleString('en-IN');
+  }
+  function _esc(s){
+    if(typeof window.escapeHtml === 'function') return window.escapeHtml(String(s||''));
+    return String(s||'').replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function _resolveOwner(loginName){
+    if(!loginName) return '';
+    const users = Array.isArray(window._allUsers) ? window._allUsers : [];
+    for(let i = 0; i < users.length; i++){
+      const u = users[i];
+      if(u && String(u.loginName||'').toLowerCase() === String(loginName).toLowerCase()){
+        return u.fullName || u.loginName || loginName;
+      }
+    }
+    return loginName;
+  }
+  function _ownerRole(loginName){
+    if(!loginName) return '';
+    const users = Array.isArray(window._allUsers) ? window._allUsers : [];
+    for(let i = 0; i < users.length; i++){
+      const u = users[i];
+      if(u && String(u.loginName||'').toLowerCase() === String(loginName).toLowerCase()){
+        return String(u.role || '').trim();
+      }
+    }
+    return '';
+  }
+
+  // Get the list of entries the dashboard uses, with cutoff applied
+  function _entries(){
+    let raw = [];
+    try {
+      if(typeof window.getVisibleEntries === 'function'){
+        raw = window.getVisibleEntries() || [];
+      } else if(Array.isArray(window._centralLog)){
+        raw = window._centralLog;
+      }
+    } catch(_){ raw = []; }
+    return raw.filter(_afterCutoff);
+  }
+
+  /* ============ (1) Deal stage chart corrected ============ */
+  function _renderStageChart(entries){
+    const canvas = document.getElementById('chart-dealstage');
+    if(!canvas || typeof Chart === 'undefined') return;
+    // Tear down any prior chart on this canvas
+    try {
+      if(window._charts && window._charts.dealstageV2){ window._charts.dealstageV2.destroy(); }
+      else if(window._charts && window._charts.conversion){ window._charts.conversion.destroy(); window._charts.conversion = null; }
+    } catch(_){}
+
+    const counts = {};
+    STAGE_ORDER_V2.forEach(function(s){ counts[s] = 0; });
+    entries.forEach(function(e){
+      if(String(e.outcome || 'open').toLowerCase() !== 'open') return;
+      const s = String(e.stage || '').trim();
+      if(counts[s] != null) counts[s]++;
+    });
+    const data = STAGE_ORDER_V2.map(function(s){ return counts[s]; });
+    const colors = STAGE_ORDER_V2.map(function(s){
+      // Use solid colors derived from the gradients
+      return STAGE_GRAD[s][0];
+    });
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const colorInk = isDark ? '#E2E8F0' : '#0F172A';
+    const colorMuted = isDark ? '#94A3B8' : '#64748B';
+    const colorBorder = isDark ? 'rgba(148,163,184,0.18)' : '#E2E8F0';
+
+    if(!window._charts) window._charts = {};
+    window._charts.dealstageV2 = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: STAGE_ORDER_V2,
+        datasets: [{
+          data: data,
+          backgroundColor: colors,
+          borderRadius: 6,
+          barThickness: 26
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 700, delay: function(c){ return c.dataIndex * 80; }, easing: 'easeOutCubic' },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(c){
+                const total = data.reduce(function(a,b){ return a+b; }, 0);
+                const pct = total > 0 ? Math.round((c.raw/total)*100) : 0;
+                return c.raw + ' deal' + (c.raw === 1 ? '' : 's') + ' (' + pct + '% of open)';
+              }
+            }
+          },
+          datalabels: false  // not enabled but harmless
+        },
+        scales: {
+          x: { beginAtZero: true, grid: { color: colorBorder }, ticks: { color: colorMuted, precision: 0, font: { weight: '600' } } },
+          y: { grid: { display: false }, ticks: { color: colorInk, font: { size: 13, weight: '700' } } }
+        }
+      }
+    });
+  }
+
+  /* ============ (2) Top Partners by ₹ ============ */
+  function _renderPartnersChart(entries){
+    const canvas = document.getElementById('chart-partners');
+    if(!canvas || typeof Chart === 'undefined') return;
+    try {
+      if(window._charts && window._charts.partnersV2){ window._charts.partnersV2.destroy(); }
+      else if(window._charts && window._charts.partners){ window._charts.partners.destroy(); window._charts.partners = null; }
+    } catch(_){}
+
+    const totals = {};  // displayName -> {val, count}
+    entries.forEach(function(e){
+      const p = String(e.partner || '').trim();
+      if(!p) return;
+      if(_isPlaceholder(p)) return;  // filter test/junk names
+      const v = _readVal(e);
+      if(!totals[p]) totals[p] = { val: 0, count: 0 };
+      totals[p].val += v;
+      totals[p].count += 1;
+    });
+    const ranked = Object.keys(totals).map(function(k){
+      return { name: k, val: totals[k].val, count: totals[k].count };
+    }).sort(function(a, b){ return b.val - a.val; }).slice(0, 8);
+
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const colorInk = isDark ? '#E2E8F0' : '#0F172A';
+    const colorMuted = isDark ? '#94A3B8' : '#64748B';
+    const colorBorder = isDark ? 'rgba(148,163,184,0.18)' : '#E2E8F0';
+
+    if(ranked.length === 0){
+      // No real partners — wipe the canvas with a placeholder
+      const ctx = canvas.getContext && canvas.getContext('2d');
+      if(ctx){
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.font = '13px system-ui';
+        ctx.fillStyle = colorMuted;
+        ctx.textAlign = 'center';
+        ctx.fillText('No partner data post Apr 1, 2026', canvas.width/2, canvas.height/2);
+      }
+      return;
+    }
+    if(!window._charts) window._charts = {};
+    window._charts.partnersV2 = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: ranked.map(function(r){ return r.name.length > 24 ? r.name.slice(0, 22) + '…' : r.name; }),
+        datasets: [{
+          label: '₹',
+          data: ranked.map(function(r){ return r.val; }),
+          backgroundColor: ranked.map(function(_, i){
+            // Rose to violet gradient by rank
+            const gradients = ['#DB2777','#C026D3','#A855F7','#9333EA','#7C3AED','#6D28D9','#5B21B6','#4338CA'];
+            return gradients[i] || '#4F46E5';
+          }),
+          borderRadius: 6,
+          barThickness: 22
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 700, delay: function(c){ return c.dataIndex * 60; }, easing: 'easeOutCubic' },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: function(items){ return ranked[items[0].dataIndex].name; },
+              label: function(c){
+                const r = ranked[c.dataIndex];
+                return _fmtINR(r.val) + ' · ' + r.count + ' deal' + (r.count === 1 ? '' : 's');
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            grid: { color: colorBorder },
+            ticks: {
+              color: colorMuted,
+              font: { weight: '600' },
+              callback: function(v){
+                if(v >= 10000000) return '₹' + (v/10000000).toFixed(1) + 'Cr';
+                if(v >= 100000) return '₹' + (v/100000).toFixed(1) + 'L';
+                if(v >= 1000) return '₹' + (v/1000).toFixed(0) + 'K';
+                return '₹' + v;
+              }
+            }
+          },
+          y: { grid: { display: false }, ticks: { color: colorInk, font: { size: 12, weight: '600' } } }
+        }
+      }
+    });
+  }
+
+  /* ============ (3+4) Sales + Presales leaderboards ============ */
+  function _renderLeaderboards(entries){
+    const salesHost = document.getElementById('chart-leaderboard');
+    const presalesHost = document.getElementById('chart-presales-leaderboard');
+    if(!salesHost && !presalesHost) return;
+
+    // Aggregate by salesPerson + presalesPerson (separate buckets)
+    const salesAgg = {};      // login -> {wonVal, wonCount, openVal, openCount}
+    const presalesAgg = {};
+    entries.forEach(function(e){
+      const v = _readVal(e);
+      const out = String(e.outcome || 'open').toLowerCase();
+      const sp = String(e.salesPerson || '').toLowerCase().trim();
+      const pp = String(e.presalesPerson || '').toLowerCase().trim();
+      function bump(agg, key){
+        if(!key) return;
+        if(!agg[key]) agg[key] = { wonVal: 0, wonCount: 0, openVal: 0, openCount: 0 };
+        if(out === 'won'){ agg[key].wonVal += v; agg[key].wonCount += 1; }
+        if(out === 'open'){ agg[key].openVal += v; agg[key].openCount += 1; }
+      }
+      bump(salesAgg, sp);
+      bump(presalesAgg, pp);
+    });
+
+    function rankList(agg){
+      return Object.keys(agg).map(function(login){
+        return Object.assign({ login: login, name: _resolveOwner(login), role: _ownerRole(login) }, agg[login]);
+      }).sort(function(a, b){
+        // Sort by total ₹ (won + open) descending
+        const aTotal = a.wonVal + a.openVal;
+        const bTotal = b.wonVal + b.openVal;
+        return bTotal - aTotal;
+      });
+    }
+    const salesRanked = rankList(salesAgg).slice(0, 5);
+    const presalesRanked = rankList(presalesAgg).slice(0, 5);
+
+    function rowHtml(it, idx){
+      const rank = idx + 1;
+      return '<div class="lb-v2-row" data-rank="' + rank + '">' +
+               '<span class="lb-v2-rank">' + rank + '</span>' +
+               '<div class="lb-v2-name-block">' +
+                 '<div class="lb-v2-name">' + _esc(it.name) + '</div>' +
+                 (it.role ? '<div class="lb-v2-meta">' + _esc(it.role) + '</div>' : '') +
+               '</div>' +
+               '<div class="lb-v2-cell" data-tone="won">' +
+                 '<span class="lb-v2-cell-label">Won ₹</span>' +
+                 '<span class="lb-v2-cell-val">' + _fmtINR(it.wonVal) + '</span>' +
+                 '<span class="lb-v2-cell-sub">' + it.wonCount + ' closed</span>' +
+               '</div>' +
+               '<div class="lb-v2-cell" data-tone="open">' +
+                 '<span class="lb-v2-cell-label">Open ₹</span>' +
+                 '<span class="lb-v2-cell-val">' + _fmtINR(it.openVal) + '</span>' +
+                 '<span class="lb-v2-cell-sub">' + it.openCount + ' driving</span>' +
+               '</div>' +
+             '</div>';
+    }
+
+    if(salesHost){
+      salesHost.className = 'leaderboard-v2';
+      if(salesRanked.length === 0){
+        salesHost.innerHTML = '<div class="lb-v2-empty">No tagged sales activity yet — assign Sales Person on each deal to see the ranking here.</div>';
+      } else {
+        salesHost.innerHTML = salesRanked.map(rowHtml).join('');
+      }
+    }
+    if(presalesHost){
+      presalesHost.className = 'leaderboard-v2';
+      if(presalesRanked.length === 0){
+        presalesHost.innerHTML = '<div class="lb-v2-empty">No presales activity attached yet — set Presales Person on a deal to populate this card.</div>';
+      } else {
+        presalesHost.innerHTML = presalesRanked.map(rowHtml).join('');
+      }
+    }
+  }
+
+  /* ============ (5) Model Performance — consolidated card ============ */
+  // Sort state — persists in localStorage
+  const MP_SORT_KEY = 'bs-model-perf-sort';
+  function _getMpSort(){
+    try { return localStorage.getItem(MP_SORT_KEY) || 'count'; } catch(_){ return 'count'; }
+  }
+  function _setMpSort(s){
+    try { localStorage.setItem(MP_SORT_KEY, s); } catch(_){}
+  }
+  // Tier classification — derived from the 'tier' or 'tag' field on the entry
+  function _classifyTier(e){
+    const blob = String((e.tier || '') + ' ' + (e.tag || '') + ' ' + (e.budget || '')).toLowerCase();
+    if(/flagship/i.test(blob)) return 'Flagship';
+    if(/performance/i.test(blob)) return 'Performance';
+    if(/standard/i.test(blob)) return 'Standard';
+    if(/basic/i.test(blob)) return 'Basic';
+    return 'Other';
+  }
+  // Mini sparkline — last 6 monthly buckets for one model
+  function _sparkSvg(monthlyCounts){
+    if(!monthlyCounts || monthlyCounts.length < 2){
+      return '<span style="color:var(--ink-subtle,#94A3B8);font-size:10px;">—</span>';
+    }
+    const w = 90, h = 28, pad = 2;
+    const max = Math.max.apply(null, monthlyCounts.concat([1]));
+    const stepX = (w - pad*2) / (monthlyCounts.length - 1);
+    const points = monthlyCounts.map(function(v, i){
+      const x = pad + i * stepX;
+      const y = h - pad - (v / max) * (h - pad*2 - 1);
+      return [x, y];
+    });
+    const pathD = 'M ' + points.map(function(p){ return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' L ');
+    const fillD = pathD + ' L ' + points[points.length-1][0].toFixed(1) + ',' + (h-pad) +
+                  ' L ' + points[0][0].toFixed(1) + ',' + (h-pad) + ' Z';
+    const lastDot = points[points.length-1];
+    return '<svg class="mp-spark" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none">' +
+             '<path class="mp-spark-fill" d="' + fillD + '"/>' +
+             '<path class="mp-spark-line" d="' + pathD + '"/>' +
+             '<circle class="mp-spark-dot" cx="' + lastDot[0].toFixed(1) + '" cy="' + lastDot[1].toFixed(1) + '" r="2"/>' +
+           '</svg>';
+  }
+  function _renderModelPerf(entries){
+    const host = document.getElementById('model-perf-body');
+    if(!host) return;
+
+    // Aggregate
+    const agg = {};  // model -> {count, qtySum, val, tier, monthly}
+    // Build 6-month buckets going back from now
+    const now = new Date();
+    const months = [];
+    for(let i = 5; i >= 0; i--){
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const start = d.getTime();
+      const end = (new Date(d.getFullYear(), d.getMonth() + 1, 1)).getTime() - 1;
+      months.push({ start: start, end: end, label: d.toLocaleString('en-IN', { month: 'short' }) });
+    }
+    entries.forEach(function(e){
+      // BS deal can have multiple chosen models in customConfig.chosenModels — try that first
+      let models = [];
+      try {
+        if(e.customConfig && e.customConfig.chosenModels && Array.isArray(e.customConfig.chosenModels)){
+          models = e.customConfig.chosenModels.map(function(c){ return c && c.id; }).filter(Boolean);
+        } else if(typeof e.customConfig === 'string' && e.customConfig){
+          const parsed = JSON.parse(e.customConfig);
+          if(parsed && Array.isArray(parsed.chosenModels)){
+            models = parsed.chosenModels.map(function(c){ return c && c.id; }).filter(Boolean);
+          }
+        }
+      } catch(_){}
+      if(models.length === 0){
+        const m = String(e.model || '').trim();
+        if(m) models = [m];
+      }
+      if(models.length === 0) return;
+      const ts = _entryTs(e);
+      const v = _readVal(e);
+      const qty = parseInt(e.qty, 10) || 1;
+      const tier = _classifyTier(e);
+      models.forEach(function(m){
+        if(!agg[m]){
+          agg[m] = { count: 0, qty: 0, val: 0, tier: tier, monthly: months.map(function(){ return 0; }) };
+        }
+        agg[m].count += 1;
+        agg[m].qty += qty;
+        agg[m].val += v;
+        // Tier — keep highest of all observations
+        const tierRank = { 'Other': 0, 'Basic': 1, 'Standard': 2, 'Performance': 3, 'Flagship': 4 };
+        if(tierRank[tier] > tierRank[agg[m].tier]) agg[m].tier = tier;
+        // Monthly bucket
+        for(let i = 0; i < months.length; i++){
+          if(ts >= months[i].start && ts <= months[i].end){
+            agg[m].monthly[i] += 1;
+            break;
+          }
+        }
+      });
+    });
+    let arr = Object.keys(agg).map(function(m){
+      return Object.assign({ model: m }, agg[m]);
+    });
+    if(arr.length === 0){
+      host.innerHTML = '<div class="mp-empty">No models quoted post Apr 1, 2026 — submit a deal with at least one model to see this rank.</div>';
+      return;
+    }
+    const sortBy = _getMpSort();
+    arr.sort(function(a, b){
+      if(sortBy === 'rev') return b.val - a.val;
+      return b.count - a.count;
+    });
+    const maxCount = Math.max.apply(null, arr.map(function(x){ return x.count; }));
+    const maxVal = Math.max.apply(null, arr.map(function(x){ return x.val; }));
+    host.innerHTML = arr.map(function(x){
+      const barRef = sortBy === 'rev' ? maxVal : maxCount;
+      const barCur = sortBy === 'rev' ? x.val : x.count;
+      const pct = barRef > 0 ? (barCur / barRef) * 100 : 0;
+      return '<div class="mp-row">' +
+               '<span class="mp-model">' + _esc(x.model) + '</span>' +
+               '<span class="mp-tier" data-tier="' + x.tier + '">' + x.tier + '</span>' +
+               '<div>' +
+                 '<div class="mp-bar-meta"><span><b>' + x.count + '</b> quote' + (x.count === 1 ? '' : 's') + ' · ' + x.qty + ' qty</span><span>' + _fmtINR(x.val) + '</span></div>' +
+                 '<div class="mp-bar-track"><div class="mp-bar-fill" data-tier="' + x.tier + '" style="width:' + pct.toFixed(1) + '%;"></div></div>' +
+               '</div>' +
+               _sparkSvg(x.monthly) +
+               '<div class="mp-revenue">' + _fmtINR(x.val) + '</div>' +
+             '</div>';
+    }).join('');
+
+    // Update sort button states
+    const cBtn = document.getElementById('model-perf-sort-count');
+    const rBtn = document.getElementById('model-perf-sort-rev');
+    if(cBtn) cBtn.classList.toggle('active', sortBy === 'count');
+    if(rBtn) rBtn.classList.toggle('active', sortBy === 'rev');
+  }
+
+  // Public — sort toggle handler
+  window.setModelPerfSort = function(s){
+    _setMpSort(s);
+    _renderModelPerf(_entries());
+  };
+
+  /* ============ Main wrap ============ */
+  function _renderDetailedV2(){
+    const entries = _entries();
+    try { _renderStageChart(entries); } catch(e){ console.warn('[detailedV2] stage chart:', e); }
+    try { _renderPartnersChart(entries); } catch(e){ console.warn('[detailedV2] partners chart:', e); }
+    try { _renderLeaderboards(entries); } catch(e){ console.warn('[detailedV2] leaderboards:', e); }
+    try { _renderModelPerf(entries); } catch(e){ console.warn('[detailedV2] model perf:', e); }
+  }
+
+  // Wrap renderDashboard so v2 always runs after the v18 chart paint completes.
+  // Run on a short delay so the original Chart.js renders first; we then replace
+  // chart-dealstage + chart-partners with corrected data.
+  if(typeof window.renderDashboard === 'function'){
+    const _baseRender = window.renderDashboard;
+    window.renderDashboard = function(){
+      const r = _baseRender.apply(this, arguments);
+      // Wait one tick for Chart.js to finish, then override
+      setTimeout(_renderDetailedV2, 80);
+      return r;
+    };
+  }
+
+  // Also re-render when expander is opened (charts paint into elements that
+  // may have been display:none until expander toggle)
+  document.addEventListener('DOMContentLoaded', function(){
+    const exp = document.getElementById('dash-detail-expander');
+    if(exp){
+      exp.addEventListener('toggle', function(){
+        if(exp.open){
+          setTimeout(_renderDetailedV2, 50);
+        }
+      });
+    }
+  });
 })();
 </script>
 </body>
