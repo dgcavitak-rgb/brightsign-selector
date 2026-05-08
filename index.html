@@ -6991,8 +6991,11 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
     </div>
 
       <!-- v24.25.1 — BRAND REVENUE COCKPIT
-           Aggregates window._centralLog (post-pipeline-cutoff) into a 6-row visual.
-           Filters: time window + region. No person-level view (that's on Review tab). -->
+           v24.25.2 — Owner-grade upgrades: Top Wins ribbon, Quarter close countdown,
+           Commit/Early split inside Open Pipeline, Risk tile (6th KPI), Run-rate
+           vs target, Engagement layer (Active customers/Repeat ratio/Partner
+           engagement/Consultant engagement), Top Repeat Customers panel, Partner
+           & Consultant relationship board (Active vs Dormant). -->
       <div id="cockpit" class="cockpit-wrap">
         <!-- Filter bar -->
         <div class="cockpit-filters">
@@ -7021,23 +7024,43 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           <div class="cockpit-filter-cell cockpit-filter-meta">
             <span id="cockpit-window-label">—</span>
           </div>
+          <div class="cockpit-countdown" id="cockpit-countdown" title="Days remaining in this period">
+            <span class="cockpit-countdown-num" id="cockpit-countdown-num">—</span>
+            <span class="cockpit-countdown-lbl" id="cockpit-countdown-lbl">days left</span>
+          </div>
           <button type="button" class="cockpit-refresh" onclick="renderCockpit()" title="Refresh">↻</button>
         </div>
 
-        <!-- Row 1 — 5 KPI tiles -->
+        <!-- Top Wins ribbon -->
+        <div class="cockpit-wins-ribbon" id="cockpit-wins-ribbon">
+          <div class="cockpit-wins-badge">🏆 LIVE</div>
+          <div class="cockpit-wins-track" id="cockpit-wins-track"><div class="cockpit-wins-empty">Recent wins will appear here</div></div>
+        </div>
+
+        <!-- Row 1 — 6 KPI tiles (Open Pipeline w/Commit split, Open Deals, New, Win Rate, Won, Risk) -->
         <div class="cockpit-kpi-strip" id="cockpit-kpi-strip">
-          <div class="cockpit-kpi" data-tone="open"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">Open Pipeline</div><div class="cockpit-kpi-value" id="ck-open-val">—</div><div class="cockpit-kpi-sub" id="ck-open-sub">—</div></div>
+          <div class="cockpit-kpi" data-tone="open"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">Open Pipeline</div><div class="cockpit-kpi-value" id="ck-open-val">—</div><div class="cockpit-kpi-sub" id="ck-open-sub">—</div><div class="cockpit-kpi-split" id="ck-open-split"></div></div>
           <div class="cockpit-kpi" data-tone="count"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">Open Deals</div><div class="cockpit-kpi-value" id="ck-open-count">—</div><div class="cockpit-kpi-sub" id="ck-open-count-sub">active in funnel</div></div>
           <div class="cockpit-kpi" data-tone="new"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">New This Period</div><div class="cockpit-kpi-value" id="ck-new-val">—</div><div class="cockpit-kpi-sub" id="ck-new-sub">—</div></div>
           <div class="cockpit-kpi" data-tone="winrate"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">Win Rate</div><div class="cockpit-kpi-value" id="ck-winrate">—</div><div class="cockpit-kpi-sub" id="ck-winrate-sub">— resolved</div></div>
-          <div class="cockpit-kpi" data-tone="won"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">Won This Period</div><div class="cockpit-kpi-value" id="ck-won-val">—</div><div class="cockpit-kpi-sub" id="ck-won-sub">—</div></div>
+          <div class="cockpit-kpi" data-tone="won"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">Won This Period</div><div class="cockpit-kpi-value" id="ck-won-val">—</div><div class="cockpit-kpi-sub" id="ck-won-sub">—</div><div class="cockpit-kpi-target" id="ck-won-target"></div></div>
+          <div class="cockpit-kpi" data-tone="risk" id="ck-risk-tile"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">Stuck > 30 days</div><div class="cockpit-kpi-value" id="ck-risk-count">—</div><div class="cockpit-kpi-sub" id="ck-risk-sub">leakage signal</div></div>
         </div>
 
-        <!-- Row 2 — Stage-wise breakdown (5 colored cards, funnel-depth gradient) -->
+        <!-- Row 2 — Engagement & retention layer (4 tiles) -->
+        <div class="cockpit-section-head"><span class="cockpit-section-eyebrow">Relationships</span><span class="cockpit-section-title">Customer · Partner · Consultant engagement</span></div>
+        <div class="cockpit-eng-strip">
+          <div class="cockpit-eng" data-tone="cust"><div class="cockpit-eng-icon">👥</div><div class="cockpit-eng-content"><div class="cockpit-eng-label">Active Customers</div><div class="cockpit-eng-value" id="ck-eng-cust">—</div><div class="cockpit-eng-sub" id="ck-eng-cust-sub">— new · — returning</div></div></div>
+          <div class="cockpit-eng" data-tone="repeat"><div class="cockpit-eng-icon">🔁</div><div class="cockpit-eng-content"><div class="cockpit-eng-label">Repeat Ratio</div><div class="cockpit-eng-value" id="ck-eng-repeat">—</div><div class="cockpit-eng-sub" id="ck-eng-repeat-sub">stickiness signal</div></div></div>
+          <div class="cockpit-eng" data-tone="partner"><div class="cockpit-eng-icon">🤝</div><div class="cockpit-eng-content"><div class="cockpit-eng-label">Active Partners</div><div class="cockpit-eng-value" id="ck-eng-partner">—</div><div class="cockpit-eng-sub" id="ck-eng-partner-sub">— dormant 60d+</div></div></div>
+          <div class="cockpit-eng" data-tone="consult"><div class="cockpit-eng-icon">💼</div><div class="cockpit-eng-content"><div class="cockpit-eng-label">Active Consultants</div><div class="cockpit-eng-value" id="ck-eng-consult">—</div><div class="cockpit-eng-sub" id="ck-eng-consult-sub">— attached deals</div></div></div>
+        </div>
+
+        <!-- Row 3 — Stage-wise breakdown (5 colored cards, funnel-depth gradient) -->
         <div class="cockpit-section-head"><span class="cockpit-section-eyebrow">Funnel breakdown</span><span class="cockpit-section-title">Open pipeline by stage</span></div>
         <div class="cockpit-stage-strip" id="cockpit-stage-strip"></div>
 
-        <!-- Row 3 — Funnel chart + Trend line side by side -->
+        <!-- Row 4 — Funnel chart + Trend line side by side -->
         <div class="cockpit-row-2">
           <div class="cockpit-card">
             <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#4F46E5,#7C3AED);">▤</span><span class="cockpit-card-title">Funnel · count + ₹</span></div>
@@ -7049,10 +7072,10 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           </div>
         </div>
 
-        <!-- Row 4 — Region performance + Source split -->
+        <!-- Row 5 — Region performance + Source split -->
         <div class="cockpit-row-2">
           <div class="cockpit-card">
-            <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#D97706,#F59E0B);">◉</span><span class="cockpit-card-title">Regional performance</span></div>
+            <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#D97706,#F59E0B);">◉</span><span class="cockpit-card-title">Regional performance & engagement</span></div>
             <div class="cockpit-card-body" id="cockpit-region-table"></div>
           </div>
           <div class="cockpit-card">
@@ -7061,13 +7084,25 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           </div>
         </div>
 
-        <!-- Row 5 — Aging spotlight (full width) -->
+        <!-- Row 6 — Top Repeat Customers + Partner/Consultant Relationship Board -->
+        <div class="cockpit-row-2">
+          <div class="cockpit-card">
+            <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#7C3AED,#A855F7);">⭐</span><span class="cockpit-card-title">Top repeat customers · lifetime ₹</span><span class="cockpit-card-sub">All-time across cutoff data</span></div>
+            <div class="cockpit-card-body" id="cockpit-repeat"></div>
+          </div>
+          <div class="cockpit-card">
+            <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#059669,#10B981);">🤝</span><span class="cockpit-card-title">Partner & Consultant board</span><span class="cockpit-card-sub">Active vs Dormant (60d+)</span></div>
+            <div class="cockpit-card-body" id="cockpit-relationships"></div>
+          </div>
+        </div>
+
+        <!-- Row 7 — Aging spotlight (full width) -->
         <div class="cockpit-card">
           <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#DC2626,#F59E0B);">⏰</span><span class="cockpit-card-title">Aging spotlight · oldest open deals</span><span class="cockpit-card-sub">Click any row to open the deal</span></div>
           <div class="cockpit-card-body" id="cockpit-aging"></div>
         </div>
 
-        <!-- Row 6 — What's moving (full width) -->
+        <!-- Row 8 — What's moving (full width) -->
         <div class="cockpit-card">
           <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#7C3AED,#EC4899);">⚡</span><span class="cockpit-card-title">What's moving · last 10 stage transitions</span></div>
           <div class="cockpit-card-body" id="cockpit-moving"></div>
@@ -7075,6 +7110,41 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
       </div>
 
       <style>
+        /* ============ v24.25.2 — Detailed Analytics Expander ============ */
+        .dash-expander{
+          margin-top:24px; background:var(--surface,#FFF);
+          border:1px solid var(--border,#E5E7EB); border-radius:14px;
+          box-shadow:0 1px 2px rgba(15,23,42,0.04);
+          overflow:hidden;
+        }
+        .dash-expander-summary{
+          display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+          padding:14px 18px; cursor:pointer; user-select:none;
+          font-size:14px; font-weight:600; color:var(--ink,#0F172A);
+          list-style:none;
+          transition:background 140ms;
+        }
+        .dash-expander-summary::-webkit-details-marker{display:none;}
+        .dash-expander-summary:hover{background:var(--surface-2,#F8FAFC);}
+        .dash-expander-icon{font-size:18px; flex-shrink:0;}
+        .dash-expander-title{flex-shrink:0;}
+        .dash-expander-meta{
+          flex:1; font-size:12px; font-weight:500; color:var(--ink-muted,#64748B);
+          font-style:italic; min-width:0;
+          overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+        }
+        .dash-expander-caret{
+          flex-shrink:0; font-size:14px; color:var(--ink-muted,#64748B);
+          transition:transform 200ms ease;
+        }
+        details[open] .dash-expander-caret{transform:rotate(180deg);}
+        .dash-expander-body{
+          padding:18px; border-top:1px solid var(--border-soft,#E2E8F0);
+        }
+        /* Compact-mode: when v18 dashboard is inside the expander, drop top hero spacing */
+        .dashboard-v18-compact{margin-top:0 !important; padding-top:0 !important;}
+        .dashboard-v18-compact .dash-section-head:first-of-type{margin-top:0 !important;}
+
         /* ============ v24.25.1 — Brand Revenue Cockpit ============ */
         .cockpit-wrap{margin-bottom:24px;}
         .cockpit-filters{
@@ -7374,12 +7444,290 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         html[data-theme="dark"] .cockpit-card{background:rgba(20,25,55,0.92);}
         html[data-theme="dark"] .cockpit-stage{background:rgba(20,25,55,0.92);}
         html[data-theme="dark"] .cockpit-filters{background:linear-gradient(135deg, rgba(99,102,241,0.10) 0%, rgba(124,58,237,0.07) 100%), var(--surface,#141937);}
+
+        /* ============ v24.25.2 — Owner-grade additions ============ */
+        /* Quarter close countdown (in filter bar) */
+        .cockpit-countdown{
+          display:inline-flex; flex-direction:column; align-items:flex-end;
+          padding:6px 14px;
+          background:linear-gradient(135deg, rgba(220,38,38,0.10) 0%, rgba(217,119,6,0.10) 100%);
+          border:1px solid rgba(220,38,38,0.20);
+          border-radius:10px;
+          line-height:1.1;
+        }
+        .cockpit-countdown-num{
+          font-family:var(--serif,Georgia,serif);
+          font-size:20px; font-weight:700; letter-spacing:-0.02em;
+          background:linear-gradient(135deg,#DC2626,#D97706);
+          -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+          font-variant-numeric:tabular-nums;
+        }
+        .cockpit-countdown-lbl{
+          font-size:10px; letter-spacing:0.06em; text-transform:uppercase;
+          font-weight:700; color:#B45309;
+        }
+
+        /* Top Wins Ribbon */
+        .cockpit-wins-ribbon{
+          display:flex; align-items:center; gap:14px;
+          padding:12px 18px; margin-bottom:18px;
+          background:linear-gradient(90deg, rgba(217,119,6,0.10) 0%, rgba(245,158,11,0.06) 50%, rgba(217,119,6,0.10) 100%);
+          border:1px solid rgba(217,119,6,0.25);
+          border-radius:12px;
+          overflow:hidden;
+        }
+        .cockpit-wins-badge{
+          display:inline-flex; align-items:center; gap:5px;
+          padding:5px 11px;
+          background:linear-gradient(135deg,#D97706,#F59E0B);
+          color:#fff; font-size:11px; font-weight:800; letter-spacing:0.06em;
+          border-radius:999px;
+          box-shadow:0 2px 6px rgba(217,119,6,0.30);
+          flex-shrink:0;
+          animation:wins-pulse 2.4s ease-in-out infinite;
+        }
+        @keyframes wins-pulse{
+          0%,100%{box-shadow:0 2px 6px rgba(217,119,6,0.30), 0 0 0 0 rgba(217,119,6,0.40);}
+          50%{box-shadow:0 2px 6px rgba(217,119,6,0.30), 0 0 0 8px rgba(217,119,6,0);}
+        }
+        .cockpit-wins-track{
+          flex:1; min-width:0; overflow:hidden;
+          font-size:13px; font-weight:500; color:var(--ink,#0F172A);
+          display:flex; gap:24px; flex-wrap:nowrap;
+          white-space:nowrap;
+        }
+        .cockpit-wins-item{
+          display:inline-flex; align-items:center; gap:6px; flex-shrink:0;
+        }
+        .cockpit-wins-item-rel{font-size:11px; color:var(--ink-muted,#64748B); font-style:italic;}
+        .cockpit-wins-item-proj{color:var(--ink,#0F172A); font-weight:600;}
+        .cockpit-wins-item-cust{color:var(--ink-muted,#64748B);}
+        .cockpit-wins-item-val{
+          background:linear-gradient(135deg,#059669,#10B981);
+          -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+          font-weight:700; font-variant-numeric:tabular-nums;
+        }
+        .cockpit-wins-empty{
+          color:var(--ink-muted,#64748B); font-size:13px; font-style:italic;
+        }
+        .cockpit-wins-sep{color:var(--ink-subtle,#CBD5E1); flex-shrink:0;}
+
+        /* KPI strip — extend to 6 columns */
+        .cockpit-kpi-strip{grid-template-columns:repeat(6, 1fr) !important;}
+        @media (max-width:1180px){.cockpit-kpi-strip{grid-template-columns:repeat(3, 1fr) !important;}}
+        @media (max-width:780px) {.cockpit-kpi-strip{grid-template-columns:repeat(2, 1fr) !important;}}
+        @media (max-width:480px) {.cockpit-kpi-strip{grid-template-columns:1fr !important;}}
+
+        /* Risk tile — color shifts with severity */
+        .cockpit-kpi[data-tone="risk"]{background:linear-gradient(135deg,#475569 0%,#64748B 100%);}
+        .cockpit-kpi[data-tone="risk"][data-severity="amber"]{background:linear-gradient(135deg,#D97706 0%,#F59E0B 100%);}
+        .cockpit-kpi[data-tone="risk"][data-severity="red"]{background:linear-gradient(135deg,#DC2626 0%,#F87171 100%);}
+        .cockpit-kpi[data-tone="risk"][data-severity="green"]{background:linear-gradient(135deg,#059669 0%,#10B981 100%);}
+
+        /* Open Pipeline tile — Commit/Early split row */
+        .cockpit-kpi-split{
+          position:relative; margin-top:10px; padding-top:10px;
+          border-top:1px solid rgba(255,255,255,0.20);
+          display:flex; gap:10px; font-size:10.5px;
+        }
+        .cockpit-kpi-split-cell{flex:1; min-width:0;}
+        .cockpit-kpi-split-lbl{
+          opacity:0.85; letter-spacing:0.06em; text-transform:uppercase;
+          font-weight:700; margin-bottom:1px;
+        }
+        .cockpit-kpi-split-val{
+          font-size:13px; font-weight:700; font-variant-numeric:tabular-nums;
+          line-height:1.1;
+        }
+
+        /* Won tile — target progress bar */
+        .cockpit-kpi-target{
+          position:relative; margin-top:10px; padding-top:8px;
+          border-top:1px solid rgba(255,255,255,0.20);
+          font-size:11px;
+        }
+        .cockpit-kpi-target-lbl{
+          opacity:0.85; letter-spacing:0.06em; text-transform:uppercase;
+          font-weight:700; margin-bottom:4px;
+          display:flex; justify-content:space-between; align-items:center;
+        }
+        .cockpit-kpi-target-bar{
+          height:5px; background:rgba(255,255,255,0.20); border-radius:3px; overflow:hidden;
+        }
+        .cockpit-kpi-target-fill{
+          height:100%; background:rgba(255,255,255,0.85); border-radius:3px;
+          transition:width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Engagement strip (4 tiles) */
+        .cockpit-eng-strip{
+          display:grid; grid-template-columns:repeat(4, 1fr); gap:12px;
+          margin-bottom:24px;
+        }
+        @media (max-width:920px){.cockpit-eng-strip{grid-template-columns:repeat(2,1fr);}}
+        @media (max-width:480px){.cockpit-eng-strip{grid-template-columns:1fr;}}
+        .cockpit-eng{
+          position:relative;
+          display:flex; gap:14px; align-items:center;
+          padding:14px 16px;
+          background:var(--surface,#FFF);
+          border:1px solid var(--border,#E5E7EB);
+          border-radius:14px;
+          box-shadow:0 1px 2px rgba(15,23,42,0.04), 0 6px 16px rgba(15,23,42,0.04);
+          overflow:hidden;
+          transition:transform 200ms, box-shadow 200ms;
+        }
+        .cockpit-eng:hover{transform:translateY(-1px); box-shadow:0 4px 8px rgba(15,23,42,0.06), 0 14px 30px rgba(15,23,42,0.07);}
+        .cockpit-eng::before{
+          content:""; position:absolute; top:0; left:0; bottom:0; width:4px;
+          background:var(--eng-accent);
+        }
+        .cockpit-eng[data-tone="cust"]   {--eng-accent:linear-gradient(180deg,#4F46E5,#7C3AED); --eng-icon-bg:linear-gradient(135deg,rgba(79,70,229,0.12),rgba(124,58,237,0.12));}
+        .cockpit-eng[data-tone="repeat"] {--eng-accent:linear-gradient(180deg,#7C3AED,#A855F7); --eng-icon-bg:linear-gradient(135deg,rgba(124,58,237,0.12),rgba(168,85,247,0.12));}
+        .cockpit-eng[data-tone="partner"]{--eng-accent:linear-gradient(180deg,#0D9488,#0EA5E9); --eng-icon-bg:linear-gradient(135deg,rgba(13,148,136,0.12),rgba(14,165,233,0.12));}
+        .cockpit-eng[data-tone="consult"]{--eng-accent:linear-gradient(180deg,#D97706,#F59E0B); --eng-icon-bg:linear-gradient(135deg,rgba(217,119,6,0.12),rgba(245,158,11,0.12));}
+        .cockpit-eng-icon{
+          width:42px; height:42px; border-radius:12px;
+          display:inline-flex; align-items:center; justify-content:center;
+          font-size:20px; flex-shrink:0;
+          background:var(--eng-icon-bg);
+        }
+        .cockpit-eng-content{min-width:0; flex:1;}
+        .cockpit-eng-label{
+          font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
+          color:var(--ink-muted,#64748B); font-weight:700; margin-bottom:2px;
+        }
+        .cockpit-eng-value{
+          font-size:24px; font-weight:700; line-height:1.1;
+          font-family:var(--serif,Georgia,serif); letter-spacing:-0.02em;
+          font-variant-numeric:tabular-nums;
+          color:var(--ink,#0F172A);
+        }
+        .cockpit-eng[data-tone="cust"]    .cockpit-eng-value{background:linear-gradient(135deg,#4F46E5,#7C3AED); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
+        .cockpit-eng[data-tone="repeat"]  .cockpit-eng-value{background:linear-gradient(135deg,#7C3AED,#A855F7); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
+        .cockpit-eng[data-tone="partner"] .cockpit-eng-value{background:linear-gradient(135deg,#0D9488,#0EA5E9); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
+        .cockpit-eng[data-tone="consult"] .cockpit-eng-value{background:linear-gradient(135deg,#D97706,#F59E0B); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
+        .cockpit-eng-sub{
+          font-size:11px; color:var(--ink-muted,#64748B);
+          font-weight:500; margin-top:2px;
+        }
+
+        /* Top Repeat Customers panel */
+        .cockpit-repeat-row{
+          display:flex; align-items:center; gap:12px;
+          padding:10px 0;
+          border-bottom:1px solid var(--border-soft,#E2E8F0);
+          font-size:13px; cursor:pointer;
+          transition:background 120ms, padding-left 160ms;
+        }
+        .cockpit-repeat-row:last-child{border-bottom:none;}
+        .cockpit-repeat-row:hover{background:rgba(124,58,237,0.04); padding-left:6px;}
+        .cockpit-repeat-rank{
+          display:inline-flex; align-items:center; justify-content:center;
+          width:26px; height:26px; border-radius:8px;
+          color:#fff; font-size:11px; font-weight:800;
+          flex-shrink:0;
+          background:linear-gradient(135deg,var(--ink-muted,#64748B),var(--slate,#334155));
+        }
+        .cockpit-repeat-row:nth-child(1) .cockpit-repeat-rank{background:linear-gradient(135deg,#D97706,#F59E0B); box-shadow:0 2px 6px rgba(217,119,6,0.30);}
+        .cockpit-repeat-row:nth-child(2) .cockpit-repeat-rank{background:linear-gradient(135deg,#64748B,#94A3B8);}
+        .cockpit-repeat-row:nth-child(3) .cockpit-repeat-rank{background:linear-gradient(135deg,#92400E,#B45309);}
+        .cockpit-repeat-info{flex:1; min-width:0;}
+        .cockpit-repeat-name{
+          font-weight:600; color:var(--ink,#0F172A);
+          overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+        }
+        .cockpit-repeat-meta{
+          font-size:11px; color:var(--ink-muted,#64748B); font-weight:500; margin-top:2px;
+        }
+        .cockpit-repeat-val{
+          font-variant-numeric:tabular-nums; font-weight:700;
+          color:var(--ink,#0F172A);
+          background:linear-gradient(135deg,#059669,#10B981);
+          -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+          flex-shrink:0;
+        }
+
+        /* Partner & Consultant Relationship Board */
+        .cockpit-rels{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+        @media (max-width:640px){.cockpit-rels{grid-template-columns:1fr;}}
+        .cockpit-rel-col{}
+        .cockpit-rel-col-title{
+          font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase;
+          font-weight:700; margin-bottom:8px; padding-bottom:6px;
+          border-bottom:1px solid var(--border-soft,#E2E8F0);
+          display:flex; gap:6px; align-items:center;
+        }
+        .cockpit-rel-col-title-dot{
+          display:inline-block; width:8px; height:8px; border-radius:50%;
+        }
+        .cockpit-rel-col[data-state="active"] .cockpit-rel-col-title{color:#047857;}
+        .cockpit-rel-col[data-state="active"] .cockpit-rel-col-title-dot{background:linear-gradient(135deg,#059669,#10B981);}
+        .cockpit-rel-col[data-state="dormant"] .cockpit-rel-col-title{color:#B45309;}
+        .cockpit-rel-col[data-state="dormant"] .cockpit-rel-col-title-dot{background:linear-gradient(135deg,#D97706,#F59E0B);}
+        .cockpit-rel-section{margin-bottom:14px;}
+        .cockpit-rel-section:last-child{margin-bottom:0;}
+        .cockpit-rel-section-head{
+          font-size:10.5px; letter-spacing:0.04em;
+          color:var(--ink-muted,#64748B); font-weight:600;
+          margin-bottom:5px;
+        }
+        .cockpit-rel-list{margin:0; padding:0; list-style:none; font-size:12.5px;}
+        .cockpit-rel-list li{
+          display:flex; justify-content:space-between; gap:8px;
+          padding:5px 0; border-bottom:1px dashed var(--border-soft,#E2E8F0);
+        }
+        .cockpit-rel-list li:last-child{border-bottom:none;}
+        .cockpit-rel-list .name{
+          color:var(--ink,#0F172A); font-weight:500;
+          overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;
+        }
+        .cockpit-rel-list .val{
+          color:var(--ink-muted,#64748B);
+          font-variant-numeric:tabular-nums; font-weight:600;
+          flex-shrink:0;
+        }
+        .cockpit-rel-empty{font-size:11.5px; font-style:italic; color:var(--ink-subtle,#94A3B8); padding:4px 0;}
+
+        /* Region table — engagement column */
+        .cockpit-region-table .eng-bar{
+          display:inline-flex; align-items:center; gap:6px;
+        }
+        .cockpit-region-table .eng-bar-track{
+          width:60px; height:4px; background:var(--surface-2,#F1F5F9); border-radius:2px; overflow:hidden;
+        }
+        .cockpit-region-table .eng-bar-fill{
+          height:100%; border-radius:2px;
+          background:linear-gradient(90deg,#0D9488,#0EA5E9);
+        }
+        .cockpit-region-table .eng-score{
+          font-variant-numeric:tabular-nums; font-weight:700;
+          color:#0F766E;
+        }
       </style>
 
+      <!-- v24.25.2 — DETAILED ANALYTICS EXPANDER
+           The cockpit above is the primary view. v18 charts (Model Distribution,
+           User Leaderboard, Top Partners, City Distribution, Activity Timeline,
+           Model Demand, Top Models Monthly) are kept here as drill-down detail.
+           Default collapsed. The old hero + KPI strip are hidden because cockpit
+           replaced them. The v18 filter bar is moved INTO the expander since it
+           only filters the v18 charts. -->
+      <details id="dash-detail-expander" class="dash-expander">
+        <summary class="dash-expander-summary">
+          <span class="dash-expander-icon">📊</span>
+          <span class="dash-expander-title">Detailed analytics</span>
+          <span class="dash-expander-meta">Models · Users · Partners · Cities · Activity · Model demand</span>
+          <span class="dash-expander-caret">▾</span>
+        </summary>
+        <div class="dash-expander-body">
+
       <!-- v18 Premium Dashboard: hero + KPI strip + filter + 7 charts -->
-      <div id="super-charts" class="dashboard-v18" style="display:none;">
+      <!-- v24.25.2 — Hero + KPI strip hidden (duplicates cockpit). Filter bar
+           moved inside expander. Only chart cards visible when expanded. -->
+      <div id="super-charts" class="dashboard-v18 dashboard-v18-compact" style="display:none;">
         <!-- Hero header with live pulse and gradient mesh -->
-        <div class="dash-hero">
+        <div class="dash-hero" style="display:none;" aria-hidden="true">
           <div class="dash-hero-eyebrow"><span class="dash-hero-pulse"></span> Live Analytics · <span id="dash-hero-tz">Real-time sync</span></div>
           <div class="dash-hero-title">Sales Intelligence Dashboard</div>
           <div class="dash-hero-sub">End-to-end visibility into BrightSign selections — from first view through confirmed deal. Filter, drill down, export.</div>
@@ -7390,9 +7738,9 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           </div>
         </div>
 
-        <!-- v20: KPI STRIP — 5 animated gradient tiles (Projects, Consultants, Partners, Cities, End-users) -->
-        <div class="dash-section-head"><div class="dash-section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div><div class="dash-section-title">Key Performance Indicators</div><div class="dash-section-line"></div></div>
-        <div class="kpi-strip">
+        <!-- v20: KPI STRIP — hidden, cockpit replaces this -->
+        <div class="dash-section-head" style="display:none;" aria-hidden="true"><div class="dash-section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div><div class="dash-section-title">Key Performance Indicators</div><div class="dash-section-line"></div></div>
+        <div class="kpi-strip" style="display:none;" aria-hidden="true">
           <div class="kpi-tile">
             <div class="kpi-label"><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>Total Projects</div>
             <div class="kpi-value" id="kpi-projects">0</div>
@@ -7541,6 +7889,8 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           </div>
         </div>
       </div>
+        </div><!-- /.dash-expander-body -->
+      </details><!-- /#dash-detail-expander -->
 
   </div>
 </div>
@@ -7815,11 +8165,14 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
     <div class="page-header">
       <div class="page-eyebrow">Review</div>
       <div class="page-title" id="review-page-title">Channel review</div>
-      <div class="page-subtitle" id="review-page-subtitle">OEM vs Cavitak-generated business, ecosystem reach, funnel, and growth analysis — filtered by period.</div>
+      <div class="page-subtitle" id="review-page-subtitle">Filter by source, region, FY, sales rep or outcome — drill into region or sales-rep performance, then work the deals through Pipeline Operations below.</div>
     </div>
 
-    <!-- v24.9: Relationship counts — active partners / consultants / end-users -->
-    <div id="review-relationship-counts" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:18px;">
+    <!-- v24.25.2 — Hidden. The 3 relationship-count cards (Active Partners /
+         Consultants / End-Users) are now in the cockpit Engagement row plus
+         shown per-region in the Region card. Keep the DOM elements so legacy
+         updateRelationshipCounts_ JS keeps working without errors. -->
+    <div id="review-relationship-counts" style="display:none; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:18px;">
       <div class="kpi-card" style="background:var(--surface-2,#F5F3FF); border:1px solid var(--border,#E5E7EB); border-radius:12px; padding:16px;">
         <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Active Partners / SI</div>
         <div id="kpi-active-partners" style="font-size:28px; font-weight:700; color:var(--indigo,#4F46E5); font-family:var(--serif,Georgia,serif); margin-top:4px;">—</div>
@@ -7836,7 +8189,8 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         <div style="font-size:11px; color:var(--ink-subtle,#94A3B8);">in open funnel</div>
       </div>
     </div>
-    <div id="review-period-bar" class="review-period-bar">
+    <!-- v24.25.2 — Period bar hidden. Filter row dropdowns + cockpit time-window cover this. Kept in DOM for renderReview() backend fetch logic. -->
+    <div id="review-period-bar" class="review-period-bar" style="display:none;">
       <div class="review-period-group">
         <label>Period</label>
         <select id="review-period" onchange="renderReview()"></select>
@@ -8219,10 +8573,11 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
     <div id="bs-kpi-wrap" style="margin:18px 0; padding:18px; background:var(--surface,#FFF); border:1px solid var(--border,#E5E7EB); border-radius:14px; box-shadow:var(--shadow-sm,0 1px 2px rgba(0,0,0,0.04));">
       <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px;">
         <div>
-          <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600; margin-bottom:4px;">Bi-monthly review</div>
-          <div style="font-size:18px; font-weight:600; color:var(--ink,#0F172A); font-family:var(--serif,Georgia,serif); line-height:1.2;">Pipeline & velocity snapshot</div>
+          <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600; margin-bottom:4px;">Pipeline operations</div>
+          <div style="font-size:18px; font-weight:600; color:var(--ink,#0F172A); font-family:var(--serif,Georgia,serif); line-height:1.2;">Plan of Action · Drilldown · Velocity · Trend</div>
+          <div style="font-size:12px; color:var(--ink-muted,#64748B); margin-top:2px;">Working tools — KPI tiles moved to Dashboard cockpit. Filter the underlying data using the dropdowns above.</div>
         </div>
-        <div style="margin-left:auto; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <div style="margin-left:auto; display:none; gap:8px; align-items:center; flex-wrap:wrap;">
           <select id="bs-kpi-period" onchange="bsKpiOnPeriodChange()" style="padding:8px 12px; border:1px solid var(--border-strong,#CBD5E1); border-radius:8px; font-size:13px; background:var(--surface,#FFF); color:var(--ink,#0F172A);">
             <option value="currentFY">Current FY (default)</option>
             <option value="thisBimonth">This bi-month</option>
@@ -8235,8 +8590,9 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           <span id="bs-kpi-period-label" style="font-size:11px; color:var(--ink-subtle,#94A3B8); padding:6px 10px; min-width:80px;">—</span>
         </div>
       </div>
-      <div id="bs-kpi-strip" style="display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; margin-bottom:14px;"></div>
-      <div id="bs-kpi-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <!-- v24.25.2 — KPI strip + grid hidden. The 5 tiles + 4 cards (stage/owner/aging/models) duplicated cockpit. Pipeline Operations now focuses on Plan of Action + drilldown table + velocity + trend below. -->
+      <div id="bs-kpi-strip" style="display:none; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; margin-bottom:14px;"></div>
+      <div id="bs-kpi-grid" style="display:none; grid-template-columns:1fr 1fr; gap:12px;">
         <div id="bs-kpi-card-stage"></div>
         <div id="bs-kpi-card-owner"></div>
         <div id="bs-kpi-card-aging"></div>
@@ -8419,7 +8775,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.25.1';  // v24.25.1 — Visual polish on Review filter row + Region card + Sales card (gradients, glass surfaces, color-tinted KPI tiles, animated stage bars). + Full Dashboard cockpit build: 5 vibrant KPI tiles, stage-wise breakdown with funnel-depth color progression, funnel + trend chart pair, region performance table, source split, aging spotlight, what's-moving stream. Time window + Region filter persist. Pairs with backend v25.13.0 (no backend changes needed).
+const FRONTEND_VERSION = '24.25.2';  // v24.25.2 — Duplication cleanup (Dashboard collapses v18 charts into "Detailed analytics" expander, Review tab Bi-monthly KPI strip hidden + section renamed to "Pipeline Operations", Custom BOQ sections gated to Advanced path). Owner-grade cockpit: Top Wins ribbon, Quarter close countdown, Commit/Early Pipeline split, Risk tile (6th KPI), Run-rate vs target. Engagement layer: Active customers + Repeat ratio + Partner engagement + Consultant engagement tiles, Top Repeat Customers panel, Partner/Consultant Relationship board (Active vs Dormant), Region table upgraded with active-customers + engagement score. BRAND_CONFIG constant added for future tvONE/Green Hippo merge. Pairs with backend v25.13.0.
+// v24.25.1 — Visual polish on Review filter row + Region card + Sales card (gradients, glass surfaces, color-tinted KPI tiles, animated stage bars). + Full Dashboard cockpit build: 5 vibrant KPI tiles, stage-wise breakdown with funnel-depth color progression, funnel + trend chart pair, region performance table, source split, aging spotlight, what's-moving stream. Time window + Region filter persist. Pairs with backend v25.13.0 (no backend changes needed).
 // v24.25.0 — Pipeline cutoff (PIPELINE_DATA_START='2026-04-01') applied to all aggregations + trend chart. YoY badges stripped from Cards 1/2/4. Card 6 replaced with cutoff explainer. UI uniformity tokens. Mobile stepper REMOVED — single responsive form. SSD + WD105 ± stepper. BOM horizontal scroll fix. Excel signature block at BOM bottom. Notification fix uses entry.project. Items 5+6+7: Review tab chip-filter panel replaced with inline dropdown row (search/Source/FY/Region/State/Sales/Presales/Outcome), plus Region card + Sales-person card with KPI tiles + top reps/customers + deal list. Pairs with backend v25.13.0.
 // v24.23.0 — features #19 Customer 360 modal + #18 server-side handoff notifications.
 // v24.21.1 — robust salesPerson auto-default for Sales/BU Head users: state.form mirror, save-time fallback, initial-load trigger
@@ -23944,7 +24301,447 @@ if(document.readyState==='loading'){
     }).join('');
   }
 
-  // Public render entry point
+  /* ============================================================
+     v24.25.2 — Owner-grade additions: countdown, top wins, commit split,
+     risk tile, run-rate target, engagement tiles, repeat customers,
+     partner/consultant relationship board, region with engagement.
+     BRAND_CONFIG is reserved for the future multi-brand merge.
+     ============================================================ */
+  const BRAND_CONFIG = {
+    active: 'BrightSign',
+    brands: [
+      {id:'BrightSign', label:'BrightSign', accent:'linear-gradient(135deg,#4F46E5,#7C3AED)'}
+      // tvONE, Green Hippo etc plug in here when the multi-brand cockpit ships
+    ]
+  };
+  const LS_TARGET_KEY = 'bs-cockpit-target-quarterly';  // optional ₹ target per quarter
+
+  // Quarter close countdown — accurate even if user is viewing a different time window
+  function _renderCountdown(range, windowKey){
+    const numEl = document.getElementById('cockpit-countdown-num');
+    const lblEl = document.getElementById('cockpit-countdown-lbl');
+    const wrap  = document.getElementById('cockpit-countdown');
+    if(!numEl || !lblEl || !wrap) return;
+    // Always show "days left in current quarter" — most relevant to owners regardless of selected window
+    const now = new Date();
+    const qStart = Math.floor(now.getMonth()/3) * 3;
+    const qEnd = new Date(now.getFullYear(), qStart + 3, 0, 23, 59, 59, 999);
+    const days = Math.max(0, Math.ceil((qEnd.getTime() - now.getTime())/(1000*60*60*24)));
+    numEl.textContent = days;
+    lblEl.textContent = 'days to Q' + (Math.floor(qStart/3)+1) + ' close';
+  }
+
+  // Top Wins ribbon — last 3 won deals, ever
+  function _renderTopWins(rawEntries){
+    const track = document.getElementById('cockpit-wins-track');
+    if(!track) return;
+    const wins = rawEntries
+      .filter(function(e){
+        const out = String(e && e.outcome || '').toLowerCase();
+        if(out !== 'won') return false;
+        if(typeof window._entryAfterPipelineCutoff === 'function' && !window._entryAfterPipelineCutoff(e)) return false;
+        return true;
+      })
+      .map(function(e){
+        return {entry:e, ts:_entryClosedMs(e) || _entryCreatedMs(e) || 0};
+      })
+      .sort(function(a, b){ return b.ts - a.ts; })
+      .slice(0, 3);
+    if(wins.length === 0){
+      track.innerHTML = '<div class="cockpit-wins-empty">No wins recorded since pipeline cutoff (Apr 1, 2026). Your next win shows here.</div>';
+      return;
+    }
+    function fmtRel(ts){
+      const ms = Date.now() - ts;
+      const h = Math.floor(ms/(1000*60*60));
+      const d = Math.floor(ms/(1000*60*60*24));
+      if(h < 1) return 'just now';
+      if(h < 24) return h + 'h ago';
+      if(d === 1) return 'yesterday';
+      if(d < 7) return d + 'd ago';
+      if(d < 30) return Math.floor(d/7) + 'w ago';
+      return Math.floor(d/30) + 'mo ago';
+    }
+    track.innerHTML = wins.map(function(w, i){
+      const e = w.entry;
+      const proj = String(e.project || 'Untitled');
+      const cust = String(e.enduser || '').trim();
+      const v = _readVal(e);
+      const owner = _resolveOwner(e.salesPerson || '');
+      const sep = i > 0 ? '<span class="cockpit-wins-sep">·</span>' : '';
+      return sep +
+        '<span class="cockpit-wins-item">' +
+          '<span class="cockpit-wins-item-rel">' + fmtRel(w.ts) + ':</span>' +
+          '<span class="cockpit-wins-item-proj">' + _esc(proj) + '</span>' +
+          (cust ? '<span class="cockpit-wins-item-cust">— ' + _esc(cust) + '</span>' : '') +
+          '<span class="cockpit-wins-item-val">' + _fmtINR(v) + '</span>' +
+          (owner ? '<span class="cockpit-wins-item-cust">by ' + _esc(owner) + '</span>' : '') +
+        '</span>';
+    }).join('');
+  }
+
+  // Risk tile — count of deals stuck > 30 days in same stage
+  function _renderRiskTile(allEntries){
+    const tile = document.getElementById('ck-risk-tile');
+    const cnt  = document.getElementById('ck-risk-count');
+    const sub  = document.getElementById('ck-risk-sub');
+    if(!tile || !cnt) return;
+    const now = Date.now();
+    let stuck = 0;
+    allEntries.forEach(function(e){
+      if(String(e.outcome || 'open').toLowerCase() !== 'open') return;
+      const stg = String(e.stage || '');
+      if(!OPEN_STAGES_SET[stg]) return;
+      // Use last stage transition timestamp if available, else creation
+      const stageTs = (e.lastStageTs || e.stageTs || _entryCreatedMs(e));
+      if(stageTs == null) return;
+      const days = Math.floor((now - stageTs)/(1000*60*60*24));
+      if(days > 30) stuck++;
+    });
+    cnt.textContent = stuck;
+    if(stuck === 0){
+      tile.setAttribute('data-severity', 'green');
+      if(sub) sub.textContent = 'no leakage 👍';
+    } else if(stuck <= 2){
+      tile.setAttribute('data-severity', 'amber');
+      if(sub) sub.textContent = stuck + ' to chase';
+    } else {
+      tile.setAttribute('data-severity', 'red');
+      if(sub) sub.textContent = 'leakage signal';
+    }
+  }
+
+  // Engagement strip — 4 tiles
+  function _renderEngagement(allEntries, range){
+    const set = function(id, val){ const el = document.getElementById(id); if(el) el.textContent = val; };
+    // Active customers — distinct enduser with open deal OR deal in window
+    const allCustomers = new Map(); // norm key -> {first ts, count, total ₹}
+    const inWindowCustomers = new Set();
+    const newCustomers = new Set();
+    const returningCustomers = new Set();
+    const partnersInWindow = new Set();
+    const partnersAllTime = new Map();   // norm key -> last activity ts
+    const consultantsInWindow = new Set();
+    const consultantsAllTime = new Map();
+    const customerDealCount = new Map();
+
+    allEntries.forEach(function(e){
+      const cust = String(e.enduser || '').trim();
+      const ts = _entryCreatedMs(e);
+      if(cust){
+        const k = cust.toLowerCase();
+        const v = _readVal(e);
+        if(!allCustomers.has(k)){
+          allCustomers.set(k, {firstTs:ts, count:0, total:0, displayName:cust});
+        }
+        const rec = allCustomers.get(k);
+        rec.count++;
+        rec.total += v;
+        if(ts != null && ts < (rec.firstTs || Infinity)) rec.firstTs = ts;
+        customerDealCount.set(k, (customerDealCount.get(k) || 0) + 1);
+        if(ts != null && ts >= range.fromMs && ts <= range.toMs){
+          inWindowCustomers.add(k);
+        }
+      }
+      const partner = String(e.partner || '').trim();
+      if(partner){
+        const k = partner.toLowerCase();
+        partnersAllTime.set(k, Math.max(partnersAllTime.get(k) || 0, ts || 0));
+        if(ts != null && ts >= range.fromMs && ts <= range.toMs) partnersInWindow.add(k);
+      }
+      const consult = String(e.consultant || '').trim();
+      if(consult){
+        const k = consult.toLowerCase();
+        consultantsAllTime.set(k, Math.max(consultantsAllTime.get(k) || 0, ts || 0));
+        if(ts != null && ts >= range.fromMs && ts <= range.toMs) consultantsInWindow.add(k);
+      }
+    });
+    // Categorize customers in window into new vs returning
+    inWindowCustomers.forEach(function(k){
+      const rec = allCustomers.get(k);
+      if(!rec) return;
+      // New = first deal of theirs falls within window. Returning = had earlier deals before window.
+      if(rec.firstTs != null && rec.firstTs >= range.fromMs && rec.firstTs <= range.toMs){
+        newCustomers.add(k);
+      } else {
+        returningCustomers.add(k);
+      }
+    });
+    set('ck-eng-cust', String(inWindowCustomers.size));
+    set('ck-eng-cust-sub', newCustomers.size + ' new · ' + returningCustomers.size + ' returning');
+
+    // Repeat ratio — % of all customers ever with ≥2 deals
+    let repeatCount = 0;
+    customerDealCount.forEach(function(c){ if(c >= 2) repeatCount++; });
+    const totalCust = customerDealCount.size;
+    const repeatPct = totalCust > 0 ? Math.round((repeatCount/totalCust)*100) : 0;
+    set('ck-eng-repeat', repeatPct + '%');
+    set('ck-eng-repeat-sub', repeatCount + ' of ' + totalCust + ' customers · ≥2 deals lifetime');
+
+    // Active partners + dormant
+    const dormantCutoffMs = Date.now() - (60 * 24 * 60 * 60 * 1000);
+    let dormantPartners = 0;
+    partnersAllTime.forEach(function(lastTs, k){
+      if(lastTs && lastTs < dormantCutoffMs) dormantPartners++;
+    });
+    set('ck-eng-partner', String(partnersInWindow.size));
+    set('ck-eng-partner-sub', dormantPartners + ' dormant 60d+');
+
+    // Active consultants + attached deals count in window
+    let attachedDeals = 0;
+    allEntries.forEach(function(e){
+      const ts = _entryCreatedMs(e);
+      if(ts != null && ts >= range.fromMs && ts <= range.toMs && String(e.consultant || '').trim()) attachedDeals++;
+    });
+    set('ck-eng-consult', String(consultantsInWindow.size));
+    set('ck-eng-consult-sub', attachedDeals + ' attached deals');
+
+    // Stash for Top Repeat Customers + Relationships board
+    window._cockpitEngContext = {
+      allCustomers: allCustomers,
+      partnersAllTime: partnersAllTime,
+      consultantsAllTime: consultantsAllTime,
+      partnersInWindow: partnersInWindow,
+      consultantsInWindow: consultantsInWindow,
+      dormantCutoffMs: dormantCutoffMs
+    };
+  }
+
+  // Top Repeat Customers panel — top 5 by lifetime ₹, ≥2 deals
+  function _renderRepeatCustomers(){
+    const host = document.getElementById('cockpit-repeat');
+    if(!host) return;
+    const ctx = window._cockpitEngContext;
+    if(!ctx){ host.innerHTML = '<div class="cockpit-empty">No customer data yet</div>'; return; }
+    const arr = [];
+    ctx.allCustomers.forEach(function(rec, k){
+      if(rec.count >= 2){
+        arr.push({key:k, name:rec.displayName, count:rec.count, total:rec.total, firstTs:rec.firstTs});
+      }
+    });
+    arr.sort(function(a, b){ return b.total - a.total; });
+    if(arr.length === 0){
+      host.innerHTML = '<div class="cockpit-empty">No repeat customers yet — every customer has ≤1 deal</div>';
+      return;
+    }
+    const top5 = arr.slice(0, 5);
+    function fmtRel(ts){
+      if(!ts) return '—';
+      const d = Math.floor((Date.now() - ts)/(1000*60*60*24));
+      if(d < 30) return d + 'd';
+      if(d < 365) return Math.floor(d/30) + 'mo';
+      return Math.floor(d/365) + 'y';
+    }
+    host.innerHTML = top5.map(function(it){
+      return '<div class="cockpit-repeat-row" onclick="(typeof window.openCustomer360===\'function\')&&window.openCustomer360(\'' + String(it.name).replace(/'/g, "\\'") + '\')">' +
+               '<span class="cockpit-repeat-rank">' + it.count + '×</span>' +
+               '<div class="cockpit-repeat-info">' +
+                 '<div class="cockpit-repeat-name">' + _esc(it.name) + '</div>' +
+                 '<div class="cockpit-repeat-meta">' + it.count + ' deals · first seen ' + fmtRel(it.firstTs) + ' ago</div>' +
+               '</div>' +
+               '<div class="cockpit-repeat-val">' + _fmtINR(it.total) + '</div>' +
+             '</div>';
+    }).join('');
+  }
+
+  // Partner & Consultant Relationship Board — Active vs Dormant in 2 columns
+  function _renderRelationships(){
+    const host = document.getElementById('cockpit-relationships');
+    if(!host) return;
+    const ctx = window._cockpitEngContext;
+    if(!ctx){ host.innerHTML = '<div class="cockpit-empty">No relationship data yet</div>'; return; }
+    const dormCutoff = ctx.dormantCutoffMs;
+    function partition(map){
+      const active = [], dormant = [];
+      map.forEach(function(lastTs, k){
+        const rec = {key:k, name:k, lastTs:lastTs};
+        // Try to recover original case — hunt the first matching enduser/partner/consultant from log
+        if(lastTs && lastTs >= dormCutoff) active.push(rec);
+        else dormant.push(rec);
+      });
+      active.sort(function(a, b){ return (b.lastTs || 0) - (a.lastTs || 0); });
+      dormant.sort(function(a, b){ return (a.lastTs || 0) - (b.lastTs || 0); });
+      return {active:active, dormant:dormant};
+    }
+    function recoverNames(items){
+      // Use the central log to find a sample of original case
+      const log = Array.isArray(window._centralLog) ? window._centralLog : [];
+      items.forEach(function(it){
+        for(let i = 0; i < log.length; i++){
+          const p = String(log[i].partner || '').trim();
+          const c = String(log[i].consultant || '').trim();
+          if(p.toLowerCase() === it.key){ it.name = p; return; }
+          if(c.toLowerCase() === it.key){ it.name = c; return; }
+        }
+      });
+    }
+    const partners = partition(ctx.partnersAllTime);
+    const consultants = partition(ctx.consultantsAllTime);
+    recoverNames(partners.active); recoverNames(partners.dormant);
+    recoverNames(consultants.active); recoverNames(consultants.dormant);
+    function fmtRel(ts){
+      if(!ts) return '—';
+      const d = Math.floor((Date.now() - ts)/(1000*60*60*24));
+      if(d < 30) return d + 'd';
+      if(d < 365) return Math.floor(d/30) + 'mo';
+      return Math.floor(d/365) + 'y';
+    }
+    function listHtml(items, isDormant){
+      if(items.length === 0){
+        return '<div class="cockpit-rel-empty">' + (isDormant ? 'No dormant relationships 🎉' : 'None active in last 60 days') + '</div>';
+      }
+      return '<ul class="cockpit-rel-list">' + items.slice(0, 5).map(function(it){
+        return '<li>' +
+                 '<span class="name">' + _esc(it.name) + '</span>' +
+                 '<span class="val">' + (isDormant ? 'last ' + fmtRel(it.lastTs) + ' ago' : fmtRel(it.lastTs) + ' ago') + '</span>' +
+               '</li>';
+      }).join('') + '</ul>';
+    }
+    host.innerHTML =
+      '<div class="cockpit-rels">' +
+        '<div class="cockpit-rel-col" data-state="active">' +
+          '<div class="cockpit-rel-col-title"><span class="cockpit-rel-col-title-dot"></span>Active · last 60 days</div>' +
+          '<div class="cockpit-rel-section">' +
+            '<div class="cockpit-rel-section-head">Partners (' + partners.active.length + ')</div>' +
+            listHtml(partners.active, false) +
+          '</div>' +
+          '<div class="cockpit-rel-section">' +
+            '<div class="cockpit-rel-section-head">Consultants (' + consultants.active.length + ')</div>' +
+            listHtml(consultants.active, false) +
+          '</div>' +
+        '</div>' +
+        '<div class="cockpit-rel-col" data-state="dormant">' +
+          '<div class="cockpit-rel-col-title"><span class="cockpit-rel-col-title-dot"></span>Dormant · 60d+</div>' +
+          '<div class="cockpit-rel-section">' +
+            '<div class="cockpit-rel-section-head">Partners (' + partners.dormant.length + ')</div>' +
+            listHtml(partners.dormant, true) +
+          '</div>' +
+          '<div class="cockpit-rel-section">' +
+            '<div class="cockpit-rel-section-head">Consultants (' + consultants.dormant.length + ')</div>' +
+            listHtml(consultants.dormant, true) +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  // Override _renderRegionTable with engagement column
+  function _renderRegionTableV2(rawEntries){
+    const host = document.getElementById('cockpit-region-table');
+    if(!host) return;
+    const REGIONS = ['West','North','South','East','International'];
+    const tbl = {};
+    REGIONS.forEach(function(r){ tbl[r] = {openC:0, openV:0, wonV:0, wonC:0, lostC:0, customers:new Set(), partners:new Set(), consultants:new Set()}; });
+    rawEntries.forEach(function(e){
+      const r = _stateToRegion(e.state);
+      if(!tbl[r]) return;
+      const v = _readVal(e);
+      const out = String(e.outcome || 'open').toLowerCase();
+      if(out === 'open'){ tbl[r].openC++; tbl[r].openV += v; }
+      if(out === 'won') { tbl[r].wonC++;  tbl[r].wonV += v; }
+      if(out === 'lost'){ tbl[r].lostC++; }
+      const cust = String(e.enduser || '').trim().toLowerCase(); if(cust) tbl[r].customers.add(cust);
+      const p = String(e.partner || '').trim().toLowerCase(); if(p) tbl[r].partners.add(p);
+      const c = String(e.consultant || '').trim().toLowerCase(); if(c) tbl[r].consultants.add(c);
+    });
+    // Compute max engagement score for bar normalization
+    const scores = REGIONS.map(function(r){ return tbl[r].customers.size + tbl[r].partners.size + tbl[r].consultants.size; });
+    const maxScore = Math.max.apply(null, scores.concat([1]));
+    const rows = REGIONS.map(function(r){
+      const d = tbl[r];
+      const wr = (d.wonC + d.lostC) > 0 ? Math.round((d.wonC/(d.wonC+d.lostC))*100) : 0;
+      const score = d.customers.size + d.partners.size + d.consultants.size;
+      const pct = maxScore > 0 ? (score/maxScore)*100 : 0;
+      return '<tr>' +
+               '<td><span class="cockpit-region-name"><span class="cockpit-region-dot" data-region="' + r + '"></span>' + r + '</span></td>' +
+               '<td class="num">' + d.openC + '</td>' +
+               '<td class="num">' + _fmtINR(d.openV) + '</td>' +
+               '<td class="num">' + _fmtINR(d.wonV) + '</td>' +
+               '<td class="num">' + (wr ? wr + '%' : '—') + '</td>' +
+               '<td class="num">' + d.customers.size + '</td>' +
+               '<td class="num">' +
+                 '<span class="eng-bar">' +
+                   '<span class="eng-bar-track"><span class="eng-bar-fill" style="width:' + pct.toFixed(1) + '%;"></span></span>' +
+                   '<span class="eng-score">' + score + '</span>' +
+                 '</span>' +
+               '</td>' +
+             '</tr>';
+    }).join('');
+    host.innerHTML =
+      '<table class="cockpit-region-table">' +
+        '<thead><tr><th>Region</th><th class="num">Open</th><th class="num">Open ₹</th><th class="num">Won ₹</th><th class="num">Win %</th><th class="num">Customers</th><th class="num">Engagement</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>';
+  }
+
+  // Extend _renderKPIs with Commit/Early split + Run-rate target
+  function _renderKPIsV2(allEntries, range){
+    let openCount = 0, openVal = 0;
+    let commitCount = 0, commitVal = 0;  // Negotiation + Order
+    let earlyCount = 0, earlyVal = 0;    // Lead + Opportunity + Proposal
+    let newCount = 0, newVal = 0;
+    let wonCount = 0, wonVal = 0, lostCount = 0;
+    allEntries.forEach(function(e){
+      const v = _readVal(e);
+      const out = String(e.outcome || 'open').toLowerCase();
+      const stg = String(e.stage || '');
+      const created = _entryCreatedMs(e);
+      const closed = _entryClosedMs(e);
+      if(out === 'open' && OPEN_STAGES_SET[stg]){
+        openCount++; openVal += v;
+        if(stg === 'Negotiation' || stg === 'Order'){ commitCount++; commitVal += v; }
+        else { earlyCount++; earlyVal += v; }
+      }
+      if(created != null && created >= range.fromMs && created <= range.toMs){
+        newCount++; newVal += v;
+      }
+      if(out === 'won' && closed != null && closed >= range.fromMs && closed <= range.toMs){
+        wonCount++; wonVal += v;
+      }
+      if(out === 'lost' && closed != null && closed >= range.fromMs && closed <= range.toMs){
+        lostCount++;
+      }
+    });
+    const wr = (wonCount + lostCount) > 0 ? Math.round((wonCount/(wonCount+lostCount))*100) : null;
+    const set = function(id, val){ const el = document.getElementById(id); if(el) el.textContent = val; };
+    const setHtml = function(id, html){ const el = document.getElementById(id); if(el) el.innerHTML = html; };
+    set('ck-open-val', _fmtINR(openVal));
+    set('ck-open-sub', openCount + ' deal' + (openCount===1?'':'s'));
+    setHtml('ck-open-split',
+      '<div class="cockpit-kpi-split-cell">' +
+        '<div class="cockpit-kpi-split-lbl">Commit</div>' +
+        '<div class="cockpit-kpi-split-val">' + _fmtINR(commitVal) + '</div>' +
+      '</div>' +
+      '<div class="cockpit-kpi-split-cell">' +
+        '<div class="cockpit-kpi-split-lbl">Early</div>' +
+        '<div class="cockpit-kpi-split-val">' + _fmtINR(earlyVal) + '</div>' +
+      '</div>'
+    );
+    set('ck-open-count', openCount);
+    set('ck-new-val', _fmtINR(newVal));
+    set('ck-new-sub', newCount + ' new in ' + range.label);
+    set('ck-winrate', wr != null ? wr + '%' : '—');
+    set('ck-winrate-sub', (wonCount + lostCount) + ' resolved');
+    set('ck-won-val', _fmtINR(wonVal));
+    set('ck-won-sub', wonCount + ' won in ' + range.label);
+
+    // Run-rate vs target — only if a target is set in localStorage
+    let target = 0;
+    try {
+      const raw = localStorage.getItem(LS_TARGET_KEY);
+      if(raw){ const n = parseFloat(raw); if(isFinite(n) && n > 0) target = n; }
+    } catch(_){}
+    if(target > 0){
+      const pct = Math.min(150, Math.round((wonVal/target)*100));
+      setHtml('ck-won-target',
+        '<div class="cockpit-kpi-target-lbl"><span>Target ' + _fmtINR(target) + '</span><span>' + pct + '%</span></div>' +
+        '<div class="cockpit-kpi-target-bar"><div class="cockpit-kpi-target-fill" style="width:' + Math.min(100, pct) + '%;"></div></div>'
+      );
+    } else {
+      setHtml('ck-won-target', '');
+    }
+  }
+
+  // Public render entry point — owner-grade orchestration
   window.renderCockpit = function(){
     if(!document.getElementById('cockpit')) return;  // section not in DOM
     _restoreFilterUI();
@@ -23954,17 +24751,34 @@ if(document.readyState==='loading'){
     if(lbl) lbl.textContent = range.label + (f.region ? ' · ' + f.region : '');
 
     const raw = Array.isArray(window._centralLog) ? window._centralLog : [];
-    // Region-filtered (for everything except the region table)
     const regionFiltered = _filterEntries(raw, range, f.region);
-    // Always-all regions (for the region table)
     const allRegionsFiltered = _filterEntries(raw, range, '');
 
-    _renderKPIs(regionFiltered, range);
+    // Top rail
+    _renderCountdown(range, f.window);
+    _renderTopWins(raw);  // top wins is global, not window-scoped — feels like momentum
+
+    // KPI strip + risk
+    _renderKPIsV2(regionFiltered, range);
+    _renderRiskTile(regionFiltered);
+
+    // Engagement
+    _renderEngagement(regionFiltered, range);
+
+    // Funnel + trend
     _renderStageStrip(regionFiltered);
     _renderFunnel(regionFiltered);
     _renderTrend(regionFiltered, range);
-    _renderRegionTable(allRegionsFiltered);
+
+    // Region table (with engagement column) + source split
+    _renderRegionTableV2(allRegionsFiltered);
     _renderSourceSplit(regionFiltered);
+
+    // Repeat customers + Relationships board
+    _renderRepeatCustomers();
+    _renderRelationships();
+
+    // Aging + Movement
     _renderAging(regionFiltered);
     _renderMoving();
   };
