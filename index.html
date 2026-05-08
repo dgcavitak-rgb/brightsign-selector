@@ -66,6 +66,15 @@
   --shadow-lg:0 20px 48px rgba(15,23,42,0.10), 0 8px 16px rgba(15,23,42,0.05);
   --shadow-glass:0 8px 32px rgba(30,27,75,0.08), inset 0 1px 0 rgba(255,255,255,0.9);
   --shadow-float:0 16px 40px rgba(30,27,75,0.12), 0 4px 12px rgba(30,27,75,0.06), inset 0 1px 0 rgba(255,255,255,0.95);
+  /* v24.25.0 — UI uniformity tokens. Use these for all new buttons, qty inputs,
+     touch targets, and modal action footers so the system stays consistent. */
+  --btn-touch-min:44px;        /* WCAG 2.2 AAA — minimum tap target on mobile */
+  --btn-h-sm:32px;             /* small buttons (toolbars, inline actions) */
+  --btn-h:40px;                /* default button (primary actions on desktop) */
+  --btn-h-lg:48px;             /* prominent CTAs */
+  --space-1:4px;  --space-2:8px;  --space-3:12px;
+  --space-4:16px; --space-5:24px; --space-6:32px;
+  --radius-sm:6px; --radius:8px; --radius-md:10px; --radius-lg:14px;
 }
 
 /* v21.8: DARK THEME — matches primary hero's deep navy/indigo aesthetic.
@@ -797,6 +806,16 @@ html[data-theme="dark"] .mode-card-check{background:#7F77DD;}
   -webkit-appearance:none;margin:0;
 }
 .qty-stepper .adv-qty-input:focus{box-shadow:none;}
+/* v24.25.0 — Stepper variant for accessory qty inputs (SSD, WD105). Fills its
+   parent's width instead of the table-cell-sized 54px default. The wrapper
+   carries inline style="width:100%;justify-content:space-between" so the input
+   stretches between the ± buttons. */
+.qty-stepper.qty-stepper-fluid,
+.qty-stepper[style*="width:100%"]{display:flex;}
+.qty-stepper[style*="width:100%"] .adv-qty-input{
+  width:auto;flex:1;min-width:0;
+  font-family:var(--mono,monospace);font-size:14px;font-weight:700;
+}
 /* Mobile — bigger tap targets per WCAG 2.2 (44×44 minimum) */
 @media (max-width:640px){
   .qty-step-btn{width:44px;height:44px;font-size:20px;}
@@ -949,18 +968,56 @@ html[data-theme="dark"] .adv-player-table .adv-qty-input{background:rgba(15,23,4
     border-top-color:rgba(148,163,184,0.15);
   }
 }
-/* BOM table on mobile — wrap in horizontal scroll so wide rows don't break the page */
-@media (max-width:640px){
-  .glass-card .bom-table-v21{
+/* BOM tables on mobile — wrap in horizontal scroll so wide rows don't break the page.
+   v24.25.0 fix: removed the inner `display:table; width:100%; table-layout:fixed` rule
+   that was forcing content to compress and overlap. Now the table renders at its
+   natural width and the user swipes horizontally. Covers both .bom-table-v21
+   (current Result page) and legacy .bom-table for full coverage. */
+@media (max-width:720px){
+  .glass-card .bom-table-v21,
+  .glass-card .bom-table,
+  .bom-table-v21,
+  .bom-table{
     display:block;
     overflow-x:auto;
-    white-space:nowrap;
     -webkit-overflow-scrolling:touch;
+    max-width:100%;
   }
   .glass-card .bom-table-v21 thead,
   .glass-card .bom-table-v21 tbody,
-  .glass-card .bom-table-v21 tr{
-    display:table;width:100%;table-layout:fixed;
+  .glass-card .bom-table-v21 tfoot,
+  .glass-card .bom-table thead,
+  .glass-card .bom-table tbody,
+  .glass-card .bom-table tfoot,
+  .bom-table-v21 thead,
+  .bom-table-v21 tbody,
+  .bom-table-v21 tfoot,
+  .bom-table thead,
+  .bom-table tbody,
+  .bom-table tfoot{
+    display:table-row-group;
+  }
+  .glass-card .bom-table-v21 th,
+  .glass-card .bom-table-v21 td,
+  .glass-card .bom-table th,
+  .glass-card .bom-table td,
+  .bom-table-v21 th,
+  .bom-table-v21 td,
+  .bom-table th,
+  .bom-table td{
+    white-space:nowrap;
+  }
+  /* Subtle hint that the table scrolls — fade-out gradient at right edge */
+  .bom-table-v21,
+  .glass-card .bom-table-v21{
+    background:
+      linear-gradient(to right, var(--surface,#FFF) 30%, rgba(255,255,255,0)),
+      linear-gradient(to right, rgba(255,255,255,0), var(--surface,#FFF) 70%) 100% 0,
+      radial-gradient(farthest-side at 0 50%, rgba(15,23,42,0.10), rgba(0,0,0,0)),
+      radial-gradient(farthest-side at 100% 50%, rgba(15,23,42,0.10), rgba(0,0,0,0)) 100% 0;
+    background-repeat:no-repeat;
+    background-size:40px 100%, 40px 100%, 14px 100%, 14px 100%;
+    background-attachment:local, local, scroll, scroll;
   }
 }
 
@@ -4814,13 +4871,18 @@ html[data-theme="dark"] .pwd-field input{
 .pwd-modal-actions{
   display:flex;
   justify-content:flex-end;
-  gap:10px;
-  margin-top:6px;
+  gap:var(--space-3,10px);
+  margin-top:var(--space-2,8px);
 }
+/* v24.25.0 — Modal action buttons standardized via design tokens. Both Cancel
+   (secondary) and Confirm (primary) get 40px height baseline → 44px on mobile,
+   matching WCAG 2.2 AAA tap-target requirements. */
 .pwd-modal-actions .btn-action,
 .pwd-modal-actions .btn-secondary{
-  padding:10px 18px;
+  padding:0 var(--space-4,16px);
+  min-height:var(--btn-h,40px);
   font-size:13px;
+  display:inline-flex;align-items:center;justify-content:center;
 }
 
 /* v23: Profile & Team tab styling */
@@ -5684,35 +5746,29 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   .model-name{font-size:40px;}
   .login-card{padding:32px 24px;}
 
-  /* v24.24.0 (#16) — Mobile stepped wizard. Active when body has .stepper-mode class.
-     Hides all form-sections except the one tagged .is-current-step.
-     Sticky bottom action bar provides Next/Back navigation.
-     User can opt out via "Switch to full form" link (sets .full-form-mode body class). */
-  body.stepper-mode #section-form #mobile-stepper-bar { display:block !important; padding:14px 16px;background:var(--surface-2,#F8FAFC);border:1px solid var(--border,#E5E7EB);border-radius:10px;margin-bottom:14px;position:sticky;top:60px;z-index:50;}
-  body.stepper-mode #section-form #mobile-stepper-actions { display:flex !important;align-items:center;gap:10px;position:fixed;bottom:0;left:0;right:0;background:var(--surface,#FFF);border-top:1px solid var(--border,#E5E7EB);padding:12px 16px;z-index:99;box-shadow:0 -4px 12px rgba(0,0,0,0.06);}
-  body.stepper-mode #section-form #mobile-stepper-actions button { padding:12px 20px;font-size:14px;font-weight:600;border-radius:8px;cursor:pointer;border:1px solid var(--border-strong,#CBD5E1);background:var(--surface,#FFF);color:var(--ink,#0F172A);min-height:44px;min-width:88px;}
-  body.stepper-mode #section-form #mobile-stepper-actions #ms-next-btn { background:var(--indigo,#4F46E5);color:#FFF;border-color:var(--indigo,#4F46E5);}
-  body.stepper-mode #section-form #mobile-stepper-actions button[disabled] { opacity:0.4;cursor:not-allowed;}
-  body.stepper-mode #section-form .container { padding-bottom:90px;}  /* clearance for sticky bar */
-  body.stepper-mode #section-form .form-section { display:none;}
-  body.stepper-mode #section-form .form-section.is-current-step { display:block;}
-  body.stepper-mode.full-form-mode #section-form #mobile-stepper-bar,
-  body.stepper-mode.full-form-mode #section-form #mobile-stepper-actions { display:none !important;}
-  body.stepper-mode.full-form-mode #section-form .form-section { display:block;}
-  body.stepper-mode.full-form-mode #section-form #full-form-mobile-hint { display:block !important;}
-  /* Mobile-first: 16px on inputs to prevent iOS zoom-on-focus, 44pt min tap targets */
-  body.stepper-mode #section-form input[type="text"],
-  body.stepper-mode #section-form input[type="number"],
-  body.stepper-mode #section-form input[type="email"],
-  body.stepper-mode #section-form input[type="tel"],
-  body.stepper-mode #section-form select,
-  body.stepper-mode #section-form textarea { font-size:16px !important; min-height:44px;}
-  body.stepper-mode #section-form .ms-progress-text { font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle,#94A3B8);font-weight:600;margin-bottom:6px;}
-  body.stepper-mode #section-form .ms-progress-rail { height:4px;background:var(--surface,#FFF);border-radius:2px;overflow:hidden;}
-  body.stepper-mode #section-form .ms-progress-fill { height:100%;background:linear-gradient(90deg,var(--indigo,#4F46E5),#6366F1);transition:width 0.25s ease;width:14%;}
+  /* v24.25.0 — Mobile stepper REMOVED. Form is now a single responsive layout
+     on every screen size. Replaced the wizard with mobile-friendly defaults so
+     touch targets meet WCAG 2.2 AAA on phones. */
+  #section-form input[type="text"],
+  #section-form input[type="number"],
+  #section-form input[type="email"],
+  #section-form input[type="tel"],
+  #section-form select,
+  #section-form textarea { font-size:16px !important; min-height:var(--btn-touch-min,44px);}
   .app-user-info{display:none;}
-  .action-bar{width:calc(100% - 24px);left:12px;right:12px;transform:none;justify-content:space-between;}
-  .action-bar button{flex:1;padding:12px 10px;font-size:13px;}
+  /* v24.25.0 — Action bar wraps buttons on mobile and gives each a proper tap
+     target. With 5-6 buttons on the Result page (Back/Confirm/Excel/PDF/WhatsApp/Email)
+     a single row was causing tiny 30px-wide buttons that were impossible to tap. */
+  .action-bar{
+    width:calc(100% - 24px);left:12px;right:12px;transform:none;
+    flex-wrap:wrap;gap:8px;padding:10px 12px;
+    justify-content:center;
+  }
+  .action-bar button{
+    flex:1 1 calc(50% - 8px);
+    min-width:0;min-height:var(--btn-touch-min,44px);
+    padding:12px 10px;font-size:13px;
+  }
 }
 
 /* ============================================================
@@ -5769,7 +5825,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   .pwd-modal-title{font-size:17px !important;}
   .pwd-modal-subtitle{font-size:12px !important;margin-bottom:16px !important;}
   .pwd-modal-actions{flex-direction:column-reverse !important;gap:8px !important;}
-  .pwd-modal-actions button{width:100% !important;}
+  .pwd-modal-actions button{width:100% !important;min-height:var(--btn-touch-min,44px) !important;}
 
   /* Team tab rows — already stacked, tighten buttons */
   .team-row{padding:14px 16px !important;}
@@ -6334,25 +6390,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         </div>
       </div>
 
-      <!-- v24.24.0 (#16) — Mobile stepper UI. Hidden on desktop, hidden on body.full-form-mode.
-           When active, only the .form-section with .is-current-step is shown. -->
-      <div id="mobile-stepper-bar" style="display:none;">
-        <div class="ms-progress-text">Step <span id="ms-step-num">1</span> of <span id="ms-step-total">7</span> · <span id="ms-step-name">Project context</span></div>
-        <div class="ms-progress-rail"><div class="ms-progress-fill" id="ms-progress-fill"></div></div>
-        <div style="margin-top:6px;text-align:right;">
-          <a href="#" onclick="event.preventDefault();_toggleFullFormMode(true);" style="font-size:11.5px;color:var(--ink-subtle);text-decoration:underline;">Switch to full form</a>
-        </div>
-      </div>
-      <!-- v24.24.0 (#16) — Sticky bottom Next/Back action bar for mobile. -->
-      <div id="mobile-stepper-actions" style="display:none;">
-        <button type="button" id="ms-back-btn" onclick="_msStep(-1)">← Back</button>
-        <div style="flex:1;"></div>
-        <button type="button" id="ms-next-btn" onclick="_msStep(1)">Next →</button>
-      </div>
-      <!-- "Switch to mobile" hint shown on phones if user previously toggled full-form -->
-      <div id="full-form-mobile-hint" style="display:none;font-size:12px;color:var(--ink-subtle);text-align:center;margin:8px 0;">
-        <a href="#" onclick="event.preventDefault();_toggleFullFormMode(false);" style="color:var(--indigo,#4F46E5);text-decoration:underline;">Use mobile-friendly stepped form</a>
-      </div>
+      <!-- v24.25.0 — Mobile stepper UI removed. Form is single responsive layout. -->
 
       <div id="draft-resume-banner" style="display:none;margin:12px 0 16px;padding:12px 16px;background:linear-gradient(135deg,rgba(79,70,229,0.06),rgba(99,102,241,0.10));border:1px solid var(--indigo,#4F46E5);border-radius:10px;align-items:center;gap:12px;flex-wrap:wrap;">
         <div style="font-size:20px;line-height:1;">💾</div>
@@ -6858,11 +6896,19 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
               <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Storage size per drive</div>
             </div>
             <div class="field" style="margin-bottom:0;"><label class="field-label">SSD (qty)</label>
-              <input type="number" id="adv-ssd-qty" min="0" step="1" value="0" oninput="clampAccessoryQty(this)" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;">
+              <div class="qty-stepper" role="group" aria-label="SSD quantity" style="width:100%;justify-content:space-between;">
+                <button type="button" class="qty-step-btn qty-step-minus" aria-label="Decrease SSD quantity" onclick="accessoryQtyStep('adv-ssd-qty', -1)">−</button>
+                <input type="number" id="adv-ssd-qty" class="adv-qty-input" min="0" step="1" value="0" inputmode="numeric" pattern="[0-9]*" oninput="clampAccessoryQty(this)" aria-label="SSD quantity" style="flex:1;min-width:0;">
+                <button type="button" class="qty-step-btn qty-step-plus" aria-label="Increase SSD quantity" onclick="accessoryQtyStep('adv-ssd-qty', +1)">+</button>
+              </div>
               <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">How many drives to include · cannot exceed total players</div>
             </div>
             <div class="field" style="margin-bottom:0;"><label class="field-label">WD105 Wi-Fi module (qty)</label>
-              <input type="number" id="adv-wd105-qty" min="0" step="1" value="0" oninput="clampAccessoryQty(this)" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;">
+              <div class="qty-stepper" role="group" aria-label="WD105 quantity" style="width:100%;justify-content:space-between;">
+                <button type="button" class="qty-step-btn qty-step-minus" aria-label="Decrease WD105 quantity" onclick="accessoryQtyStep('adv-wd105-qty', -1)">−</button>
+                <input type="number" id="adv-wd105-qty" class="adv-qty-input" min="0" step="1" value="0" inputmode="numeric" pattern="[0-9]*" oninput="clampAccessoryQty(this)" aria-label="WD105 quantity" style="flex:1;min-width:0;">
+                <button type="button" class="qty-step-btn qty-step-plus" aria-label="Increase WD105 quantity" onclick="accessoryQtyStep('adv-wd105-qty', +1)">+</button>
+              </div>
               <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;">Wireless connectivity · cannot exceed total players</div>
             </div>
           </div>
@@ -7415,64 +7461,161 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
       <button class="btn-secondary" onclick="renderReview()" style="margin-left:auto;">↻ Refresh</button>
     </div>
 
-    <!-- v24.21.2 — Multi-select filter panel. Collapsible, persists to localStorage,
-         applies to BOTH KPI tiles and aggregator cards. Region is derived from State. -->
-    <div id="review-filters-wrap" style="margin:0 0 14px 0; background:var(--surface,#FFF); border:1px solid var(--border,#E5E7EB); border-radius:12px; box-shadow:var(--shadow-sm,0 1px 2px rgba(0,0,0,0.04)); overflow:hidden;">
-      <button id="review-filters-toggle" type="button" onclick="toggleReviewFilters()" style="width:100%; display:flex; align-items:center; gap:10px; padding:12px 16px; background:transparent; border:none; cursor:pointer; font:inherit; color:var(--ink,#0F172A); text-align:left;">
-        <span style="font-size:13px; font-weight:600;">Filters</span>
-        <span id="review-filters-summary" style="font-size:12px; color:var(--ink-subtle,#94A3B8); flex:1;">— No filters applied (showing all data)</span>
-        <span id="review-filters-caret" style="font-size:14px; color:var(--ink-muted,#64748B); transition:transform 0.18s ease;">▾</span>
-      </button>
-      <div id="review-filters-panel" style="display:none; padding:14px 16px 16px; border-top:1px solid var(--border,#E5E7EB);">
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
-          <div data-filter-group="leadSource">
-            <div class="rf-label">Source</div>
-            <div class="rf-options" id="rf-leadSource"></div>
-          </div>
-          <div data-filter-group="region">
-            <div class="rf-label">Region</div>
-            <div class="rf-options" id="rf-region"></div>
-          </div>
-          <div data-filter-group="state">
-            <div class="rf-label">State</div>
-            <div class="rf-options rf-options-scroll" id="rf-state"></div>
-          </div>
-          <div data-filter-group="salesPerson">
-            <div class="rf-label">Sales Person</div>
-            <div class="rf-options rf-options-scroll" id="rf-salesPerson"></div>
-          </div>
-          <div data-filter-group="presalesPerson">
-            <div class="rf-label">Presales Person</div>
-            <div class="rf-options rf-options-scroll" id="rf-presalesPerson"></div>
-          </div>
-          <div data-filter-group="enduser">
-            <div class="rf-label">End-Client</div>
-            <div class="rf-options rf-options-scroll" id="rf-enduser"></div>
-          </div>
-          <div data-filter-group="consultant">
-            <div class="rf-label">Consultant</div>
-            <div class="rf-options rf-options-scroll" id="rf-consultant"></div>
-          </div>
+    <!-- v24.25.0 (item 5) — Inline dropdown filter row. Replaces the v24.21.2 chip
+         panel. 8 controls in a single row (search + Source + FY + Region + State
+         + Sales + Presales + Outcome). Wraps to 2-up on mobile. Filters apply on
+         change — no Apply button. Persists in localStorage 'bs-review-filters-v1'. -->
+    <div id="review-filters-wrap" style="margin:0 0 14px 0; padding:14px 16px; background:var(--surface,#FFF); border:1px solid var(--border,#E5E7EB); border-radius:12px; box-shadow:var(--shadow-sm,0 1px 2px rgba(0,0,0,0.04));">
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
+        <span style="font-size:13px; font-weight:600; color:var(--ink,#0F172A);">Filters</span>
+        <span id="review-filters-summary" style="font-size:12px; color:var(--ink-subtle,#94A3B8); flex:1;">— No filters applied</span>
+        <button type="button" class="btn-secondary" onclick="clearAllReviewFilters()" style="font-size:12px; padding:6px 12px;">Clear all</button>
+      </div>
+      <div class="rf-grid">
+        <div class="rf-cell" style="flex:1.5 1 220px;">
+          <label class="rf-label" for="rf-search">Search</label>
+          <input type="text" id="rf-search" placeholder="project, customer, partner…" oninput="onReviewSearchChange()" autocomplete="off">
         </div>
-        <div id="review-filters-active" style="margin-top:12px; display:flex; flex-wrap:wrap; gap:6px; align-items:center; min-height:0;"></div>
-        <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
-          <button type="button" class="btn-secondary" onclick="clearAllReviewFilters()" style="font-size:12px; padding:6px 12px;">Clear all</button>
+        <div class="rf-cell">
+          <label class="rf-label" for="rf-d-leadSource">Source</label>
+          <select id="rf-d-leadSource" onchange="onReviewDropdownChange('leadSource', this.value)">
+            <option value="">All sources</option>
+            <option value="BrightSign">BrightSign</option>
+            <option value="Cavitak">Cavitak</option>
+          </select>
+        </div>
+        <div class="rf-cell">
+          <label class="rf-label" for="rf-d-fy">FY</label>
+          <select id="rf-d-fy" onchange="onReviewDropdownChange('fy', this.value)">
+            <option value="">All FYs</option>
+            <option value="FY26-27">FY26-27</option>
+            <option value="FY27-28">FY27-28</option>
+          </select>
+        </div>
+        <div class="rf-cell">
+          <label class="rf-label" for="rf-d-region">Region</label>
+          <select id="rf-d-region" onchange="onReviewDropdownChange('region', this.value)">
+            <option value="">All regions</option>
+            <option value="West">West</option>
+            <option value="North">North</option>
+            <option value="South">South</option>
+            <option value="East">East</option>
+            <option value="International">International</option>
+          </select>
+        </div>
+        <div class="rf-cell">
+          <label class="rf-label" for="rf-d-state">State</label>
+          <select id="rf-d-state" onchange="onReviewDropdownChange('state', this.value)">
+            <option value="">All states</option>
+          </select>
+        </div>
+        <div class="rf-cell">
+          <label class="rf-label" for="rf-d-salesPerson">Sales</label>
+          <select id="rf-d-salesPerson" onchange="onReviewDropdownChange('salesPerson', this.value)">
+            <option value="">All sales</option>
+          </select>
+        </div>
+        <div class="rf-cell">
+          <label class="rf-label" for="rf-d-presalesPerson">Presales</label>
+          <select id="rf-d-presalesPerson" onchange="onReviewDropdownChange('presalesPerson', this.value)">
+            <option value="">All presales</option>
+          </select>
+        </div>
+        <div class="rf-cell">
+          <label class="rf-label" for="rf-d-outcome">Outcome</label>
+          <select id="rf-d-outcome" onchange="onReviewDropdownChange('outcome', this.value)">
+            <option value="">All outcomes</option>
+            <option value="open">Open</option>
+            <option value="won">Won</option>
+            <option value="lost">Lost</option>
+            <option value="on-hold">On hold</option>
+          </select>
         </div>
       </div>
     </div>
 
     <style>
-      #review-filters-wrap .rf-label { font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600; margin-bottom:6px; }
-      #review-filters-wrap .rf-options { display:flex; flex-wrap:wrap; gap:6px; }
-      #review-filters-wrap .rf-options-scroll { max-height:140px; overflow-y:auto; padding:4px; border:1px solid var(--border,#E5E7EB); border-radius:8px; background:var(--surface-2,#F8FAFC); }
-      #review-filters-wrap .rf-chip { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; font-size:12px; line-height:1.4; border:1px solid var(--border-strong,#CBD5E1); border-radius:999px; background:var(--surface,#FFF); color:var(--ink,#0F172A); cursor:pointer; user-select:none; transition:all 0.12s ease; }
-      #review-filters-wrap .rf-chip:hover { border-color:var(--indigo,#4F46E5); }
-      #review-filters-wrap .rf-chip.active { background:var(--indigo,#4F46E5); color:#FFF; border-color:var(--indigo,#4F46E5); }
-      #review-filters-wrap .rf-chip.empty { opacity:0.6; font-style:italic; }
-      #review-filters-active .rf-active-chip { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; font-size:11px; background:var(--surface-2,#F1F5F9); border:1px solid var(--border,#E5E7EB); border-radius:999px; color:var(--ink-muted,#475569); }
-      #review-filters-active .rf-active-chip .rf-x { cursor:pointer; padding:0 2px; opacity:0.6; }
-      #review-filters-active .rf-active-chip .rf-x:hover { opacity:1; color:#DC2626; }
+      #review-filters-wrap .rf-grid{display:flex; flex-wrap:wrap; gap:10px;}
+      #review-filters-wrap .rf-cell{flex:1 1 150px; display:flex; flex-direction:column; min-width:0;}
+      #review-filters-wrap .rf-label{font-size:10px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600; margin-bottom:4px;}
+      #review-filters-wrap select,
+      #review-filters-wrap input[type="text"]{
+        width:100%; min-height:var(--btn-h,40px);
+        padding:0 10px; font-size:13px; font-family:var(--sans,system-ui),sans-serif;
+        background:var(--surface,#FFF); color:var(--ink,#0F172A);
+        border:1px solid var(--border-strong,#CBD5E1); border-radius:var(--radius,8px);
+      }
+      #review-filters-wrap select:focus,
+      #review-filters-wrap input[type="text"]:focus{
+        outline:none; border-color:var(--indigo,#4F46E5);
+        box-shadow:0 0 0 3px rgba(79,70,229,0.15);
+      }
+      @media (max-width:720px){
+        #review-filters-wrap .rf-cell{flex:1 1 calc(50% - 5px); min-width:0;}
+      }
+      @media (max-width:480px){
+        #review-filters-wrap .rf-cell{flex:1 1 100%;}
+      }
+      /* v24.25.0 (items 6+7) — Region + Sales person card styling */
+      #review-rs-wrap{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:0 0 18px 0;}
+      @media (max-width:920px){#review-rs-wrap{grid-template-columns:1fr;}}
+      .rs-card{background:var(--surface,#FFF); border:1px solid var(--border,#E5E7EB); border-radius:14px; padding:18px; box-shadow:var(--shadow-sm,0 1px 2px rgba(0,0,0,0.04));}
+      .rs-card-head{display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap;}
+      .rs-card-icon{width:32px; height:32px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; font-size:16px; color:#fff; flex-shrink:0;}
+      .rs-card-title{font-size:14px; font-weight:600; color:var(--ink,#0F172A); flex:1; min-width:120px;}
+      .rs-card-pick{min-height:var(--btn-h,40px); padding:0 10px; font-size:13px; border:1px solid var(--border-strong,#CBD5E1); border-radius:var(--radius,8px); background:var(--surface,#FFF); color:var(--ink,#0F172A);}
+      .rs-tile-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px;}
+      @media (max-width:480px){.rs-tile-grid{grid-template-columns:repeat(2,1fr);}}
+      .rs-tile{background:var(--surface-2,#F8FAFC); border:1px solid var(--border,#E5E7EB); border-radius:10px; padding:10px;}
+      .rs-tile-label{font-size:9.5px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600; margin-bottom:4px;}
+      .rs-tile-value{font-size:18px; font-weight:700; color:var(--ink,#0F172A); font-variant-numeric:tabular-nums; line-height:1.1;}
+      .rs-tile-sub{font-size:10px; color:var(--ink-muted,#64748B); margin-top:2px;}
+      .rs-section{margin-top:12px;}
+      .rs-section-title{font-size:10.5px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600; margin-bottom:6px;}
+      .rs-list{margin:0; padding:0; list-style:none; font-size:12.5px;}
+      .rs-list li{display:flex; justify-content:space-between; gap:8px; padding:6px 0; border-bottom:1px dashed var(--border-soft,#E2E8F0);}
+      .rs-list li:last-child{border-bottom:none;}
+      .rs-list li .rs-list-name{color:var(--ink,#0F172A); font-weight:500; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+      .rs-list li .rs-list-val{color:var(--ink-muted,#64748B); font-variant-numeric:tabular-nums; white-space:nowrap;}
+      .rs-deals{max-height:240px; overflow-y:auto; border:1px solid var(--border,#E5E7EB); border-radius:8px; background:var(--surface-2,#F8FAFC);}
+      .rs-deal-row{display:flex; gap:10px; padding:8px 12px; border-bottom:1px dashed var(--border-soft,#E2E8F0); cursor:pointer; font-size:12px; transition:background 100ms;}
+      .rs-deal-row:hover{background:rgba(79,70,229,0.06);}
+      .rs-deal-row:last-child{border-bottom:none;}
+      .rs-deal-proj{flex:1; min-width:0; font-weight:500; color:var(--ink,#0F172A); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+      .rs-deal-stage{padding:2px 8px; border-radius:999px; background:var(--indigo-light,#E0E7FF); color:var(--indigo,#4F46E5); font-size:10.5px; font-weight:600; flex-shrink:0;}
+      .rs-deal-val{color:var(--ink-muted,#64748B); font-variant-numeric:tabular-nums; flex-shrink:0;}
+      .rs-empty{padding:24px; text-align:center; color:var(--ink-subtle,#94A3B8); font-size:12.5px; font-style:italic;}
     </style>
+
+    <!-- v24.25.0 (items 6+7) — Region + Sales person review cards. Populated by
+         renderReviewRegionSalesCards() on tab open + after every filter change. -->
+    <div id="review-rs-wrap">
+      <div class="rs-card" id="review-region-card">
+        <div class="rs-card-head">
+          <div class="rs-card-icon" style="background:linear-gradient(135deg,#7C3AED 0%,#5B21B6 100%);">◉</div>
+          <div class="rs-card-title">Region performance</div>
+          <select id="rs-region-pick" class="rs-card-pick" onchange="renderReviewRegionCard(this.value)">
+            <option value="">— Pick a region —</option>
+            <option value="West">West</option>
+            <option value="North">North</option>
+            <option value="South">South</option>
+            <option value="East">East</option>
+            <option value="International">International</option>
+          </select>
+        </div>
+        <div id="rs-region-body" class="rs-empty">Select a region to see deal count, pipeline value, win rate, top reps, and the deal list.</div>
+      </div>
+      <div class="rs-card" id="review-sales-card">
+        <div class="rs-card-head">
+          <div class="rs-card-icon" style="background:linear-gradient(135deg,#0D9488 0%,#0F766E 100%);">☰</div>
+          <div class="rs-card-title">Sales person performance</div>
+          <select id="rs-sales-pick" class="rs-card-pick" onchange="renderReviewSalesCard(this.value)">
+            <option value="">— Pick a sales person —</option>
+          </select>
+        </div>
+        <div id="rs-sales-body" class="rs-empty">Select a sales person to see their tagged deals, pipeline value, win rate, and stage breakdown.</div>
+      </div>
+    </div>
     <!-- v24.14.9: Bi-monthly Review KPI dashboard — pure frontend, reads window._centralLog -->
     <div id="bs-kpi-wrap" style="margin:18px 0; padding:18px; background:var(--surface,#FFF); border:1px solid var(--border,#E5E7EB); border-radius:14px; box-shadow:var(--shadow-sm,0 1px 2px rgba(0,0,0,0.04));">
       <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px;">
@@ -7677,7 +7820,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.24.0';  // v24.24.0 — features #17 (Email templates editable by Super, with quote-send modal pre-fill from server template) + #16 (Mobile stepped-form wizard skeleton: viewport-triggered, 7 steps based on existing form-section divs, Next/Back sticky bar, "Switch to full form" escape, persisted in localStorage). Per-step validation deferred to follow-up. Pairs with backend v25.12.0.
+const FRONTEND_VERSION = '24.25.0';  // v24.25.0 — Pipeline cutoff (PIPELINE_DATA_START='2026-04-01') applied to all aggregations + trend chart. YoY badges stripped from Cards 1/2/4. Card 6 replaced with cutoff explainer. UI uniformity tokens. Mobile stepper REMOVED — single responsive form. SSD + WD105 ± stepper. BOM horizontal scroll fix. Excel signature block at BOM bottom. Notification fix uses entry.project. Items 5+6+7: Review tab chip-filter panel replaced with inline dropdown row (search/Source/FY/Region/State/Sales/Presales/Outcome), plus Region card + Sales-person card with KPI tiles + top reps/customers + deal list. Pairs with backend v25.13.0.
 // v24.23.0 — features #19 Customer 360 modal + #18 server-side handoff notifications.
 // v24.21.1 — robust salesPerson auto-default for Sales/BU Head users: state.form mirror, save-time fallback, initial-load trigger
 // v24.21.0 — security hardening: auth on doGet?action=read GET calls; escape user-controlled fields in renderTeamList + statusEl; formatINR returns ₹0 not — for zero; drop ineffective timeZone option from Number.toLocaleString calls
@@ -8198,6 +8341,39 @@ function autoFillStateFromCity(){
    No form input — users don't type it, no override, no drift. */
 const SHOW_PRICING = true;
 window.FRONTEND_VERSION = FRONTEND_VERSION;
+
+/* v24.25.0 — Pipeline data cutoff. Pre-cutoff rows in Sheet1 are legacy SAP/billed
+   records, not active pipeline. Every client-side aggregator filters by this date.
+   Mirror of backend PIPELINE_DATA_START. To restore YoY (April 2027+), set to null. */
+const PIPELINE_DATA_START = '2026-04-01';
+const PIPELINE_CUTOFF_MS = (function(){
+  if(!PIPELINE_DATA_START) return null;
+  const d = new Date(PIPELINE_DATA_START + 'T00:00:00');
+  return isNaN(d.getTime()) ? null : d.getTime();
+})();
+function _entryAfterPipelineCutoff(entry){
+  if(PIPELINE_CUTOFF_MS == null) return true;
+  if(!entry) return false;
+  // Read the entry's primary timestamp using the same helper the rest of the
+  // app uses where possible. Fallback chain: entry.timestamp / entry.created /
+  // entry.tsMs.
+  let ts = null;
+  try { if(typeof _entryCreatedMs === 'function') ts = _entryCreatedMs(entry); } catch(_){}
+  if(ts == null){
+    const candidates = [entry.timestamp, entry.created, entry.createdAt, entry.tsMs];
+    for(let i = 0; i < candidates.length; i++){
+      const v = candidates[i];
+      if(v == null || v === '') continue;
+      const d = (v instanceof Date) ? v : new Date(v);
+      if(!isNaN(d.getTime())){ ts = d.getTime(); break; }
+    }
+  }
+  if(ts == null) return false;
+  return ts >= PIPELINE_CUTOFF_MS;
+}
+window.PIPELINE_DATA_START = PIPELINE_DATA_START;
+window.PIPELINE_CUTOFF_MS = PIPELINE_CUTOFF_MS;
+window._entryAfterPipelineCutoff = _entryAfterPipelineCutoff;
 
 /* ================================================================
    v24.5.0: PRIOR-FY REFERENCE DATA — FY25-26 invoiced sales (SAP)
@@ -13406,139 +13582,11 @@ window.addEventListener('beforeunload',function(){
   state.user=null;
 });
 
-/* v24.24.0 (#16) — Mobile stepped-form wizard.
-   Rules of engagement:
-   - Activated when viewport width ≤ 720px (matches existing mobile breakpoint).
-   - Each .form-section in #section-form becomes one wizard step.
-   - At any time exactly one section is "current"; the others are hidden via CSS.
-   - User navigates via Next/Back buttons in a sticky bottom bar.
-   - "Switch to full form" link toggles full-form-mode (persisted in localStorage).
-   - Submit button stays at the bottom of the LAST section (existing behavior).
-   - This release is the wizard SKELETON. Per-step required-field validation will be
-     wired in a follow-up — for v24.24.0 the user can move freely between steps.
-*/
-window._currentStep = 0;
-window._stepCount = 0;
-
-window._initStepper = function(){
-  // Read all .form-section elements inside #section-form, attach data-step attr
-  const formRoot = document.getElementById('section-form');
-  if(!formRoot) return;
-  const sections = formRoot.querySelectorAll('.form-section');
-  window._stepCount = sections.length;
-  sections.forEach(function(s, i){
-    s.dataset.step = String(i);
-    if(i === 0) s.classList.add('is-current-step');
-    else s.classList.remove('is-current-step');
-  });
-  window._currentStep = 0;
-  // Decide initial mode: if user previously chose full-form, honor that
-  const savedMode = localStorage.getItem('bs-form-mode');
-  if(savedMode === 'full-form'){
-    document.body.classList.add('full-form-mode');
-  } else {
-    document.body.classList.remove('full-form-mode');
-  }
-  // stepper-mode is added/removed based on viewport
-  _applyStepperMode();
-  _renderStepperUI();
-  // Re-evaluate on resize (e.g., rotation)
-  if(!window._stepperResizeWired){
-    window.addEventListener('resize', _applyStepperMode);
-    window._stepperResizeWired = true;
-  }
-};
-
-window._applyStepperMode = function(){
-  if(window.innerWidth <= 720){
-    document.body.classList.add('stepper-mode');
-  } else {
-    document.body.classList.remove('stepper-mode');
-  }
-};
-
-window._renderStepperUI = function(){
-  const total = window._stepCount;
-  const cur = window._currentStep;
-  const numEl = document.getElementById('ms-step-num');
-  const totalEl = document.getElementById('ms-step-total');
-  const nameEl = document.getElementById('ms-step-name');
-  const fillEl = document.getElementById('ms-progress-fill');
-  if(numEl) numEl.textContent = String(cur + 1);
-  if(totalEl) totalEl.textContent = String(total);
-  // Look up current section's title
-  const formRoot = document.getElementById('section-form');
-  const sections = formRoot ? formRoot.querySelectorAll('.form-section') : [];
-  const curSection = sections[cur];
-  if(nameEl && curSection){
-    const titleEl = curSection.querySelector('.section-title');
-    nameEl.textContent = titleEl ? titleEl.textContent : '';
-  }
-  if(fillEl) fillEl.style.width = (((cur + 1) / Math.max(total, 1)) * 100) + '%';
-  // Back/Next button states
-  const backBtn = document.getElementById('ms-back-btn');
-  const nextBtn = document.getElementById('ms-next-btn');
-  if(backBtn){
-    backBtn.disabled = (cur === 0);
-  }
-  if(nextBtn){
-    nextBtn.textContent = (cur === total - 1) ? 'Done · scroll to submit' : 'Next →';
-  }
-};
-
-window._msStep = function(delta){
-  const formRoot = document.getElementById('section-form');
-  if(!formRoot) return;
-  const sections = formRoot.querySelectorAll('.form-section');
-  const total = sections.length;
-  let next = window._currentStep + delta;
-  if(next < 0) next = 0;
-  if(next >= total){
-    // On "Next" past the last step, scroll the user to the action buttons (Recommend etc.)
-    // The submit happens through existing logic — wizard doesn't intercept submit.
-    next = total - 1;
-    // Find action area below sections (typically a button row) and scroll into view
-    const actionEl = document.querySelector('#section-form .form-actions, #section-form .actions, #section-form button.primary-action');
-    if(actionEl){
-      try { actionEl.scrollIntoView({behavior:'smooth', block:'center'}); } catch(_){}
-    } else {
-      // Fallback: scroll to bottom of the section
-      try { sections[next].scrollIntoView({behavior:'smooth', block:'end'}); } catch(_){}
-    }
-  }
-  // Move .is-current-step
-  sections.forEach(function(s, i){
-    if(i === next) s.classList.add('is-current-step');
-    else s.classList.remove('is-current-step');
-  });
-  window._currentStep = next;
-  _renderStepperUI();
-  // Scroll to top of current section so the user sees its header
-  if(sections[next]){
-    try { sections[next].scrollIntoView({behavior:'smooth', block:'start'}); } catch(_){}
-  }
-};
-
-window._toggleFullFormMode = function(useFullForm){
-  if(useFullForm){
-    document.body.classList.add('full-form-mode');
-    localStorage.setItem('bs-form-mode', 'full-form');
-  } else {
-    document.body.classList.remove('full-form-mode');
-    localStorage.setItem('bs-form-mode', 'stepper');
-    // Reset to first step so user doesn't land mid-wizard
-    if(typeof _initStepper === 'function') _initStepper();
-  }
-};
-
-// Initialize stepper after DOM is ready and after the form has rendered.
-// Two trigger points to be safe: DOMContentLoaded for first paint, and post-login
-// (since some forms may be re-rendered after auth).
-document.addEventListener('DOMContentLoaded', function(){
-  setTimeout(function(){
-    try { _initStepper(); } catch(e){ console.warn('[stepper init]', e); }
-  }, 600);
-});
+/* v24.25.0 — Mobile stepped-form wizard REMOVED.
+   The form is a single responsive layout on every screen size. CSS handles
+   touch-target sizing on mobile via the input/select/textarea selectors above.
+   localStorage key 'bs-form-mode' is no longer read or written; existing values
+   in users' browsers are harmless and will be ignored. */
 
 function showTab(which){
   // v24.19.9 (#4): Hard-block ALL tab navigation while Profile Gate is active.
@@ -15430,6 +15478,24 @@ function clampAccessoryQty(inputEl){
   }
 }
 
+/* v24.25.0 — ± stepper handler for SSD / WD105 accessory qty inputs.
+   Standardizes on the same UX as Custom BOQ player qty buttons: − [N] + with
+   click handlers that bump the input value and reuse clampAccessoryQty for
+   the same upper-bound enforcement. inputId is the target <input>'s id. */
+function accessoryQtyStep(inputId, delta){
+  const el = document.getElementById(inputId);
+  if(!el) return;
+  const cur = parseInt(el.value, 10) || 0;
+  const next = Math.max(0, cur + delta);
+  el.value = String(next);
+  // Re-run the existing clamp logic so we don't exceed total players
+  if(typeof clampAccessoryQty === 'function') clampAccessoryQty(el);
+  // Fire input event so anything else listening (draft autosave, dirty flag, etc.) sees it
+  try { el.dispatchEvent(new Event('input', {bubbles:true})); } catch(_){}
+  try { el.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
+}
+window.accessoryQtyStep = accessoryQtyStep;
+
 function selectOS(os){
   state.osChoice=os;
   // v24.14.12 — flip state.form.xcOs so BOM construction picks up the right SKU/price.
@@ -16116,10 +16182,13 @@ function updateReviewAdminBarVisibility_(){
 async function renderReview(){
   updateRelationshipCounts_();
   updateReviewAdminBarVisibility_();
-  // v24.21.2 — refresh filter chip lists from current _centralLog + _allUsers.
-  // Safe to call even before _centralLog has loaded; chips render empty and rebuild
-  // again when refreshLog() completes via aggregator re-fire.
-  try { if(typeof window.rebuildReviewFilters === 'function') window.rebuildReviewFilters(); } catch(_){}
+  // v24.25.0 (item 5) — repopulate inline filter dropdowns from current data.
+  // Replaces the old chip rebuilder. `rebuildReviewFilters` may still exist for
+  // legacy paths but the dropdown row is what users see.
+  try { if(typeof window.populateReviewDropdowns === 'function') window.populateReviewDropdowns(); } catch(_){}
+  // v24.25.0 (items 6+7) — restore region + sales card pickings if any
+  try { if(typeof window._renderRegionCardForCurrentPick === 'function') window._renderRegionCardForCurrentPick(); } catch(_){}
+  try { if(typeof window._renderSalesCardForCurrentPick === 'function') window._renderSalesCardForCurrentPick(); } catch(_){}
   
   if(!state.user)return;
   populateReviewPeriodSelects();
@@ -16176,27 +16245,29 @@ function renderReviewCards(host,data,period,comparePeriod){
   const parts=[];
 
   // Card 1: Executive summary
-  const kpi=(label,value,cur,prev,isPct)=>{
-    const delta=compare?computeDelta(cur,prev,isPct):null;
-    const deltaStr=delta?`<div class="exec-kpi-delta ${delta.cls}">${delta.label} vs compare</div>`:'';
-    return `<div class="exec-kpi"><div class="exec-kpi-label">${label}</div><div class="exec-kpi-value">${value}</div>${deltaStr}</div>`;
+  // v24.25.0 — YoY comparison badges removed. 2025 data is billed/SAP legacy
+  // (not pipeline) so vs-prev-year deltas were misleading. When April 2027 arrives
+  // and a full year of post-cutoff data exists, the YoY logic can be re-enabled.
+  const kpi=(label,value)=>{
+    return `<div class="exec-kpi"><div class="exec-kpi-label">${label}</div><div class="exec-kpi-value">${value}</div></div>`;
   };
   parts.push(`<div class="review-card">
     <div class="review-card-head">
       <div class="review-card-icon ri-exec">★</div>
       <div class="review-card-title">Executive summary</div>
-      <div class="review-card-sub">${escapeHtml(period)}${compare?' vs '+escapeHtml(comparePeriod):''}</div>
+      <div class="review-card-sub">${escapeHtml(period)}</div>
     </div>
     <div class="exec-kpi-grid${SHOW_PRICING?'':' no-pricing'}">
-      ${SHOW_PRICING?kpi('Pipeline (₹)',formatINR(primary.pipelineValue),primary.pipelineValue,compare?compare.pipelineValue:null,false):''}
-      ${SHOW_PRICING?kpi('Won (₹)',formatINR(primary.wonValue),primary.wonValue,compare?compare.wonValue:null,false):''}
-      ${kpi('Win rate',primary.winRate+'%',primary.winRate,compare?compare.winRate:null,true)}
-      ${kpi('Active deals',primary.activeCount,primary.activeCount,compare?compare.activeCount:null,false)}
-      ${kpi('Total entries',primary.entryCount,primary.entryCount,compare?compare.entryCount:null,false)}
+      ${SHOW_PRICING?kpi('Pipeline (₹)',formatINR(primary.pipelineValue)):''}
+      ${SHOW_PRICING?kpi('Won (₹)',formatINR(primary.wonValue)):''}
+      ${kpi('Win rate',primary.winRate+'%')}
+      ${kpi('Active deals',primary.activeCount)}
+      ${kpi('Total entries',primary.entryCount)}
     </div>
   </div>`);
 
   // Card 2: Business source split
+  // v24.25.0 — vs-compare deltas removed. Cutoff makes prior-period compare misleading.
   const bySource=primary.bySource||{BrightSign:{count:0,value:0},Cavitak:{count:0,value:0}};
   // v24.14.6: BrightSign source (was 'OEM' in v24.x).
   // v24.4.8: when pricing is hidden, use deal COUNTS instead of ₹ values for the split
@@ -16205,14 +16276,6 @@ function renderReviewCards(host,data,period,comparePeriod){
   const totalSrc=bsMetric+cavMetric;
   const bsPct=totalSrc>0?Math.round((bsMetric/totalSrc)*100):0;
   const cavPct=totalSrc>0?Math.round((cavMetric/totalSrc)*100):0;
-  const compSrc=compare?compare.bySource:null;
-  const compBsMetric=compSrc?(SHOW_PRICING?compSrc.BrightSign.value:compSrc.BrightSign.count):0;
-  const compCavMetric=compSrc?(SHOW_PRICING?compSrc.Cavitak.value:compSrc.Cavitak.count):0;
-  const bsDelta=compSrc?computeDelta(bsMetric,compBsMetric,false):null;
-  const cavDelta=compSrc?computeDelta(cavMetric,compCavMetric,false):null;
-  const compTotalSrc=compBsMetric+compCavMetric;
-  const compCavPct=compTotalSrc>0?Math.round((compCavMetric/compTotalSrc)*100):0;
-  const shareDelta=compSrc?computeDelta(cavPct,compCavPct,true):null;
   const valueLabel=(n)=>SHOW_PRICING?formatINR(n):(n+' '+(n===1?'deal':'deals'));
   const subLabel=totalSrc>0?(SHOW_PRICING?'₹'+formatINR(totalSrc).replace('₹',''):(totalSrc+' total deals')):'no data';
   parts.push(`<div class="review-card">
@@ -16222,16 +16285,15 @@ function renderReviewCards(host,data,period,comparePeriod){
       <div class="review-card-sub">${subLabel}</div>
     </div>
     <div class="source-row">
-      <div><div class="source-label">BrightSign-generated</div>${bsDelta?`<div class="source-delta ${bsDelta.cls}">${bsDelta.label}</div>`:''}</div>
+      <div><div class="source-label">BrightSign-generated</div></div>
       <div class="source-bar-wrap"><div class="source-bar source-bar-oem" style="width:${Math.max(bsPct,4)}%"><span class="source-bar-pct">${bsPct}%</span></div></div>
       <div class="source-value">${valueLabel(bsMetric)}</div>
     </div>
     <div class="source-row">
-      <div><div class="source-label">Cavitak-generated</div>${cavDelta?`<div class="source-delta ${cavDelta.cls}">${cavDelta.label}</div>`:''}</div>
+      <div><div class="source-label">Cavitak-generated</div></div>
       <div class="source-bar-wrap"><div class="source-bar source-bar-cavitak" style="width:${Math.max(cavPct,4)}%"><span class="source-bar-pct">${cavPct}%</span></div></div>
       <div class="source-value">${valueLabel(cavMetric)}</div>
     </div>
-    ${shareDelta?`<div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border-soft);font-family:var(--sans);font-size:12px;color:var(--ink-muted);">Cavitak share: ${cavPct}% <span class="${shareDelta.cls}">(${shareDelta.label} vs compare)</span></div>`:''}
   </div>`);
 
   // Card 3: Funnel
@@ -16281,12 +16343,10 @@ function renderReviewCards(host,data,period,comparePeriod){
   </div>`);
 
   // Card 4: Ecosystem reach
+  // v24.25.0 — vs-compare deltas removed (pipeline cutoff makes them misleading).
   const eco=primary.ecosystem||{partners:0,consultants:0,endClients:0};
-  const compEco=compare?compare.ecosystem:null;
-  const ecoTile=(label,cur,prev)=>{
-    const d=compEco?computeDelta(cur,prev,false):null;
-    const sub=d?`<div class="eco-tile-sub ${d.cls}">${d.label} vs compare</div>`:'<div class="eco-tile-sub">unique in period</div>';
-    return `<div class="eco-tile"><div class="eco-tile-label">${label}</div><div class="eco-tile-value">${cur}</div>${sub}</div>`;
+  const ecoTile=(label,cur)=>{
+    return `<div class="eco-tile"><div class="eco-tile-label">${label}</div><div class="eco-tile-value">${cur}</div><div class="eco-tile-sub">unique in period</div></div>`;
   };
   parts.push(`<div class="review-card">
     <div class="review-card-head">
@@ -16295,9 +16355,9 @@ function renderReviewCards(host,data,period,comparePeriod){
       <div class="review-card-sub">unique relationships</div>
     </div>
     <div class="eco-grid">
-      ${ecoTile('Partners / SIs',eco.partners,compEco?compEco.partners:null)}
-      ${ecoTile('Consultants',eco.consultants,compEco?compEco.consultants:null)}
-      ${ecoTile('End clients',eco.endClients,compEco?compEco.endClients:null)}
+      ${ecoTile('Partners / SIs',eco.partners)}
+      ${ecoTile('Consultants',eco.consultants)}
+      ${ecoTile('End clients',eco.endClients)}
     </div>
   </div>`);
 
@@ -16343,52 +16403,18 @@ function renderReviewCards(host,data,period,comparePeriod){
     </div>
   </div>`);
 
-  // Card 6: YoY growth
-  const prevFY=data.prevFYData||{entryCount:0,pipelineValue:0,wonValue:0,ecosystem:{partners:0,consultants:0,endClients:0}};
-  const ytdPrim=data.ytdThisFY||{entryCount:0,pipelineValue:0,wonValue:0,ecosystem:{partners:0,consultants:0,endClients:0}};
-  const yoyRow=(label,cur,prev,fmt)=>{
-    const d=computeDelta(cur,prev,false);
-    const f=fmt||(v=>v);
-    return `<tr><td>${label}</td><td class="num">${f(prev)}</td><td class="num">${f(cur)}</td><td class="num ${d.cls}">${d.label}</td></tr>`;
-  };
+  // Card 6: Pipeline cutoff explainer
+  // v24.25.0 — Full YoY card replaced by an inline note. FY25-26 is invoiced (SAP)
+  // legacy data; FY26-27+ is pipeline activity tracked in this app. Direct YoY
+  // comparison was misleading. When April 2027 arrives, restore YoY here.
   parts.push(`<div class="review-card">
     <div class="review-card-head">
       <div class="review-card-icon ri-yoy">⇡</div>
-      <div class="review-card-title">YoY reference — FY25-26 invoiced (SAP) vs FY26-27 activity</div>
-      <div class="review-card-sub">invoiced vs activity</div>
+      <div class="review-card-title">Why no year-over-year comparison?</div>
+      <div class="review-card-sub">Pipeline started 2026-04-01</div>
     </div>
-    <table class="review-table">
-      <thead>
-        <tr>
-          <th>Metric</th>
-          <th class="num">FY25-26 invoiced</th>
-          <th class="num">${escapeHtml(data.currentFY||'current')} YTD</th>
-          <th class="num">Growth</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr class="pfy-row">
-          <td>Invoiced revenue</td>
-          <td class="num">${priorFY_fmtLakh(PRIOR_FY_DATA.totals.revenue)}</td>
-          <td class="num" title="Current-year ₹ invoiced is not tracked in this app. See note below.">—</td>
-          <td class="num" title="Not comparable: prior = ₹ invoiced, current = deal activity">—</td>
-        </tr>
-        <tr class="pfy-row">
-          <td>Units invoiced</td>
-          <td class="num">${PRIOR_FY_DATA.totals.quantity}</td>
-          <td class="num" title="Current-year units invoiced is not tracked in this app.">—</td>
-          <td class="num">—</td>
-        </tr>
-        ${yoyRow('Entries (deal activity)',ytdPrim.entryCount,prevFY.entryCount)}
-        ${yoyRow('Unique partners',(ytdPrim.ecosystem||{}).partners||0,(prevFY.ecosystem||{}).partners||0)}
-        ${yoyRow('Unique consultants',(ytdPrim.ecosystem||{}).consultants||0,(prevFY.ecosystem||{}).consultants||0)}
-        ${yoyRow('Unique end-clients',(ytdPrim.ecosystem||{}).endClients||0,(prevFY.ecosystem||{}).endClients||0)}
-      </tbody>
-    </table>
-    <div class="review-pfy-note">
-      <strong>FY25-26 invoiced</strong> figures come from Cavitak's SAP invoice export, BrightSign-only (₹208.66 L · 367 units · 86 invoices, 2025-05-10 → 2026-03-31).
-      Current-year ₹ is not tracked here because deal value was removed from the form in v24.4.6.
-      Partner/consultant/end-client growth rows compare real FY25-26 entry data — those YoY figures are reliable. Use the ₹ baseline for scale context, not as a YoY number.
+    <div style="font-family:var(--sans);font-size:13px;color:var(--ink-muted);line-height:1.6;padding:8px 4px;">
+      All metrics on this page show <strong>pipeline activity from ${escapeHtml(PIPELINE_DATA_START)} onward</strong>. Older Sheet1 rows exist (legacy SAP/billed data) but are excluded from every aggregation because they are different in kind — invoiced revenue vs. live deal pipeline. YoY comparisons will return automatically once a full post-cutoff year of data exists (April 2027+).
     </div>
   </div>`);
 
@@ -16985,7 +17011,22 @@ function confirmSelection(){
       // v22.3: Exit edit mode if we were editing (clears locks + banner)
       if(window._editMode){window._editMode=false;applyEditLocks(false);}
       const _wasEditing = window._editModeAtSave || false;  // captured below before the edit mode flip
-      const _projectName = state.result && state.result.formData ? (state.result.formData.project || 'Untitled') : 'Untitled';
+      // v24.25.0 (#9) — Notification fix. Use entry.project / formData.project as the
+      // primary label. Falls back to refId if somehow blank (item 10 makes project required
+      // at form submit, so this fallback is a safety net for edits of legacy rows).
+      let _projectName = '';
+      try {
+        if(state.result && state.result.formData){
+          _projectName = String(state.result.formData.project || '').trim();
+        }
+        if(!_projectName && state.result){
+          _projectName = String(state.result.project || '').trim();
+        }
+      } catch(_){}
+      if(!_projectName){
+        const _ref = (state.result && state.result.refId) ? state.result.refId : '';
+        _projectName = _ref ? ('Deal ' + _ref) : 'Untitled deal';
+      }
       resetForm();
       state.result=null;
       document.getElementById('tab-result').style.display='none';
@@ -17411,6 +17452,17 @@ function downloadQuoteExcel(returnWorkbook){
       qAoa.push(['For pricing escalation: Dipenkumar Gajjar · National Product Manager · dipen.g@cavitak.com · +91 8160 756 906','','','','','','']);
     }
     qAoa.push(['Issued by: ' + _name + ' · Cavitak Marketing Pvt Ltd','','','','','','']);
+
+    // v24.25.0 (#8) — Signature block at the bottom of the Excel Quotation sheet.
+    // Mirrors the PDF footer pattern. Visible on every printed/shared quote so the
+    // recipient sees Cavitak branding + sender accountability.
+    qAoa.push([]);
+    qAoa.push([]);
+    qAoa.push(['Cavitak Marketing Pvt Ltd · Authorized BrightSign distributor · India','','','','','','','']);
+    qAoa.push(['——————————————————————————————————————————','','','','','','','']);
+    qAoa.push(['Prepared by: ' + _name + ' · ' + _title + ' · ' + _phone + ' · ' + _email,'','','','','','','']);
+    qAoa.push(['This document is for internal reference and customer discussion. Pricing subject to current price list, forex, and landed-cost variations.','','','','','','','']);
+    qAoa.push(['Generated by BrightSign Product Selector · v' + (typeof FRONTEND_VERSION !== 'undefined' ? FRONTEND_VERSION : ''),'','','','','','','']);
   })();
 
   const qWs=XLSX.utils.aoa_to_sheet(qAoa);
@@ -21984,9 +22036,24 @@ if(document.readyState==='loading'){
     _initFilters();
     const f = window._reviewFilters;
     const hasAny = FILTER_GROUPS.some(function(g){ return f[g] && f[g].size > 0; });
-    if(!hasAny) return log;
+
+    // v24.25.0 — Pipeline cutoff is ALWAYS applied, regardless of user filters.
+    // Pre-cutoff data is legacy (SAP/billed) and should not pollute aggregations.
+    const cutoffMs = (typeof window.PIPELINE_CUTOFF_MS === 'number') ? window.PIPELINE_CUTOFF_MS : null;
+    const cutoffOk = function(e){
+      if(cutoffMs == null) return true;
+      try {
+        if(typeof window._entryAfterPipelineCutoff === 'function'){
+          return window._entryAfterPipelineCutoff(e);
+        }
+      } catch(_){}
+      return true;
+    };
+
+    if(!hasAny) return log.filter(cutoffOk);
 
     return log.filter(function(e){
+      if(!cutoffOk(e)) return false;
       // leadSource: case-insensitive match
       if(f.leadSource.size){
         const v = String(e.leadSource||'').trim();
@@ -22225,7 +22292,522 @@ if(document.readyState==='loading'){
     try { if(typeof updateRelationshipCounts_ === 'function') updateRelationshipCounts_(); } catch(_){}
     try { if(typeof window.bsRenderReviewKPIs === 'function') window.bsRenderReviewKPIs(); } catch(_){}
     try { if(typeof window.bsC2aRender === 'function') window.bsC2aRender(); } catch(_){}
+    // v24.25.0 (items 6+7): refresh Region + Sales person cards too
+    try { if(typeof window._renderRegionCardForCurrentPick === 'function') window._renderRegionCardForCurrentPick(); } catch(_){}
+    try { if(typeof window._renderSalesCardForCurrentPick === 'function') window._renderSalesCardForCurrentPick(); } catch(_){}
   }
+
+  /* ============================================================
+     v24.25.0 (item 5) — Inline dropdown row handlers.
+     Single-value-per-group selection (or empty = "All"). Stored
+     in the SAME window._reviewFilters Set (just zero or one element)
+     so applyReviewFilters keeps working unchanged for everything else. */
+  // search/fy/outcome are NEW filter dimensions
+  function _ensureExtendedFilters(){
+    _initFilters();
+    const f = window._reviewFilters;
+    if(!f.search)  f.search  = '';
+    if(!f.fy)      f.fy      = new Set();
+    if(!f.outcome) f.outcome = new Set();
+    // Restore search/fy/outcome from localStorage
+    try {
+      const raw = localStorage.getItem(LS_FILTERS_KEY);
+      if(raw){
+        const obj = JSON.parse(raw);
+        if(typeof obj.search === 'string' && !f._searchRestored){
+          f.search = obj.search; f._searchRestored = true;
+        }
+        if(Array.isArray(obj.fy) && !f._fyRestored){
+          f.fy = new Set(obj.fy); f._fyRestored = true;
+        }
+        if(Array.isArray(obj.outcome) && !f._outcomeRestored){
+          f.outcome = new Set(obj.outcome); f._outcomeRestored = true;
+        }
+      }
+    } catch(_){}
+  }
+  function _persistFiltersExtended(){
+    try {
+      const f = window._reviewFilters;
+      const out = {};
+      FILTER_GROUPS.forEach(function(g){ out[g] = Array.from(f[g] || []); });
+      out.search  = String(f.search || '');
+      out.fy      = Array.from(f.fy || []);
+      out.outcome = Array.from(f.outcome || []);
+      localStorage.setItem(LS_FILTERS_KEY, JSON.stringify(out));
+    } catch(_){}
+  }
+
+  window.onReviewSearchChange = function(){
+    _ensureExtendedFilters();
+    const el = document.getElementById('rf-search');
+    window._reviewFilters.search = el ? String(el.value || '').toLowerCase().trim() : '';
+    _persistFiltersExtended();
+    _updateFiltersSummaryV2();
+    _refireAggregators();
+  };
+
+  window.onReviewDropdownChange = function(group, value){
+    _ensureExtendedFilters();
+    const f = window._reviewFilters;
+    const v = String(value || '').trim();
+    if(group === 'fy' || group === 'outcome'){
+      f[group] = v ? new Set([v]) : new Set();
+    } else if(FILTER_GROUPS.indexOf(group) >= 0){
+      // Existing groups (leadSource/region/state/salesPerson/presalesPerson/enduser/consultant):
+      // dropdown is single-select; clear then add. Empty = clear.
+      f[group] = v ? new Set([v]) : new Set();
+    }
+    _persistFiltersExtended();
+    _updateFiltersSummaryV2();
+    _refireAggregators();
+  };
+
+  // v24.25.0 — re-implement summary count to include search/fy/outcome
+  function _updateFiltersSummaryV2(){
+    const sumEl = document.getElementById('review-filters-summary');
+    if(!sumEl) return;
+    _ensureExtendedFilters();
+    const f = window._reviewFilters;
+    let count = 0;
+    FILTER_GROUPS.forEach(function(g){ count += (f[g] && f[g].size) || 0; });
+    if(f.fy && f.fy.size)           count += 1;
+    if(f.outcome && f.outcome.size) count += 1;
+    if(f.search)                    count += 1;
+    if(count === 0){
+      sumEl.textContent = '— No filters applied';
+      sumEl.style.color = 'var(--ink-subtle,#94A3B8)';
+    } else {
+      sumEl.textContent = count + (count === 1 ? ' filter active' : ' filters active');
+      sumEl.style.color = 'var(--indigo,#4F46E5)';
+      sumEl.style.fontWeight = '600';
+    }
+  }
+
+  // FY helper — returns the Indian FY label ('FY26-27') for a Date.
+  function _entryFY(e){
+    let ts = null;
+    try { if(typeof _entryCreatedMs === 'function') ts = _entryCreatedMs(e); } catch(_){}
+    if(ts == null){
+      const candidates = [e && e.timestamp, e && e.created, e && e.createdAt, e && e.tsMs];
+      for(let i = 0; i < candidates.length; i++){
+        const v = candidates[i];
+        if(v == null || v === '') continue;
+        const d = (v instanceof Date) ? v : new Date(v);
+        if(!isNaN(d.getTime())){ ts = d.getTime(); break; }
+      }
+    }
+    if(ts == null) return '';
+    const d = new Date(ts);
+    const m = d.getMonth() + 1; // 1-12
+    const y = d.getFullYear();
+    // Indian FY runs Apr-Mar. Apr 2026 → 'FY26-27'.
+    const fyStartYr = (m >= 4) ? y : (y - 1);
+    const a = String(fyStartYr % 100).padStart(2, '0');
+    const b = String((fyStartYr + 1) % 100).padStart(2, '0');
+    return 'FY' + a + '-' + b;
+  }
+
+  // Override applyReviewFilters to ALSO honor search/fy/outcome.
+  // Wrap the existing function rather than redefine it, so we don't lose the
+  // pipeline-cutoff prefilter or the existing Set-based group filters.
+  (function _wrapApplyReviewFilters(){
+    const _baseApply = window.applyReviewFilters;
+    if(typeof _baseApply !== 'function') return;
+    window.applyReviewFilters = function(log){
+      const stage1 = _baseApply(log);  // cutoff + existing groups
+      _ensureExtendedFilters();
+      const f = window._reviewFilters;
+      const hasSearch  = !!(f.search && f.search.length > 0);
+      const hasFy      = f.fy      && f.fy.size > 0;
+      const hasOutcome = f.outcome && f.outcome.size > 0;
+      if(!hasSearch && !hasFy && !hasOutcome) return stage1;
+      const fyVal = hasFy ? Array.from(f.fy)[0] : null;
+      const outcomeVal = hasOutcome ? String(Array.from(f.outcome)[0] || '').toLowerCase() : null;
+      return stage1.filter(function(e){
+        if(hasSearch){
+          const hay = (
+            String(e.project||'') + ' ' +
+            String(e.enduser||'') + ' ' +
+            String(e.partner||'') + ' ' +
+            String(e.consultant||'') + ' ' +
+            String(e.city||'') + ' ' +
+            String(e.state||'')
+          ).toLowerCase();
+          if(hay.indexOf(f.search) === -1) return false;
+        }
+        if(hasFy){
+          if(_entryFY(e) !== fyVal) return false;
+        }
+        if(hasOutcome){
+          if(String(e.outcome||'open').toLowerCase() !== outcomeVal) return false;
+        }
+        return true;
+      });
+    };
+  })();
+
+  // Repopulate the dropdown options from current data, and restore selections.
+  // Called from renderReview() each time the tab opens.
+  window.populateReviewDropdowns = function(){
+    _ensureExtendedFilters();
+    const f = window._reviewFilters;
+    const log   = Array.isArray(window._centralLog) ? window._centralLog : [];
+    const users = Array.isArray(window._allUsers) ? window._allUsers : [];
+
+    // Restore search input
+    const searchEl = document.getElementById('rf-search');
+    if(searchEl) searchEl.value = String(f.search || '');
+
+    // Helper: rebuild a select from a list of {value, label} options + 'All' default.
+    function rebuildSelect(id, allLabel, items, currentVal){
+      const sel = document.getElementById(id);
+      if(!sel) return;
+      const sortItems = items.slice().sort(function(a, b){
+        return String(a.label).localeCompare(String(b.label));
+      });
+      const opts = ['<option value="">' + allLabel + '</option>'].concat(
+        sortItems.map(function(it){
+          const v = String(it.value).replace(/"/g, '&quot;');
+          const l = (typeof escapeHtml === 'function') ? escapeHtml(String(it.label)) : String(it.label);
+          return '<option value="' + v + '">' + l + '</option>';
+        })
+      );
+      sel.innerHTML = opts.join('');
+      if(currentVal && sel.querySelector('option[value="' + String(currentVal).replace(/"/g, '\\"') + '"]')){
+        sel.value = currentVal;
+      } else {
+        sel.value = '';
+      }
+    }
+
+    // States — distinct, canonical case preserved
+    const stateMap = {};
+    log.forEach(function(e){
+      const s = String(e && e.state || '').trim();
+      if(s) stateMap[s.toLowerCase()] = s;
+    });
+    const stateItems = Object.values(stateMap).map(function(s){ return {value:s, label:s}; });
+    rebuildSelect('rf-d-state', 'All states', stateItems, Array.from(f.state || [])[0] || '');
+
+    // Sales / Presales people — pull from users sheet, role-filtered
+    const salesItems = [];
+    const presalesItems = [];
+    users.forEach(function(u){
+      if(!u || u.isActive === false) return;
+      const ln = String(u.loginName || '').toLowerCase().trim();
+      if(!ln) return;
+      const fn = String(u.fullName || u.loginName || '').trim();
+      const role = String(u.role || '').trim();
+      // v24.21.4: Sales role gets the Sales filter; Presales role gets Presales filter.
+      // BU Head + Super are eligible for both (they may handle either function).
+      if(/^Sales$/i.test(role) || /^BU\s*Head$/i.test(role) || u.isSuper === true){
+        salesItems.push({value:ln, label:fn});
+      }
+      if(/^Presales$/i.test(role) || /^BU\s*Head$/i.test(role) || u.isSuper === true){
+        presalesItems.push({value:ln, label:fn});
+      }
+    });
+    rebuildSelect('rf-d-salesPerson', 'All sales', salesItems, Array.from(f.salesPerson || [])[0] || '');
+    rebuildSelect('rf-d-presalesPerson', 'All presales', presalesItems, Array.from(f.presalesPerson || [])[0] || '');
+
+    // Static dropdowns — just restore selected value
+    const setSel = function(id, v){
+      const el = document.getElementById(id);
+      if(el) el.value = String(v || '');
+    };
+    setSel('rf-d-leadSource', Array.from(f.leadSource || [])[0] || '');
+    setSel('rf-d-region',     Array.from(f.region || [])[0] || '');
+    setSel('rf-d-fy',         Array.from(f.fy || [])[0] || '');
+    setSel('rf-d-outcome',    Array.from(f.outcome || [])[0] || '');
+
+    // Populate Sales Person dropdown for the Sales card too
+    const rsSalesPick = document.getElementById('rs-sales-pick');
+    if(rsSalesPick){
+      const cur = rsSalesPick.value;
+      const sortedSales = salesItems.slice().sort(function(a, b){
+        return String(a.label).localeCompare(String(b.label));
+      });
+      rsSalesPick.innerHTML = '<option value="">— Pick a sales person —</option>' +
+        sortedSales.map(function(it){
+          const v = String(it.value).replace(/"/g, '&quot;');
+          const l = (typeof escapeHtml === 'function') ? escapeHtml(String(it.label)) : String(it.label);
+          return '<option value="' + v + '">' + l + '</option>';
+        }).join('');
+      if(cur && rsSalesPick.querySelector('option[value="' + cur.replace(/"/g, '\\"') + '"]')){
+        rsSalesPick.value = cur;
+      }
+    }
+
+    _updateFiltersSummaryV2();
+  };
+
+  // Override clearAllReviewFilters so it ALSO resets search/fy/outcome and clears
+  // the new dropdown values in the DOM.
+  window.clearAllReviewFilters = function(){
+    _ensureExtendedFilters();
+    FILTER_GROUPS.forEach(function(g){ window._reviewFilters[g].clear(); });
+    window._reviewFilters.search = '';
+    if(window._reviewFilters.fy)      window._reviewFilters.fy.clear();
+    if(window._reviewFilters.outcome) window._reviewFilters.outcome.clear();
+    _persistFiltersExtended();
+    // Reset DOM controls
+    ['rf-d-leadSource','rf-d-fy','rf-d-region','rf-d-state','rf-d-salesPerson','rf-d-presalesPerson','rf-d-outcome'].forEach(function(id){
+      const el = document.getElementById(id);
+      if(el) el.value = '';
+    });
+    const s = document.getElementById('rf-search');
+    if(s) s.value = '';
+    _updateFiltersSummaryV2();
+    _refireAggregators();
+  };
+
+  /* ============================================================
+     v24.25.0 (item 6) — Region card renderer.
+     Picks a region; computes count/value/won/win-rate + top reps + top
+     customers + clickable deal list (open + recently closed). All from
+     the unfiltered pipeline-cutoff log so it stands alone from the
+     filter row above.  */
+  function _fmtINRsafe(n){
+    if(typeof formatINR === 'function') return formatINR(n);
+    return '₹' + (Math.round(n||0)).toLocaleString('en-IN');
+  }
+  function _readDealValSafe(e){
+    if(typeof _readDealValue === 'function'){
+      try { return _readDealValue(e); } catch(_){}
+    }
+    const v = e && (e.dealValueINR || e.dealValue || e.dealvalueinr);
+    const n = parseFloat(v);
+    return isFinite(n) ? n : 0;
+  }
+  function _resolveOwnerName(loginName){
+    if(!loginName) return '';
+    const users = Array.isArray(window._allUsers) ? window._allUsers : [];
+    for(let i = 0; i < users.length; i++){
+      const u = users[i];
+      if(u && String(u.loginName||'').toLowerCase() === String(loginName).toLowerCase()){
+        return u.fullName || u.loginName || loginName;
+      }
+    }
+    return loginName;
+  }
+  function _entriesAfterCutoff(){
+    const raw = Array.isArray(window._centralLog) ? window._centralLog : [];
+    if(typeof _filterTestData === 'function'){
+      const filtered = _filterTestData(raw, window._reviewIncludeTest === true);
+      // Also drop pre-cutoff
+      if(typeof window._entryAfterPipelineCutoff === 'function'){
+        return filtered.filter(window._entryAfterPipelineCutoff);
+      }
+      return filtered;
+    }
+    return raw;
+  }
+  function _stageBadge(stage){
+    return '<span class="rs-deal-stage">' + (typeof escapeHtml === 'function' ? escapeHtml(stage) : stage) + '</span>';
+  }
+
+  window.renderReviewRegionCard = function(regionName){
+    const body = document.getElementById('rs-region-body');
+    if(!body) return;
+    if(!regionName){
+      body.className = 'rs-empty';
+      body.innerHTML = 'Select a region to see deal count, pipeline value, win rate, top reps, and the deal list.';
+      return;
+    }
+    body.className = '';
+    const entries = _entriesAfterCutoff().filter(function(e){
+      return _stateToRegion(e.state) === regionName;
+    });
+    if(entries.length === 0){
+      body.innerHTML = '<div class="rs-empty">No deals tagged to ' + (typeof escapeHtml === 'function' ? escapeHtml(regionName) : regionName) + ' yet.</div>';
+      return;
+    }
+    // KPIs
+    let openCount = 0, openVal = 0, wonCount = 0, wonVal = 0, lostCount = 0;
+    const repTotals = {};       // sales loginName → ₹ pipeline
+    const customerTotals = {};  // enduser → ₹ pipeline
+    entries.forEach(function(e){
+      const v = _readDealValSafe(e);
+      const out = String(e.outcome || 'open').toLowerCase();
+      if(out === 'open'){ openCount++; openVal += v; }
+      if(out === 'won'){  wonCount++;  wonVal += v; }
+      if(out === 'lost'){ lostCount++; }
+      const sp = String(e.salesPerson || '').toLowerCase().trim();
+      if(sp){ repTotals[sp] = (repTotals[sp] || 0) + v; }
+      const cust = String(e.enduser || '').trim();
+      if(cust){ customerTotals[cust] = (customerTotals[cust] || 0) + v; }
+    });
+    const winRate = (wonCount + lostCount) > 0 ? Math.round((wonCount / (wonCount + lostCount)) * 100) : 0;
+    // Top 3 reps + customers
+    const topReps = Object.keys(repTotals).map(function(k){
+      return {name:_resolveOwnerName(k), val:repTotals[k]};
+    }).sort(function(a, b){ return b.val - a.val; }).slice(0, 3);
+    const topCustomers = Object.keys(customerTotals).map(function(k){
+      return {name:k, val:customerTotals[k]};
+    }).sort(function(a, b){ return b.val - a.val; }).slice(0, 3);
+
+    // Deal list — open first by stage order, then closed
+    const STAGE_ORDER = {'Lead':0,'Opportunity':1,'Proposal':2,'Negotiation':3,'Order':4};
+    const dealsSorted = entries.slice().sort(function(a, b){
+      const oa = String(a.outcome || 'open').toLowerCase();
+      const ob = String(b.outcome || 'open').toLowerCase();
+      if(oa !== ob){ return oa === 'open' ? -1 : (ob === 'open' ? 1 : 0); }
+      const sa = STAGE_ORDER[a.stage] != null ? STAGE_ORDER[a.stage] : 99;
+      const sb = STAGE_ORDER[b.stage] != null ? STAGE_ORDER[b.stage] : 99;
+      return sa - sb;
+    });
+
+    const tile = function(label, value, sub){
+      return '<div class="rs-tile"><div class="rs-tile-label">' + label + '</div>' +
+             '<div class="rs-tile-value">' + value + '</div>' +
+             '<div class="rs-tile-sub">' + (sub || '') + '</div></div>';
+    };
+    const listItems = function(arr){
+      if(!arr.length) return '<li><span class="rs-list-name" style="color:var(--ink-subtle);font-style:italic;">— none —</span></li>';
+      return arr.map(function(it){
+        return '<li><span class="rs-list-name">' + (typeof escapeHtml === 'function' ? escapeHtml(it.name) : it.name) +
+               '</span><span class="rs-list-val">' + _fmtINRsafe(it.val) + '</span></li>';
+      }).join('');
+    };
+    const dealRows = dealsSorted.slice(0, 25).map(function(e){
+      const proj = String(e.project || 'Untitled');
+      const stg = String(e.stage || '');
+      const v = _readDealValSafe(e);
+      const refId = String(e.refId || '').replace(/'/g, "\\'");
+      return '<div class="rs-deal-row" onclick="(typeof openEditFromHistory===\'function\')&&openEditFromHistory(\'' + refId + '\')">' +
+               '<div class="rs-deal-proj">' + (typeof escapeHtml === 'function' ? escapeHtml(proj) : proj) + '</div>' +
+               (stg ? _stageBadge(stg) : '') +
+               '<div class="rs-deal-val">' + _fmtINRsafe(v) + '</div>' +
+             '</div>';
+    }).join('');
+
+    body.innerHTML =
+      '<div class="rs-tile-grid">' +
+        tile('Total deals', String(entries.length), '') +
+        tile('Open ₹', _fmtINRsafe(openVal), openCount + ' open') +
+        tile('Won ₹', _fmtINRsafe(wonVal), wonCount + ' won') +
+        tile('Win rate', winRate + '%', (wonCount + lostCount) + ' resolved') +
+      '</div>' +
+      '<div class="rs-section">' +
+        '<div class="rs-section-title">Top sales reps</div>' +
+        '<ul class="rs-list">' + listItems(topReps) + '</ul>' +
+      '</div>' +
+      '<div class="rs-section">' +
+        '<div class="rs-section-title">Top customers</div>' +
+        '<ul class="rs-list">' + listItems(topCustomers) + '</ul>' +
+      '</div>' +
+      '<div class="rs-section">' +
+        '<div class="rs-section-title">Deals (' + dealsSorted.length + ' total · showing ' + Math.min(25, dealsSorted.length) + ')</div>' +
+        '<div class="rs-deals">' + (dealRows || '<div class="rs-empty">No deals to show</div>') + '</div>' +
+      '</div>';
+  };
+  window._renderRegionCardForCurrentPick = function(){
+    const sel = document.getElementById('rs-region-pick');
+    if(sel) renderReviewRegionCard(sel.value);
+  };
+
+  /* ============================================================
+     v24.25.0 (item 7) — Sales person card renderer.
+     Picks a sales person; computes their tagged-deal numbers, stage
+     breakdown, and clickable deal list. Stage breakdown shows depth in
+     funnel which is what BU-Head reviews care about. */
+  window.renderReviewSalesCard = function(salesLoginName){
+    const body = document.getElementById('rs-sales-body');
+    if(!body) return;
+    if(!salesLoginName){
+      body.className = 'rs-empty';
+      body.innerHTML = 'Select a sales person to see their tagged deals, pipeline value, win rate, and stage breakdown.';
+      return;
+    }
+    body.className = '';
+    const ln = String(salesLoginName).toLowerCase().trim();
+    const entries = _entriesAfterCutoff().filter(function(e){
+      return String(e.salesPerson || '').toLowerCase().trim() === ln;
+    });
+    if(entries.length === 0){
+      body.innerHTML = '<div class="rs-empty">No deals tagged to ' + _resolveOwnerName(ln) + ' yet.</div>';
+      return;
+    }
+    let openCount = 0, openVal = 0, wonCount = 0, wonVal = 0, lostCount = 0;
+    const stageCounts = {Lead:0, Opportunity:0, Proposal:0, Negotiation:0, Order:0};
+    const stageVals   = {Lead:0, Opportunity:0, Proposal:0, Negotiation:0, Order:0};
+    entries.forEach(function(e){
+      const v = _readDealValSafe(e);
+      const out = String(e.outcome || 'open').toLowerCase();
+      if(out === 'open'){
+        openCount++; openVal += v;
+        const stg = String(e.stage || '').trim();
+        if(stageCounts[stg] != null){ stageCounts[stg]++; stageVals[stg] += v; }
+      }
+      if(out === 'won'){ wonCount++; wonVal += v; }
+      if(out === 'lost'){ lostCount++; }
+    });
+    const winRate = (wonCount + lostCount) > 0 ? Math.round((wonCount / (wonCount + lostCount)) * 100) : 0;
+
+    // Stage breakdown bars
+    const maxStageVal = Math.max.apply(null, Object.values(stageVals).concat([1]));
+    const stageColors = ['#4F46E5','#5B47E0','#6748DC','#7349D7','#7C3AED'];
+    const STAGES_ORDER = ['Lead','Opportunity','Proposal','Negotiation','Order'];
+    const stageBars = STAGES_ORDER.map(function(s, i){
+      const c = stageCounts[s] || 0;
+      const v = stageVals[s] || 0;
+      const pct = maxStageVal > 0 ? Math.min(100, (v / maxStageVal) * 100) : 0;
+      return '<div style="margin-bottom:8px;">' +
+               '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;gap:8px;">' +
+                 '<span style="color:var(--ink,#0F172A);font-weight:500;">' + s + '</span>' +
+                 '<span style="color:var(--ink-muted,#64748B);font-variant-numeric:tabular-nums;">' + c + ' · ' + _fmtINRsafe(v) + '</span>' +
+               '</div>' +
+               '<div style="height:6px;background:var(--surface-2,#F1F5F9);border-radius:3px;overflow:hidden;">' +
+                 '<div style="width:' + pct.toFixed(1) + '%;height:100%;background:' + stageColors[i] + ';border-radius:3px;"></div>' +
+               '</div>' +
+             '</div>';
+    }).join('');
+
+    const STAGE_ORDER = {'Lead':0,'Opportunity':1,'Proposal':2,'Negotiation':3,'Order':4};
+    const dealsSorted = entries.slice().sort(function(a, b){
+      const oa = String(a.outcome || 'open').toLowerCase();
+      const ob = String(b.outcome || 'open').toLowerCase();
+      if(oa !== ob){ return oa === 'open' ? -1 : (ob === 'open' ? 1 : 0); }
+      return (STAGE_ORDER[a.stage] != null ? STAGE_ORDER[a.stage] : 99) -
+             (STAGE_ORDER[b.stage] != null ? STAGE_ORDER[b.stage] : 99);
+    });
+    const dealRows = dealsSorted.slice(0, 25).map(function(e){
+      const proj = String(e.project || 'Untitled');
+      const stg = String(e.stage || '');
+      const v = _readDealValSafe(e);
+      const refId = String(e.refId || '').replace(/'/g, "\\'");
+      return '<div class="rs-deal-row" onclick="(typeof openEditFromHistory===\'function\')&&openEditFromHistory(\'' + refId + '\')">' +
+               '<div class="rs-deal-proj">' + (typeof escapeHtml === 'function' ? escapeHtml(proj) : proj) + '</div>' +
+               (stg ? _stageBadge(stg) : '') +
+               '<div class="rs-deal-val">' + _fmtINRsafe(v) + '</div>' +
+             '</div>';
+    }).join('');
+    const tile = function(label, value, sub){
+      return '<div class="rs-tile"><div class="rs-tile-label">' + label + '</div>' +
+             '<div class="rs-tile-value">' + value + '</div>' +
+             '<div class="rs-tile-sub">' + (sub || '') + '</div></div>';
+    };
+    body.innerHTML =
+      '<div class="rs-tile-grid">' +
+        tile('Tagged deals', String(entries.length), '') +
+        tile('Open ₹', _fmtINRsafe(openVal), openCount + ' open') +
+        tile('Won ₹', _fmtINRsafe(wonVal), wonCount + ' won') +
+        tile('Win rate', winRate + '%', (wonCount + lostCount) + ' resolved') +
+      '</div>' +
+      '<div class="rs-section">' +
+        '<div class="rs-section-title">Open pipeline by stage</div>' +
+        stageBars +
+      '</div>' +
+      '<div class="rs-section">' +
+        '<div class="rs-section-title">Deals (' + dealsSorted.length + ' total · showing ' + Math.min(25, dealsSorted.length) + ')</div>' +
+        '<div class="rs-deals">' + (dealRows || '<div class="rs-empty">No deals to show</div>') + '</div>' +
+      '</div>';
+  };
+  window._renderSalesCardForCurrentPick = function(){
+    const sel = document.getElementById('rs-sales-pick');
+    if(sel) renderReviewSalesCard(sel.value);
+  };
 })();
 </script>
 </body>
