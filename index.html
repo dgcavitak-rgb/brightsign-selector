@@ -5683,6 +5683,33 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   .alternates-row{grid-template-columns:1fr;}
   .model-name{font-size:40px;}
   .login-card{padding:32px 24px;}
+
+  /* v24.24.0 (#16) — Mobile stepped wizard. Active when body has .stepper-mode class.
+     Hides all form-sections except the one tagged .is-current-step.
+     Sticky bottom action bar provides Next/Back navigation.
+     User can opt out via "Switch to full form" link (sets .full-form-mode body class). */
+  body.stepper-mode #section-form #mobile-stepper-bar { display:block !important; padding:14px 16px;background:var(--surface-2,#F8FAFC);border:1px solid var(--border,#E5E7EB);border-radius:10px;margin-bottom:14px;position:sticky;top:60px;z-index:50;}
+  body.stepper-mode #section-form #mobile-stepper-actions { display:flex !important;align-items:center;gap:10px;position:fixed;bottom:0;left:0;right:0;background:var(--surface,#FFF);border-top:1px solid var(--border,#E5E7EB);padding:12px 16px;z-index:99;box-shadow:0 -4px 12px rgba(0,0,0,0.06);}
+  body.stepper-mode #section-form #mobile-stepper-actions button { padding:12px 20px;font-size:14px;font-weight:600;border-radius:8px;cursor:pointer;border:1px solid var(--border-strong,#CBD5E1);background:var(--surface,#FFF);color:var(--ink,#0F172A);min-height:44px;min-width:88px;}
+  body.stepper-mode #section-form #mobile-stepper-actions #ms-next-btn { background:var(--indigo,#4F46E5);color:#FFF;border-color:var(--indigo,#4F46E5);}
+  body.stepper-mode #section-form #mobile-stepper-actions button[disabled] { opacity:0.4;cursor:not-allowed;}
+  body.stepper-mode #section-form .container { padding-bottom:90px;}  /* clearance for sticky bar */
+  body.stepper-mode #section-form .form-section { display:none;}
+  body.stepper-mode #section-form .form-section.is-current-step { display:block;}
+  body.stepper-mode.full-form-mode #section-form #mobile-stepper-bar,
+  body.stepper-mode.full-form-mode #section-form #mobile-stepper-actions { display:none !important;}
+  body.stepper-mode.full-form-mode #section-form .form-section { display:block;}
+  body.stepper-mode.full-form-mode #section-form #full-form-mobile-hint { display:block !important;}
+  /* Mobile-first: 16px on inputs to prevent iOS zoom-on-focus, 44pt min tap targets */
+  body.stepper-mode #section-form input[type="text"],
+  body.stepper-mode #section-form input[type="number"],
+  body.stepper-mode #section-form input[type="email"],
+  body.stepper-mode #section-form input[type="tel"],
+  body.stepper-mode #section-form select,
+  body.stepper-mode #section-form textarea { font-size:16px !important; min-height:44px;}
+  body.stepper-mode #section-form .ms-progress-text { font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle,#94A3B8);font-weight:600;margin-bottom:6px;}
+  body.stepper-mode #section-form .ms-progress-rail { height:4px;background:var(--surface,#FFF);border-radius:2px;overflow:hidden;}
+  body.stepper-mode #section-form .ms-progress-fill { height:100%;background:linear-gradient(90deg,var(--indigo,#4F46E5),#6366F1);transition:width 0.25s ease;width:14%;}
   .app-user-info{display:none;}
   .action-bar{width:calc(100% - 24px);left:12px;right:12px;transform:none;justify-content:space-between;}
   .action-bar button{flex:1;padding:12px 10px;font-size:13px;}
@@ -6271,6 +6298,9 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
     <button id="tab-log" onclick="showTab('log')" role="tab" aria-selected="false" aria-controls="section-log">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       <span id="log-tab-label">History</span>
+      <!-- v24.22.0 (#15): Tagged-deals badge — shows count of deals where I'm tagged
+           as salesPerson/presalesPerson but didn't create. Hidden when count is 0. -->
+      <span id="log-tab-badge" class="nav-tab-badge" style="display:none;" title="Deals where you're tagged for handoff">0</span>
     </button>
     <button id="tab-dashboard" onclick="showTab('dashboard')" style="display:none;" role="tab" aria-selected="false" aria-controls="section-dashboard">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
@@ -6304,7 +6334,26 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         </div>
       </div>
 
-      <!-- v24.17.0: Draft resume banner — shows on app load if user has an unsaved draft -->
+      <!-- v24.24.0 (#16) — Mobile stepper UI. Hidden on desktop, hidden on body.full-form-mode.
+           When active, only the .form-section with .is-current-step is shown. -->
+      <div id="mobile-stepper-bar" style="display:none;">
+        <div class="ms-progress-text">Step <span id="ms-step-num">1</span> of <span id="ms-step-total">7</span> · <span id="ms-step-name">Project context</span></div>
+        <div class="ms-progress-rail"><div class="ms-progress-fill" id="ms-progress-fill"></div></div>
+        <div style="margin-top:6px;text-align:right;">
+          <a href="#" onclick="event.preventDefault();_toggleFullFormMode(true);" style="font-size:11.5px;color:var(--ink-subtle);text-decoration:underline;">Switch to full form</a>
+        </div>
+      </div>
+      <!-- v24.24.0 (#16) — Sticky bottom Next/Back action bar for mobile. -->
+      <div id="mobile-stepper-actions" style="display:none;">
+        <button type="button" id="ms-back-btn" onclick="_msStep(-1)">← Back</button>
+        <div style="flex:1;"></div>
+        <button type="button" id="ms-next-btn" onclick="_msStep(1)">Next →</button>
+      </div>
+      <!-- "Switch to mobile" hint shown on phones if user previously toggled full-form -->
+      <div id="full-form-mobile-hint" style="display:none;font-size:12px;color:var(--ink-subtle);text-align:center;margin:8px 0;">
+        <a href="#" onclick="event.preventDefault();_toggleFullFormMode(false);" style="color:var(--indigo,#4F46E5);text-decoration:underline;">Use mobile-friendly stepped form</a>
+      </div>
+
       <div id="draft-resume-banner" style="display:none;margin:12px 0 16px;padding:12px 16px;background:linear-gradient(135deg,rgba(79,70,229,0.06),rgba(99,102,241,0.10));border:1px solid var(--indigo,#4F46E5);border-radius:10px;align-items:center;gap:12px;flex-wrap:wrap;">
         <div style="font-size:20px;line-height:1;">💾</div>
         <div style="flex:1;min-width:200px;">
@@ -7522,6 +7571,95 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
 </div>
 </div>
 
+<!-- v24.23.0 (#19) — Customer 360 modal. Hidden by default; opened via openCustomer360(name).
+     Aggregates all deals visible to the user where e.enduser matches (case-insensitive). -->
+<div id="cust360-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:9000;padding:32px 16px;overflow-y:auto;" onclick="closeCustomer360(event)">
+  <div id="cust360-card" style="max-width:920px;margin:0 auto;background:var(--surface,#FFF);border-radius:14px;box-shadow:0 24px 64px rgba(0,0,0,0.25);padding:0;color:var(--ink,#0F172A);" onclick="event.stopPropagation();">
+    <!-- Header -->
+    <div style="padding:20px 24px;border-bottom:1px solid var(--border,#E5E7EB);display:flex;align-items:center;gap:14px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-subtle,#94A3B8);font-weight:600;">Customer 360</div>
+        <div id="cust360-name" style="font-size:22px;font-weight:600;color:var(--ink,#0F172A);font-family:var(--serif,Georgia,serif);margin-top:2px;line-height:1.2;">—</div>
+      </div>
+      <button onclick="closeCustomer360()" style="background:transparent;border:none;font-size:24px;cursor:pointer;color:var(--ink-subtle,#94A3B8);line-height:1;padding:4px 8px;" title="Close">×</button>
+    </div>
+    <!-- Summary KPI strip -->
+    <div id="cust360-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:18px 24px 0;"></div>
+    <!-- Stage breakdown bar + outcome breakdown -->
+    <div style="padding:18px 24px;display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+      <div>
+        <div style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle,#94A3B8);font-weight:600;margin-bottom:8px;">Stage breakdown · open deals</div>
+        <div id="cust360-stage-bars"></div>
+      </div>
+      <div>
+        <div style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle,#94A3B8);font-weight:600;margin-bottom:8px;">Outcome breakdown · all deals</div>
+        <div id="cust360-outcome-bars"></div>
+      </div>
+    </div>
+    <!-- Deals table -->
+    <div style="padding:6px 24px 24px;">
+      <div style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle,#94A3B8);font-weight:600;margin-bottom:8px;">Deals · most recent first</div>
+      <div id="cust360-deals" style="max-height:340px;overflow-y:auto;border:1px solid var(--border,#E5E7EB);border-radius:8px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- v24.24.0 (#17) — Email templates editor modal. Super-only. -->
+<div id="email-tmpl-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:9000;padding:32px 16px;overflow-y:auto;" onclick="closeEmailTemplatesEditor(event)">
+  <div style="max-width:920px;margin:0 auto;background:var(--surface,#FFF);border-radius:14px;box-shadow:0 24px 64px rgba(0,0,0,0.25);color:var(--ink,#0F172A);" onclick="event.stopPropagation();">
+    <div style="padding:20px 24px;border-bottom:1px solid var(--border,#E5E7EB);display:flex;align-items:center;gap:14px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-subtle,#94A3B8);font-weight:600;">Email templates</div>
+        <div style="font-size:20px;font-weight:600;font-family:var(--serif,Georgia,serif);margin-top:2px;">Edit the quote-send email</div>
+      </div>
+      <button onclick="closeEmailTemplatesEditor()" style="background:transparent;border:none;font-size:24px;cursor:pointer;color:var(--ink-subtle,#94A3B8);line-height:1;padding:4px 8px;" title="Close">×</button>
+    </div>
+    <div style="padding:18px 24px;">
+      <!-- Template selector (will list when more templates are added) -->
+      <div style="margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+        <label style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle,#94A3B8);font-weight:600;">Template:</label>
+        <select id="email-tmpl-id" onchange="loadEmailTemplateForEdit()" style="padding:6px 10px;border:1px solid var(--border,#E5E7EB);border-radius:6px;font-size:13px;">
+          <option value="quote_send">Quote send (used by Email Quote modal)</option>
+        </select>
+        <span id="email-tmpl-meta" style="margin-left:auto;font-size:11px;color:var(--ink-subtle,#94A3B8);">—</span>
+      </div>
+
+      <!-- Available variables hint -->
+      <div style="background:var(--surface-2,#F8FAFC);border:1px solid var(--border,#E5E7EB);border-radius:8px;padding:12px;margin-bottom:14px;">
+        <div style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle,#94A3B8);font-weight:600;margin-bottom:6px;">Available variables — copy into subject or body</div>
+        <div id="email-tmpl-vars" style="font-size:12px;color:var(--ink-muted,#64748B);font-family:monospace;line-height:1.8;"></div>
+      </div>
+
+      <!-- Subject -->
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle,#94A3B8);font-weight:600;margin-bottom:4px;">Subject</label>
+        <input type="text" id="email-tmpl-subject" style="width:100%;padding:10px 12px;border:1px solid var(--border,#E5E7EB);border-radius:6px;font-size:13px;font-family:inherit;">
+      </div>
+
+      <!-- Body -->
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle,#94A3B8);font-weight:600;margin-bottom:4px;">Body</label>
+        <textarea id="email-tmpl-body" rows="14" style="width:100%;padding:10px 12px;border:1px solid var(--border,#E5E7EB);border-radius:6px;font-size:13px;font-family:monospace;line-height:1.5;resize:vertical;"></textarea>
+      </div>
+
+      <!-- Preview -->
+      <details style="margin-bottom:12px;border:1px solid var(--border,#E5E7EB);border-radius:6px;padding:10px 12px;background:var(--surface-2,#F8FAFC);">
+        <summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--ink,#0F172A);">Preview with sample data</summary>
+        <div id="email-tmpl-preview" style="margin-top:10px;font-size:12.5px;line-height:1.55;background:var(--surface,#FFF);border:1px solid var(--border,#E5E7EB);border-radius:6px;padding:12px;font-family:Arial,sans-serif;white-space:pre-wrap;color:var(--ink,#0F172A);">—</div>
+      </details>
+
+      <div id="email-tmpl-error" style="color:#DC2626;font-size:13px;margin-bottom:10px;display:none;"></div>
+
+      <!-- Actions -->
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn-action" onclick="saveEmailTemplate()" id="email-tmpl-save-btn">💾 Save template</button>
+        <button class="btn-secondary" onclick="previewEmailTemplate()">👁 Refresh preview</button>
+        <button class="btn-secondary" onclick="resetEmailTemplate()" style="margin-left:auto;color:#991B1B;border-color:rgba(220,38,38,0.25);" title="Restore the factory default for this template">↺ Reset to default</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="sync-status" id="sync-status"><span class="sync-dot"></span><span id="sync-msg">Saving…</span></div>
 
 <script>
@@ -7539,8 +7677,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.21.3';  // v24.21.3 — Region map remap (no Central, no Northeast; RJ/MP/CG to West, Bihar to North, NE folded into East). Pairs with backend v25.10.0 BU Head visibility.
-// v24.21.2 — Review tab: 7-filter multi-select panel (Source/Region/State/Sales/Presales/End-Client/Consultant); region auto-derived from state; persists to localStorage; collapsible UI
+const FRONTEND_VERSION = '24.24.0';  // v24.24.0 — features #17 (Email templates editable by Super, with quote-send modal pre-fill from server template) + #16 (Mobile stepped-form wizard skeleton: viewport-triggered, 7 steps based on existing form-section divs, Next/Back sticky bar, "Switch to full form" escape, persisted in localStorage). Per-step validation deferred to follow-up. Pairs with backend v25.12.0.
+// v24.23.0 — features #19 Customer 360 modal + #18 server-side handoff notifications.
 // v24.21.1 — robust salesPerson auto-default for Sales/BU Head users: state.form mirror, save-time fallback, initial-load trigger
 // v24.21.0 — security hardening: auth on doGet?action=read GET calls; escape user-controlled fields in renderTeamList + statusEl; formatINR returns ₹0 not — for zero; drop ineffective timeZone option from Number.toLocaleString calls
 // v24.20.0 — Cavitak brand logo as data URL. Used by Excel exports + PDF cover/headers.
@@ -7721,7 +7859,7 @@ function renderDirectoryTable(){
     rows.forEach(function(c){
       const contact = [c.primaryContact, c.primaryPhone, c.primaryEmail].filter(Boolean).join(' · ');
       html += '<tr>';
-      html += '<td><b>' + dirEsc_(c.name) + '</b>' + (c.website ? '<br><span style="font-size:11px;color:var(--ink-subtle)">' + dirEsc_(c.website) + '</span>' : '') + '</td>';
+      html += '<td><b><a href="#" onclick="event.preventDefault();openCustomer360(\'' + dirEsc_(c.name).replace(/'/g, "\\'") + '\')" style="color:var(--indigo,#4F46E5);text-decoration:none;border-bottom:1px dashed var(--indigo,#4F46E5);" title="Customer 360 — see all deals">' + dirEsc_(c.name) + '</a></b>' + (c.website ? '<br><span style="font-size:11px;color:var(--ink-subtle)">' + dirEsc_(c.website) + '</span>' : '') + '</td>';
       html += '<td>' + dirEsc_(c.industry || '—') + '</td>';
       html += '<td>' + dirEsc_([c.city,c.state].filter(Boolean).join(', ') || '—') + '</td>';
       html += '<td style="font-size:12px">' + (dirEsc_(contact) || '—') + '</td>';
@@ -8970,6 +9108,8 @@ function getCmsPrice(vendor, priceType, term){
     _saveNotifs_(list);
     renderNotifBell();
     renderNotifPanel();
+    // v24.23.0 (#18): propagate to server so other devices see the same state
+    try { if (typeof window.markAllServerNotificationsRead === 'function') window.markAllServerNotificationsRead(); } catch(_){}
   };
 
   window.markNotificationRead = function(id) {
@@ -9002,6 +9142,8 @@ function getCmsPrice(vendor, priceType, term){
     if (!panel || !bell) return;
     const isOpen = panel.classList.contains('open');
     if (isOpen) { closeNotifPanel(); return; }
+    // v24.23.0 (#18) — refresh server notifications on bell open (cheap, throttled)
+    try { if (typeof window.fetchServerNotifications === 'function') window.fetchServerNotifications(); } catch(_){}
     if (panel.parentNode !== document.body) document.body.appendChild(panel);
     const rect = bell.getBoundingClientRect();
     const panelWidth = 360;
@@ -9059,9 +9201,15 @@ function getCmsPrice(vendor, priceType, term){
       });
     };
     body.innerHTML = list.map(function(n) {
-      return '<div class="notif-item ' + (n.read ? '' : 'unread') + '" onclick="markNotificationRead(\'' + E(n.id) + '\'); renderNotifPanel();">' +
+      // v24.23.0 (#18): server-origin notifs (NTF-) jump to History + scroll to refId
+      const isHandoff = n.serverNotif && n.refId;
+      const onclickJS = isHandoff
+        ? "markNotificationRead('" + E(n.id) + "'); closeNotifPanel(); window.openDealByRefId && window.openDealByRefId('" + E(n.refId) + "'); renderNotifPanel();"
+        : "markNotificationRead('" + E(n.id) + "'); renderNotifPanel();";
+      const arrow = isHandoff ? '<span style="float:right;font-size:14px;opacity:0.5;">→</span>' : '';
+      return '<div class="notif-item ' + (n.read ? '' : 'unread') + '" style="cursor:pointer;" onclick="' + onclickJS + '">' +
         '<div class="notif-item-body">' +
-          '<div class="notif-item-title">' + E(n.title) + '</div>' +
+          '<div class="notif-item-title">' + E(n.title) + arrow + '</div>' +
           (n.sub ? '<div class="notif-item-sub">' + E(n.sub) + '</div>' : '') +
           '<div class="notif-item-time">' + _relativeNotifTime_(n.ts) + '</div>' +
         '</div>' +
@@ -9070,9 +9218,132 @@ function getCmsPrice(vendor, priceType, term){
   }
   window.renderNotifPanel = renderNotifPanel;
 
+  /* v24.23.0 (#18) — Server-side handoff notifications.
+     Polls the backend on login, after any deal save, and when the bell opens.
+     Newly-fetched server notifications get merged into the same localStorage queue
+     used by client-side push — same UI, same dropdown, same UX.
+     Backend is the source of truth for "deals where I've been tagged"; localStorage
+     handles offline/UX events (saved a quote, customer merged, etc.) the bell already shows.
+     Server notifs use ID prefix "NTF-" so we de-dupe against re-fetches. */
+  window._lastServerNotifFetchMs = 0;
+  window.fetchServerNotifications = async function(opts) {
+    opts = opts || {};
+    if (!state || !state.user || !state.user.loginName || !WEBHOOK_URL) return;
+    // Throttle: don't refetch within 30s unless caller forces it
+    const now = Date.now();
+    if (!opts.force && (now - window._lastServerNotifFetchMs) < 30000) return;
+    window._lastServerNotifFetchMs = now;
+    try {
+      const pwHash = await getCurrentAuthHash();
+      const resp = await fetch(WEBHOOK_URL, {
+        method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          action: 'notifications_list',
+          requesterLoginName: state.user.loginName,
+          requesterPasswordHash: pwHash
+        })
+      });
+      const data = await resp.json();
+      if (!data || data.status !== 'ok' || !Array.isArray(data.notifications)) return;
+      // Merge into localStorage queue. ID prefix "NTF-" identifies server origin.
+      const localList = _loadNotifs_();
+      const existingIds = {};
+      localList.forEach(function(n) { if (n && n.id) existingIds[n.id] = true; });
+      let added = 0;
+      // Walk newest→oldest so unshift order keeps newest at top
+      data.notifications.forEach(function(srv) {
+        if (existingIds[srv.notifId]) {
+          // Update the read flag if the server says it's read
+          if (srv.readAt) {
+            const idx = localList.findIndex(function(n) { return n.id === srv.notifId; });
+            if (idx >= 0) localList[idx].read = true;
+          }
+          return;
+        }
+        // Build a UI-shaped notification
+        const subBits = [];
+        if (srv.refId) subBits.push(srv.refId);
+        if (srv.creator) subBits.push('from ' + srv.creator);
+        localList.push({
+          id: srv.notifId,
+          title: srv.message || (srv.type === 'sales' ? 'Tagged as Sales' : 'Tagged as Presales'),
+          sub: subBits.join(' · '),
+          type: 'info',
+          ts: srv.ts,
+          read: !!srv.readAt,
+          // Custom payload for click-through
+          serverNotif: true,
+          refId: srv.refId
+        });
+        added++;
+      });
+      // Sort by ts desc, cap, save
+      localList.sort(function(a, b) { return Date.parse(b.ts || 0) - Date.parse(a.ts || 0); });
+      _saveNotifs_(localList);
+      if (added > 0 || data.notifications.some(function(s) { return !!s.readAt; })) {
+        renderNotifBell();
+      }
+    } catch (err) {
+      console.warn('[fetchServerNotifications]', err);
+    }
+  };
+
+  /* v24.23.0 (#18) — Mark all server notifications as read on the backend.
+     Triggered when the user opens the panel and clicks "Mark all read", OR after we
+     auto-mark all on panel open (matches existing UX). Frontend already updates the
+     localStorage flags; this just propagates to the server so other devices get parity. */
+  window.markAllServerNotificationsRead = async function() {
+    if (!state || !state.user || !state.user.loginName || !WEBHOOK_URL) return;
+    try {
+      const pwHash = await getCurrentAuthHash();
+      // No need to wait for response — fire and forget
+      fetch(WEBHOOK_URL, {
+        method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          action: 'notifications_mark_read',
+          requesterLoginName: state.user.loginName,
+          requesterPasswordHash: pwHash,
+          markAll: true
+        })
+      }).catch(function() { /* fire-and-forget */ });
+    } catch (_) {}
+  };
+
   setTimeout(renderNotifBell, 200);
   window.addEventListener('load', function() { setTimeout(renderNotifBell, 500); });
 })();
+
+/* v24.23.0 (#18) — Open a specific deal in the History tab. Used by handoff
+   notification clickthrough. Switches to History tab, then highlights the row
+   matching refId. Falls back gracefully if the deal isn't visible to the user. */
+window.openDealByRefId = function(refId){
+  if (!refId) return;
+  try {
+    if (typeof showTab === 'function') showTab('log');
+    // Wait for History to render then find + flash the row
+    setTimeout(function() {
+      const entries = window._currentLogEntries || [];
+      const idx = entries.findIndex(function(e) { return e && e.refId === refId; });
+      if (idx < 0) {
+        if (typeof showSync === 'function') showSync('Deal not in your visible history', 'error');
+        return;
+      }
+      const row = document.querySelector('[data-entry-idx="' + idx + '"]');
+      if (row) {
+        row.scrollIntoView({ behavior:'smooth', block:'center' });
+        row.style.transition = 'box-shadow 0.4s ease, background 0.4s ease';
+        const orig = row.style.background;
+        row.style.background = 'rgba(79,70,229,0.10)';
+        row.style.boxShadow = '0 0 0 2px var(--indigo,#4F46E5)';
+        setTimeout(function() {
+          row.style.background = orig;
+          row.style.boxShadow = '';
+        }, 1800);
+      }
+    }, 200);
+  } catch (e) { console.warn('[openDealByRefId]', e); }
+};
+
 
 /* v24.16.0 — _readDealValue helper hoist.
    Centralizes the 3-name fallback for legacy data: dealValueINR (current), dealValue,
@@ -9082,6 +9353,90 @@ function _readDealValue(r){
   const v = parseFloat(r.dealValueINR || r.dealValue || r.dealvalueinr || 0);
   return (isFinite(v) && v > 0) ? v : 0;
 }
+
+/* v24.24.0 (#17) — Email templates.
+   Fetches templates once on login, caches in window._emailTemplates + localStorage.
+   _renderEmailTemplate(id, vars) returns {subject, body} with {{vars}} substituted.
+   On miss (template not loaded yet, or unknown id) returns null and caller falls back
+   to its hardcoded copy — never breaks the email modal. */
+window._emailTemplates = null;
+window._emailTemplatesFetchedAt = 0;
+
+window._fetchEmailTemplates = async function(opts){
+  opts = opts || {};
+  if(!state || !state.user || !state.user.loginName || !WEBHOOK_URL) return;
+  const now = Date.now();
+  // 5-minute throttle. Force=true on first login, manual refresh, or after a Save in editor.
+  if(!opts.force && (now - window._emailTemplatesFetchedAt) < 5*60*1000) return;
+  window._emailTemplatesFetchedAt = now;
+  try {
+    const pwHash = await getCurrentAuthHash();
+    const resp = await fetch(WEBHOOK_URL, {
+      method:'POST', mode:'cors', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        action:'email_templates_list',
+        requesterLoginName: state.user.loginName,
+        requesterPasswordHash: pwHash
+      })
+    });
+    const data = await resp.json();
+    if(!data || data.status !== 'ok' || !data.templates) return;
+    window._emailTemplates = data.templates;
+    try { localStorage.setItem('bs-email-templates-cache', JSON.stringify(data.templates)); } catch(_){}
+  } catch(err){
+    console.warn('[fetchEmailTemplates]', err);
+    // Try cache fallback
+    if(!window._emailTemplates){
+      try {
+        const cached = localStorage.getItem('bs-email-templates-cache');
+        if(cached) window._emailTemplates = JSON.parse(cached);
+      } catch(_){}
+    }
+  }
+};
+
+/* Render a stored template against a vars dict. Substitutes {{varName}} with vars[varName].
+   Missing vars become empty string (not literal "{{x}}") so users never see broken merges.
+   Returns null if no template loaded yet — caller falls back to hardcoded default. */
+window._renderEmailTemplate = function(templateId, vars){
+  // First call may race with fetch; opportunistically pull cache from localStorage
+  if(!window._emailTemplates){
+    try {
+      const cached = localStorage.getItem('bs-email-templates-cache');
+      if(cached) window._emailTemplates = JSON.parse(cached);
+    } catch(_){}
+  }
+  const t = window._emailTemplates && window._emailTemplates[templateId];
+  if(!t) return null;
+  const sub = function(text){
+    return String(text || '').replace(/\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g, function(_, name){
+      return (vars && vars[name] != null) ? String(vars[name]) : '';
+    });
+  };
+  // Drop sign-off lines that resolve to empty (e.g., user has no phone).
+  // Detection: lines that are JUST the variable, or "📞 {{phone}}" style — if the var was empty,
+  // the rendered line is just whitespace or the prefix glyph. We trim and drop blank or "📞" lines.
+  const renderedBody = sub(t.body || '')
+    .split('\n')
+    .filter(function(line, idx, all){
+      const trimmed = line.trim();
+      if(trimmed === '') {
+        // Keep intentional blank lines (between paragraphs) but drop trailing or doubled
+        const next = all[idx+1] || '';
+        const prev = all[idx-1] || '';
+        if(next.trim() === '' && prev.trim() === '') return false;
+        return true;
+      }
+      // Drop lines that are just the phone-icon prefix (means {{senderPhone}} was empty)
+      if(trimmed === '📞' || trimmed === '📞 ') return false;
+      return true;
+    })
+    .join('\n');
+  return {
+    subject: sub(t.subject || ''),
+    body: renderedBody
+  };
+};
 
 function formatINR(amount){
   if(amount==null||isNaN(amount))return '—';
@@ -10617,7 +10972,10 @@ function _applyPostLoginUI(){
   const reviewTab = document.getElementById('tab-review');
   if(reviewTab){
     const role = (String(u.role || '')).trim();
-    const showReview = u.isSuper || role === 'BrightSign';
+    // v24.21.4 — BU Head needs Review tab to see their region's data and team analytics.
+    // Without this, the v25.10.0 region+reportsTo backend work delivered to a tab they
+    // couldn't access. Pattern: Super OR BrightSign OR BU Head (any case/spacing variant).
+    const showReview = u.isSuper || role === 'BrightSign' || /BU.?Head/i.test(role);
     reviewTab.style.display = showReview ? 'inline-flex' : 'none';
   }
   document.getElementById('page-login').classList.remove('active');
@@ -10659,6 +11017,18 @@ function _applyPostLoginUI(){
       if(typeof _populateSalesPresalesDropdowns === 'function') _populateSalesPresalesDropdowns();
     }catch(_){ /* defensive */ }
   }, 150);
+  // v24.23.0 (#18): pull handoff notifications from server post-login
+  setTimeout(function(){
+    try{
+      if(typeof window.fetchServerNotifications === 'function') window.fetchServerNotifications({force:true});
+    }catch(_){}
+  }, 800);
+  // v24.24.0 (#17): pull email templates post-login (cached for offline use)
+  setTimeout(function(){
+    try{
+      if(typeof window._fetchEmailTemplates === 'function') window._fetchEmailTemplates({force:true});
+    }catch(_){}
+  }, 1200);
 }
 
 /* v24.14.11: Page-load rehydrate. Returns true if session restored, false otherwise.
@@ -11331,6 +11701,7 @@ async function renderSuperTeamView(host){
     <div class="team-toolbar">
       <button class="btn-action" onclick="showAddUserModal()">➕ Add user</button>
       <button class="btn-secondary" onclick="renderTeamTab()">↻ Refresh</button>
+      <button class="btn-secondary" onclick="openEmailTemplatesEditor()" title="Edit the email body Super uses for quote sends. Variables in {{double_braces}} are filled in at send time.">✉️ Email templates</button>
       <span id="reset-req-badge-wrap" style="display:none;margin-left:auto;"><button class="btn-secondary reset-req-badge-btn" onclick="document.getElementById('reset-requests-host').scrollIntoView({behavior:'smooth',block:'start'});">🔑 <span id="reset-req-count">0</span> pending request<span id="reset-req-s">s</span></button></span>
       <span id="errors-badge-wrap" style="display:none;"><button class="btn-secondary errors-badge-btn" onclick="document.getElementById('errors-host').scrollIntoView({behavior:'smooth',block:'start'});" style="background:rgba(220,38,38,0.08);border-color:rgba(220,38,38,0.25);color:#991B1B;">⚠️ <span id="errors-badge-count">0</span> error<span id="errors-badge-s">s</span> (24h)</button></span>
     </div>
@@ -11570,7 +11941,363 @@ function prettifyFieldName(f){
   return map[f]||f;
 }
 
+/* v24.23.0 (#19) — Customer 360 modal.
+   Aggregates all deals visible to the user where e.enduser matches (case-insensitive).
+   Pure-frontend: reads window._centralLog (already backend-scoped). No new API calls.
+   Triggered from: History row enduser link, Directory customer name link.
+*/
+function openCustomer360(customerName){
+  const name = String(customerName || '').trim();
+  if(!name){ return; }
+  const log = Array.isArray(window._centralLog) ? window._centralLog : [];
+  const target = name.toLowerCase();
+  const deals = log.filter(function(e){
+    return String(e.enduser || '').trim().toLowerCase() === target;
+  }).sort(function(a, b){
+    const ta = a.ts ? Date.parse(a.ts) : 0;
+    const tb = b.ts ? Date.parse(b.ts) : 0;
+    return tb - ta;
+  });
+
+  const displayName = deals.length > 0 ? String(deals[0].enduser || name).trim() : name;
+  const modal = document.getElementById('cust360-modal');
+  if(!modal){ return; }
+  document.getElementById('cust360-name').textContent = displayName;
+
+  if(deals.length === 0){
+    document.getElementById('cust360-kpis').innerHTML = '';
+    document.getElementById('cust360-stage-bars').innerHTML = '<div style="font-size:13px;color:var(--ink-subtle,#94A3B8);padding:12px 0;">No deals found for this customer in your visible history.</div>';
+    document.getElementById('cust360-outcome-bars').innerHTML = '';
+    document.getElementById('cust360-deals').innerHTML = '<div style="padding:18px;font-size:13px;color:var(--ink-subtle,#94A3B8);text-align:center;">No deals visible.</div>';
+    modal.style.display = 'block';
+    return;
+  }
+
+  const totalDeals = deals.length;
+  let totalValue = 0, openValue = 0, openCount = 0, wonValue = 0, wonCount = 0, lostCount = 0;
+  const partnerSet = {}, cityList = {};
+  let latestTs = 0;
+  deals.forEach(function(e){
+    const v = (typeof _readDealValue === 'function') ? _readDealValue(e) : (parseFloat(e.dealValue || e.dealValueINR || 0) || 0);
+    totalValue += v;
+    const outcome = String(e.outcome || 'open').toLowerCase();
+    if(outcome === 'open'){ openValue += v; openCount++; }
+    if(outcome === 'won'){  wonValue += v; wonCount++; }
+    if(outcome === 'lost'){ lostCount++; }
+    if(e.partner) partnerSet[String(e.partner).trim().toLowerCase()] = String(e.partner).trim();
+    if(e.city) cityList[String(e.city).trim()] = true;
+    const t = e.ts ? Date.parse(e.ts) : 0;
+    if(t > latestTs) latestTs = t;
+  });
+  const partnerCount = Object.keys(partnerSet).length;
+  const cityCountN = Object.keys(cityList).length;
+  const winRate = (wonCount + lostCount) > 0 ? Math.round((wonCount / (wonCount + lostCount)) * 100) : null;
+
+  const _fmt = function(n){
+    if(typeof formatINR === 'function') return formatINR(n);
+    return '₹' + (n || 0).toLocaleString('en-IN');
+  };
+  const lastActivityStr = latestTs > 0
+    ? new Date(latestTs).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
+    : '—';
+
+  const kpiHTML = [
+    _kpiTile('Total deals', totalDeals, totalDeals + ' deal' + (totalDeals === 1 ? '' : 's'), '#4F46E5'),
+    _kpiTile('Pipeline value', _fmt(totalValue), 'Lifetime', '#10B981'),
+    _kpiTile('Open deals', openCount + ' · ' + _fmt(openValue), 'Active right now', '#F59E0B'),
+    _kpiTile('Last activity', lastActivityStr, partnerCount + ' partner' + (partnerCount === 1 ? '' : 's') + ' · ' + cityCountN + ' citie' + (cityCountN === 1 ? '' : 's'), '#8B5CF6')
+  ].join('');
+  document.getElementById('cust360-kpis').innerHTML = kpiHTML;
+
+  const stageOrder = ['Lead','Opportunity','Proposal','Negotiation','Order'];
+  const stageCount = { Lead:0, Opportunity:0, Proposal:0, Negotiation:0, Order:0 };
+  deals.forEach(function(e){
+    if(String(e.outcome || 'open').toLowerCase() !== 'open') return;
+    const s = String(e.stage || '').trim();
+    if(stageCount[s] !== undefined) stageCount[s]++;
+  });
+  const maxStage = Math.max.apply(null, stageOrder.map(function(s){ return stageCount[s]; }).concat([1]));
+  let stageHTML = '';
+  stageOrder.forEach(function(s){
+    const n = stageCount[s];
+    const pct = Math.round((n / maxStage) * 100);
+    stageHTML += '<div style="display:flex;align-items:center;gap:10px;font-size:12px;margin-bottom:6px;">' +
+      '<div style="width:96px;color:var(--ink-muted,#64748B);">' + s + '</div>' +
+      '<div style="flex:1;height:8px;background:var(--surface-2,#F1F5F9);border-radius:4px;overflow:hidden;">' +
+        (n > 0 ? '<div style="height:100%;width:' + pct + '%;background:#4F46E5;border-radius:4px;"></div>' : '') +
+      '</div>' +
+      '<div style="min-width:24px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink,#0F172A);">' + n + '</div>' +
+      '</div>';
+  });
+  if (openCount === 0) {
+    stageHTML = '<div style="font-size:13px;color:var(--ink-subtle,#94A3B8);padding:8px 0;">No open deals — see Outcome breakdown for closed history.</div>';
+  }
+  document.getElementById('cust360-stage-bars').innerHTML = stageHTML;
+
+  const outcomeMap = { open:0, won:0, lost:0, 'on-hold':0 };
+  deals.forEach(function(e){
+    const o = String(e.outcome || 'open').toLowerCase();
+    if(outcomeMap[o] !== undefined) outcomeMap[o]++;
+  });
+  const outcomeColors = { open:'#3B82F6', won:'#10B981', lost:'#EF4444', 'on-hold':'#F59E0B' };
+  const outcomeLabels = { open:'Open', won:'Won', lost:'Lost', 'on-hold':'On hold' };
+  const maxOut = Math.max.apply(null, Object.keys(outcomeMap).map(function(k){ return outcomeMap[k]; }).concat([1]));
+  let outcomeHTML = '';
+  ['open','won','lost','on-hold'].forEach(function(k){
+    const n = outcomeMap[k];
+    const pct = Math.round((n / maxOut) * 100);
+    outcomeHTML += '<div style="display:flex;align-items:center;gap:10px;font-size:12px;margin-bottom:6px;">' +
+      '<div style="width:80px;color:var(--ink-muted,#64748B);">' + outcomeLabels[k] + '</div>' +
+      '<div style="flex:1;height:8px;background:var(--surface-2,#F1F5F9);border-radius:4px;overflow:hidden;">' +
+        (n > 0 ? '<div style="height:100%;width:' + pct + '%;background:' + outcomeColors[k] + ';border-radius:4px;"></div>' : '') +
+      '</div>' +
+      '<div style="min-width:24px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink,#0F172A);">' + n + '</div>' +
+      '</div>';
+  });
+  if (winRate !== null) {
+    outcomeHTML += '<div style="font-size:11px;color:var(--ink-subtle,#94A3B8);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border,#E5E7EB);">' +
+      'Win rate: <b style="color:#10B981;">' + winRate + '%</b> (Won &divide; Closed)</div>';
+  }
+  document.getElementById('cust360-outcome-bars').innerHTML = outcomeHTML;
+
+  const _resolveOwnerName = function(login){
+    if(!login) return '—';
+    const u = (window._allUsers || []).find(function(x){
+      return String(x.loginName || '').toLowerCase() === String(login).toLowerCase();
+    });
+    return u ? (u.fullName || u.loginName) : login;
+  };
+  let dealsHTML = '<table style="width:100%;border-collapse:collapse;font-size:12.5px;">';
+  dealsHTML += '<thead><tr style="background:var(--surface-2,#F1F5F9);text-align:left;">' +
+    '<th style="padding:8px 10px;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle,#94A3B8);">Date</th>' +
+    '<th style="padding:8px 10px;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle,#94A3B8);">Project</th>' +
+    '<th style="padding:8px 10px;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle,#94A3B8);">Stage</th>' +
+    '<th style="padding:8px 10px;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle,#94A3B8);">Outcome</th>' +
+    '<th style="padding:8px 10px;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle,#94A3B8);">Sales / Presales</th>' +
+    '<th style="padding:8px 10px;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle,#94A3B8);text-align:right;">Value</th>' +
+    '</tr></thead><tbody>';
+  deals.forEach(function(e){
+    const d = e.ts ? new Date(e.ts) : null;
+    const dateStr = d ? d.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'2-digit' }) : '—';
+    const v = (typeof _readDealValue === 'function') ? _readDealValue(e) : (parseFloat(e.dealValue || e.dealValueINR || 0) || 0);
+    const outcome = String(e.outcome || 'open').toLowerCase();
+    const outcomeBg = { open:'#EFF6FF', won:'#F0FDF4', lost:'#FEF2F2', 'on-hold':'#FFFBEB' }[outcome] || '#F1F5F9';
+    const outcomeFg = { open:'#1E40AF', won:'#166534', lost:'#991B1B', 'on-hold':'#92400E' }[outcome] || '#475569';
+    const salesName = _resolveOwnerName(e.salesPerson);
+    const presalesName = _resolveOwnerName(e.presalesPerson);
+    const handoff = (e.salesPerson || e.presalesPerson)
+      ? (e.salesPerson ? '<b>S:</b> ' + escapeHtml(salesName) : '') +
+        (e.salesPerson && e.presalesPerson ? ' &middot; ' : '') +
+        (e.presalesPerson ? '<b>P:</b> ' + escapeHtml(presalesName) : '')
+      : '—';
+    dealsHTML += '<tr style="border-top:1px solid var(--border,#E5E7EB);">' +
+      '<td style="padding:8px 10px;color:var(--ink-muted,#64748B);font-family:monospace;white-space:nowrap;">' + escapeHtml(dateStr) + (e.refId ? '<br><span style="font-size:10px;opacity:0.65;">' + escapeHtml(e.refId) + '</span>' : '') + '</td>' +
+      '<td style="padding:8px 10px;"><b>' + escapeHtml(e.project || '—') + '</b><br><span style="font-size:11px;color:var(--ink-subtle,#94A3B8);">' + escapeHtml(e.partner || '—') + ' &middot; ' + escapeHtml(e.city || '—') + '</span></td>' +
+      '<td style="padding:8px 10px;color:var(--ink,#0F172A);">' + escapeHtml(e.stage || '—') + '</td>' +
+      '<td style="padding:8px 10px;"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:700;letter-spacing:0.04em;background:' + outcomeBg + ';color:' + outcomeFg + ';">' + escapeHtml((e.outcome || 'open').toUpperCase()) + '</span></td>' +
+      '<td style="padding:8px 10px;font-size:11.5px;color:var(--ink-muted,#64748B);">' + handoff + '</td>' +
+      '<td style="padding:8px 10px;text-align:right;font-variant-numeric:tabular-nums;">' + (v > 0 ? _fmt(v) : '—') + '</td>' +
+      '</tr>';
+  });
+  dealsHTML += '</tbody></table>';
+  document.getElementById('cust360-deals').innerHTML = dealsHTML;
+
+  modal.style.display = 'block';
+  document.addEventListener('keydown', _cust360EscClose);
+}
+
+function _kpiTile(label, value, sub, color){
+  return '<div style="background:var(--surface-2,#F8FAFC);border:1px solid var(--border,#E5E7EB);border-radius:10px;padding:12px;border-left:3px solid ' + color + ';">' +
+    '<div style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-subtle,#94A3B8);font-weight:600;">' + label + '</div>' +
+    '<div style="font-size:18px;font-weight:600;color:var(--ink,#0F172A);font-family:var(--serif,Georgia,serif);margin-top:4px;line-height:1.2;">' + value + '</div>' +
+    '<div style="font-size:11px;color:var(--ink-subtle,#94A3B8);margin-top:2px;">' + sub + '</div>' +
+    '</div>';
+}
+
+function closeCustomer360(ev){
+  if(ev && ev.type === 'click' && ev.target && ev.target.id !== 'cust360-modal') return;
+  const modal = document.getElementById('cust360-modal');
+  if(modal) modal.style.display = 'none';
+  document.removeEventListener('keydown', _cust360EscClose);
+}
+
+function _cust360EscClose(e){
+  if(e.key === 'Escape') closeCustomer360();
+}
+
 /* v24.2.12: Toggle inline history panel, fetches audit log on first open */
+/* v24.24.0 (#17) — Super-only Email Templates editor.
+   Opens a modal listing templates, lets Super edit subject + body, saves to backend.
+   Validates variable names against per-template whitelist BEFORE save (matches backend rule
+   so errors surface here rather than after a round-trip). */
+const TEMPLATE_KNOWN_VARS = {
+  quote_send: ['customerName', 'projectName', 'quoteNumber', 'totalValue',
+               'senderName', 'senderTitle', 'senderPhone',
+               'playerLine', 'quantity', 'validUntil', 'endUser']
+};
+
+window.openEmailTemplatesEditor = async function(){
+  if(!state.user || !state.user.isSuper){
+    alert('Email templates are Super only.');
+    return;
+  }
+  try { await window._fetchEmailTemplates({force:true}); } catch(_){}
+  document.getElementById('email-tmpl-modal').style.display = 'block';
+  loadEmailTemplateForEdit();
+};
+
+window.closeEmailTemplatesEditor = function(ev){
+  if(ev && ev.type === 'click' && ev.target && ev.target.id !== 'email-tmpl-modal') return;
+  document.getElementById('email-tmpl-modal').style.display = 'none';
+};
+
+window.loadEmailTemplateForEdit = function(){
+  const id = document.getElementById('email-tmpl-id').value;
+  const t = (window._emailTemplates || {})[id];
+  const subjEl = document.getElementById('email-tmpl-subject');
+  const bodyEl = document.getElementById('email-tmpl-body');
+  const metaEl = document.getElementById('email-tmpl-meta');
+  const varsEl = document.getElementById('email-tmpl-vars');
+  const errEl = document.getElementById('email-tmpl-error');
+  errEl.style.display = 'none';
+  if(!t){
+    subjEl.value = '';
+    bodyEl.value = '';
+    metaEl.textContent = 'Not loaded — click Save to create from default.';
+  } else {
+    subjEl.value = t.subject || '';
+    bodyEl.value = t.body || '';
+    let metaText = '';
+    if(t.updatedAt){
+      try {
+        const d = new Date(t.updatedAt);
+        metaText = 'Last edited: ' + d.toLocaleString('en-IN', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+        if(t.updatedBy) metaText += ' by ' + t.updatedBy;
+      } catch(_){}
+    }
+    metaEl.textContent = metaText;
+  }
+  const known = TEMPLATE_KNOWN_VARS[id] || [];
+  varsEl.innerHTML = known.map(function(v){
+    return '<code style="background:var(--surface,#FFF);border:1px solid var(--border,#E5E7EB);padding:2px 6px;border-radius:4px;cursor:pointer;margin-right:4px;display:inline-block;" onclick="navigator.clipboard.writeText(\'{{' + v + '}}\').then(function(){showSync(\'Copied {{' + v + '}}\',\'success\');})" title="Click to copy">{{' + v + '}}</code>';
+  }).join(' ');
+  previewEmailTemplate();
+};
+
+window.previewEmailTemplate = function(){
+  const subj = document.getElementById('email-tmpl-subject').value;
+  const body = document.getElementById('email-tmpl-body').value;
+  const sampleVars = {
+    customerName: 'Mr. Sample Partner',
+    projectName: 'Bangalore Tech Park Phase 2',
+    quoteNumber: 'BS-2026050801',
+    totalValue: '₹2,45,000',
+    senderName: 'Dipenkumar G',
+    senderTitle: 'Director — Marketing',
+    senderPhone: '+91 98765 43210',
+    playerLine: 'XD235 — Compact 4K player',
+    quantity: '12 units',
+    validUntil: '23 May 2026',
+    endUser: 'Acme Industries'
+  };
+  const sub = function(text){
+    return String(text || '').replace(/\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g, function(_, name){
+      return (sampleVars[name] != null) ? String(sampleVars[name]) : '';
+    });
+  };
+  const previewEl = document.getElementById('email-tmpl-preview');
+  const renderedSubj = sub(subj);
+  const renderedBody = sub(body);
+  previewEl.innerHTML =
+    '<div style="font-weight:600;border-bottom:1px solid var(--border,#E5E7EB);padding-bottom:6px;margin-bottom:8px;">Subject: ' +
+      String(renderedSubj || '—').replace(/[&<>]/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}) +
+    '</div>' +
+    '<div style="white-space:pre-wrap;">' +
+      String(renderedBody || '—').replace(/[&<>]/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}) +
+    '</div>';
+};
+
+window.saveEmailTemplate = async function(){
+  if(!state.user || !state.user.isSuper) return;
+  const id = document.getElementById('email-tmpl-id').value;
+  const subj = document.getElementById('email-tmpl-subject').value.trim();
+  const body = document.getElementById('email-tmpl-body').value.trim();
+  const errEl = document.getElementById('email-tmpl-error');
+  const btn = document.getElementById('email-tmpl-save-btn');
+  errEl.style.display = 'none';
+  if(!subj){ errEl.textContent = 'Subject is required.'; errEl.style.display = 'block'; return; }
+  if(!body){ errEl.textContent = 'Body is required.'; errEl.style.display = 'block'; return; }
+  const known = TEMPLATE_KNOWN_VARS[id] || [];
+  const referenced = (subj + '\n' + body).match(/\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g) || [];
+  const refNames = {};
+  referenced.forEach(function(r){ refNames[r.replace(/[\{\}\s]/g, '')] = true; });
+  const unknown = Object.keys(refNames).filter(function(v){ return known.indexOf(v) === -1; });
+  if(unknown.length){
+    errEl.textContent = 'Unknown variable(s): ' + unknown.join(', ') + '. Allowed: ' + known.join(', ');
+    errEl.style.display = 'block';
+    return;
+  }
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const pwHash = await getCurrentAuthHash();
+    const resp = await fetch(WEBHOOK_URL, {
+      method:'POST', mode:'cors', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        action: 'email_template_update',
+        templateId: id,
+        subject: subj,
+        body: body,
+        requesterLoginName: state.user.loginName,
+        requesterPasswordHash: pwHash
+      })
+    });
+    const data = await resp.json();
+    if(!data || data.status !== 'ok'){
+      errEl.textContent = (data && data.message) || 'Save failed.';
+      errEl.style.display = 'block';
+    } else {
+      showSync('Template saved ✓', 'success');
+      await window._fetchEmailTemplates({force:true});
+      loadEmailTemplateForEdit();
+    }
+  } catch(err){
+    errEl.textContent = 'Network error: ' + err.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Save template';
+  }
+};
+
+window.resetEmailTemplate = async function(){
+  if(!state.user || !state.user.isSuper) return;
+  const id = document.getElementById('email-tmpl-id').value;
+  if(!confirm('Reset "' + id + '" template to its factory default? Your edits will be replaced.')) return;
+  try {
+    const pwHash = await getCurrentAuthHash();
+    const resp = await fetch(WEBHOOK_URL, {
+      method:'POST', mode:'cors', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        action: 'email_template_reset',
+        templateId: id,
+        requesterLoginName: state.user.loginName,
+        requesterPasswordHash: pwHash
+      })
+    });
+    const data = await resp.json();
+    if(!data || data.status !== 'ok'){
+      const errEl = document.getElementById('email-tmpl-error');
+      errEl.textContent = (data && data.message) || 'Reset failed.';
+      errEl.style.display = 'block';
+      return;
+    }
+    showSync('Template reset to default ✓', 'success');
+    await window._fetchEmailTemplates({force:true});
+    loadEmailTemplateForEdit();
+  } catch(err){
+    alert('Network error: ' + err.message);
+  }
+};
+
 /* v24.16.0 — Revisions modal viewer.
    Fetches up to 3 archived snapshots for a deal (per refId) from the Revisions
    sheet. Backend route: revisions_list. Shows side-by-side comparison cards
@@ -12677,6 +13404,140 @@ async function requireAuth(){
 window.addEventListener('beforeunload',function(){
   stopSessionTimer();
   state.user=null;
+});
+
+/* v24.24.0 (#16) — Mobile stepped-form wizard.
+   Rules of engagement:
+   - Activated when viewport width ≤ 720px (matches existing mobile breakpoint).
+   - Each .form-section in #section-form becomes one wizard step.
+   - At any time exactly one section is "current"; the others are hidden via CSS.
+   - User navigates via Next/Back buttons in a sticky bottom bar.
+   - "Switch to full form" link toggles full-form-mode (persisted in localStorage).
+   - Submit button stays at the bottom of the LAST section (existing behavior).
+   - This release is the wizard SKELETON. Per-step required-field validation will be
+     wired in a follow-up — for v24.24.0 the user can move freely between steps.
+*/
+window._currentStep = 0;
+window._stepCount = 0;
+
+window._initStepper = function(){
+  // Read all .form-section elements inside #section-form, attach data-step attr
+  const formRoot = document.getElementById('section-form');
+  if(!formRoot) return;
+  const sections = formRoot.querySelectorAll('.form-section');
+  window._stepCount = sections.length;
+  sections.forEach(function(s, i){
+    s.dataset.step = String(i);
+    if(i === 0) s.classList.add('is-current-step');
+    else s.classList.remove('is-current-step');
+  });
+  window._currentStep = 0;
+  // Decide initial mode: if user previously chose full-form, honor that
+  const savedMode = localStorage.getItem('bs-form-mode');
+  if(savedMode === 'full-form'){
+    document.body.classList.add('full-form-mode');
+  } else {
+    document.body.classList.remove('full-form-mode');
+  }
+  // stepper-mode is added/removed based on viewport
+  _applyStepperMode();
+  _renderStepperUI();
+  // Re-evaluate on resize (e.g., rotation)
+  if(!window._stepperResizeWired){
+    window.addEventListener('resize', _applyStepperMode);
+    window._stepperResizeWired = true;
+  }
+};
+
+window._applyStepperMode = function(){
+  if(window.innerWidth <= 720){
+    document.body.classList.add('stepper-mode');
+  } else {
+    document.body.classList.remove('stepper-mode');
+  }
+};
+
+window._renderStepperUI = function(){
+  const total = window._stepCount;
+  const cur = window._currentStep;
+  const numEl = document.getElementById('ms-step-num');
+  const totalEl = document.getElementById('ms-step-total');
+  const nameEl = document.getElementById('ms-step-name');
+  const fillEl = document.getElementById('ms-progress-fill');
+  if(numEl) numEl.textContent = String(cur + 1);
+  if(totalEl) totalEl.textContent = String(total);
+  // Look up current section's title
+  const formRoot = document.getElementById('section-form');
+  const sections = formRoot ? formRoot.querySelectorAll('.form-section') : [];
+  const curSection = sections[cur];
+  if(nameEl && curSection){
+    const titleEl = curSection.querySelector('.section-title');
+    nameEl.textContent = titleEl ? titleEl.textContent : '';
+  }
+  if(fillEl) fillEl.style.width = (((cur + 1) / Math.max(total, 1)) * 100) + '%';
+  // Back/Next button states
+  const backBtn = document.getElementById('ms-back-btn');
+  const nextBtn = document.getElementById('ms-next-btn');
+  if(backBtn){
+    backBtn.disabled = (cur === 0);
+  }
+  if(nextBtn){
+    nextBtn.textContent = (cur === total - 1) ? 'Done · scroll to submit' : 'Next →';
+  }
+};
+
+window._msStep = function(delta){
+  const formRoot = document.getElementById('section-form');
+  if(!formRoot) return;
+  const sections = formRoot.querySelectorAll('.form-section');
+  const total = sections.length;
+  let next = window._currentStep + delta;
+  if(next < 0) next = 0;
+  if(next >= total){
+    // On "Next" past the last step, scroll the user to the action buttons (Recommend etc.)
+    // The submit happens through existing logic — wizard doesn't intercept submit.
+    next = total - 1;
+    // Find action area below sections (typically a button row) and scroll into view
+    const actionEl = document.querySelector('#section-form .form-actions, #section-form .actions, #section-form button.primary-action');
+    if(actionEl){
+      try { actionEl.scrollIntoView({behavior:'smooth', block:'center'}); } catch(_){}
+    } else {
+      // Fallback: scroll to bottom of the section
+      try { sections[next].scrollIntoView({behavior:'smooth', block:'end'}); } catch(_){}
+    }
+  }
+  // Move .is-current-step
+  sections.forEach(function(s, i){
+    if(i === next) s.classList.add('is-current-step');
+    else s.classList.remove('is-current-step');
+  });
+  window._currentStep = next;
+  _renderStepperUI();
+  // Scroll to top of current section so the user sees its header
+  if(sections[next]){
+    try { sections[next].scrollIntoView({behavior:'smooth', block:'start'}); } catch(_){}
+  }
+};
+
+window._toggleFullFormMode = function(useFullForm){
+  if(useFullForm){
+    document.body.classList.add('full-form-mode');
+    localStorage.setItem('bs-form-mode', 'full-form');
+  } else {
+    document.body.classList.remove('full-form-mode');
+    localStorage.setItem('bs-form-mode', 'stepper');
+    // Reset to first step so user doesn't land mid-wizard
+    if(typeof _initStepper === 'function') _initStepper();
+  }
+};
+
+// Initialize stepper after DOM is ready and after the form has rendered.
+// Two trigger points to be safe: DOMContentLoaded for first paint, and post-login
+// (since some forms may be re-rendered after auth).
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(function(){
+    try { _initStepper(); } catch(e){ console.warn('[stepper init]', e); }
+  }, 600);
 });
 
 function showTab(which){
@@ -14896,6 +15757,110 @@ function showSync(msg,type){
   document.getElementById('sync-msg').textContent=msg;
   if(type!=='error')setTimeout(()=>el.classList.remove('show'),2500);
 }
+
+/* v24.22.0 (#10) — Won-deal confetti. Pure CSS+DOM, no library deps. ~2s animation,
+   ~80 particles with randomized color/rotation/drift. Performance-safe (uses transform,
+   opacity only — GPU-friendly). Auto-cleans the container after animation ends.
+   Optional `entry` arg lets us show a celebratory toast with the project name. */
+window._fireConfetti = function(entry){
+  // Skip if user has reduced-motion preference set
+  try {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      // Still show the toast for accessibility — just no particles
+      if (entry && entry.project) {
+        showSync('🎉 Won — ' + entry.project + '!', 'success');
+      }
+      return;
+    }
+  } catch(_) {}
+
+  // Inject style once
+  if (!document.getElementById('confetti-style')) {
+    const st = document.createElement('style');
+    st.id = 'confetti-style';
+    st.textContent =
+      '@keyframes confetti-fall { 0% { transform: translateY(-20vh) translateX(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(110vh) translateX(var(--drift,0px)) rotate(var(--spin,720deg)); opacity: 0; } }' +
+      '.confetti-host { position: fixed; inset: 0; pointer-events: none; z-index: 99999; overflow: hidden; }' +
+      '.confetti-piece { position: absolute; width: 10px; height: 14px; top: -20vh; border-radius: 2px; animation: confetti-fall var(--dur,2.4s) ease-out forwards; will-change: transform, opacity; }';
+    document.head.appendChild(st);
+  }
+
+  const host = document.createElement('div');
+  host.className = 'confetti-host';
+  document.body.appendChild(host);
+
+  const colors = ['#4F46E5','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#06B6D4','#84CC16'];
+  const N = 80;
+  for (let i = 0; i < N; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = (Math.random() * 100) + 'vw';
+    p.style.background = colors[(Math.random() * colors.length) | 0];
+    p.style.setProperty('--drift', ((Math.random() - 0.5) * 200).toFixed(0) + 'px');
+    p.style.setProperty('--spin', ((Math.random() * 720 + 360) | 0) + 'deg');
+    p.style.setProperty('--dur', (2 + Math.random() * 1.5).toFixed(2) + 's');
+    p.style.animationDelay = (Math.random() * 0.4).toFixed(2) + 's';
+    // Mix shapes: half rectangles, half circles
+    if (i % 2 === 0) p.style.borderRadius = '50%';
+    host.appendChild(p);
+  }
+
+  // Toast with project name if available
+  if (entry && entry.project) {
+    showSync('🎉 Won — ' + entry.project + '!', 'success');
+  }
+
+  // Clean up after the longest possible animation (4s max delay+duration)
+  setTimeout(function(){ try { host.remove(); } catch(_){} }, 4500);
+};
+
+/* v24.22.0 (#15) — Tagged-deals badge updater. Counts deals in _centralLog where:
+   - I'm NOT the creator (deal.loginName !== me)
+   - AND I am tagged as salesPerson OR presalesPerson
+   Result: count of "deals handed to me" (or where I'm working alongside someone else
+   in a sales+presales pair). Updates the small chip on the History tab.
+   Run on every fetch + every save. Cheap (single pass over _centralLog). */
+window._updateTaggedDealsBadge = function(){
+  try {
+    const badge = document.getElementById('log-tab-badge');
+    if (!badge) return;
+    if (!state.user || !state.user.loginName) {
+      badge.style.display = 'none';
+      return;
+    }
+    const me = String(state.user.loginName).toLowerCase();
+    const log = Array.isArray(window._centralLog) ? window._centralLog : [];
+    let count = 0;
+    for (let i = 0; i < log.length; i++) {
+      const e = log[i];
+      if (!e) continue;
+      const creator  = String(e.loginName || '').toLowerCase();
+      const sales    = String(e.salesPerson || '').toLowerCase();
+      const presales = String(e.presalesPerson || '').toLowerCase();
+      // Tagged but didn't create — these are the "handoff" deals worth flagging
+      if (creator !== me && (sales === me || presales === me)) count++;
+    }
+    if (count > 0) {
+      badge.textContent = String(count);
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch(_) { /* never block */ }
+};
+
+// Inject badge styling once
+(function _injectTabBadgeCSS(){
+  if (document.getElementById('nav-tab-badge-css')) return;
+  const st = document.createElement('style');
+  st.id = 'nav-tab-badge-css';
+  st.textContent =
+    '.nav-tab-badge { display:inline-flex; align-items:center; justify-content:center;' +
+    ' min-width:18px; height:18px; padding:0 5px; margin-left:6px;' +
+    ' background:#EF4444; color:#fff; font-size:11px; font-weight:700;' +
+    ' border-radius:9px; line-height:1; }';
+  document.head.appendChild(st);
+})();
 function loadLocalLog(){try{const raw=localStorage.getItem('bs-selector-log');return raw?JSON.parse(raw):[];}catch(e){return [];}}
 function saveLocalLog(entries){try{localStorage.setItem('bs-selector-log',JSON.stringify(entries));}catch(e){}}
 
@@ -15713,6 +16678,21 @@ async function logEntry(status,onDone){
           return;
         }
         showSync(status==='saved'?'Saved ✓':'Saved ✓','success');
+        // v24.22.0 (#10): Won-deal confetti. Fires only when outcome is 'won' on this save —
+        // doesn't fire for 'open' updates or stage-only edits. Skip when edit mode opened
+        // already-won deal (no need to celebrate again on every minor edit).
+        try {
+          if (entry && String(entry.outcome || '').toLowerCase() === 'won') {
+            const wasAlreadyWon = window._editSnapshot && String(window._editSnapshot.outcome || '').toLowerCase() === 'won';
+            if (!wasAlreadyWon && typeof window._fireConfetti === 'function') {
+              window._fireConfetti(entry);
+            }
+          }
+        } catch(_) { /* never block save success */ }
+        // v24.23.0 (#18): refresh server notifications after save (catches handoff alerts
+        // for tagged users who happen to be the same person, e.g. you tagging Faiz then
+        // viewing as Faiz). Throttled to 30s so this is cheap.
+        try { if (typeof window.fetchServerNotifications === 'function') window.fetchServerNotifications(); } catch(_){}
         // v22.4: Schedule a verification sweep in 4 seconds to confirm server received it
         setTimeout(()=>verifyPendingSync(),4000);
         if(onDone)onDone();
@@ -15817,6 +16797,8 @@ async function verifyPendingSync(silent){
     const data=await resp.json();
     if(!Array.isArray(data))return;
     window._centralLog=data;  // Freshen cache
+    // v24.22.0 (#15): refresh badge after sync verifier updates centralLog
+    try { window._updateTaggedDealsBadge && window._updateTaggedDealsBadge(); } catch(_){}
     const centralRefIds=new Set(data.map(e=>e.refId).filter(Boolean));
     let removed=0;
     queue.forEach(q=>{
@@ -16579,36 +17561,59 @@ function openEmailModal(){
   const ccDefault = 'dipen.g@cavitak.com';
 
   const playerLine = r.isAdvanced ? 'Custom BOQ — multiple models' : (m ? (m.id + ' — ' + (m.tag || '')) : '');
-  const subject = 'Quote · ' + (f.project || 'Project') + ' · ' + (r.isAdvanced ? 'Custom BOQ' : (m ? m.id : '')) + ' · ' + (f.qty || 1) + ' unit' + ((f.qty||1)==1 ? '' : 's');
-
-  const greeting = (f.contactname || f.partnerContactName || '').trim() ? ('Dear ' + (f.contactname || f.partnerContactName) + ',') : 'Dear Partner,';
   const userName = (state.user && state.user.fullName) || 'Cavitak Team';
-  // v24.19.0: Use partner-facing professionalTitle, NOT internal role.
   const userTitle = (state.user && state.user.professionalTitle) || '';
   const userPhone = (state.user && state.user.phone) || '';
   const grandStr = state._bomTotals.grandTotal ? formatINR(state._bomTotals.grandTotal) : '—';
+  const validUntilStr = new Date(Date.now() + 15*24*60*60*1000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  const customerName = (f.contactname || f.partnerContactName || '').trim() || 'Partner';
+  const quantityStr = (f.qty || 1) + ' unit' + ((f.qty||1)==1 ? '' : 's');
 
-  // Build sign-off lines, skipping empty
-  const signOffLines = [userName];
-  if(userTitle) signOffLines.push(userTitle);
-  if(userPhone) signOffLines.push('📞 ' + userPhone);
-  signOffLines.push('Cavitak Marketing Pvt Ltd');
-
-  const body = [
-    greeting,
-    '',
-    'Please find attached the BrightSign product recommendation and quotation for your project "' + (f.project||'Project') + '"' + (f.enduser ? (' at ' + f.enduser) : '') + '.',
-    '',
-    'Quote ref: ' + refId,
-    'Player: ' + playerLine,
-    'Quantity: ' + (f.qty || 1) + ' unit' + ((f.qty||1)==1 ? '' : 's'),
-    'Indicative quotation: ' + grandStr + ' (incl. GST @ 18%)',
-    'Valid until: ' + new Date(Date.now() + 15*24*60*60*1000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
-    '',
-    'For commercial terms, volume rates, stock position, or any clarifications, please reach out anytime.',
-    '',
-    'Regards,'
-  ].concat(signOffLines).join('\n');
+  // v24.24.0 (#17): Build vars from form/result/user, then render template (server or fallback).
+  const vars = {
+    customerName: customerName,
+    projectName: f.project || 'Project',
+    quoteNumber: refId,
+    totalValue: grandStr,
+    senderName: userName,
+    senderTitle: userTitle,
+    senderPhone: userPhone,
+    playerLine: playerLine,
+    quantity: quantityStr,
+    validUntil: validUntilStr,
+    endUser: f.enduser || ''
+  };
+  const rendered = window._renderEmailTemplate ? window._renderEmailTemplate('quote_send', vars) : null;
+  let subject, body;
+  if (rendered) {
+    subject = rendered.subject;
+    body = rendered.body;
+  } else {
+    // Hardcoded fallback — used if templates haven't loaded yet (offline, first-paint race).
+    // Matches the DEFAULT_EMAIL_TEMPLATES in the backend so the user sees identical output
+    // regardless of network state.
+    subject = 'Quote · ' + vars.projectName + ' · ' + vars.playerLine + ' · ' + vars.quantity;
+    const greeting = 'Dear ' + vars.customerName + ',';
+    body = [
+      greeting,
+      '',
+      'Please find attached the BrightSign product recommendation and quotation for your project "' + vars.projectName + '"' + (vars.endUser ? (' at ' + vars.endUser) : '') + '.',
+      '',
+      'Quote ref: ' + vars.quoteNumber,
+      'Player: ' + vars.playerLine,
+      'Quantity: ' + vars.quantity,
+      'Indicative quotation: ' + vars.totalValue + ' (incl. GST @ 18%)',
+      'Valid until: ' + vars.validUntil,
+      '',
+      'For commercial terms, volume rates, stock position, or any clarifications, please reach out anytime.',
+      '',
+      'Regards,',
+      vars.senderName,
+      vars.senderTitle,
+      vars.senderPhone ? ('📞 ' + vars.senderPhone) : '',
+      'Cavitak Marketing Pvt Ltd'
+    ].filter(function(l) { return l !== ''; }).join('\n');
+  }
 
   document.getElementById('emailModalTo').value = toEmail;
   // v24.18.0: CC field is now optional/extra — backend force-adds dipen.g@cavitak.com always.
@@ -16862,6 +17867,8 @@ async function refreshLog(){
       showSync('History updated ✓','success');
       renderLog();
       renderDashboard();
+      // v24.22.0 (#15): refresh tagged-deals badge after central log changes
+      try { window._updateTaggedDealsBadge && window._updateTaggedDealsBadge(); } catch(_){}
       return;
     }
     showSync('Unable to refresh · showing last known data','error');
@@ -16870,6 +17877,8 @@ async function refreshLog(){
   }
   renderLog();
   renderDashboard();
+  // v24.22.0 (#15): refresh tagged-deals badge in offline path too
+  try { window._updateTaggedDealsBadge && window._updateTaggedDealsBadge(); } catch(_){}
 }
 
 /* v13: global chart instances — keep references so we can destroy before re-rendering */
@@ -16903,17 +17912,21 @@ function getVisibleEntries(){
     if(project)return true;
     return false;
   });
-  if(seesAll)return allEntries;
+  // v24.21.4 — Trust backend scoping. Backend (v25.9.0+) filters _centralLog before
+  // delivering it: Super/BrightSign get all rows; BU Head gets own + reports + region;
+  // everyone else gets own + tagged-as-sales/presales. Re-filtering here would strip
+  // out the regional and reports-based deals the backend just delivered, silently
+  // breaking BU Head visibility. Authoritative source = server.
+  // For local-cache fallback (offline/no server data) we still apply own-only filter
+  // as a safe minimum, since we can't know the BU Head/region scope without backend.
+  if(haveServerData) return allEntries;
+  if(seesAll) return allEntries;
+  // Local-cache fallback path only: apply minimum own+tagged filter
   const myLogin=(String(state.user.loginName || '')).toLowerCase();
   const myFullName=(String(state.user.fullName || '')).toLowerCase();
   return allEntries.filter(e=>{
     const elogin=(String(e.loginName || '')).toLowerCase();
     const euser=(String(e.user || '')).toLowerCase();
-    // v24.20.4 (#3 visibility): salesPerson and presalesPerson tags also grant History
-    // access. So if I'm tagged on a deal as either, I see it in my History — even if
-    // someone else logged it in. Closes the gap where handed-off deals were invisible
-    // to the assignee. Empty-string short-circuit (eSales && ...) prevents legacy rows
-    // with no tags from leaking into anyone's History via empty-equals-empty.
     const eSales=(String(e.salesPerson || '')).toLowerCase();
     const ePresales=(String(e.presalesPerson || '')).toLowerCase();
     return (elogin    && elogin    === myLogin)
@@ -17103,8 +18116,14 @@ function renderLog(){
     const historyBtn=`<button class="log-history-btn" onclick="event.stopPropagation();toggleHistoryPanel('${e.refId}',${idx});" title="View change history">↻ History</button>`;
     // v24.16.0 — Revisions modal button (full row snapshots, up to last 3 per refId)
     const revisionsBtn=`<button class="log-revisions-btn" onclick="event.stopPropagation();openRevisionsModal('${e.refId}');" title="View past revisions (full snapshots)">📋 Revisions</button>`;
+    // v24.22.0 (#20) — Quick stage button. Skip for finalized deals (won/lost/on-hold) — stage
+    // shouldn't move on those. Skip if user can't edit this row.
+    const _canQuick = canEdit && String(e.outcome||'open').toLowerCase() === 'open';
+    const quickStageBtn = _canQuick
+      ? `<button class="log-quick-stage-btn" onclick="event.stopPropagation();openQuickStageMenu('${e.refId}',${idx},this);" title="Move to next stage without opening Edit form">⇄ Stage</button>`
+      : '';
     const deleteBtn=isSuperUser?`<button class="log-delete-btn" onclick="event.stopPropagation();softDeleteEntry('${e.refId}','${(e.project||'').replace(/'/g,"\\'")}');" title="Move to trash (super only)">🗑 Delete</button>`:'';
-    const metaRow=`<div class="log-meta-row">${historyBtn}${revisionsBtn}${deleteBtn}</div>`;
+    const metaRow=`<div class="log-meta-row">${historyBtn}${revisionsBtn}${quickStageBtn}${deleteBtn}</div>`;
     const historyPanel=`<div class="log-history-panel" id="log-history-panel-${idx}" style="display:none;"></div>`;
     // v24.20.0 (#3): Sales/Presales handoff display — resolve loginNames to fullNames via _allUsers cache
     const _resolveName = function(login){
@@ -17140,7 +18159,7 @@ function renderLog(){
         }
       }
     } catch(_){}
-    return `<div class="log-entry${agingClass}"${canEdit?` data-entry-idx="${idx}"`:''}${e.isTest?' data-test-entry="1"':''}><div class="log-entry-top"><div class="log-date">${dateStr}<br>${timeStr}<br><span style="color:var(--ink-muted);">${e.user}</span>${e.refId?`<br><span style="font-size:10px;opacity:0.7;">${e.refId}</span>`:''}</div><div class="log-main"><div class="log-project">${e.project} <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:${statusBg};color:${statusColor};margin-left:6px;vertical-align:middle;">${statusLabel}</span>${e.isTest?'<span title="Submitted in test mode — excluded from Dashboard + Review aggregations" style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:#FEF3C7;color:#92400E;margin-left:6px;vertical-align:middle;">🧪 TEST</span>':''}${agingBadge}</div><div class="log-detail">${e.enduser} · ${e.venue} · ${e.city} · ${e.partner}</div><div class="log-detail">${_formatQtyModelDisplay(e)} · ${resStr} · ${e.environment} · ${e.update} · ${e.stage} · ${e.budget}${e.os&&e.os!=='—'?' · '+(e.os==='brightsignos'?'BSOS':'Win IoT'):''}</div>${handoffStr}${metaRow}</div><div class="log-model">${_formatModelBadgeDisplay(e)}${editBtn}</div></div>${historyPanel}</div>`;
+    return `<div class="log-entry${agingClass}"${canEdit?` data-entry-idx="${idx}"`:''}${e.isTest?' data-test-entry="1"':''}><div class="log-entry-top"><div class="log-date">${dateStr}<br>${timeStr}<br><span style="color:var(--ink-muted);">${e.user}</span>${e.refId?`<br><span style="font-size:10px;opacity:0.7;">${e.refId}</span>`:''}</div><div class="log-main"><div class="log-project">${e.project} <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:${statusBg};color:${statusColor};margin-left:6px;vertical-align:middle;">${statusLabel}</span>${e.isTest?'<span title="Submitted in test mode — excluded from Dashboard + Review aggregations" style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:#FEF3C7;color:#92400E;margin-left:6px;vertical-align:middle;">🧪 TEST</span>':''}${agingBadge}</div><div class="log-detail"><a href="#" onclick="event.preventDefault();event.stopPropagation();openCustomer360('${(e.enduser||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}');" style="color:var(--indigo,#4F46E5);text-decoration:none;border-bottom:1px dashed var(--indigo,#4F46E5);" title="Customer 360 — see all deals for this customer">${e.enduser}</a> · ${e.venue} · ${e.city} · ${e.partner}</div><div class="log-detail">${_formatQtyModelDisplay(e)} · ${resStr} · ${e.environment} · ${e.update} · ${e.stage} · ${e.budget}${e.os&&e.os!=='—'?' · '+(e.os==='brightsignos'?'BSOS':'Win IoT'):''}</div>${handoffStr}${metaRow}</div><div class="log-model">${_formatModelBadgeDisplay(e)}${editBtn}</div></div>${historyPanel}</div>`;
   }).join('');
   window._currentLogEntries=entries;
 }
@@ -17208,6 +18227,121 @@ function renderDashboard(){
     filterCount.style.display='none';
   }
 }
+
+/* v24.22.0 (#20) — Quick stage menu. Pops a tiny floating list of the 5 stages next to
+   the clicked button. Picking one POSTs a stage-only update (no Edit form needed),
+   audit-logs the change, refreshes History.
+   Closes on outside click or Escape. Disabled stages: current stage (greyed). */
+function openQuickStageMenu(refId, idx, btn){
+  // Close any existing menu
+  document.querySelectorAll('.quick-stage-menu').forEach(function(el){ el.remove(); });
+  const entries = window._currentLogEntries || [];
+  const entry = entries[idx];
+  if (!entry) { alert('Entry not found.'); return; }
+  if (!state.user) { alert('Please sign in.'); return; }
+  const STAGES = ['Lead','Opportunity','Proposal','Negotiation','Order'];
+  const currentStage = String(entry.stage || '').trim();
+
+  const menu = document.createElement('div');
+  menu.className = 'quick-stage-menu';
+  menu.innerHTML =
+    '<div class="qs-head">Move to stage…</div>' +
+    STAGES.map(function(s){
+      const isCurrent = s === currentStage;
+      return '<button type="button" class="qs-item' + (isCurrent ? ' qs-current' : '') + '"' +
+             (isCurrent ? ' disabled' : '') +
+             ' data-stage="' + s + '">' + s + (isCurrent ? ' · current' : '') + '</button>';
+    }).join('');
+  document.body.appendChild(menu);
+
+  const r = btn.getBoundingClientRect();
+  menu.style.position = 'fixed';
+  menu.style.top  = Math.min(window.innerHeight - 250, r.bottom + 6) + 'px';
+  menu.style.left = Math.min(window.innerWidth - 200, r.left) + 'px';
+  menu.style.zIndex = '99998';
+
+  menu.querySelectorAll('button.qs-item').forEach(function(b){
+    b.addEventListener('click', async function(){
+      const newStage = b.getAttribute('data-stage');
+      if (!newStage || newStage === currentStage) return;
+      menu.remove();
+      await _commitQuickStage(entry, newStage);
+    });
+  });
+
+  const close = function(ev){
+    if (ev && ev.type === 'keydown' && ev.key !== 'Escape') return;
+    if (ev && ev.type === 'click' && menu.contains(ev.target)) return;
+    menu.remove();
+    document.removeEventListener('click', close, true);
+    document.removeEventListener('keydown', close, true);
+  };
+  setTimeout(function(){
+    document.addEventListener('click', close, true);
+    document.addEventListener('keydown', close, true);
+  }, 50);
+}
+
+async function _commitQuickStage(entry, newStage){
+  const oldStage = String(entry.stage || '');
+  if (oldStage === newStage) return;
+  showSync('Updating stage…');
+  const updated = Object.assign({}, entry, { stage: newStage });
+  if (!WEBHOOK_URL) {
+    showSync('Offline — change saved locally only', 'error');
+    return;
+  }
+  try {
+    const pwHash = await getCurrentAuthHash();
+    const postBody = JSON.stringify(Object.assign({}, updated, {
+      requesterLoginName: state.user.loginName,
+      requesterPasswordHash: pwHash
+    }));
+    const resp = await fetch(WEBHOOK_URL, {
+      method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain' },
+      body: postBody
+    });
+    let data = null;
+    try { data = await resp.json(); } catch(_){}
+    if (data && data.ok === false) {
+      showSync('Stage update failed: ' + (data.error || 'rejected'), 'error');
+      return;
+    }
+    showSync('Stage → ' + newStage + ' ✓', 'success');
+    try {
+      fetch(WEBHOOK_URL, {
+        method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          action: 'audit_log_append',
+          requesterLoginName: state.user.loginName,
+          requesterPasswordHash: pwHash,
+          refId: entry.refId,
+          editedBy: state.user.loginName,
+          changes: [{ fieldName: 'stage', oldValue: oldStage, newValue: newStage }]
+        })
+      }).catch(function(){});
+    } catch(_) {}
+    if (typeof refreshLog === 'function') refreshLog();
+  } catch(err) {
+    showSync('Stage update failed · check connection', 'error');
+    console.warn('quick stage:', err);
+  }
+}
+
+(function _injectQuickStageCSS(){
+  if (document.getElementById('quick-stage-css')) return;
+  const st = document.createElement('style');
+  st.id = 'quick-stage-css';
+  st.textContent =
+    '.quick-stage-menu { background:var(--surface,#FFF); border:1px solid var(--border-strong,#CBD5E1); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.15); padding:6px; min-width:180px; }' +
+    '.quick-stage-menu .qs-head { font-size:10px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); padding:6px 10px 4px; font-weight:600; }' +
+    '.quick-stage-menu .qs-item { display:block; width:100%; text-align:left; padding:8px 12px; border:none; background:transparent; cursor:pointer; font-size:13px; border-radius:6px; color:var(--ink,#0F172A); }' +
+    '.quick-stage-menu .qs-item:hover:not(:disabled) { background:var(--surface-2,#F8FAFC); }' +
+    '.quick-stage-menu .qs-item.qs-current { color:var(--ink-subtle,#94A3B8); font-style:italic; cursor:default; }' +
+    '.log-quick-stage-btn { background:transparent; border:1px solid var(--border,#E5E7EB); border-radius:6px; padding:4px 10px; font-size:11px; cursor:pointer; color:var(--ink-muted,#64748B); margin-right:6px; }' +
+    '.log-quick-stage-btn:hover { background:var(--surface-2,#F8FAFC); color:var(--indigo,#4F46E5); border-color:var(--indigo,#4F46E5); }';
+  document.head.appendChild(st);
+})();
 
 /* v22.2–v22.3: Edit a past entry — all users can edit entries visible to them.
    Basic info (project/enduser/partner/etc.) is LOCKED.
@@ -18788,13 +19922,64 @@ function exportCSV(){
   }
   if(state.user&&state.user.isSuper&&hasActiveFilters())entries=applyFiltersToEntries(entries);
   if(!entries.length){alert('No data to export.');return;}
-  const headers=['Ref ID','Status','Timestamp','User','Role','Project','End-user','Venue','Partner','Consultant','City','Contact name','Contact phone','Contact email','Deal stage','Close month','Qty','Indoor Qty','Outdoor Qty','Model','Outdoor Model','Content type','Resolution','Deployment type','Content update','Budget','HDMI in','Touch','Wi-Fi','GPIO','SSD','OS','CMS Vendor','CMS Term','CMS Billing Type'];
-  const rows=entries.map(e=>[e.refId||'',e.status||'viewed',e.ts,e.user,e.role,e.project,e.enduser,e.venue,e.partner,e.consultant,e.city,e.contactname,e.contactphone,e.contactemail,e.stage,e.closemonth,e.qty,e.qtyIndoor||'',e.qtyOutdoor||'',e.model,e.outdoorModel||'',e.content,e.resolution,e.environment,e.update,e.budget,e.hdmiIn,e.touch,e.wifi,e.gpio||'—',e.ssd,e.os,e.cmsVendor||'',e.cmsTerm||'',e.cmsBillingType||'']);
-  const csv=[headers,...rows].map(r=>r.map(c=>`"${(c||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  // v24.22.0 (#9) — Expand CSV columns to cover all fields shipped since v24.5:
+  // leadSource, dealValue, outcome, outcomeReason, outcomeReasonNote, planOfAction,
+  // salesPerson, presalesPerson, isTest. Resolves loginNames to fullNames using
+  // _allUsers cache. Adds full Indian INR formatting on dealValue for spreadsheet
+  // readability.
+  const _resolveOwnerName = function(login){
+    if(!login) return '';
+    const u = (window._allUsers||[]).find(function(x){
+      return String(x.loginName||'').toLowerCase() === String(login).toLowerCase();
+    });
+    return u ? (u.fullName || u.loginName) : login;
+  };
+  const headers=[
+    'Ref ID','Status','Timestamp','Created By','Sales Person','Presales Person','Role',
+    'Project','End-user','Venue','Partner','Consultant','City','State','Region',
+    'Contact name','Contact phone','Contact email',
+    'Deal stage','Close month','Outcome','Outcome reason','Outcome note',
+    'Lead source','Deal value (INR)',
+    'Qty','Indoor Qty','Outdoor Qty','Model','Outdoor Model',
+    'Content type','Resolution','Deployment type','Content update','Budget',
+    'HDMI in','Touch','Wi-Fi','GPIO','SSD','OS',
+    'CMS Vendor','CMS Term','CMS Billing Type','Test mode','Plan of action'
+  ];
+  // Best-effort state→region lookup using the same map that powers Review filters
+  const _regionOf = function(state){
+    try { if (typeof STATE_TO_REGION !== 'undefined' && STATE_TO_REGION) {
+      return STATE_TO_REGION[String(state||'').toLowerCase().trim()] || '';
+    } } catch(_) {}
+    return '';
+  };
+  const rows=entries.map(e=>[
+    e.refId||'', e.status||'viewed', e.ts,
+    e.user || _resolveOwnerName(e.loginName),
+    _resolveOwnerName(e.salesPerson),
+    _resolveOwnerName(e.presalesPerson),
+    e.role||'',
+    e.project||'', e.enduser||'', e.venue||'', e.partner||'', e.consultant||'',
+    e.city||'', e.state||'', _regionOf(e.state),
+    e.contactname||'', e.contactphone||'', e.contactemail||'',
+    e.stage||'', e.closemonth||'',
+    e.outcome || 'open', e.outcomeReason||'', e.outcomeReasonNote||'',
+    e.leadSource||'',
+    (typeof e.dealValue === 'number' && e.dealValue > 0) ? e.dealValue : '',
+    e.qty||'', e.qtyIndoor||'', e.qtyOutdoor||'',
+    e.model||'', e.outdoorModel||'',
+    e.content||'', e.resolution||'', e.environment||'', e.update||'', e.budget||'',
+    e.hdmiIn||'', e.touch||'', e.wifi||'', e.gpio||'—', e.ssd||'', e.os||'',
+    e.cmsVendor||'', e.cmsTerm||'', e.cmsBillingType||'',
+    e.isTest === true || String(e.isTest||'').toUpperCase() === 'TRUE' ? 'TRUE' : '',
+    e.planOfAction||''
+  ]);
+  const csv=[headers,...rows].map(r=>r.map(c=>`"${(c==null?'':c.toString()).replace(/"/g,'""')}"`).join(',')).join('\n');
+  // Add UTF-8 BOM so Excel opens with proper encoding (₹ symbol, accents render correctly)
+  const blob=new Blob(['\uFEFF', csv],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=`brightsign-selector-log-${new Date().toISOString().slice(0,10)}.csv`;a.click();
   URL.revokeObjectURL(url);
+  showSync(`Exported ${entries.length} deal${entries.length===1?'':'s'} to CSV`,'success');
 }
 
 setBudget(2);
@@ -20461,6 +21646,11 @@ if(document.readyState==='loading'){
     const host = document.getElementById('bs-kpi-card-owner');
     if(!host) return;
     if(!log || !log.length){ host.innerHTML = _cardHTML('Pipeline by owner · top 8', null, 'No deals loaded'); return; }
+    // v24.22.0 (#11): per-owner stage velocity. Average days-in-stage across each owner's
+    // open deals. Uses StageTransitions when available, falls back to deal creation
+    // timestamp (same source as the aging card to stay consistent).
+    const transitions = window._bsC2bTransitions || {};
+    const now = Date.now();
     const byOwner = {};
     for(let i=0; i<log.length; i++){
       const r = log[i] || {};
@@ -20468,19 +21658,39 @@ if(document.readyState==='loading'){
       const s = String(r.stage||'').trim();
       if(!OPEN_STAGES_SET[s]) continue;
       const owner = (String(r.user||'').trim() || String(String(r.loginName || '')).trim() || 'Unattributed');
-      if(!byOwner[owner]) byOwner[owner] = {count:0, value:0};
+      if(!byOwner[owner]) byOwner[owner] = {count:0, value:0, totalDays:0, daysCount:0};
       byOwner[owner].count++;
       byOwner[owner].value += _readDealValue(r);
+      // Compute days-in-stage for velocity
+      const refId = r.refId || '';
+      const tx = refId ? transitions[refId] : null;
+      const baseMs = (tx && tx.transitionedAtMs) ? tx.transitionedAtMs : _entryCreatedMs(r);
+      if (baseMs) {
+        const days = Math.max(0, Math.floor((now - baseMs) / 86400000));
+        byOwner[owner].totalDays += days;
+        byOwner[owner].daysCount++;
+      }
     }
     const ranked = Object.keys(byOwner).map(function(o){
-      return { owner:o, count:byOwner[o].count, value:byOwner[o].value };
+      const data = byOwner[o];
+      const avgDays = data.daysCount > 0 ? Math.round(data.totalDays / data.daysCount) : null;
+      return { owner:o, count:data.count, value:data.value, avgDays: avgDays };
     }).sort(function(a,b){ return b.value - a.value; }).slice(0, 8);
     if(!ranked.length){ host.innerHTML = _cardHTML('Pipeline by owner · top 8', null, 'No open deals'); return; }
     const maxValue = Math.max.apply(null, ranked.map(function(o){ return o.value; }).concat([1]));
     let body = '';
     ranked.forEach(function(o){
-      body += _barRow(o.owner, o.value, maxValue, o.count + ' · ' + _fmtINR(o.value), '#4F46E5');
+      // Velocity badge: green ≤30d, amber 31-60d, red 60+d. Clean visual cue for "who's stuck"
+      let velStr = '';
+      if (o.avgDays !== null) {
+        const velColor = o.avgDays <= 30 ? '#10B981' : (o.avgDays <= 60 ? '#F59E0B' : '#E11D48');
+        velStr = ' · <span style="color:' + velColor + '; font-weight:600;">~' + o.avgDays + 'd avg</span>';
+      }
+      body += _barRow(o.owner, o.value, maxValue, o.count + ' · ' + _fmtINR(o.value) + velStr, '#4F46E5');
     });
+    body += '<div style="font-size:11px; color:var(--ink-subtle,#94A3B8); margin-top:8px; padding-top:8px; border-top:1px dashed var(--border,#E5E7EB);">' +
+              'Avg days-in-stage per owner · green ≤30d, amber ≤60d, red &gt;60d' +
+            '</div>';
     host.innerHTML = _cardHTML('Pipeline by owner · top 8', body);
   }
 
