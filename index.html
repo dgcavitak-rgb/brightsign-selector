@@ -7539,7 +7539,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.21.2';  // v24.21.2 — Review tab: 7-filter multi-select panel (Source/Region/State/Sales/Presales/End-Client/Consultant); region auto-derived from state; persists to localStorage; collapsible UI
+const FRONTEND_VERSION = '24.21.3';  // v24.21.3 — Region map remap (no Central, no Northeast; RJ/MP/CG to West, Bihar to North, NE folded into East). Pairs with backend v25.10.0 BU Head visibility.
+// v24.21.2 — Review tab: 7-filter multi-select panel (Source/Region/State/Sales/Presales/End-Client/Consultant); region auto-derived from state; persists to localStorage; collapsible UI
 // v24.21.1 — robust salesPerson auto-default for Sales/BU Head users: state.form mirror, save-time fallback, initial-load trigger
 // v24.21.0 — security hardening: auth on doGet?action=read GET calls; escape user-controlled fields in renderTeamList + statusEl; formatINR returns ₹0 not — for zero; drop ineffective timeZone option from Number.toLocaleString calls
 // v24.20.0 — Cavitak brand logo as data URL. Used by Excel exports + PDF cover/headers.
@@ -20687,22 +20688,23 @@ if(document.readyState==='loading'){
  *   - toggleReviewFilters()    : show/hide the filter panel
  * ============================================================================ */
 (function(){
-  // India state→region mapping. Includes UTs. International stays as own bucket.
-  // West:  Maharashtra, Gujarat, Goa, Dadra & Nagar Haveli and Daman & Diu
-  // North: Delhi, Punjab, Haryana, Himachal Pradesh, Jammu & Kashmir, Ladakh, Uttarakhand, Uttar Pradesh, Chandigarh, Rajasthan
-  // South: Karnataka, Tamil Nadu, Kerala, Andhra Pradesh, Telangana, Puducherry, Lakshadweep
-  // East:  West Bengal, Odisha, Bihar, Jharkhand, Andaman & Nicobar
-  // Central: Madhya Pradesh, Chhattisgarh
-  // Northeast: Assam, Meghalaya, Tripura, Mizoram, Manipur, Nagaland, Arunachal Pradesh, Sikkim
+  // India state→region mapping. Aligned with backend STATE_TO_REGION_V2510 (BS v25.10.0+).
+  // Per Cavitak spec (2026-05-08): 4 regions only. No Central, no Northeast bucket.
+  //   West:  Maharashtra, Gujarat, Goa, Daman/DNH, Rajasthan, MP, Chhattisgarh
+  //   North: Delhi, Punjab, Haryana, HP, J&K, Ladakh, Uttarakhand, UP, Chandigarh, Bihar
+  //   South: Karnataka, Tamil Nadu, Kerala, AP, Telangana, Puducherry, Lakshadweep
+  //   East:  West Bengal, Odisha, Jharkhand, Andaman/Nicobar + ALL Northeast states
+  //   International: International
+  // Anything not listed (rare typo, custom city as state) returns '' (excluded from region filter).
   const STATE_TO_REGION = {
-    'andhra pradesh':'South','arunachal pradesh':'Northeast','assam':'Northeast',
-    'bihar':'East','chhattisgarh':'Central','goa':'West','gujarat':'West',
+    'andhra pradesh':'South','arunachal pradesh':'East','assam':'East',
+    'bihar':'North','chhattisgarh':'West','goa':'West','gujarat':'West',
     'haryana':'North','himachal pradesh':'North','jharkhand':'East',
-    'karnataka':'South','kerala':'South','madhya pradesh':'Central',
-    'maharashtra':'West','manipur':'Northeast','meghalaya':'Northeast',
-    'mizoram':'Northeast','nagaland':'Northeast','odisha':'East','punjab':'North',
-    'rajasthan':'North','sikkim':'Northeast','tamil nadu':'South',
-    'telangana':'South','tripura':'Northeast','uttar pradesh':'North',
+    'karnataka':'South','kerala':'South','madhya pradesh':'West',
+    'maharashtra':'West','manipur':'East','meghalaya':'East',
+    'mizoram':'East','nagaland':'East','odisha':'East','punjab':'North',
+    'rajasthan':'West','sikkim':'East','tamil nadu':'South',
+    'telangana':'South','tripura':'East','uttar pradesh':'North',
     'uttarakhand':'North','west bengal':'East','delhi':'North','chandigarh':'North',
     'jammu & kashmir':'North','jammu and kashmir':'North','ladakh':'North',
     'puducherry':'South','andaman & nicobar':'East','andaman and nicobar':'East',
@@ -20711,7 +20713,7 @@ if(document.readyState==='loading'){
   };
   function _stateToRegion(s){
     const k = String(s||'').toLowerCase().trim();
-    return STATE_TO_REGION[k] || (k ? 'Other' : '');
+    return STATE_TO_REGION[k] || '';  // Empty for unknown — excluded from region filter
   }
 
   const LS_FILTERS_KEY = 'bs-review-filters-v1';
@@ -20870,8 +20872,9 @@ if(document.readyState==='loading'){
       });
     };
 
-    // Region: stable canonical order, not alphabetical
-    const REGION_ORDER = ['North','South','East','West','Central','Northeast','International','Other'];
+    // Region: stable canonical order, not alphabetical.
+    // v24.21.3: 4 regions only (West/North/South/East) per Cavitak spec.
+    const REGION_ORDER = ['North','South','East','West','International'];
     const regionList = REGION_ORDER.filter(function(r){ return distinct.region.has(r); });
 
     // Render each group
