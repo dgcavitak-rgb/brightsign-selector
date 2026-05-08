@@ -6986,9 +6986,396 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   <div class="container">
     <div class="page-header">
       <div class="page-eyebrow" id="dashboard-page-eyebrow">Dashboard</div>
-      <div class="page-title" id="dashboard-page-title">Analytics</div>
-      <div class="page-subtitle" id="dashboard-page-subtitle">Live view of your recommendations, conversion funnel, and product demand.</div>
+      <div class="page-title" id="dashboard-page-title">Brand revenue cockpit</div>
+      <div class="page-subtitle" id="dashboard-page-subtitle">Pipeline health · funnel flow · regional momentum · what's moving — at a glance for director and owner reviews.</div>
     </div>
+
+      <!-- v24.25.1 — BRAND REVENUE COCKPIT
+           Aggregates window._centralLog (post-pipeline-cutoff) into a 6-row visual.
+           Filters: time window + region. No person-level view (that's on Review tab). -->
+      <div id="cockpit" class="cockpit-wrap">
+        <!-- Filter bar -->
+        <div class="cockpit-filters">
+          <div class="cockpit-filter-cell">
+            <label class="cockpit-filter-label" for="cockpit-window">Time window</label>
+            <select id="cockpit-window" onchange="onCockpitFilterChange()">
+              <option value="thisMonth">This month</option>
+              <option value="lastMonth">Last month</option>
+              <option value="thisQuarter" selected>This quarter</option>
+              <option value="lastQuarter">Last quarter</option>
+              <option value="last6m">Last 6 months</option>
+              <option value="thisFY">This FY</option>
+            </select>
+          </div>
+          <div class="cockpit-filter-cell">
+            <label class="cockpit-filter-label" for="cockpit-region">Region</label>
+            <select id="cockpit-region" onchange="onCockpitFilterChange()">
+              <option value="">All regions</option>
+              <option value="West">West</option>
+              <option value="North">North</option>
+              <option value="South">South</option>
+              <option value="East">East</option>
+              <option value="International">International</option>
+            </select>
+          </div>
+          <div class="cockpit-filter-cell cockpit-filter-meta">
+            <span id="cockpit-window-label">—</span>
+          </div>
+          <button type="button" class="cockpit-refresh" onclick="renderCockpit()" title="Refresh">↻</button>
+        </div>
+
+        <!-- Row 1 — 5 KPI tiles -->
+        <div class="cockpit-kpi-strip" id="cockpit-kpi-strip">
+          <div class="cockpit-kpi" data-tone="open"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">Open Pipeline</div><div class="cockpit-kpi-value" id="ck-open-val">—</div><div class="cockpit-kpi-sub" id="ck-open-sub">—</div></div>
+          <div class="cockpit-kpi" data-tone="count"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">Open Deals</div><div class="cockpit-kpi-value" id="ck-open-count">—</div><div class="cockpit-kpi-sub" id="ck-open-count-sub">active in funnel</div></div>
+          <div class="cockpit-kpi" data-tone="new"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">New This Period</div><div class="cockpit-kpi-value" id="ck-new-val">—</div><div class="cockpit-kpi-sub" id="ck-new-sub">—</div></div>
+          <div class="cockpit-kpi" data-tone="winrate"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">Win Rate</div><div class="cockpit-kpi-value" id="ck-winrate">—</div><div class="cockpit-kpi-sub" id="ck-winrate-sub">— resolved</div></div>
+          <div class="cockpit-kpi" data-tone="won"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">Won This Period</div><div class="cockpit-kpi-value" id="ck-won-val">—</div><div class="cockpit-kpi-sub" id="ck-won-sub">—</div></div>
+        </div>
+
+        <!-- Row 2 — Stage-wise breakdown (5 colored cards, funnel-depth gradient) -->
+        <div class="cockpit-section-head"><span class="cockpit-section-eyebrow">Funnel breakdown</span><span class="cockpit-section-title">Open pipeline by stage</span></div>
+        <div class="cockpit-stage-strip" id="cockpit-stage-strip"></div>
+
+        <!-- Row 3 — Funnel chart + Trend line side by side -->
+        <div class="cockpit-row-2">
+          <div class="cockpit-card">
+            <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#4F46E5,#7C3AED);">▤</span><span class="cockpit-card-title">Funnel · count + ₹</span></div>
+            <div class="cockpit-card-body" id="cockpit-funnel"></div>
+          </div>
+          <div class="cockpit-card">
+            <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#0D9488,#0EA5E9);">📈</span><span class="cockpit-card-title">Trend · new vs won</span></div>
+            <div class="cockpit-card-body" id="cockpit-trend"></div>
+          </div>
+        </div>
+
+        <!-- Row 4 — Region performance + Source split -->
+        <div class="cockpit-row-2">
+          <div class="cockpit-card">
+            <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#D97706,#F59E0B);">◉</span><span class="cockpit-card-title">Regional performance</span></div>
+            <div class="cockpit-card-body" id="cockpit-region-table"></div>
+          </div>
+          <div class="cockpit-card">
+            <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#DB2777,#F472B6);">◐</span><span class="cockpit-card-title">Business source split</span></div>
+            <div class="cockpit-card-body" id="cockpit-source"></div>
+          </div>
+        </div>
+
+        <!-- Row 5 — Aging spotlight (full width) -->
+        <div class="cockpit-card">
+          <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#DC2626,#F59E0B);">⏰</span><span class="cockpit-card-title">Aging spotlight · oldest open deals</span><span class="cockpit-card-sub">Click any row to open the deal</span></div>
+          <div class="cockpit-card-body" id="cockpit-aging"></div>
+        </div>
+
+        <!-- Row 6 — What's moving (full width) -->
+        <div class="cockpit-card">
+          <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#7C3AED,#EC4899);">⚡</span><span class="cockpit-card-title">What's moving · last 10 stage transitions</span></div>
+          <div class="cockpit-card-body" id="cockpit-moving"></div>
+        </div>
+      </div>
+
+      <style>
+        /* ============ v24.25.1 — Brand Revenue Cockpit ============ */
+        .cockpit-wrap{margin-bottom:24px;}
+        .cockpit-filters{
+          position:sticky; top:8px; z-index:5;
+          display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;
+          padding:14px 18px; margin-bottom:18px;
+          background:linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(124,58,237,0.05) 100%), var(--surface,#FFF);
+          border:1px solid var(--border,#E5E7EB);
+          border-radius:14px;
+          box-shadow:0 2px 4px rgba(15,23,42,0.04), 0 8px 20px rgba(99,102,241,0.06);
+          backdrop-filter:blur(12px);
+        }
+        .cockpit-filter-cell{display:flex; flex-direction:column; min-width:180px;}
+        .cockpit-filter-label{
+          font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
+          color:var(--ink-muted,#64748B); font-weight:700; margin-bottom:5px;
+        }
+        .cockpit-filters select{
+          min-height:var(--btn-h,40px); padding:0 12px;
+          font-size:13px; font-weight:600; font-family:var(--sans,system-ui),sans-serif;
+          background:var(--surface,#FFF); color:var(--ink,#0F172A);
+          border:1px solid var(--border-strong,#CBD5E1); border-radius:var(--radius,8px);
+          box-shadow:0 1px 2px rgba(15,23,42,0.04);
+          cursor:pointer; transition:border-color 140ms, box-shadow 140ms;
+        }
+        .cockpit-filters select:hover{border-color:var(--indigo,#4F46E5);}
+        .cockpit-filters select:focus{outline:none; border-color:var(--indigo,#4F46E5); box-shadow:0 0 0 3px rgba(79,70,229,0.18);}
+        .cockpit-filter-meta{flex:1; align-items:flex-end; padding-bottom:8px;}
+        .cockpit-filter-meta span{
+          font-size:12px; color:var(--ink-muted,#64748B); font-style:italic;
+        }
+        .cockpit-refresh{
+          width:var(--btn-h,40px); height:var(--btn-h,40px);
+          border:1px solid var(--border-strong,#CBD5E1); border-radius:var(--radius,8px);
+          background:var(--surface,#FFF); color:var(--ink-muted,#64748B);
+          cursor:pointer; font-size:18px; line-height:1;
+          transition:transform 200ms, color 140ms, border-color 140ms;
+        }
+        .cockpit-refresh:hover{
+          color:var(--indigo,#4F46E5); border-color:var(--indigo,#4F46E5);
+          transform:rotate(90deg);
+        }
+
+        /* Row 1 — KPI strip with gradient tiles */
+        .cockpit-kpi-strip{
+          display:grid; grid-template-columns:repeat(5, 1fr); gap:14px;
+          margin-bottom:24px;
+        }
+        @media (max-width:920px){.cockpit-kpi-strip{grid-template-columns:repeat(2,1fr);}}
+        @media (max-width:480px){.cockpit-kpi-strip{grid-template-columns:1fr;}}
+        .cockpit-kpi{
+          position:relative; overflow:hidden;
+          padding:18px 20px;
+          border-radius:16px;
+          color:#fff;
+          box-shadow:0 4px 12px rgba(15,23,42,0.10), 0 12px 32px rgba(15,23,42,0.08);
+          transition:transform 220ms, box-shadow 220ms;
+        }
+        .cockpit-kpi:hover{transform:translateY(-2px); box-shadow:0 8px 18px rgba(15,23,42,0.12), 0 24px 48px rgba(15,23,42,0.12);}
+        .cockpit-kpi[data-tone="open"]   {background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%);}
+        .cockpit-kpi[data-tone="count"]  {background:linear-gradient(135deg,#7C3AED 0%,#A855F7 100%);}
+        .cockpit-kpi[data-tone="new"]    {background:linear-gradient(135deg,#0D9488 0%,#0EA5E9 100%);}
+        .cockpit-kpi[data-tone="winrate"]{background:linear-gradient(135deg,#059669 0%,#10B981 100%);}
+        .cockpit-kpi[data-tone="won"]    {background:linear-gradient(135deg,#D97706 0%,#F59E0B 100%);}
+        .cockpit-kpi-glow{
+          position:absolute; top:-50%; right:-30%; width:240px; height:240px;
+          background:radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 70%);
+          pointer-events:none;
+        }
+        .cockpit-kpi-label{
+          position:relative; font-size:10.5px; letter-spacing:0.10em; text-transform:uppercase;
+          font-weight:700; opacity:0.85; margin-bottom:8px;
+        }
+        .cockpit-kpi-value{
+          position:relative; font-size:28px; font-weight:700;
+          font-family:var(--serif,Georgia,serif); letter-spacing:-0.02em;
+          line-height:1.05; font-variant-numeric:tabular-nums;
+        }
+        .cockpit-kpi-sub{
+          position:relative; font-size:11px; opacity:0.85; margin-top:6px;
+          font-weight:500;
+        }
+
+        /* Section heads */
+        .cockpit-section-head{
+          display:flex; align-items:baseline; gap:10px; margin:20px 0 12px;
+          padding-bottom:8px; border-bottom:1px solid var(--border,#E5E7EB);
+        }
+        .cockpit-section-eyebrow{
+          font-size:10px; letter-spacing:0.10em; text-transform:uppercase;
+          color:var(--ink-subtle,#94A3B8); font-weight:700;
+        }
+        .cockpit-section-title{
+          font-size:15px; font-weight:600; color:var(--ink,#0F172A);
+          font-family:var(--serif,Georgia,serif); letter-spacing:-0.01em;
+        }
+
+        /* Row 2 — Stage breakdown strip (5 cards with funnel-depth color progression) */
+        .cockpit-stage-strip{
+          display:grid; grid-template-columns:repeat(5, 1fr); gap:12px;
+          margin-bottom:24px;
+        }
+        @media (max-width:920px){.cockpit-stage-strip{grid-template-columns:repeat(2, 1fr);}}
+        @media (max-width:480px){.cockpit-stage-strip{grid-template-columns:1fr;}}
+        .cockpit-stage{
+          position:relative; padding:14px 16px;
+          background:var(--surface,#FFF); border:1px solid var(--border,#E5E7EB);
+          border-radius:14px;
+          box-shadow:0 1px 2px rgba(15,23,42,0.04), 0 6px 18px rgba(15,23,42,0.05);
+          overflow:hidden;
+          transition:transform 200ms, box-shadow 200ms;
+        }
+        .cockpit-stage:hover{transform:translateY(-1px); box-shadow:0 4px 8px rgba(15,23,42,0.06), 0 16px 32px rgba(15,23,42,0.08);}
+        .cockpit-stage::before{
+          content:""; position:absolute; top:0; left:0; right:0; height:4px;
+          background:var(--stg-accent);
+        }
+        .cockpit-stage[data-stage="Lead"]       {--stg-accent:linear-gradient(90deg,#6366F1,#818CF8);}
+        .cockpit-stage[data-stage="Opportunity"]{--stg-accent:linear-gradient(90deg,#5B21B6,#7C3AED);}
+        .cockpit-stage[data-stage="Proposal"]   {--stg-accent:linear-gradient(90deg,#7C3AED,#A855F7);}
+        .cockpit-stage[data-stage="Negotiation"]{--stg-accent:linear-gradient(90deg,#C026D3,#E879F9);}
+        .cockpit-stage[data-stage="Order"]      {--stg-accent:linear-gradient(90deg,#DB2777,#F472B6);}
+        .cockpit-stage-name{
+          font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
+          color:var(--ink-muted,#64748B); font-weight:700; margin-bottom:8px;
+        }
+        .cockpit-stage-count{
+          font-size:32px; font-weight:700; line-height:1;
+          font-family:var(--serif,Georgia,serif); letter-spacing:-0.02em;
+          font-variant-numeric:tabular-nums; margin-bottom:4px;
+        }
+        .cockpit-stage[data-stage="Lead"]       .cockpit-stage-count{color:#4F46E5;}
+        .cockpit-stage[data-stage="Opportunity"] .cockpit-stage-count{color:#6D28D9;}
+        .cockpit-stage[data-stage="Proposal"]   .cockpit-stage-count{color:#7C3AED;}
+        .cockpit-stage[data-stage="Negotiation"] .cockpit-stage-count{color:#C026D3;}
+        .cockpit-stage[data-stage="Order"]      .cockpit-stage-count{color:#DB2777;}
+        .cockpit-stage-val{
+          font-size:13px; color:var(--ink,#0F172A); font-weight:600;
+          font-variant-numeric:tabular-nums; margin-bottom:8px;
+        }
+        .cockpit-stage-pct{
+          height:4px; background:var(--surface-2,#F1F5F9);
+          border-radius:2px; overflow:hidden; margin-bottom:4px;
+        }
+        .cockpit-stage-pct-fill{
+          height:100%; background:var(--stg-accent);
+          border-radius:2px;
+          transition:width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .cockpit-stage-pct-label{
+          font-size:10px; color:var(--ink-muted,#64748B); font-weight:600;
+        }
+
+        /* Row 3+ — generic cockpit-card */
+        .cockpit-row-2{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px;}
+        @media (max-width:920px){.cockpit-row-2{grid-template-columns:1fr;}}
+        .cockpit-card{
+          background:var(--surface,#FFF); border:1px solid var(--border,#E5E7EB);
+          border-radius:14px; overflow:hidden; margin-bottom:18px;
+          box-shadow:0 1px 2px rgba(15,23,42,0.04), 0 8px 24px rgba(15,23,42,0.05);
+        }
+        .cockpit-card-head{
+          display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+          padding:14px 18px; border-bottom:1px solid var(--border-soft,#E2E8F0);
+        }
+        .cockpit-card-icon{
+          width:32px; height:32px; border-radius:8px;
+          display:inline-flex; align-items:center; justify-content:center;
+          font-size:15px; color:#fff; flex-shrink:0;
+          box-shadow:0 4px 10px rgba(79,70,229,0.25), inset 0 1px 0 rgba(255,255,255,0.20);
+        }
+        .cockpit-card-title{
+          font-size:14px; font-weight:600; color:var(--ink,#0F172A);
+          letter-spacing:-0.005em; flex:1; min-width:120px;
+        }
+        .cockpit-card-sub{
+          font-size:11px; color:var(--ink-muted,#64748B);
+          font-style:italic;
+        }
+        .cockpit-card-body{padding:18px;}
+
+        /* Funnel chart */
+        .cockpit-funnel-row{margin-bottom:12px;}
+        .cockpit-funnel-row:last-child{margin-bottom:0;}
+        .cockpit-funnel-meta{
+          display:flex; justify-content:space-between; gap:8px;
+          font-size:12.5px; margin-bottom:4px;
+        }
+        .cockpit-funnel-stage{font-weight:600; color:var(--ink,#0F172A);}
+        .cockpit-funnel-vals{color:var(--ink-muted,#64748B); font-variant-numeric:tabular-nums; font-weight:500;}
+        .cockpit-funnel-track{
+          height:10px; background:var(--surface-2,#F1F5F9); border-radius:5px; overflow:hidden;
+        }
+        .cockpit-funnel-fill{
+          height:100%; border-radius:5px;
+          transition:width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+          box-shadow:inset 0 1px 0 rgba(255,255,255,0.20);
+        }
+
+        /* Trend chart (SVG line) */
+        .cockpit-trend-svg{width:100%; height:200px;}
+        .cockpit-trend-legend{
+          display:flex; gap:16px; margin-top:8px; font-size:11.5px;
+          color:var(--ink-muted,#64748B);
+        }
+        .cockpit-trend-legend-dot{
+          display:inline-block; width:10px; height:10px; border-radius:50%;
+          margin-right:6px; vertical-align:middle;
+        }
+
+        /* Region table */
+        .cockpit-region-table{width:100%; border-collapse:collapse; font-size:13px;}
+        .cockpit-region-table th{
+          text-align:left; padding:8px 10px;
+          font-size:10.5px; letter-spacing:0.06em; text-transform:uppercase;
+          color:var(--ink-muted,#64748B); font-weight:700;
+          border-bottom:1px solid var(--border,#E5E7EB);
+        }
+        .cockpit-region-table th.num{text-align:right;}
+        .cockpit-region-table td{
+          padding:10px;
+          border-bottom:1px solid var(--border-soft,#E2E8F0);
+          font-variant-numeric:tabular-nums;
+        }
+        .cockpit-region-table tr:last-child td{border-bottom:none;}
+        .cockpit-region-table td.num{text-align:right; font-weight:600;}
+        .cockpit-region-name{
+          display:inline-flex; align-items:center; gap:8px;
+          font-weight:600; color:var(--ink,#0F172A);
+        }
+        .cockpit-region-dot{width:8px; height:8px; border-radius:50%;}
+        .cockpit-region-dot[data-region="West"]   {background:linear-gradient(135deg,#4F46E5,#7C3AED);}
+        .cockpit-region-dot[data-region="North"]  {background:linear-gradient(135deg,#0D9488,#0891B2);}
+        .cockpit-region-dot[data-region="South"]  {background:linear-gradient(135deg,#D97706,#CA8A04);}
+        .cockpit-region-dot[data-region="East"]   {background:linear-gradient(135deg,#DC2626,#DB2777);}
+        .cockpit-region-dot[data-region="International"]{background:linear-gradient(135deg,#334155,#64748B);}
+
+        /* Source split */
+        .cockpit-source-bar{
+          display:flex; height:32px; border-radius:8px; overflow:hidden;
+          box-shadow:0 1px 2px rgba(15,23,42,0.06);
+          margin-bottom:14px;
+        }
+        .cockpit-source-seg{
+          display:flex; align-items:center; justify-content:center;
+          color:#fff; font-size:13px; font-weight:700;
+          transition:flex 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .cockpit-source-seg[data-src="BrightSign"]{background:linear-gradient(135deg,#4F46E5,#7C3AED);}
+        .cockpit-source-seg[data-src="Cavitak"]   {background:linear-gradient(135deg,#D97706,#F59E0B);}
+        .cockpit-source-legend{display:flex; gap:12px; font-size:12px; flex-wrap:wrap;}
+        .cockpit-source-leg{display:flex; align-items:center; gap:6px;}
+        .cockpit-source-leg-dot{width:10px; height:10px; border-radius:50%;}
+        .cockpit-source-leg-name{color:var(--ink,#0F172A); font-weight:600;}
+        .cockpit-source-leg-val{color:var(--ink-muted,#64748B); font-variant-numeric:tabular-nums;}
+
+        /* Aging spotlight */
+        .cockpit-aging-row{
+          display:flex; align-items:center; gap:12px;
+          padding:10px 0;
+          border-bottom:1px solid var(--border-soft,#E2E8F0);
+          font-size:13px; cursor:pointer;
+          transition:background 120ms, padding-left 160ms;
+        }
+        .cockpit-aging-row:hover{background:rgba(79,70,229,0.04); padding-left:6px;}
+        .cockpit-aging-row:last-child{border-bottom:none;}
+        .cockpit-aging-proj{flex:1; min-width:0; font-weight:600; color:var(--ink,#0F172A); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+        .cockpit-aging-cust{font-size:11.5px; color:var(--ink-muted,#64748B); font-weight:500; min-width:100px; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+        .cockpit-aging-stage{
+          padding:3px 9px; border-radius:999px; font-size:10.5px; font-weight:700;
+          flex-shrink:0;
+        }
+        .cockpit-aging-days{
+          padding:3px 10px; border-radius:999px; font-size:11px; font-weight:700;
+          font-variant-numeric:tabular-nums;
+          flex-shrink:0;
+        }
+        .cockpit-aging-days[data-tier="green"]{background:rgba(5,150,105,0.10); color:#047857;}
+        .cockpit-aging-days[data-tier="amber"]{background:rgba(217,119,6,0.12); color:#B45309;}
+        .cockpit-aging-days[data-tier="red"]  {background:rgba(220,38,38,0.14); color:#991B1B;}
+
+        /* What's moving */
+        .cockpit-mov-row{
+          display:flex; align-items:center; gap:10px;
+          padding:10px 0; border-bottom:1px solid var(--border-soft,#E2E8F0);
+          font-size:12.5px;
+        }
+        .cockpit-mov-row:last-child{border-bottom:none;}
+        .cockpit-mov-arrow{color:var(--ink-subtle,#94A3B8); font-size:14px; flex-shrink:0;}
+        .cockpit-mov-who{font-weight:600; color:var(--ink,#0F172A); flex-shrink:0;}
+        .cockpit-mov-detail{flex:1; color:var(--ink-muted,#64748B); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+        .cockpit-mov-when{font-size:11px; color:var(--ink-subtle,#94A3B8); flex-shrink:0;}
+
+        .cockpit-empty{padding:32px 20px; text-align:center; color:var(--ink-subtle,#94A3B8); font-size:13px; font-style:italic;}
+
+        /* Dark mode */
+        html[data-theme="dark"] .cockpit-card{background:rgba(20,25,55,0.92);}
+        html[data-theme="dark"] .cockpit-stage{background:rgba(20,25,55,0.92);}
+        html[data-theme="dark"] .cockpit-filters{background:linear-gradient(135deg, rgba(99,102,241,0.10) 0%, rgba(124,58,237,0.07) 100%), var(--surface,#141937);}
+      </style>
+
       <!-- v18 Premium Dashboard: hero + KPI strip + filter + 7 charts -->
       <div id="super-charts" class="dashboard-v18" style="display:none;">
         <!-- Hero header with live pulse and gradient mesh -->
@@ -7535,20 +7922,45 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
     </div>
 
     <style>
+      /* ============ v24.25.1 — Review filter row, polished ============ */
+      #review-filters-wrap{
+        position:relative;
+        background:linear-gradient(135deg, rgba(99,102,241,0.05) 0%, rgba(124,58,237,0.04) 50%, rgba(217,70,239,0.03) 100%), var(--surface,#FFF);
+        border:1px solid var(--border,#E5E7EB);
+        border-radius:14px;
+        box-shadow:0 1px 2px rgba(15,23,42,0.04), 0 4px 14px rgba(99,102,241,0.06);
+        overflow:hidden;
+      }
+      #review-filters-wrap::before{
+        content:"";position:absolute;top:0;left:0;right:0;height:3px;
+        background:linear-gradient(90deg,#4F46E5 0%,#7C3AED 50%,#DB2777 100%);
+      }
       #review-filters-wrap .rf-grid{display:flex; flex-wrap:wrap; gap:10px;}
       #review-filters-wrap .rf-cell{flex:1 1 150px; display:flex; flex-direction:column; min-width:0;}
-      #review-filters-wrap .rf-label{font-size:10px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600; margin-bottom:4px;}
+      #review-filters-wrap .rf-label{
+        font-size:10px; letter-spacing:0.06em; text-transform:uppercase;
+        color:var(--ink-muted,#64748B); font-weight:700; margin-bottom:5px;
+      }
       #review-filters-wrap select,
       #review-filters-wrap input[type="text"]{
         width:100%; min-height:var(--btn-h,40px);
-        padding:0 10px; font-size:13px; font-family:var(--sans,system-ui),sans-serif;
+        padding:0 12px; font-size:13px; font-weight:500; font-family:var(--sans,system-ui),sans-serif;
         background:var(--surface,#FFF); color:var(--ink,#0F172A);
         border:1px solid var(--border-strong,#CBD5E1); border-radius:var(--radius,8px);
+        box-shadow:0 1px 2px rgba(15,23,42,0.04);
+        transition:border-color 140ms, box-shadow 140ms;
       }
+      #review-filters-wrap select:hover,
+      #review-filters-wrap input[type="text"]:hover{border-color:var(--indigo-soft,#312E81);}
       #review-filters-wrap select:focus,
       #review-filters-wrap input[type="text"]:focus{
         outline:none; border-color:var(--indigo,#4F46E5);
-        box-shadow:0 0 0 3px rgba(79,70,229,0.15);
+        box-shadow:0 0 0 3px rgba(79,70,229,0.18);
+      }
+      #review-filters-wrap select:not([value=""]):not(:invalid){
+        border-color:var(--indigo,#4F46E5);
+        background:linear-gradient(0deg, rgba(79,70,229,0.04), rgba(79,70,229,0.04)), var(--surface,#FFF);
+        font-weight:600;
       }
       @media (max-width:720px){
         #review-filters-wrap .rf-cell{flex:1 1 calc(50% - 5px); min-width:0;}
@@ -7556,35 +7968,222 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
       @media (max-width:480px){
         #review-filters-wrap .rf-cell{flex:1 1 100%;}
       }
-      /* v24.25.0 (items 6+7) — Region + Sales person card styling */
-      #review-rs-wrap{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:0 0 18px 0;}
+
+      /* ============ v24.25.1 — Region + Sales card, polished ============ */
+      #review-rs-wrap{
+        display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:0 0 18px 0;
+      }
       @media (max-width:920px){#review-rs-wrap{grid-template-columns:1fr;}}
-      .rs-card{background:var(--surface,#FFF); border:1px solid var(--border,#E5E7EB); border-radius:14px; padding:18px; box-shadow:var(--shadow-sm,0 1px 2px rgba(0,0,0,0.04));}
-      .rs-card-head{display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap;}
-      .rs-card-icon{width:32px; height:32px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; font-size:16px; color:#fff; flex-shrink:0;}
-      .rs-card-title{font-size:14px; font-weight:600; color:var(--ink,#0F172A); flex:1; min-width:120px;}
-      .rs-card-pick{min-height:var(--btn-h,40px); padding:0 10px; font-size:13px; border:1px solid var(--border-strong,#CBD5E1); border-radius:var(--radius,8px); background:var(--surface,#FFF); color:var(--ink,#0F172A);}
-      .rs-tile-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px;}
+
+      .rs-card{
+        position:relative;
+        background:linear-gradient(180deg, rgba(255,255,255,0.94) 0%, var(--surface,#FFF) 100%);
+        border:1px solid var(--border,#E5E7EB);
+        border-radius:16px; padding:0; overflow:hidden;
+        box-shadow:0 2px 4px rgba(15,23,42,0.04), 0 12px 32px rgba(15,23,42,0.06);
+        transition:box-shadow 220ms ease, transform 220ms ease;
+      }
+      .rs-card:hover{box-shadow:0 4px 8px rgba(15,23,42,0.06), 0 20px 40px rgba(15,23,42,0.08);}
+      .rs-card::before{
+        content:"";position:absolute;top:0;left:0;right:0;height:4px;
+        background:var(--rs-accent, linear-gradient(90deg,#4F46E5 0%,#7C3AED 100%));
+      }
+      /* Region card — violet gradient (changes per pick via JS data-attribute) */
+      .rs-card[data-region="West"]{--rs-accent:linear-gradient(90deg,#4F46E5 0%,#7C3AED 100%);}
+      .rs-card[data-region="North"]{--rs-accent:linear-gradient(90deg,#0D9488 0%,#0891B2 100%);}
+      .rs-card[data-region="South"]{--rs-accent:linear-gradient(90deg,#D97706 0%,#CA8A04 100%);}
+      .rs-card[data-region="East"]{--rs-accent:linear-gradient(90deg,#DC2626 0%,#DB2777 100%);}
+      .rs-card[data-region="International"]{--rs-accent:linear-gradient(90deg,#334155 0%,#64748B 100%);}
+      /* Sales card — teal/cyan signature */
+      #review-sales-card{--rs-accent:linear-gradient(90deg,#0D9488 0%,#0EA5E9 100%);}
+
+      .rs-card-head{
+        display:flex; align-items:center; gap:12px;
+        padding:18px 20px 14px;
+        border-bottom:1px solid var(--border-soft,#E2E8F0);
+        flex-wrap:wrap;
+      }
+      .rs-card-icon{
+        width:38px; height:38px; border-radius:10px;
+        display:inline-flex; align-items:center; justify-content:center;
+        font-size:18px; color:#fff; flex-shrink:0;
+        box-shadow:0 4px 12px rgba(79,70,229,0.30), inset 0 1px 0 rgba(255,255,255,0.20);
+      }
+      .rs-card-title{
+        font-size:15px; font-weight:600; color:var(--ink,#0F172A);
+        flex:1; min-width:120px; letter-spacing:-0.005em;
+      }
+      .rs-card-pick{
+        min-height:var(--btn-h,40px); padding:0 12px;
+        font-size:13px; font-weight:600;
+        border:1px solid var(--border-strong,#CBD5E1);
+        border-radius:var(--radius,8px);
+        background:var(--surface,#FFF); color:var(--ink,#0F172A);
+        cursor:pointer;
+        box-shadow:0 1px 2px rgba(15,23,42,0.04);
+        transition:border-color 140ms, box-shadow 140ms;
+        max-width:200px;
+      }
+      .rs-card-pick:hover{border-color:var(--indigo,#4F46E5);}
+      .rs-card-pick:focus{
+        outline:none; border-color:var(--indigo,#4F46E5);
+        box-shadow:0 0 0 3px rgba(79,70,229,0.18);
+      }
+
+      .rs-body{padding:18px 20px 20px;}
+
+      .rs-tile-grid{
+        display:grid; grid-template-columns:repeat(4,1fr); gap:10px;
+        margin-bottom:18px;
+      }
       @media (max-width:480px){.rs-tile-grid{grid-template-columns:repeat(2,1fr);}}
-      .rs-tile{background:var(--surface-2,#F8FAFC); border:1px solid var(--border,#E5E7EB); border-radius:10px; padding:10px;}
-      .rs-tile-label{font-size:9.5px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600; margin-bottom:4px;}
-      .rs-tile-value{font-size:18px; font-weight:700; color:var(--ink,#0F172A); font-variant-numeric:tabular-nums; line-height:1.1;}
-      .rs-tile-sub{font-size:10px; color:var(--ink-muted,#64748B); margin-top:2px;}
-      .rs-section{margin-top:12px;}
-      .rs-section-title{font-size:10.5px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600; margin-bottom:6px;}
-      .rs-list{margin:0; padding:0; list-style:none; font-size:12.5px;}
-      .rs-list li{display:flex; justify-content:space-between; gap:8px; padding:6px 0; border-bottom:1px dashed var(--border-soft,#E2E8F0);}
+      .rs-tile{
+        position:relative; overflow:hidden;
+        background:linear-gradient(180deg, var(--rs-tile-bg, rgba(79,70,229,0.06)) 0%, transparent 100%), var(--surface,#FFF);
+        border:1px solid var(--rs-tile-border, rgba(79,70,229,0.15));
+        border-radius:12px; padding:12px 12px 10px;
+        transition:transform 160ms ease, box-shadow 160ms ease;
+      }
+      .rs-tile:hover{transform:translateY(-1px); box-shadow:0 4px 12px rgba(15,23,42,0.06);}
+      /* Per-tile color theming: total=indigo, open=violet, won=emerald, win-rate=amber */
+      .rs-tile[data-tone="total"]{--rs-tile-bg:rgba(79,70,229,0.07); --rs-tile-border:rgba(79,70,229,0.18);}
+      .rs-tile[data-tone="total"] .rs-tile-value{background:linear-gradient(135deg,#4F46E5,#7C3AED); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
+      .rs-tile[data-tone="open"]{--rs-tile-bg:rgba(124,58,237,0.07); --rs-tile-border:rgba(124,58,237,0.18);}
+      .rs-tile[data-tone="open"] .rs-tile-value{background:linear-gradient(135deg,#7C3AED,#A855F7); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
+      .rs-tile[data-tone="won"]{--rs-tile-bg:rgba(5,150,105,0.07); --rs-tile-border:rgba(5,150,105,0.20);}
+      .rs-tile[data-tone="won"] .rs-tile-value{background:linear-gradient(135deg,#059669,#10B981); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
+      .rs-tile[data-tone="rate"]{--rs-tile-bg:rgba(217,119,6,0.07); --rs-tile-border:rgba(217,119,6,0.20);}
+      .rs-tile[data-tone="rate"] .rs-tile-value{background:linear-gradient(135deg,#D97706,#F59E0B); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
+      .rs-tile-label{
+        font-size:9.5px; letter-spacing:0.08em; text-transform:uppercase;
+        color:var(--ink-muted,#64748B); font-weight:700; margin-bottom:4px;
+      }
+      .rs-tile-value{
+        font-size:22px; font-weight:700; color:var(--ink,#0F172A);
+        font-variant-numeric:tabular-nums; line-height:1.1;
+        font-family:var(--serif,Georgia,serif); letter-spacing:-0.015em;
+      }
+      .rs-tile-sub{
+        font-size:10px; color:var(--ink-muted,#64748B); margin-top:3px;
+        font-weight:500;
+      }
+
+      .rs-section{margin-top:16px;}
+      .rs-section-title{
+        font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase;
+        color:var(--ink-muted,#64748B); font-weight:700;
+        margin-bottom:8px; padding-bottom:6px;
+        border-bottom:1px solid var(--border-soft,#E2E8F0);
+      }
+      .rs-list{margin:0; padding:0; list-style:none; font-size:13px;}
+      .rs-list li{
+        display:flex; justify-content:space-between; align-items:center; gap:8px;
+        padding:8px 0; border-bottom:1px dashed var(--border-soft,#E2E8F0);
+      }
       .rs-list li:last-child{border-bottom:none;}
-      .rs-list li .rs-list-name{color:var(--ink,#0F172A); font-weight:500; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-      .rs-list li .rs-list-val{color:var(--ink-muted,#64748B); font-variant-numeric:tabular-nums; white-space:nowrap;}
-      .rs-deals{max-height:240px; overflow-y:auto; border:1px solid var(--border,#E5E7EB); border-radius:8px; background:var(--surface-2,#F8FAFC);}
-      .rs-deal-row{display:flex; gap:10px; padding:8px 12px; border-bottom:1px dashed var(--border-soft,#E2E8F0); cursor:pointer; font-size:12px; transition:background 100ms;}
-      .rs-deal-row:hover{background:rgba(79,70,229,0.06);}
+      .rs-list li .rs-list-rank{
+        display:inline-flex; align-items:center; justify-content:center;
+        width:22px; height:22px; border-radius:6px;
+        background:linear-gradient(135deg, var(--ink-muted,#64748B), var(--slate,#334155));
+        color:#fff; font-size:11px; font-weight:700;
+        flex-shrink:0;
+      }
+      .rs-list li:nth-child(1) .rs-list-rank{background:linear-gradient(135deg,#D97706,#F59E0B);}
+      .rs-list li:nth-child(2) .rs-list-rank{background:linear-gradient(135deg,#64748B,#94A3B8);}
+      .rs-list li:nth-child(3) .rs-list-rank{background:linear-gradient(135deg,#92400E,#B45309);}
+      .rs-list li .rs-list-name{
+        color:var(--ink,#0F172A); font-weight:600; flex:1;
+        min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+      }
+      .rs-list li .rs-list-val{
+        color:var(--ink-muted,#475569); font-variant-numeric:tabular-nums;
+        white-space:nowrap; font-weight:600; font-size:12.5px;
+      }
+
+      /* Stage breakdown bars */
+      .rs-stage-bar{margin-bottom:10px;}
+      .rs-stage-bar-row{
+        display:flex; justify-content:space-between; align-items:baseline;
+        font-size:12.5px; margin-bottom:4px; gap:8px;
+      }
+      .rs-stage-bar-label{color:var(--ink,#0F172A); font-weight:600;}
+      .rs-stage-bar-meta{color:var(--ink-muted,#64748B); font-variant-numeric:tabular-nums; font-weight:500;}
+      .rs-stage-bar-track{
+        position:relative; height:8px; background:var(--surface-2,#F1F5F9);
+        border-radius:4px; overflow:hidden;
+      }
+      .rs-stage-bar-fill{
+        position:absolute; top:0; left:0; bottom:0;
+        border-radius:4px;
+        transition:width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow:inset 0 1px 0 rgba(255,255,255,0.20);
+      }
+      .rs-stage-bar-fill[data-stage="Lead"]       {background:linear-gradient(90deg,#6366F1,#818CF8);}
+      .rs-stage-bar-fill[data-stage="Opportunity"]{background:linear-gradient(90deg,#5B21B6,#7C3AED);}
+      .rs-stage-bar-fill[data-stage="Proposal"]   {background:linear-gradient(90deg,#7C3AED,#A855F7);}
+      .rs-stage-bar-fill[data-stage="Negotiation"]{background:linear-gradient(90deg,#C026D3,#E879F9);}
+      .rs-stage-bar-fill[data-stage="Order"]      {background:linear-gradient(90deg,#DB2777,#F472B6);}
+
+      /* Deal list */
+      .rs-deals{
+        max-height:280px; overflow-y:auto;
+        border:1px solid var(--border,#E5E7EB);
+        border-radius:10px; background:var(--surface,#FFF);
+      }
+      .rs-deals::-webkit-scrollbar{width:6px;}
+      .rs-deals::-webkit-scrollbar-track{background:transparent;}
+      .rs-deals::-webkit-scrollbar-thumb{background:var(--border-strong,#CBD5E1); border-radius:3px;}
+      .rs-deal-row{
+        display:flex; align-items:center; gap:10px;
+        padding:10px 14px; border-bottom:1px solid var(--border-soft,#E2E8F0);
+        cursor:pointer; font-size:12.5px;
+        transition:background 120ms ease, padding-left 160ms ease;
+      }
+      .rs-deal-row:hover{
+        background:linear-gradient(90deg,rgba(79,70,229,0.06),transparent);
+        padding-left:18px;
+      }
       .rs-deal-row:last-child{border-bottom:none;}
-      .rs-deal-proj{flex:1; min-width:0; font-weight:500; color:var(--ink,#0F172A); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-      .rs-deal-stage{padding:2px 8px; border-radius:999px; background:var(--indigo-light,#E0E7FF); color:var(--indigo,#4F46E5); font-size:10.5px; font-weight:600; flex-shrink:0;}
-      .rs-deal-val{color:var(--ink-muted,#64748B); font-variant-numeric:tabular-nums; flex-shrink:0;}
-      .rs-empty{padding:24px; text-align:center; color:var(--ink-subtle,#94A3B8); font-size:12.5px; font-style:italic;}
+      .rs-deal-proj{
+        flex:1; min-width:0; font-weight:600; color:var(--ink,#0F172A);
+        overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+      }
+      .rs-deal-stage{
+        padding:3px 9px; border-radius:999px; font-size:10.5px; font-weight:700;
+        flex-shrink:0; letter-spacing:0.02em;
+      }
+      .rs-deal-stage[data-stage="Lead"]       {background:rgba(99,102,241,0.12);  color:#4F46E5;}
+      .rs-deal-stage[data-stage="Opportunity"]{background:rgba(124,58,237,0.12);  color:#6D28D9;}
+      .rs-deal-stage[data-stage="Proposal"]   {background:rgba(168,85,247,0.12);  color:#7C3AED;}
+      .rs-deal-stage[data-stage="Negotiation"]{background:rgba(217,119,6,0.12);   color:#B45309;}
+      .rs-deal-stage[data-stage="Order"]      {background:rgba(5,150,105,0.12);   color:#047857;}
+      .rs-deal-stage[data-outcome="won"]      {background:rgba(5,150,105,0.18);   color:#065F46;}
+      .rs-deal-stage[data-outcome="lost"]     {background:rgba(220,38,38,0.12);   color:#991B1B;}
+      .rs-deal-stage[data-outcome="on-hold"]  {background:rgba(100,116,139,0.14); color:#475569;}
+      .rs-deal-val{
+        color:var(--ink-muted,#475569); font-variant-numeric:tabular-nums;
+        white-space:nowrap; font-weight:600; flex-shrink:0;
+      }
+      .rs-empty{
+        padding:32px 20px; text-align:center;
+        color:var(--ink-subtle,#94A3B8); font-size:13px; font-style:italic;
+      }
+      .rs-empty-strong{
+        padding:32px 20px; text-align:center;
+        background:var(--surface-2,#F8FAFC); border-radius:10px;
+        border:1px dashed var(--border-strong,#CBD5E1);
+        color:var(--ink-muted,#64748B); font-size:13px;
+      }
+      .rs-empty-strong-icon{font-size:28px; margin-bottom:8px; opacity:0.5;}
+
+      /* Dark mode */
+      html[data-theme="dark"] #review-filters-wrap{
+        background:linear-gradient(135deg, rgba(99,102,241,0.10) 0%, rgba(124,58,237,0.07) 50%, rgba(217,70,239,0.05) 100%), var(--surface,#141937);
+      }
+      html[data-theme="dark"] .rs-card{
+        background:linear-gradient(180deg, rgba(20,25,55,0.94) 0%, var(--surface,#141937) 100%);
+      }
+      html[data-theme="dark"] .rs-tile{background:rgba(20,25,55,0.50);}
     </style>
 
     <!-- v24.25.0 (items 6+7) — Region + Sales person review cards. Populated by
@@ -7820,7 +8419,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.25.0';  // v24.25.0 — Pipeline cutoff (PIPELINE_DATA_START='2026-04-01') applied to all aggregations + trend chart. YoY badges stripped from Cards 1/2/4. Card 6 replaced with cutoff explainer. UI uniformity tokens. Mobile stepper REMOVED — single responsive form. SSD + WD105 ± stepper. BOM horizontal scroll fix. Excel signature block at BOM bottom. Notification fix uses entry.project. Items 5+6+7: Review tab chip-filter panel replaced with inline dropdown row (search/Source/FY/Region/State/Sales/Presales/Outcome), plus Region card + Sales-person card with KPI tiles + top reps/customers + deal list. Pairs with backend v25.13.0.
+const FRONTEND_VERSION = '24.25.1';  // v24.25.1 — Visual polish on Review filter row + Region card + Sales card (gradients, glass surfaces, color-tinted KPI tiles, animated stage bars). + Full Dashboard cockpit build: 5 vibrant KPI tiles, stage-wise breakdown with funnel-depth color progression, funnel + trend chart pair, region performance table, source split, aging spotlight, what's-moving stream. Time window + Region filter persist. Pairs with backend v25.13.0 (no backend changes needed).
+// v24.25.0 — Pipeline cutoff (PIPELINE_DATA_START='2026-04-01') applied to all aggregations + trend chart. YoY badges stripped from Cards 1/2/4. Card 6 replaced with cutoff explainer. UI uniformity tokens. Mobile stepper REMOVED — single responsive form. SSD + WD105 ± stepper. BOM horizontal scroll fix. Excel signature block at BOM bottom. Notification fix uses entry.project. Items 5+6+7: Review tab chip-filter panel replaced with inline dropdown row (search/Source/FY/Region/State/Sales/Presales/Outcome), plus Region card + Sales-person card with KPI tiles + top reps/customers + deal list. Pairs with backend v25.13.0.
 // v24.23.0 — features #19 Customer 360 modal + #18 server-side handoff notifications.
 // v24.21.1 — robust salesPerson auto-default for Sales/BU Head users: state.form mirror, save-time fallback, initial-load trigger
 // v24.21.0 — security hardening: auth on doGet?action=read GET calls; escape user-controlled fields in renderTeamList + statusEl; formatINR returns ₹0 not — for zero; drop ineffective timeZone option from Number.toLocaleString calls
@@ -18219,6 +18819,9 @@ function renderLog(){
 /* v23.1: renderDashboard — ALL charts and KPIs. Super sees team data + filter bar; regular sees own data only. */
 function renderDashboard(){
   if(!state.user)return;
+  // v24.25.1 — render the new Brand Revenue Cockpit on every dashboard open.
+  // Falls through to the older charts if the cockpit module isn't loaded yet.
+  try { if(typeof window.renderCockpit === 'function') window.renderCockpit(); } catch(_){}
   const isSuper=state.user.isSuper;
   const role=(String(state.user.role || '')).trim();
   const seesAll=isSuper || role==='BrightSign';  // v24.14.6: BrightSign role also sees team-wide
@@ -22608,25 +23211,27 @@ if(document.readyState==='loading'){
   }
 
   window.renderReviewRegionCard = function(regionName){
+    const card = document.getElementById('review-region-card');
     const body = document.getElementById('rs-region-body');
     if(!body) return;
+    if(card) card.setAttribute('data-region', regionName || '');
     if(!regionName){
-      body.className = 'rs-empty';
-      body.innerHTML = 'Select a region to see deal count, pipeline value, win rate, top reps, and the deal list.';
+      body.className = 'rs-empty-strong';
+      body.innerHTML = '<div class="rs-empty-strong-icon">◉</div><div>Pick a region above to see deal count, pipeline value, win rate, top reps and the deal list.</div>';
       return;
     }
-    body.className = '';
+    body.className = 'rs-body';
     const entries = _entriesAfterCutoff().filter(function(e){
       return _stateToRegion(e.state) === regionName;
     });
     if(entries.length === 0){
-      body.innerHTML = '<div class="rs-empty">No deals tagged to ' + (typeof escapeHtml === 'function' ? escapeHtml(regionName) : regionName) + ' yet.</div>';
+      body.innerHTML = '<div class="rs-empty-strong"><div class="rs-empty-strong-icon">○</div><div>No deals tagged to ' + (typeof escapeHtml === 'function' ? escapeHtml(regionName) : regionName) + ' yet.</div></div>';
       return;
     }
     // KPIs
     let openCount = 0, openVal = 0, wonCount = 0, wonVal = 0, lostCount = 0;
-    const repTotals = {};       // sales loginName → ₹ pipeline
-    const customerTotals = {};  // enduser → ₹ pipeline
+    const repTotals = {};
+    const customerTotals = {};
     entries.forEach(function(e){
       const v = _readDealValSafe(e);
       const out = String(e.outcome || 'open').toLowerCase();
@@ -22639,7 +23244,6 @@ if(document.readyState==='loading'){
       if(cust){ customerTotals[cust] = (customerTotals[cust] || 0) + v; }
     });
     const winRate = (wonCount + lostCount) > 0 ? Math.round((wonCount / (wonCount + lostCount)) * 100) : 0;
-    // Top 3 reps + customers
     const topReps = Object.keys(repTotals).map(function(k){
       return {name:_resolveOwnerName(k), val:repTotals[k]};
     }).sort(function(a, b){ return b.val - a.val; }).slice(0, 3);
@@ -22647,7 +23251,6 @@ if(document.readyState==='loading'){
       return {name:k, val:customerTotals[k]};
     }).sort(function(a, b){ return b.val - a.val; }).slice(0, 3);
 
-    // Deal list — open first by stage order, then closed
     const STAGE_ORDER = {'Lead':0,'Opportunity':1,'Proposal':2,'Negotiation':3,'Order':4};
     const dealsSorted = entries.slice().sort(function(a, b){
       const oa = String(a.outcome || 'open').toLowerCase();
@@ -22658,47 +23261,55 @@ if(document.readyState==='loading'){
       return sa - sb;
     });
 
-    const tile = function(label, value, sub){
-      return '<div class="rs-tile"><div class="rs-tile-label">' + label + '</div>' +
+    const tile = function(label, value, sub, tone){
+      return '<div class="rs-tile" data-tone="' + tone + '"><div class="rs-tile-label">' + label + '</div>' +
              '<div class="rs-tile-value">' + value + '</div>' +
              '<div class="rs-tile-sub">' + (sub || '') + '</div></div>';
     };
-    const listItems = function(arr){
-      if(!arr.length) return '<li><span class="rs-list-name" style="color:var(--ink-subtle);font-style:italic;">— none —</span></li>';
-      return arr.map(function(it){
-        return '<li><span class="rs-list-name">' + (typeof escapeHtml === 'function' ? escapeHtml(it.name) : it.name) +
-               '</span><span class="rs-list-val">' + _fmtINRsafe(it.val) + '</span></li>';
+    const rankedItems = function(arr){
+      if(!arr.length) return '<li><span class="rs-list-name" style="color:var(--ink-subtle);font-style:italic;font-weight:400;">— none —</span></li>';
+      return arr.map(function(it, idx){
+        return '<li>' +
+                 '<span class="rs-list-rank">' + (idx + 1) + '</span>' +
+                 '<span class="rs-list-name">' + (typeof escapeHtml === 'function' ? escapeHtml(it.name) : it.name) + '</span>' +
+                 '<span class="rs-list-val">' + _fmtINRsafe(it.val) + '</span>' +
+               '</li>';
       }).join('');
     };
-    const dealRows = dealsSorted.slice(0, 25).map(function(e){
+    const dealRow = function(e){
       const proj = String(e.project || 'Untitled');
       const stg = String(e.stage || '');
+      const out = String(e.outcome || 'open').toLowerCase();
       const v = _readDealValSafe(e);
       const refId = String(e.refId || '').replace(/'/g, "\\'");
+      const stageAttr = (out === 'won' || out === 'lost' || out === 'on-hold')
+        ? 'data-outcome="' + out + '"' : 'data-stage="' + stg + '"';
+      const stageLbl = (out === 'won') ? 'Won' : (out === 'lost') ? 'Lost' : (out === 'on-hold') ? 'On hold' : stg;
       return '<div class="rs-deal-row" onclick="(typeof openEditFromHistory===\'function\')&&openEditFromHistory(\'' + refId + '\')">' +
                '<div class="rs-deal-proj">' + (typeof escapeHtml === 'function' ? escapeHtml(proj) : proj) + '</div>' +
-               (stg ? _stageBadge(stg) : '') +
+               (stageLbl ? '<span class="rs-deal-stage" ' + stageAttr + '>' + stageLbl + '</span>' : '') +
                '<div class="rs-deal-val">' + _fmtINRsafe(v) + '</div>' +
              '</div>';
-    }).join('');
+    };
+    const dealRows = dealsSorted.slice(0, 25).map(dealRow).join('');
 
     body.innerHTML =
       '<div class="rs-tile-grid">' +
-        tile('Total deals', String(entries.length), '') +
-        tile('Open ₹', _fmtINRsafe(openVal), openCount + ' open') +
-        tile('Won ₹', _fmtINRsafe(wonVal), wonCount + ' won') +
-        tile('Win rate', winRate + '%', (wonCount + lostCount) + ' resolved') +
+        tile('Total deals', String(entries.length), 'in ' + (typeof escapeHtml === 'function' ? escapeHtml(regionName) : regionName), 'total') +
+        tile('Open ₹', _fmtINRsafe(openVal), openCount + ' open', 'open') +
+        tile('Won ₹', _fmtINRsafe(wonVal), wonCount + ' won', 'won') +
+        tile('Win rate', winRate + '%', (wonCount + lostCount) + ' resolved', 'rate') +
       '</div>' +
       '<div class="rs-section">' +
         '<div class="rs-section-title">Top sales reps</div>' +
-        '<ul class="rs-list">' + listItems(topReps) + '</ul>' +
+        '<ul class="rs-list">' + rankedItems(topReps) + '</ul>' +
       '</div>' +
       '<div class="rs-section">' +
         '<div class="rs-section-title">Top customers</div>' +
-        '<ul class="rs-list">' + listItems(topCustomers) + '</ul>' +
+        '<ul class="rs-list">' + rankedItems(topCustomers) + '</ul>' +
       '</div>' +
       '<div class="rs-section">' +
-        '<div class="rs-section-title">Deals (' + dealsSorted.length + ' total · showing ' + Math.min(25, dealsSorted.length) + ')</div>' +
+        '<div class="rs-section-title">Deals · ' + dealsSorted.length + ' total · showing ' + Math.min(25, dealsSorted.length) + '</div>' +
         '<div class="rs-deals">' + (dealRows || '<div class="rs-empty">No deals to show</div>') + '</div>' +
       '</div>';
   };
@@ -22716,17 +23327,18 @@ if(document.readyState==='loading'){
     const body = document.getElementById('rs-sales-body');
     if(!body) return;
     if(!salesLoginName){
-      body.className = 'rs-empty';
-      body.innerHTML = 'Select a sales person to see their tagged deals, pipeline value, win rate, and stage breakdown.';
+      body.className = 'rs-empty-strong';
+      body.innerHTML = '<div class="rs-empty-strong-icon">☰</div><div>Pick a sales person above to see tagged deals, pipeline value, win rate and stage breakdown.</div>';
       return;
     }
-    body.className = '';
+    body.className = 'rs-body';
     const ln = String(salesLoginName).toLowerCase().trim();
     const entries = _entriesAfterCutoff().filter(function(e){
       return String(e.salesPerson || '').toLowerCase().trim() === ln;
     });
     if(entries.length === 0){
-      body.innerHTML = '<div class="rs-empty">No deals tagged to ' + _resolveOwnerName(ln) + ' yet.</div>';
+      const safeName = (typeof escapeHtml === 'function') ? escapeHtml(_resolveOwnerName(ln)) : _resolveOwnerName(ln);
+      body.innerHTML = '<div class="rs-empty-strong"><div class="rs-empty-strong-icon">○</div><div>No deals tagged to ' + safeName + ' yet.</div></div>';
       return;
     }
     let openCount = 0, openVal = 0, wonCount = 0, wonVal = 0, lostCount = 0;
@@ -22745,21 +23357,19 @@ if(document.readyState==='loading'){
     });
     const winRate = (wonCount + lostCount) > 0 ? Math.round((wonCount / (wonCount + lostCount)) * 100) : 0;
 
-    // Stage breakdown bars
     const maxStageVal = Math.max.apply(null, Object.values(stageVals).concat([1]));
-    const stageColors = ['#4F46E5','#5B47E0','#6748DC','#7349D7','#7C3AED'];
     const STAGES_ORDER = ['Lead','Opportunity','Proposal','Negotiation','Order'];
-    const stageBars = STAGES_ORDER.map(function(s, i){
+    const stageBars = STAGES_ORDER.map(function(s){
       const c = stageCounts[s] || 0;
       const v = stageVals[s] || 0;
       const pct = maxStageVal > 0 ? Math.min(100, (v / maxStageVal) * 100) : 0;
-      return '<div style="margin-bottom:8px;">' +
-               '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;gap:8px;">' +
-                 '<span style="color:var(--ink,#0F172A);font-weight:500;">' + s + '</span>' +
-                 '<span style="color:var(--ink-muted,#64748B);font-variant-numeric:tabular-nums;">' + c + ' · ' + _fmtINRsafe(v) + '</span>' +
+      return '<div class="rs-stage-bar">' +
+               '<div class="rs-stage-bar-row">' +
+                 '<span class="rs-stage-bar-label">' + s + '</span>' +
+                 '<span class="rs-stage-bar-meta">' + c + ' · ' + _fmtINRsafe(v) + '</span>' +
                '</div>' +
-               '<div style="height:6px;background:var(--surface-2,#F1F5F9);border-radius:3px;overflow:hidden;">' +
-                 '<div style="width:' + pct.toFixed(1) + '%;height:100%;background:' + stageColors[i] + ';border-radius:3px;"></div>' +
+               '<div class="rs-stage-bar-track">' +
+                 '<div class="rs-stage-bar-fill" data-stage="' + s + '" style="width:' + pct.toFixed(1) + '%;"></div>' +
                '</div>' +
              '</div>';
     }).join('');
@@ -22772,41 +23382,598 @@ if(document.readyState==='loading'){
       return (STAGE_ORDER[a.stage] != null ? STAGE_ORDER[a.stage] : 99) -
              (STAGE_ORDER[b.stage] != null ? STAGE_ORDER[b.stage] : 99);
     });
-    const dealRows = dealsSorted.slice(0, 25).map(function(e){
+    const dealRow = function(e){
       const proj = String(e.project || 'Untitled');
       const stg = String(e.stage || '');
+      const out = String(e.outcome || 'open').toLowerCase();
       const v = _readDealValSafe(e);
       const refId = String(e.refId || '').replace(/'/g, "\\'");
+      const stageAttr = (out === 'won' || out === 'lost' || out === 'on-hold')
+        ? 'data-outcome="' + out + '"' : 'data-stage="' + stg + '"';
+      const stageLbl = (out === 'won') ? 'Won' : (out === 'lost') ? 'Lost' : (out === 'on-hold') ? 'On hold' : stg;
       return '<div class="rs-deal-row" onclick="(typeof openEditFromHistory===\'function\')&&openEditFromHistory(\'' + refId + '\')">' +
                '<div class="rs-deal-proj">' + (typeof escapeHtml === 'function' ? escapeHtml(proj) : proj) + '</div>' +
-               (stg ? _stageBadge(stg) : '') +
+               (stageLbl ? '<span class="rs-deal-stage" ' + stageAttr + '>' + stageLbl + '</span>' : '') +
                '<div class="rs-deal-val">' + _fmtINRsafe(v) + '</div>' +
              '</div>';
-    }).join('');
-    const tile = function(label, value, sub){
-      return '<div class="rs-tile"><div class="rs-tile-label">' + label + '</div>' +
+    };
+    const dealRows = dealsSorted.slice(0, 25).map(dealRow).join('');
+    const tile = function(label, value, sub, tone){
+      return '<div class="rs-tile" data-tone="' + tone + '"><div class="rs-tile-label">' + label + '</div>' +
              '<div class="rs-tile-value">' + value + '</div>' +
              '<div class="rs-tile-sub">' + (sub || '') + '</div></div>';
     };
     body.innerHTML =
       '<div class="rs-tile-grid">' +
-        tile('Tagged deals', String(entries.length), '') +
-        tile('Open ₹', _fmtINRsafe(openVal), openCount + ' open') +
-        tile('Won ₹', _fmtINRsafe(wonVal), wonCount + ' won') +
-        tile('Win rate', winRate + '%', (wonCount + lostCount) + ' resolved') +
+        tile('Tagged deals', String(entries.length), '', 'total') +
+        tile('Open ₹', _fmtINRsafe(openVal), openCount + ' open', 'open') +
+        tile('Won ₹', _fmtINRsafe(wonVal), wonCount + ' won', 'won') +
+        tile('Win rate', winRate + '%', (wonCount + lostCount) + ' resolved', 'rate') +
       '</div>' +
       '<div class="rs-section">' +
         '<div class="rs-section-title">Open pipeline by stage</div>' +
         stageBars +
       '</div>' +
       '<div class="rs-section">' +
-        '<div class="rs-section-title">Deals (' + dealsSorted.length + ' total · showing ' + Math.min(25, dealsSorted.length) + ')</div>' +
+        '<div class="rs-section-title">Deals · ' + dealsSorted.length + ' total · showing ' + Math.min(25, dealsSorted.length) + '</div>' +
         '<div class="rs-deals">' + (dealRows || '<div class="rs-empty">No deals to show</div>') + '</div>' +
       '</div>';
   };
   window._renderSalesCardForCurrentPick = function(){
     const sel = document.getElementById('rs-sales-pick');
     if(sel) renderReviewSalesCard(sel.value);
+  };
+})();
+
+/* ============================================================================
+ * v24.25.1 — Brand Revenue Cockpit
+ * Self-contained module. Reads window._centralLog (post-cutoff filtered),
+ * applies the cockpit's own time-window + region filters, renders 6 rows of
+ * visuals into the #cockpit container that lives at the top of the Dashboard tab.
+ * ============================================================================ */
+(function(){
+  const LS_COCKPIT_KEY = 'bs-cockpit-filters-v1';
+  // India state→region map — same as Review module
+  const STATE_TO_REGION = {
+    'andhra pradesh':'South','arunachal pradesh':'East','assam':'East',
+    'bihar':'North','chhattisgarh':'West','goa':'West','gujarat':'West',
+    'haryana':'North','himachal pradesh':'North','jharkhand':'East',
+    'karnataka':'South','kerala':'South','madhya pradesh':'West',
+    'maharashtra':'West','manipur':'East','meghalaya':'East',
+    'mizoram':'East','nagaland':'East','odisha':'East','punjab':'North',
+    'rajasthan':'West','sikkim':'East','tamil nadu':'South',
+    'telangana':'South','tripura':'East','uttar pradesh':'North',
+    'uttarakhand':'North','west bengal':'East','delhi':'North','chandigarh':'North',
+    'jammu & kashmir':'North','jammu and kashmir':'North','ladakh':'North',
+    'puducherry':'South','andaman & nicobar':'East','andaman and nicobar':'East',
+    'dadra & nagar haveli and daman & diu':'West','lakshadweep':'South',
+    'international':'International'
+  };
+  function _stateToRegion(s){
+    return STATE_TO_REGION[String(s||'').toLowerCase().trim()] || '';
+  }
+  function _fmtINR(n){
+    if(typeof formatINR === 'function') return formatINR(n);
+    return '₹' + (Math.round(n||0)).toLocaleString('en-IN');
+  }
+  function _readVal(e){
+    if(typeof _readDealValue === 'function'){
+      try { return _readDealValue(e); } catch(_){}
+    }
+    const v = e && (e.dealValueINR || e.dealValue || e.dealvalueinr);
+    const n = parseFloat(v);
+    return isFinite(n) ? n : 0;
+  }
+  function _entryCreatedMs(e){
+    if(typeof window._entryCreatedMs === 'function'){
+      try { return window._entryCreatedMs(e); } catch(_){}
+    }
+    const candidates = [e && e.timestamp, e && e.created, e && e.createdAt, e && e.tsMs];
+    for(let i = 0; i < candidates.length; i++){
+      const v = candidates[i];
+      if(v == null || v === '') continue;
+      const d = (v instanceof Date) ? v : new Date(v);
+      if(!isNaN(d.getTime())) return d.getTime();
+    }
+    return null;
+  }
+  function _entryClosedMs(e){
+    if(typeof window._entryClosedMs === 'function'){
+      try { return window._entryClosedMs(e); } catch(_){}
+    }
+    return _entryCreatedMs(e);
+  }
+  function _esc(s){
+    if(typeof escapeHtml === 'function') return escapeHtml(String(s||''));
+    return String(s||'').replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function _resolveOwner(loginName){
+    if(!loginName) return loginName || '';
+    const users = Array.isArray(window._allUsers) ? window._allUsers : [];
+    for(let i = 0; i < users.length; i++){
+      const u = users[i];
+      if(u && String(u.loginName||'').toLowerCase() === String(loginName).toLowerCase()){
+        return u.fullName || u.loginName || loginName;
+      }
+    }
+    return loginName;
+  }
+
+  // Time window resolution
+  function _periodRange(key){
+    const now = new Date();
+    const startOfDay = function(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0); };
+    const endOfDay = function(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999); };
+    let from, to, label;
+    if(key === 'thisMonth'){
+      from = new Date(now.getFullYear(), now.getMonth(), 1);
+      to = endOfDay(now);
+      label = from.toLocaleString('en-IN', {month:'long', year:'numeric'});
+    } else if(key === 'lastMonth'){
+      from = new Date(now.getFullYear(), now.getMonth()-1, 1);
+      to = endOfDay(new Date(now.getFullYear(), now.getMonth(), 0));
+      label = from.toLocaleString('en-IN', {month:'long', year:'numeric'});
+    } else if(key === 'thisQuarter'){
+      const qStart = Math.floor(now.getMonth()/3) * 3;
+      from = new Date(now.getFullYear(), qStart, 1);
+      to = endOfDay(now);
+      label = 'Q' + (Math.floor(qStart/3)+1) + ' ' + now.getFullYear();
+    } else if(key === 'lastQuarter'){
+      const curQStart = Math.floor(now.getMonth()/3) * 3;
+      const prevQStart = curQStart - 3;
+      const yr = prevQStart < 0 ? now.getFullYear() - 1 : now.getFullYear();
+      const startMonth = prevQStart < 0 ? 12 + prevQStart : prevQStart;
+      from = new Date(yr, startMonth, 1);
+      to = endOfDay(new Date(yr, startMonth + 3, 0));
+      label = 'Q' + (Math.floor(startMonth/3)+1) + ' ' + yr;
+    } else if(key === 'last6m'){
+      from = new Date(now.getFullYear(), now.getMonth()-5, 1);
+      to = endOfDay(now);
+      label = 'Last 6 months';
+    } else if(key === 'thisFY'){
+      // Indian FY: Apr 1 - Mar 31. If currently in Jan/Feb/Mar, FY started prev year April.
+      const m = now.getMonth() + 1;
+      const fyStartYr = (m >= 4) ? now.getFullYear() : (now.getFullYear() - 1);
+      from = new Date(fyStartYr, 3, 1);  // April 1
+      to = endOfDay(now);
+      const a = String(fyStartYr % 100).padStart(2, '0');
+      const b = String((fyStartYr+1) % 100).padStart(2, '0');
+      label = 'FY' + a + '-' + b;
+    } else {
+      from = new Date(now.getFullYear(), 0, 1);
+      to = endOfDay(now);
+      label = String(now.getFullYear());
+    }
+    return {fromMs: from.getTime(), toMs: to.getTime(), label: label, from: from, to: to};
+  }
+
+  // Filter state
+  function _getFilters(){
+    let saved = {window:'thisQuarter', region:''};
+    try {
+      const raw = localStorage.getItem(LS_COCKPIT_KEY);
+      if(raw){ const p = JSON.parse(raw); if(p && typeof p === 'object') saved = Object.assign(saved, p); }
+    } catch(_){}
+    return saved;
+  }
+  function _saveFilters(f){
+    try { localStorage.setItem(LS_COCKPIT_KEY, JSON.stringify(f)); } catch(_){}
+  }
+  function _restoreFilterUI(){
+    const f = _getFilters();
+    const w = document.getElementById('cockpit-window');
+    const r = document.getElementById('cockpit-region');
+    if(w && f.window) w.value = f.window;
+    if(r) r.value = f.region || '';
+  }
+
+  // Filter applies pipeline cutoff (already done in window._entryAfterPipelineCutoff)
+  // + test-mode exclude + time window + region.
+  function _filterEntries(entries, range, region){
+    const cutoffOk = (typeof window._entryAfterPipelineCutoff === 'function')
+      ? window._entryAfterPipelineCutoff
+      : function(){ return true; };
+    return entries.filter(function(e){
+      if(!cutoffOk(e)) return false;
+      if(e && e.isTest === true && window._reviewIncludeTest !== true) return false;
+      // Region
+      if(region && _stateToRegion(e && e.state) !== region) return false;
+      return true;
+    });
+  }
+
+  const OPEN_STAGES = ['Lead','Opportunity','Proposal','Negotiation','Order'];
+  const OPEN_STAGES_SET = {Lead:1, Opportunity:1, Proposal:1, Negotiation:1, Order:1};
+  const STAGE_COLORS = {
+    Lead:        'linear-gradient(90deg,#6366F1,#818CF8)',
+    Opportunity: 'linear-gradient(90deg,#5B21B6,#7C3AED)',
+    Proposal:    'linear-gradient(90deg,#7C3AED,#A855F7)',
+    Negotiation: 'linear-gradient(90deg,#C026D3,#E879F9)',
+    Order:       'linear-gradient(90deg,#DB2777,#F472B6)'
+  };
+
+  // ============ Renderers ============
+  function _renderKPIs(allEntries, range){
+    let openCount = 0, openVal = 0;
+    let newCount = 0, newVal = 0;
+    let wonCount = 0, wonVal = 0, lostCount = 0;
+    allEntries.forEach(function(e){
+      const v = _readVal(e);
+      const out = String(e.outcome || 'open').toLowerCase();
+      const stg = String(e.stage || '');
+      const created = _entryCreatedMs(e);
+      const closed = _entryClosedMs(e);
+      if(out === 'open' && OPEN_STAGES_SET[stg]){ openCount++; openVal += v; }
+      if(created != null && created >= range.fromMs && created <= range.toMs){
+        newCount++; newVal += v;
+      }
+      if(out === 'won' && closed != null && closed >= range.fromMs && closed <= range.toMs){
+        wonCount++; wonVal += v;
+      }
+      if(out === 'lost' && closed != null && closed >= range.fromMs && closed <= range.toMs){
+        lostCount++;
+      }
+    });
+    const wr = (wonCount + lostCount) > 0 ? Math.round((wonCount/(wonCount+lostCount))*100) : null;
+    const set = function(id, val){ const el = document.getElementById(id); if(el) el.textContent = val; };
+    set('ck-open-val', _fmtINR(openVal));
+    set('ck-open-sub', openCount + ' deal' + (openCount===1?'':'s'));
+    set('ck-open-count', openCount);
+    set('ck-new-val', _fmtINR(newVal));
+    set('ck-new-sub', newCount + ' new in ' + range.label);
+    set('ck-winrate', wr != null ? wr + '%' : '—');
+    set('ck-winrate-sub', (wonCount + lostCount) + ' resolved');
+    set('ck-won-val', _fmtINR(wonVal));
+    set('ck-won-sub', wonCount + ' won in ' + range.label);
+  }
+
+  function _renderStageStrip(allEntries){
+    const host = document.getElementById('cockpit-stage-strip');
+    if(!host) return;
+    const stages = {Lead:{c:0,v:0}, Opportunity:{c:0,v:0}, Proposal:{c:0,v:0}, Negotiation:{c:0,v:0}, Order:{c:0,v:0}};
+    let totalOpenVal = 0;
+    allEntries.forEach(function(e){
+      if(String(e.outcome || 'open').toLowerCase() !== 'open') return;
+      const s = String(e.stage || '');
+      if(!stages[s]) return;
+      const v = _readVal(e);
+      stages[s].c++; stages[s].v += v; totalOpenVal += v;
+    });
+    host.innerHTML = OPEN_STAGES.map(function(s){
+      const d = stages[s];
+      const pct = totalOpenVal > 0 ? Math.round((d.v/totalOpenVal)*100) : 0;
+      return '<div class="cockpit-stage" data-stage="' + s + '">' +
+               '<div class="cockpit-stage-name">' + s + '</div>' +
+               '<div class="cockpit-stage-count">' + d.c + '</div>' +
+               '<div class="cockpit-stage-val">' + _fmtINR(d.v) + '</div>' +
+               '<div class="cockpit-stage-pct"><div class="cockpit-stage-pct-fill" style="width:' + pct + '%;"></div></div>' +
+               '<div class="cockpit-stage-pct-label">' + pct + '% of open ₹</div>' +
+             '</div>';
+    }).join('');
+  }
+
+  function _renderFunnel(allEntries){
+    const host = document.getElementById('cockpit-funnel');
+    if(!host) return;
+    const stages = {Lead:{c:0,v:0}, Opportunity:{c:0,v:0}, Proposal:{c:0,v:0}, Negotiation:{c:0,v:0}, Order:{c:0,v:0}};
+    allEntries.forEach(function(e){
+      if(String(e.outcome || 'open').toLowerCase() !== 'open') return;
+      const s = String(e.stage || '');
+      if(!stages[s]) return;
+      const v = _readVal(e);
+      stages[s].c++; stages[s].v += v;
+    });
+    const maxV = Math.max.apply(null, OPEN_STAGES.map(function(s){return stages[s].v;}).concat([1]));
+    host.innerHTML = OPEN_STAGES.map(function(s){
+      const d = stages[s];
+      const pct = maxV > 0 ? (d.v/maxV)*100 : 0;
+      return '<div class="cockpit-funnel-row">' +
+               '<div class="cockpit-funnel-meta">' +
+                 '<span class="cockpit-funnel-stage">' + s + '</span>' +
+                 '<span class="cockpit-funnel-vals">' + d.c + ' · ' + _fmtINR(d.v) + '</span>' +
+               '</div>' +
+               '<div class="cockpit-funnel-track"><div class="cockpit-funnel-fill" style="width:' + pct.toFixed(1) + '%; background:' + STAGE_COLORS[s] + ';"></div></div>' +
+             '</div>';
+    }).join('');
+  }
+
+  function _renderTrend(allEntries, range){
+    const host = document.getElementById('cockpit-trend');
+    if(!host) return;
+    // Decide bucket size: weekly for last 6 months or smaller, monthly for FY
+    const span = range.toMs - range.fromMs;
+    const useMonthly = span > (1000*60*60*24*120);  // > 4 months → monthly
+    const buckets = [];
+    if(useMonthly){
+      // Iterate by month from range.from to range.to
+      const cur = new Date(range.from.getFullYear(), range.from.getMonth(), 1);
+      while(cur.getTime() <= range.toMs){
+        const next = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
+        buckets.push({
+          start:cur.getTime(), end:next.getTime()-1,
+          label:cur.toLocaleString('en-IN',{month:'short'}),
+          newCount:0, wonCount:0
+        });
+        cur.setMonth(cur.getMonth()+1);
+      }
+    } else {
+      // Weekly buckets
+      const cur = new Date(range.from);
+      cur.setHours(0,0,0,0);
+      while(cur.getTime() <= range.toMs){
+        const next = new Date(cur); next.setDate(next.getDate()+7);
+        buckets.push({
+          start:cur.getTime(), end:next.getTime()-1,
+          label:('' + cur.getDate()).padStart(2,'0') + '/' + ('' + (cur.getMonth()+1)).padStart(2,'0'),
+          newCount:0, wonCount:0
+        });
+        cur.setDate(cur.getDate()+7);
+      }
+    }
+    if(buckets.length === 0){
+      host.innerHTML = '<div class="cockpit-empty">Not enough data for trend</div>';
+      return;
+    }
+    allEntries.forEach(function(e){
+      const c = _entryCreatedMs(e); const cl = _entryClosedMs(e);
+      const out = String(e.outcome || 'open').toLowerCase();
+      buckets.forEach(function(b){
+        if(c != null && c >= b.start && c <= b.end) b.newCount++;
+        if(out === 'won' && cl != null && cl >= b.start && cl <= b.end) b.wonCount++;
+      });
+    });
+    const maxY = Math.max(1, ...buckets.map(function(b){ return Math.max(b.newCount, b.wonCount); }));
+    const W = 600, H = 200, padL = 30, padR = 10, padT = 12, padB = 22;
+    const innerW = W - padL - padR, innerH = H - padT - padB;
+    const xStep = buckets.length > 1 ? innerW / (buckets.length - 1) : 0;
+    const ptsNew = buckets.map(function(b, i){
+      const x = padL + i * xStep;
+      const y = padT + innerH - (b.newCount/maxY) * innerH;
+      return [x, y];
+    });
+    const ptsWon = buckets.map(function(b, i){
+      const x = padL + i * xStep;
+      const y = padT + innerH - (b.wonCount/maxY) * innerH;
+      return [x, y];
+    });
+    function path(pts){
+      if(pts.length === 0) return '';
+      return 'M ' + pts.map(function(p){ return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' L ');
+    }
+    function pathFill(pts){
+      if(pts.length === 0) return '';
+      const baseY = padT + innerH;
+      return 'M ' + pts[0][0].toFixed(1) + ',' + baseY.toFixed(1) +
+             ' L ' + pts.map(function(p){ return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' L ') +
+             ' L ' + pts[pts.length-1][0].toFixed(1) + ',' + baseY.toFixed(1) + ' Z';
+    }
+    // X-axis labels — show ~6 evenly
+    const labelEvery = Math.max(1, Math.ceil(buckets.length / 6));
+    const xLabels = buckets.map(function(b, i){
+      if(i % labelEvery !== 0 && i !== buckets.length-1) return '';
+      const x = padL + i * xStep;
+      return '<text x="' + x.toFixed(1) + '" y="' + (H-6) + '" text-anchor="middle" font-size="10" fill="var(--ink-subtle,#94A3B8)">' + _esc(b.label) + '</text>';
+    }).join('');
+    // Y-axis ticks (0, mid, max)
+    const yTicks = [0, Math.round(maxY/2), maxY].map(function(v){
+      const y = padT + innerH - (v/maxY) * innerH;
+      return '<text x="' + (padL-6) + '" y="' + (y+3).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--ink-subtle,#94A3B8)">' + v + '</text>' +
+             '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (W-padR) + '" y2="' + y.toFixed(1) + '" stroke="var(--border-soft,#E2E8F0)" stroke-width="1" stroke-dasharray="2 2"/>';
+    }).join('');
+    const dotsNew = ptsNew.map(function(p){ return '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3" fill="#4F46E5"/>'; }).join('');
+    const dotsWon = ptsWon.map(function(p){ return '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3" fill="#D97706"/>'; }).join('');
+    host.innerHTML =
+      '<svg class="cockpit-trend-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
+        '<defs>' +
+          '<linearGradient id="ck-trend-fill-new" x1="0" x2="0" y1="0" y2="1">' +
+            '<stop offset="0%" stop-color="#4F46E5" stop-opacity="0.25"/>' +
+            '<stop offset="100%" stop-color="#4F46E5" stop-opacity="0.02"/>' +
+          '</linearGradient>' +
+          '<linearGradient id="ck-trend-fill-won" x1="0" x2="0" y1="0" y2="1">' +
+            '<stop offset="0%" stop-color="#D97706" stop-opacity="0.20"/>' +
+            '<stop offset="100%" stop-color="#D97706" stop-opacity="0.02"/>' +
+          '</linearGradient>' +
+        '</defs>' +
+        yTicks +
+        '<path d="' + pathFill(ptsNew) + '" fill="url(#ck-trend-fill-new)" stroke="none"/>' +
+        '<path d="' + pathFill(ptsWon) + '" fill="url(#ck-trend-fill-won)" stroke="none"/>' +
+        '<path d="' + path(ptsNew) + '" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<path d="' + path(ptsWon) + '" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+        dotsNew + dotsWon +
+        xLabels +
+      '</svg>' +
+      '<div class="cockpit-trend-legend">' +
+        '<span><span class="cockpit-trend-legend-dot" style="background:#4F46E5;"></span>New deals</span>' +
+        '<span><span class="cockpit-trend-legend-dot" style="background:#D97706;"></span>Won deals</span>' +
+      '</div>';
+  }
+
+  function _renderRegionTable(rawEntries){  // Use rawEntries (not region-filtered) so the table shows ALL regions
+    const host = document.getElementById('cockpit-region-table');
+    if(!host) return;
+    const REGIONS = ['West','North','South','East','International'];
+    const tbl = {};
+    REGIONS.forEach(function(r){ tbl[r] = {openC:0, openV:0, wonV:0, wonC:0, lostC:0}; });
+    rawEntries.forEach(function(e){
+      const r = _stateToRegion(e.state);
+      if(!tbl[r]) return;
+      const v = _readVal(e);
+      const out = String(e.outcome || 'open').toLowerCase();
+      if(out === 'open'){ tbl[r].openC++; tbl[r].openV += v; }
+      if(out === 'won') { tbl[r].wonC++;  tbl[r].wonV += v; }
+      if(out === 'lost'){ tbl[r].lostC++; }
+    });
+    const rows = REGIONS.map(function(r){
+      const d = tbl[r];
+      const wr = (d.wonC + d.lostC) > 0 ? Math.round((d.wonC/(d.wonC+d.lostC))*100) : 0;
+      return '<tr>' +
+               '<td><span class="cockpit-region-name"><span class="cockpit-region-dot" data-region="' + r + '"></span>' + r + '</span></td>' +
+               '<td class="num">' + d.openC + '</td>' +
+               '<td class="num">' + _fmtINR(d.openV) + '</td>' +
+               '<td class="num">' + _fmtINR(d.wonV) + '</td>' +
+               '<td class="num">' + (wr ? wr + '%' : '—') + '</td>' +
+             '</tr>';
+    }).join('');
+    host.innerHTML =
+      '<table class="cockpit-region-table">' +
+        '<thead><tr><th>Region</th><th class="num">Open</th><th class="num">Open ₹</th><th class="num">Won ₹</th><th class="num">Win %</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>';
+  }
+
+  function _renderSourceSplit(allEntries){
+    const host = document.getElementById('cockpit-source');
+    if(!host) return;
+    let bsV = 0, cavV = 0, bsC = 0, cavC = 0;
+    allEntries.forEach(function(e){
+      const v = _readVal(e);
+      const ls = String(e.leadSource || '').trim();
+      if(ls === 'BrightSign'){ bsV += v; bsC++; }
+      else if(ls === 'Cavitak'){ cavV += v; cavC++; }
+    });
+    const total = bsV + cavV;
+    if(total === 0){
+      host.innerHTML = '<div class="cockpit-empty">No source data in this window</div>';
+      return;
+    }
+    const bsPct = Math.round((bsV/total)*100);
+    const cavPct = 100 - bsPct;
+    host.innerHTML =
+      '<div class="cockpit-source-bar">' +
+        (bsPct > 0 ? '<div class="cockpit-source-seg" data-src="BrightSign" style="flex:' + bsPct + ';">' + (bsPct >= 8 ? bsPct + '%' : '') + '</div>' : '') +
+        (cavPct > 0 ? '<div class="cockpit-source-seg" data-src="Cavitak" style="flex:' + cavPct + ';">' + (cavPct >= 8 ? cavPct + '%' : '') + '</div>' : '') +
+      '</div>' +
+      '<div class="cockpit-source-legend">' +
+        '<div class="cockpit-source-leg"><span class="cockpit-source-leg-dot" style="background:linear-gradient(135deg,#4F46E5,#7C3AED);"></span>' +
+          '<span class="cockpit-source-leg-name">BrightSign</span><span class="cockpit-source-leg-val">' + _fmtINR(bsV) + ' · ' + bsC + '</span>' +
+        '</div>' +
+        '<div class="cockpit-source-leg"><span class="cockpit-source-leg-dot" style="background:linear-gradient(135deg,#D97706,#F59E0B);"></span>' +
+          '<span class="cockpit-source-leg-name">Cavitak</span><span class="cockpit-source-leg-val">' + _fmtINR(cavV) + ' · ' + cavC + '</span>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function _renderAging(allEntries){
+    const host = document.getElementById('cockpit-aging');
+    if(!host) return;
+    const now = Date.now();
+    const aged = allEntries
+      .filter(function(e){
+        const out = String(e.outcome || 'open').toLowerCase();
+        return out === 'open' && OPEN_STAGES_SET[String(e.stage || '')];
+      })
+      .map(function(e){
+        const c = _entryCreatedMs(e);
+        const days = c != null ? Math.floor((now - c)/(1000*60*60*24)) : 0;
+        return {entry:e, days:days};
+      })
+      .sort(function(a, b){ return b.days - a.days; })
+      .slice(0, 10);
+    if(aged.length === 0){
+      host.innerHTML = '<div class="cockpit-empty">No open deals in this window</div>';
+      return;
+    }
+    host.innerHTML = aged.map(function(it){
+      const e = it.entry;
+      const days = it.days;
+      const tier = days > 30 ? 'red' : (days > 14 ? 'amber' : 'green');
+      const proj = String(e.project || 'Untitled');
+      const cust = String(e.enduser || '');
+      const stg = String(e.stage || '');
+      const refId = String(e.refId || '').replace(/'/g, "\\'");
+      const stageColor = {
+        Lead:'rgba(99,102,241,0.12);color:#4F46E5',
+        Opportunity:'rgba(124,58,237,0.12);color:#6D28D9',
+        Proposal:'rgba(168,85,247,0.12);color:#7C3AED',
+        Negotiation:'rgba(217,119,6,0.12);color:#B45309',
+        Order:'rgba(5,150,105,0.12);color:#047857'
+      }[stg] || 'rgba(100,116,139,0.10);color:#475569';
+      return '<div class="cockpit-aging-row" onclick="(typeof openEditFromHistory===\'function\')&&openEditFromHistory(\'' + refId + '\')">' +
+               '<div class="cockpit-aging-proj">' + _esc(proj) + '</div>' +
+               (cust ? '<div class="cockpit-aging-cust">' + _esc(cust) + '</div>' : '') +
+               '<span class="cockpit-aging-stage" style="background:' + stageColor + ';">' + _esc(stg) + '</span>' +
+               '<span class="cockpit-aging-days" data-tier="' + tier + '">' + days + 'd</span>' +
+             '</div>';
+    }).join('');
+  }
+
+  function _renderMoving(){
+    const host = document.getElementById('cockpit-moving');
+    if(!host) return;
+    // Read stage transitions if available; fall back to "no recent activity"
+    const trans = window._bsC2bTransitions || {};
+    // _bsC2bTransitions can be either {refId: [ts]} or a flat list of records.
+    // We try to flatten any structure into an array of {who, refId, fromStage, toStage, ts}.
+    let flat = [];
+    if(Array.isArray(trans)){
+      flat = trans.slice();
+    } else if(typeof trans === 'object'){
+      Object.keys(trans).forEach(function(k){
+        const v = trans[k];
+        if(Array.isArray(v)) flat = flat.concat(v.map(function(x){ return Object.assign({refId:k}, x||{}); }));
+      });
+    }
+    flat = flat.filter(function(t){ return t && t.ts; }).sort(function(a, b){
+      return (b.ts || 0) - (a.ts || 0);
+    }).slice(0, 10);
+    if(flat.length === 0){
+      host.innerHTML = '<div class="cockpit-empty">No recent stage transitions to show</div>';
+      return;
+    }
+    function fmtRel(ts){
+      const ms = Date.now() - ts;
+      const d = Math.floor(ms/(1000*60*60*24));
+      if(d === 0) return 'today';
+      if(d === 1) return 'yesterday';
+      if(d < 7) return d + 'd ago';
+      if(d < 30) return Math.floor(d/7) + 'w ago';
+      return Math.floor(d/30) + 'mo ago';
+    }
+    host.innerHTML = flat.map(function(t){
+      const who = _resolveOwner(t.user || t.changedBy || '');
+      const refId = String(t.refId || '').replace(/'/g, "\\'");
+      const detail = (t.fromStage || '?') + ' → ' + (t.toStage || '?');
+      return '<div class="cockpit-mov-row">' +
+               '<span class="cockpit-mov-arrow">→</span>' +
+               '<span class="cockpit-mov-who">' + _esc(who || 'Someone') + '</span>' +
+               '<span class="cockpit-mov-detail">' + _esc(detail) + (refId ? ' · ' + _esc(refId) : '') + '</span>' +
+               '<span class="cockpit-mov-when">' + fmtRel(t.ts) + '</span>' +
+             '</div>';
+    }).join('');
+  }
+
+  // Public render entry point
+  window.renderCockpit = function(){
+    if(!document.getElementById('cockpit')) return;  // section not in DOM
+    _restoreFilterUI();
+    const f = _getFilters();
+    const range = _periodRange(f.window || 'thisQuarter');
+    const lbl = document.getElementById('cockpit-window-label');
+    if(lbl) lbl.textContent = range.label + (f.region ? ' · ' + f.region : '');
+
+    const raw = Array.isArray(window._centralLog) ? window._centralLog : [];
+    // Region-filtered (for everything except the region table)
+    const regionFiltered = _filterEntries(raw, range, f.region);
+    // Always-all regions (for the region table)
+    const allRegionsFiltered = _filterEntries(raw, range, '');
+
+    _renderKPIs(regionFiltered, range);
+    _renderStageStrip(regionFiltered);
+    _renderFunnel(regionFiltered);
+    _renderTrend(regionFiltered, range);
+    _renderRegionTable(allRegionsFiltered);
+    _renderSourceSplit(regionFiltered);
+    _renderAging(regionFiltered);
+    _renderMoving();
+  };
+
+  window.onCockpitFilterChange = function(){
+    const w = document.getElementById('cockpit-window');
+    const r = document.getElementById('cockpit-region');
+    _saveFilters({window: w ? w.value : 'thisQuarter', region: r ? r.value : ''});
+    window.renderCockpit();
   };
 })();
 </script>
