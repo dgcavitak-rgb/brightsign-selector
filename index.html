@@ -8177,7 +8177,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.13';  // v24.26.13 — REGION + OUTCOME POLISH per user feedback. Two changes: (1) REGION ZONE TILES — dropped International tile (5→4 tiles: West/North/South/East only). Filter logic still recognizes 'International' from URL/state — only the visual tile is suppressed. Grid recalibrated 5col→4col, breakpoint adjusted to 900px (was 1100px). (2) OUTCOME SCORECARD — TECH STYLE polish. JetBrains Mono numerals (tabular figures, slight tracking) via CSS font stack. Sharp 4px corners (was 12px/8px) — terminal/wireframe aesthetic over pillow. Lower-saturation green (#059669 forest instead of #10B981 emerald) — less neon. Equal-weight grid (1fr 2fr instead of fixed 200px hero) — hero no longer dominates. Hero gradient flattened to single surface tone — less skeumorphic. Trophy emoji REMOVED — cleaner, label-driven status. Bracketed monospace labels [ OPEN ] / [ WON ] — tech feel without cliché. HUD-style corner tick-marks on hero (top-left + bottom-right). Zero tiles: dashed border + lower opacity + smaller "0" — quiet but present (was "0" at full size competing with real numbers). Border-left accent thinner (3px instead of 4px). All text colors via var() so theme-flip still works. Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.26.14';  // v24.26.14 — THREE BUG FIXES (1 of 3 in user-requested release sequence). (1) CALCULATE BUTTON "needs 2-3 clicks" bug. Root cause: only pill/choice-card widgets cleared `.field-error` class on user input — plain text inputs and selects kept the red border even after user typed correct values, making users think the form was still invalid → they clicked Calculate multiple times. Functionally the click WAS registering; it was a UX trust issue. Fix: delegated input/change listener on #section-form clears `.field-error` from any field's wrapper as soon as user touches it (matches existing pill widget behavior). Also dismisses top-of-form error banner on first input. Also: validation-focus setTimeout now stored in window._validationFocusTimer so it can be cancelled by user input — was at 420ms after validation reject and could steal focus mid-typing if user was fast. (2) EXCEL EXPORT — Sales Person + Presales Person fields ADDED to PROJECT CONTEXT block (rows 6-7 of Excel summary sheet). Were missing entirely. Resolves loginName → "Full Name (loginName)" via window._allUsers cache when available, else loginName, else "—". (3) EMAIL PDF — improved error visibility. Previously: generic "PDF generation failed" hid actual reason. Now: try/catch wraps exportQuotePDF call, surfaces specific reason in error message + console log (no recommendation, BOM not built yet, jsPDF missing, html2canvas missing, or empty base64 output). Helps Dipenkumar diagnose the suspected PDF email bug — if it still fails, console will show the actual cause. NOTE: v24.26.15 will tackle sales role rules (auto-default behavior matrix). v24.26.16 will tackle Excel theme/logo + button styling parity. Pairs with backend v25.13.0 — no backend changes.
+// v24.26.13 — REGION + OUTCOME POLISH per user feedback. (1) Region zones: dropped International tile (5→4 tiles W/N/S/E). (2) Outcome scorecard tech-style polish — JetBrains Mono numerals, sharp 4px corners, lower-saturation green (#059669), equal-weight grid, hero gradient flattened, trophy emoji removed, bracketed monospace labels [ OPEN ], HUD-style corner tick-marks, dashed zero-state tiles.
 // v24.26.12 — REGION ZONE TILES (replaces India map). India choropleth was repeatedly broken in production: GeoJSON CDN sources unreliable, echarts-gl 3D path WebGL-fragile, the existing 2D fallback occasionally rendered an empty card. Replaced with HTML zone tiles: 5 tiles in one row showing count + ₹ pipeline value + top state per zone. Pure HTML, zero CDN dependency, theme-aware via CSS vars.
 // v24.26.11 — DARK MODE FIX. Four parts: (1) Replaced 6 standalone hardcoded hex values in v26 CSS block with var(--*) references using same hex as fallback (CSS auto-flips via :root theme swap when [data-theme="dark"]). Most v26 CSS already used the var() pattern — these were the gaps. (2) Added _themeColors() JS helper inside v26 module (reads document.documentElement.dataset.theme) returning theme-aware ECharts colors: ink, inkMuted, inkSubtle, splitLine, border, surface. Vibrant brand/palette colors (KPI gradients, bar palette, status badges) intentionally stay constant — they read correctly on both backgrounds. (3) 51 hardcoded chart color refs in 9 ECharts renderers (axisLabel.color, splitLine.lineStyle.color, label.color, legend.textStyle.color, emphasis.borderColor) replaced with _theme.* references; const _theme = _themeColors() injected at top of each renderer body. Theme-toggle hook at applyTheme() (existed since v24.4.18 for Chart.js) already re-renders dashboard on theme change — v26 ECharts inherit this for free since they're created/disposed inside _renderTeamCharts on each render. NO scorecard changes needed (pure HTML, theme-aware via CSS vars). (4) AUDIT GAP FIX: Added 6 [data-theme="dark"] overrides for Tender Spec view classes that had hardcoded #fff backgrounds.
 // v24.26.10 — CHART POLISH. Two changes per user feedback: (1) MOST QUOTED PLAYERS — dropped "u" suffix from bar labels; now reads "62 · 52%" instead of "62u · 52%" (tooltip still says "62 units · 52% of total" — long form keeps the meaning). (2) OUTCOME SPLIT — replaced stacked horizontal bar with HTML Outcome Scorecard. New layout: Win Rate hero (Won÷Closed) on left with color-coded big number (green ≥60%, amber 40-59%, red <40%, trophy ≥80%) + 2x2 grid of outcome tiles on right (Open / Won / Lost / On hold) showing count, % of total, and ₹ value. Zero-count tiles render greyed-out and non-interactive. Click any non-zero tile → filters Team Analytics by that outcome (preserves v26.5 drill-through). Card title "Outcome split" → "Outcome scorecard". Pure HTML — no ECharts instance for this card. Pairs with backend v25.13.0 — no backend changes.
@@ -15081,10 +15082,14 @@ function runSelector(){
     err.classList.add('show');
     if(firstTarget){
       firstTarget.scrollIntoView({behavior:'smooth',block:'center'});
-      // Focus the first input inside the target
-      setTimeout(()=>{
+      // v24.26.14: Store timeout handle so user input can cancel it (delegated listener
+      // in _initDraftAutosave clears window._validationFocusTimer when user starts typing).
+      // Without this cancel path, focus could shift mid-typing 420ms after validation, making
+      // it feel like the user's first click on Calculate didn't register.
+      window._validationFocusTimer = setTimeout(()=>{
         const inp=firstTarget.querySelector('input:not([type=hidden]), select, button.pill, button.choice-card');
         if(inp && inp.focus)inp.focus({preventScroll:true});
+        window._validationFocusTimer = null;
       },420);
     }
     releaseRunSelectorLock();  // v20.1: user needs to fix fields and re-click
@@ -16504,6 +16509,38 @@ function _initDraftAutosave(){
   };
   root.addEventListener('input', _markDirty, true);
   root.addEventListener('change', _markDirty, true);
+
+  // v24.26.14 — Calculate button "needs 2-3 clicks" bug fix.
+  // Root cause: only pill/choice-card widgets cleared `.field-error` class on user input
+  // (lines 14390/14452). Plain inputs and selects kept the red border even after user
+  // typed correct values, making users think the form was still invalid → they clicked
+  // Calculate multiple times because they didn't trust the first click had registered.
+  // Fix: delegated input/change listener clears `.field-error` from ANY field's wrapper
+  // as soon as the user touches it. Same pattern pill widgets already have.
+  // Also cancel any pending validation-focus setTimeout — was stealing focus 420ms after
+  // validation, which could feel like the click "didn't work" if user was fast.
+  if(!root._fieldErrorClearWired){
+    root._fieldErrorClearWired = true;
+    const _clearOnTouch = function(e){
+      if(!e || !e.target) return;
+      const wrap = (e.target.closest && (e.target.closest('.field') || e.target.closest('.form-group'))) || null;
+      if(wrap && wrap.classList && wrap.classList.contains('field-error')){
+        wrap.classList.remove('field-error');
+      }
+      // Also dismiss the top-of-form error banner once user starts correcting
+      const errBanner = document.getElementById('form-error');
+      if(errBanner && errBanner.classList.contains('show')){
+        errBanner.classList.remove('show');
+      }
+      // Cancel pending validation-focus timeout — was at line 15085 in runSelector
+      if(window._validationFocusTimer){
+        clearTimeout(window._validationFocusTimer);
+        window._validationFocusTimer = null;
+      }
+    };
+    root.addEventListener('input', _clearOnTouch, true);
+    root.addEventListener('change', _clearOnTouch, true);
+  }
 }
 
 // v24.19.9 (#6): Browser beforeunload guard. Native dialog only fires if user has
@@ -17906,6 +17943,19 @@ function downloadQuoteExcel(returnWorkbook){
   sAoa.push(['Consultant',f.consultant||'—']);
   sAoa.push(['Venue',f.venue||'—']);
   sAoa.push(['Location',f.city||'—']);
+  // v24.26.14: Sales/Presales person fields ADDED — were missing from Excel export.
+  // Resolves loginName → "Full Name (loginName)" via _allUsers cache when available, else loginName, else "—".
+  function _resolveUserName(loginName){
+    if(!loginName) return '—';
+    try {
+      const list = Array.isArray(window._allUsers) ? window._allUsers : [];
+      const u = list.find(function(x){ return String(x.loginName||'').toLowerCase() === String(loginName).toLowerCase(); });
+      if(u && u.fullName) return u.fullName + ' (' + loginName + ')';
+    } catch(_){}
+    return loginName;
+  }
+  sAoa.push(['Sales Person',_resolveUserName(f.salesPerson)]);
+  sAoa.push(['Presales Person',_resolveUserName(f.presalesPerson)]);
   sAoa.push(['Stage',f.stage||'—']);
   sAoa.push(['Expected Close',f.closemonth||'—']);
   sAoa.push([]);
@@ -18362,14 +18412,37 @@ async function sendEmailViaBackend(){
   try {
     let pdfBase64 = null, pdfFilename = null;
     if(includePdf){
-      const doc = await exportQuotePDF(true);
-      if(!doc){ throw new Error('PDF generation failed'); }
+      // v24.26.14: Improved error visibility for PDF generation failures.
+      // Previously: generic "PDF generation failed" hid actual reason (no recommendation,
+      // BOM not built yet, jsPDF lib missing, etc). Now: specific message + console log.
+      let doc = null;
+      try {
+        doc = await exportQuotePDF(true);
+      } catch (pdfErr) {
+        console.error('[sendEmailViaBackend] exportQuotePDF threw:', pdfErr);
+        throw new Error('PDF generation crashed: ' + (pdfErr.message || pdfErr));
+      }
+      if(!doc){
+        // exportQuotePDF returns null when preconditions fail. Build a specific message.
+        let why = 'unknown reason';
+        if(!state.result || state.result.noRec) why = 'no recommendation available';
+        else if(!state._bomTotals || !state._bomTotals.rows || !state._bomTotals.rows.length) why = 'BOM not built — click Recommend / Generate BOQ first';
+        else if(typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF) why = 'PDF library not loaded — refresh page';
+        else if(typeof window.html2canvas !== 'function') why = 'PDF rendering library not loaded — refresh page';
+        console.error('[sendEmailViaBackend] PDF gen returned null:', why, {result:state.result, bomReady: !!(state._bomTotals && state._bomTotals.rows)});
+        throw new Error('PDF generation failed: ' + why);
+      }
       const refId = (state.result && state.result.refId) || 'BS-' + Date.now().toString().slice(-8);
       const safeProj = (state.form.project || 'project').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
       pdfFilename = 'Quote_' + refId + '_' + safeProj + '.pdf';
       // jsPDF.output('datauristring') returns 'data:application/pdf;base64,XXX' — strip the prefix
       const dataUri = doc.output('datauristring');
       pdfBase64 = dataUri.split(',')[1] || dataUri;
+      // v24.26.14: Sanity check — empty base64 means doc.output failed silently
+      if(!pdfBase64 || pdfBase64.length < 100){
+        console.error('[sendEmailViaBackend] PDF datauristring suspiciously short:', pdfBase64 ? pdfBase64.length : 0);
+        throw new Error('PDF generated but appears empty — try Download PDF first to verify');
+      }
     }
 
     const pwHash = await getCurrentAuthHash();
