@@ -7590,7 +7590,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         <div class="v26-chart-card"><div class="v26-chart-head">Outcome split <span class="v26-chart-sub">Open · Won · Lost · On hold</span></div><div class="v26-chart-body" id="v26-chart-outcome"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Top partners <span class="v26-chart-sub">Top 10 by # cases</span></div><div class="v26-chart-body" id="v26-chart-partners"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Top consultants <span class="v26-chart-sub">Top 10 by # cases</span></div><div class="v26-chart-body" id="v26-chart-consultants"></div></div>
-        <div class="v26-chart-card"><div class="v26-chart-head">Most quoted players <span class="v26-chart-sub">BrightSign models recommended</span></div><div class="v26-chart-body" id="v26-chart-players"></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Most quoted players <span class="v26-chart-sub">total units quoted · for inventory forecasting</span></div><div class="v26-chart-body" id="v26-chart-players"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Weekly trend <span class="v26-chart-sub">New vs Won · last 12 weeks</span></div><div class="v26-chart-body" id="v26-chart-trend"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Time-to-close <span class="v26-chart-sub">Days from Lead → Won (won deals)</span></div><div class="v26-chart-body" id="v26-chart-ttc"></div></div>
       </div>
@@ -8028,7 +8028,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.8';  // v24.26.8 — MONTH-BASED REVIEW + DEAL HISTORY + 3D MAP + PARTNER/CONSULTANT REDESIGN. Six changes: (1) MY PIPELINE TO-DOS now month-based — was days-based (Closing this week / Stuck >14d / Stale >30d). New labels: Closing this month / Closing next month / Slipped overdue. KPI tile "Closing This Week" → "Closing This Month". (2) TEAM ANALYTICS STUCK DEALS card → "Stuck & slipped" — combines slipped (closeMonth past + open) AND stage-frozen >30d. Sorted slipped-first, status column shows "Slipped · was Apr 2026" or "45d in Lead". (3) DEAL HISTORY MODAL — new 📜 button on every row in My Deals + Team filtered table. Modal shows stage timeline (Created → Stage changes → NOW) with day gaps. Reads from window._stageTransitions if backend has it; falls back to minimal Created+Now view. Footer shows total age + time-in-stage with ⚠ if ≥30d. (4) TOP PARTNERS + TOP CONSULTANTS — replaced flat horizontal bars with KPI strip (Total / Repeat / Pipeline / Top share %) plus ₹-sorted bars. Click row → filters Team Analytics by that entity name (via search). Bars now sorted by ₹ pipeline value, not deal count. (5) 3D INDIA MAP — region chart attempts echarts-gl 3D map3D series with extruded states; falls back to 2D map if echarts-gl not available; falls back to vertical bar if GeoJSON CDN fails. (6) Close month formatting carried forward from v26.6 (May 2026 not ISO). Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.26.9';  // v24.26.9 — MOST QUOTED PLAYERS hotfix: now sums QTY (physical units) not deal-count, for accurate inventory forecasting. Reads e.qty for guided indoor+outdoor, advancedSelectionsJson per-model qty for Custom BOQ. Each model gets distinct color from 10-color palette (was all amber). Subtitle updated to "total units quoted · for inventory forecasting". Pairs with backend v25.13.0 — no backend changes.
+// v24.26.8 — MONTH-BASED REVIEW + DEAL HISTORY + 3D MAP + PARTNER/CONSULTANT REDESIGN.
 // v24.26.7 — Confirm-on-edit fix + Most Quoted Players chart + N/A filter (carried forward).
 // v24.26.6 — Stage funnel + India map retry + close-month format.
 // v24.26.5 — ECharts migration.
@@ -25971,47 +25972,66 @@ if(document.readyState==='loading'){
     const dom = document.getElementById('v26-chart-players');
     if(!dom) return;
     dom.innerHTML = '';
-    dom.style.height = '260px';
-    const modelCounts = {};
+    dom.style.height = '300px';
+    // v24.26.9: Sum PLAYER QUANTITIES not deal counts. Inventory forecasting needs total physical units.
+    //   Guided mode: dealQty (e.qty) applies to indoor + outdoor models (each is 1 set per qty).
+    //   Custom BOQ: per-model qty from advancedSelectionsJson.
+    // Deals with no qty set default to 1 (so models appear at least, just with low count).
+    const modelQty = {};
     deals.forEach(function(e){
+      const dealQty = parseInt(e.qty, 10) || 1;
       const m1 = String(e.model || '').trim();
       const m2 = String(e.outdoorModel || '').trim();
-      if(m1 && m1.toLowerCase() !== 'na'){ modelCounts[m1] = (modelCounts[m1] || 0) + 1; }
-      if(m2 && m2.toLowerCase() !== 'na' && m2 !== m1){ modelCounts[m2] = (modelCounts[m2] || 0) + 1; }
+      if(m1 && m1.toLowerCase() !== 'na'){ modelQty[m1] = (modelQty[m1] || 0) + dealQty; }
+      if(m2 && m2.toLowerCase() !== 'na' && m2 !== m1){ modelQty[m2] = (modelQty[m2] || 0) + dealQty; }
       try {
         const advJson = e.advancedSelectionsJson || e.advancedSelectionsJSON || '';
         if(advJson && String(advJson).trim()){
           const sels = JSON.parse(advJson);
           if(Array.isArray(sels)){
             sels.forEach(function(s){
-              const mdl = String((s && s.model) || '').trim();
-              if(mdl && mdl.toLowerCase() !== 'na'){
-                modelCounts[mdl] = (modelCounts[mdl] || 0) + 1;
+              if(!s) return;
+              const mdl = String(s.model || '').trim();
+              const q = parseInt(s.qty, 10) || 0;
+              if(mdl && mdl.toLowerCase() !== 'na' && q > 0){
+                modelQty[mdl] = (modelQty[mdl] || 0) + q;
               }
             });
           }
         }
       } catch(_){ /* malformed JSON — skip */ }
     });
-    const top = Object.keys(modelCounts).map(function(k){ return { name: k, count: modelCounts[k] }; })
+    const top = Object.keys(modelQty).map(function(k){ return { name: k, count: modelQty[k] }; })
       .sort(function(a, b){ return b.count - a.count; }).slice(0, 10);
     if(!top.length){ dom.innerHTML = '<div style="padding:60px;text-align:center;color:var(--ink-muted);">No player data yet</div>'; return; }
-    const totalQuotes = top.reduce(function(s, t){ return s + t.count; }, 0);
+    const totalUnits = top.reduce(function(s, t){ return s + t.count; }, 0);
+    // v24.26.9: Distinct color per model — vibrant 10-color palette covers Top 10 cleanly.
+    const palette = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#06B6D4','#84CC16','#F97316','#6366F1'];
     const inst = _initECharts('v26-chart-players');
     if(!inst) return;
     inst.setOption({
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: function(p){
-        const t = p[0]; const pct = totalQuotes ? Math.round((t.value / totalQuotes) * 100) : 0;
-        return t.name + '<br/>' + t.value + ' quote' + (t.value === 1 ? '' : 's') + ' · ' + pct + '% of total';
+        const t = p[0]; const pct = totalUnits ? Math.round((t.value / totalUnits) * 100) : 0;
+        return '<b>' + t.name + '</b><br/>' + t.value + ' unit' + (t.value === 1 ? '' : 's') + ' · ' + pct + '% of total';
       } },
-      grid: { left: 8, right: 56, top: 12, bottom: 12, containLabel: true },
+      grid: { left: 8, right: 64, top: 12, bottom: 24, containLabel: true },
       xAxis: { type: 'value', axisLabel: { color: '#64748B', fontSize: 11 }, splitLine: { lineStyle: { color: '#F1F5F9' } } },
-      yAxis: { type: 'category', data: top.map(function(t){ return t.name; }).reverse(), axisLabel: { color: '#0F172A', fontSize: 11, fontWeight: 600 } },
+      yAxis: { type: 'category', data: top.map(function(t){ return t.name; }).reverse(), axisLabel: { color: '#0F172A', fontSize: 12, fontWeight: 700 } },
       series: [{
-        type: 'bar', data: top.map(function(t){ return t.count; }).reverse(),
-        itemStyle: { color: '#F59E0B', borderRadius: [0, 6, 6, 0] },
-        label: { show: true, position: 'right', color: '#0F172A', fontSize: 11, fontWeight: 700,
-          formatter: function(p){ const pct = totalQuotes ? Math.round((p.value / totalQuotes) * 100) : 0; return p.value + ' (' + pct + '%)'; } }
+        type: 'bar',
+        data: top.map(function(t, i){
+          const colorIdx = (top.length - 1 - i) % palette.length;
+          // We reverse the data array, so color index needs to map back to original position
+          return { value: t.count, itemStyle: { color: palette[i % palette.length], borderRadius: [0, 8, 8, 0] } };
+        }).reverse(),
+        barWidth: '60%',
+        label: {
+          show: true, position: 'right', color: '#0F172A', fontSize: 13, fontWeight: 800,
+          formatter: function(p){
+            const pct = totalUnits ? Math.round((p.value / totalUnits) * 100) : 0;
+            return p.value + 'u · ' + pct + '%';
+          }
+        }
       }]
     });
     _v26Charts.players = inst;
