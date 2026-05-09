@@ -1711,6 +1711,114 @@ html[data-theme="dark"] .tender-section-outdoor .tender-section-badge{background
 }
 .btn-email:active{transform:translateY(0);}
 .btn-email:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+
+/* v24.26.17 — Option B action button row. Single indigo accent, only Confirm filled.
+   Equal-width grid with real brand SVG icons. Replaces inconsistent btn-action/btn-print/
+   btn-email mix on the RESULT PAGE only. Existing classes still used in other contexts
+   (Add User, Reset, modal actions). New class names so opt-in is explicit. */
+.action-bar-v2{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--glass-bg-strong);
+  backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-border);
+  border-radius:16px;padding:10px;
+  display:grid;grid-template-columns:repeat(6, minmax(78px, 1fr));gap:8px;
+  box-shadow:var(--shadow-float);z-index:40;
+  max-width:calc(100vw - 32px);
+}
+.ab2-btn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  background:transparent;
+  color:#4F46E5;
+  border:1px solid #C7D2FE;
+  border-radius:10px;
+  padding:10px 6px;
+  min-height:64px;
+  font-family:var(--sans);
+  font-size:11.5px;line-height:1.2;font-weight:600;letter-spacing:-0.005em;
+  cursor:pointer;
+  transition:all 140ms;
+  text-align:center;
+}
+.ab2-btn:hover{
+  background:#EEF2FF;
+  border-color:#818CF8;
+  transform:translateY(-1px);
+}
+.ab2-btn:active{transform:translateY(0);}
+.ab2-btn:disabled{opacity:0.55;cursor:not-allowed;transform:none;}
+.ab2-btn .ab2-ic{
+  width:20px;height:20px;display:block;flex-shrink:0;
+}
+.ab2-btn .ab2-label{display:block;}
+/* Back is the quietest — neutral grey, no indigo */
+.ab2-btn.is-back{
+  color:var(--ink-muted, #64748B);
+  border-color:var(--border-soft, #E5E7EB);
+}
+.ab2-btn.is-back:hover{
+  background:var(--surface-2, #F1F5F9);
+  border-color:var(--ink-muted, #64748B);
+  color:var(--ink, #0F172A);
+}
+/* Confirm is THE primary action — filled indigo */
+.ab2-btn.is-primary{
+  background:#4F46E5;
+  color:#fff;
+  border-color:#4F46E5;
+  box-shadow:0 4px 12px rgba(79,70,229,0.20);
+}
+.ab2-btn.is-primary:hover{
+  background:#4338CA;
+  border-color:#4338CA;
+  box-shadow:0 6px 16px rgba(79,70,229,0.30);
+}
+.ab2-btn.is-primary:disabled{
+  background:#A5B4FC;
+  border-color:#A5B4FC;
+  box-shadow:none;
+}
+/* Dark mode: invert outline buttons */
+html[data-theme="dark"] .ab2-btn{
+  color:#A5B4FC;
+  border-color:rgba(165,180,252,0.35);
+}
+html[data-theme="dark"] .ab2-btn:hover{
+  background:rgba(99,102,241,0.15);
+  border-color:#818CF8;
+}
+html[data-theme="dark"] .ab2-btn.is-back{
+  color:#94A3B8;
+  border-color:rgba(148,163,184,0.30);
+}
+html[data-theme="dark"] .ab2-btn.is-back:hover{
+  background:rgba(148,163,184,0.10);
+  color:#E2E8F0;
+}
+html[data-theme="dark"] .ab2-btn.is-primary{
+  background:linear-gradient(135deg,#4F46E5 0%,#6366F1 100%);
+  color:#fff;
+  border-color:transparent;
+}
+html[data-theme="dark"] .ab2-btn.is-primary:hover{
+  background:linear-gradient(135deg,#6366F1 0%,#818CF8 100%);
+}
+/* Mobile: drop to 3-column grid; rows wrap */
+@media (max-width: 640px){
+  .action-bar-v2{
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    bottom:12px;
+    padding:8px;
+    gap:6px;
+  }
+  .ab2-btn{
+    min-height:56px;
+    font-size:10.5px;
+    padding:8px 4px;
+  }
+  .ab2-btn .ab2-ic{ width:18px;height:18px; }
+}
 .btn-gold{
   background:var(--gold);color:#fff;border:none;
   padding:12px 22px;border-radius:10px;
@@ -7564,14 +7672,46 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
       <div id="result-content"></div>
       <div class="print-only-footer"><div id="print-footer-user">Cavitak Marketing</div><div>This document is for internal reference and customer discussion. Pricing subject to current price list, forex, and landed-cost variations.</div></div>
     </div>
-    <div class="action-bar">
-      <button class="btn-secondary" onclick="backToForm()">← Back</button>
-      <button class="btn-action" onclick="confirmSelection()">Confirm ✓</button>
-      <button class="btn-print" onclick="downloadQuoteExcel()">Download Excel ↓</button>
-      <!-- v24.18.0: PDF export + WhatsApp share + redesigned Email modal -->
-      <button class="btn-print" onclick="exportQuotePDF()" title="Download a partner-ready PDF of this quote">📄 Download PDF</button>
-      <button class="btn-print" onclick="shareViaWhatsApp()" title="Share quote summary via WhatsApp">📱 WhatsApp</button>
-      <button class="btn-email" onclick="openEmailModal()" title="Email PDF quote to partner with CC to Cavitak">✉ Email to partner</button>
+    <!-- v24.26.17: Action bar Option B — outlined indigo, only Confirm filled.
+         Equal-width 6-col grid with real brand SVG icons (no emoji — render identically across all platforms). -->
+    <div class="action-bar action-bar-v2">
+      <button class="ab2-btn is-back" onclick="backToForm()" title="Back to form">
+        <svg class="ab2-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        <span class="ab2-label">Back</span>
+      </button>
+      <button class="ab2-btn is-primary" onclick="confirmSelection()" title="Confirm and save selection">
+        <svg class="ab2-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        <span class="ab2-label">Confirm</span>
+      </button>
+      <button class="ab2-btn" onclick="downloadQuoteExcel()" title="Download Excel quote">
+        <svg class="ab2-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <polyline points="14 2 14 8 20 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <text x="12" y="17" text-anchor="middle" font-size="6" font-weight="700" fill="currentColor" font-family="Arial,sans-serif">XLS</text>
+        </svg>
+        <span class="ab2-label">Excel</span>
+      </button>
+      <button class="ab2-btn" onclick="exportQuotePDF()" title="Download PDF quote">
+        <svg class="ab2-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <polyline points="14 2 14 8 20 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <text x="12" y="17" text-anchor="middle" font-size="6" font-weight="700" fill="currentColor" font-family="Arial,sans-serif">PDF</text>
+        </svg>
+        <span class="ab2-label">PDF</span>
+      </button>
+      <button class="ab2-btn" onclick="shareViaWhatsApp()" title="Share quote via WhatsApp">
+        <svg class="ab2-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.002-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413"/>
+        </svg>
+        <span class="ab2-label">WhatsApp</span>
+      </button>
+      <button class="ab2-btn" onclick="openEmailModal()" title="Email quote to partner (Cavitak CC'd)">
+        <svg class="ab2-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+        <span class="ab2-label">Email</span>
+      </button>
     </div>
   </div>
 
@@ -8235,7 +8375,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.16';  // v24.26.16 — PASSWORD SHOW/HIDE TOGGLE on login. Standard pattern: 👁 button at right edge of password input. Click to reveal so user can verify they typed correctly before clicking Sign in. Click again to hide. Keyboard accessible (focus-visible outline). Caret position preserved on toggle so typing flow isn't interrupted. Helper function `togglePasswordVisibility(inputId, btn)` is reusable — can be wired to the forced-password-change modal in a future release if desired. Pairs with backend v25.13.0 — no backend changes. NOTE: Keyboard shortcuts feature still pending — waiting on user clarification on scope (which shortcuts, mobile gestures, both apps).
+const FRONTEND_VERSION = '24.26.17';  // v24.26.17 — TWO FEATURES BUNDLED. (1) KEYBOARD SHORTCUTS (laptop/desktop) — self-contained IIFE module. Five shortcuts: Ctrl/Cmd+S → Save (form: _saveDraft, result: confirm), Ctrl/Cmd+Enter → Submit (form: action-recommend or action-generate-boq, whichever visible), Esc → Close top open modal, / → Focus context-relevant search, ? → Show shortcuts help overlay. Plus small ? help button next to version footer (bottom-right) for discoverability. Mac users see ⌘ instead of Ctrl. (2) ACTION BUTTON STYLING (Option B per user pick) — replaces inconsistent btn-action/btn-print/btn-email mix on result page with action-bar-v2 + ab2-btn classes. Outlined indigo accent, only Confirm filled (primary action). Equal-width 6-col grid with real brand SVG icons inline (Excel/PDF document icons with text labels, official WhatsApp glyph, envelope email). No emoji — renders identically across Win/Mac/mobile. Mobile: drops to 3-col grid below 640px. Existing btn-action/btn-print/btn-email classes UNTOUCHED — used in many other places (Add User, Reset, modal actions). Updated 4 JS selectors that previously targeted #section-result .btn-action — now use #section-result .action-bar-v2 .ab2-btn.is-primary. Critical: Confirm button now contains SVG + .ab2-label span; the v24.26.7 reset logic + confirmSelection's text manipulation updated to set .ab2-label.textContent only (never btn.textContent which would wipe the SVG). Pairs with backend v25.13.0 — no backend changes.
+// v24.26.16 — PASSWORD SHOW/HIDE TOGGLE on login. 👁 button at right edge of password input. Caret position preserved on toggle. Reusable togglePasswordVisibility(inputId, btn) helper.
 // v24.26.15 — CRITICAL HOTFIX for Custom BOQ "Generate BOQ does nothing" bug. Lock leak in runAdvancedBOQ — _runSelectorBusy stayed TRUE for 10 seconds on validation early-return, blocking subsequent clicks. Fixed by resetting flag at all 3 early-return paths + scrollIntoView added to _advValidateProjectContext.
 // v24.26.14 — THREE BUG FIXES (1 of 3 in user-requested release sequence). (1) CALCULATE BUTTON "needs 2-3 clicks" UX bug — added live field-error clearing on input/change. (2) EXCEL EXPORT — Sales Person + Presales Person fields ADDED to PROJECT CONTEXT block. (3) EMAIL PDF — improved error visibility.
 // v24.26.13 — REGION + OUTCOME POLISH per user feedback. (1) Region zones: dropped International tile (5→4 tiles W/N/S/E). (2) Outcome scorecard tech-style polish — JetBrains Mono numerals, sharp 4px corners, lower-saturation green (#059669), equal-weight grid, hero gradient flattened, trophy emoji removed, bracketed monospace labels [ OPEN ], HUD-style corner tick-marks, dashed zero-state tiles.
@@ -9182,6 +9323,260 @@ function updateVersionFooter(){
   if(!el)return;
   el.textContent = `v${FRONTEND_VERSION}`;
 }
+
+/* ================================================================
+ * v24.26.17 — KEYBOARD SHORTCUTS MODULE
+ * ================================================================
+ * Common shortcuts that match user expectations from desktop apps.
+ * All shortcut handlers respect:
+ *   - Modifier-key contracts (Ctrl on Win/Linux, Cmd on Mac, both via e.metaKey || e.ctrlKey)
+ *   - Skip when user is mid-edit in a contenteditable region or composing IME
+ *   - Skip when ANY modal is open EXCEPT for Esc (which closes the modal)
+ *   - Skip when user is typing in an input/textarea (so / inside a search bar doesn't trigger)
+ *
+ * Shortcuts:
+ *   Ctrl/Cmd+S       — Save (form: save draft / result: confirm submission)
+ *   Ctrl/Cmd+Enter   — Submit (form: Calculate or Generate BOQ / result: confirm)
+ *   Esc              — Close any open modal
+ *   /                — Focus context-relevant search (history/directory/dashboard filter)
+ *   ?                — Show shortcuts help overlay
+ * ================================================================ */
+(function(){
+  'use strict';
+  // Detect Mac for ⌘ vs Ctrl display in help overlay
+  const IS_MAC = /Mac|iPad|iPhone/.test(navigator.platform);
+  const META_LABEL = IS_MAC ? '⌘' : 'Ctrl';
+
+  function _isTypingTarget(t){
+    if(!t) return false;
+    const tag = (t.tagName || '').toUpperCase();
+    if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+    if(t.isContentEditable) return true;
+    return false;
+  }
+
+  function _activeSection(){
+    // Returns the ID of the visible top-level section, or null.
+    const ids = ['section-form','section-result','section-log','section-dashboard',
+                 'section-team','section-directory','section-profile'];
+    for(const id of ids){
+      const el = document.getElementById(id);
+      if(el && el.style.display !== 'none' && el.offsetParent !== null) return id;
+    }
+    return null;
+  }
+
+  function _anyModalOpen(){
+    // Detect any common modal patterns — hidden if `display:none` OR `.hidden` class.
+    const sels = [
+      '.modal-overlay', '.dir-modal-overlay',
+      '#emailModal', '#auditModal', '#forgot-password-modal',
+      '#customer-detail-modal', '#merge-modal', '#confirm-modal',
+      '#profile-gate-modal', '#shortcuts-help-overlay'
+    ];
+    for(const s of sels){
+      const els = document.querySelectorAll(s);
+      for(const el of els){
+        if(!el) continue;
+        if(el.classList.contains('hidden')) continue;
+        const cs = getComputedStyle(el);
+        if(cs.display !== 'none' && cs.visibility !== 'hidden') return el;
+      }
+    }
+    return null;
+  }
+
+  function _closeTopModal(){
+    const m = _anyModalOpen();
+    if(!m) return false;
+    // Profile gate is non-dismissible (per existing code at line 11548)
+    if(m.id === 'profile-gate-modal') return false;
+    // Try multiple close patterns — some modals use display:none, some use .hidden class
+    if(m.classList.contains('modal-overlay') || m.classList.contains('dir-modal-overlay')){
+      m.style.display = 'none';
+    } else {
+      m.classList.add('hidden');
+      m.style.display = 'none';
+    }
+    return true;
+  }
+
+  function _focusContextSearch(){
+    // Pick the most relevant search input based on which section is visible.
+    const sec = _activeSection();
+    let target = null;
+    if(sec === 'section-log') target = document.getElementById('history-search-input');
+    else if(sec === 'section-directory') target = document.getElementById('customerSearch');
+    else if(sec === 'section-dashboard'){
+      // Dashboard's filter inputs are in the v26 module — search box is one of them
+      target = document.querySelector('#section-dashboard input[type="search"], #section-dashboard input[placeholder*="search" i]');
+    }
+    // Fallback: any visible search input on the active page
+    if(!target) target = document.querySelector('input[type="search"]:not([style*="display:none"])');
+    if(target && typeof target.focus === 'function'){
+      target.focus({preventScroll:false});
+      try { target.select(); } catch(_){}
+      return true;
+    }
+    return false;
+  }
+
+  function _doSave(){
+    const sec = _activeSection();
+    if(sec === 'section-form'){
+      // Save Draft is the closest analog to Ctrl+S in the form context
+      if(typeof window._saveDraft === 'function'){ try { window._saveDraft(); } catch(_){} }
+      else if(typeof _saveDraft === 'function'){ try { _saveDraft(); } catch(_){} }
+      // Show a tiny confirmation flash
+      _flashStatus('Draft saved');
+      return true;
+    }
+    if(sec === 'section-result'){
+      // Result page: trigger Confirm. v24.26.17 — selector updated for action-bar-v2.
+      const btn = document.querySelector('#section-result .action-bar-v2 .ab2-btn.is-primary');
+      if(btn && !btn.disabled){ btn.click(); return true; }
+    }
+    return false;
+  }
+
+  function _doSubmit(){
+    const sec = _activeSection();
+    if(sec === 'section-form'){
+      // Form: trigger whichever submit button is visible (Recommend or Generate BOQ)
+      const recBtn = document.getElementById('action-recommend');
+      const boqBtn = document.getElementById('action-generate-boq');
+      const visible = function(b){ return b && b.style.display !== 'none' && !b.disabled; };
+      if(visible(recBtn)){ recBtn.click(); return true; }
+      if(visible(boqBtn)){ boqBtn.click(); return true; }
+    }
+    if(sec === 'section-result'){
+      // v24.26.17 — selector updated for action-bar-v2.
+      const btn = document.querySelector('#section-result .action-bar-v2 .ab2-btn.is-primary');
+      if(btn && !btn.disabled){ btn.click(); return true; }
+    }
+    return false;
+  }
+
+  function _flashStatus(msg){
+    // Reuse showSync if available — that's the existing toast system
+    if(typeof showSync === 'function'){
+      try { showSync(msg, 'success'); return; } catch(_){}
+    }
+    // Fallback: a tiny ephemeral div
+    let f = document.getElementById('shortcut-flash');
+    if(!f){
+      f = document.createElement('div');
+      f.id = 'shortcut-flash';
+      f.style.cssText = 'position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#0F172A;color:#fff;padding:8px 16px;border-radius:6px;font-size:13px;font-family:var(--sans);z-index:99999;opacity:0;transition:opacity 180ms;pointer-events:none;';
+      document.body.appendChild(f);
+    }
+    f.textContent = msg;
+    f.style.opacity = '1';
+    clearTimeout(f._t);
+    f._t = setTimeout(function(){ f.style.opacity = '0'; }, 1400);
+  }
+
+  function _toggleHelpOverlay(){
+    let ov = document.getElementById('shortcuts-help-overlay');
+    if(ov){ ov.remove(); return; }
+    ov = document.createElement('div');
+    ov.id = 'shortcuts-help-overlay';
+    ov.className = 'modal-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.55);display:flex;align-items:center;justify-content:center;z-index:99998;';
+    ov.innerHTML =
+      '<div style="background:var(--surface, #fff);color:var(--ink, #0F172A);border-radius:12px;padding:24px 28px;max-width:460px;width:calc(100% - 40px);box-shadow:0 24px 60px rgba(15,23,42,0.25);font-family:var(--sans);">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
+          '<div style="font-size:16px;font-weight:700;letter-spacing:-0.01em;">Keyboard shortcuts</div>' +
+          '<button type="button" onclick="document.getElementById(\'shortcuts-help-overlay\').remove();" aria-label="Close" style="background:transparent;border:none;font-size:22px;cursor:pointer;color:var(--ink-muted, #64748B);padding:0;line-height:1;">×</button>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:auto 1fr;gap:10px 18px;font-size:13px;line-height:1.5;">' +
+          '<kbd style="font-family:JetBrains Mono,monospace;background:var(--surface-2, #F1F5F9);border:1px solid var(--border-soft, #E5E7EB);border-radius:4px;padding:2px 8px;font-size:12px;white-space:nowrap;">' + META_LABEL + ' + S</kbd><div>Save (draft in form, or confirm on result)</div>' +
+          '<kbd style="font-family:JetBrains Mono,monospace;background:var(--surface-2, #F1F5F9);border:1px solid var(--border-soft, #E5E7EB);border-radius:4px;padding:2px 8px;font-size:12px;white-space:nowrap;">' + META_LABEL + ' + Enter</kbd><div>Submit / generate recommendation</div>' +
+          '<kbd style="font-family:JetBrains Mono,monospace;background:var(--surface-2, #F1F5F9);border:1px solid var(--border-soft, #E5E7EB);border-radius:4px;padding:2px 8px;font-size:12px;white-space:nowrap;">Esc</kbd><div>Close any open modal</div>' +
+          '<kbd style="font-family:JetBrains Mono,monospace;background:var(--surface-2, #F1F5F9);border:1px solid var(--border-soft, #E5E7EB);border-radius:4px;padding:2px 8px;font-size:12px;white-space:nowrap;">/</kbd><div>Focus search (in History / Directory / Dashboard)</div>' +
+          '<kbd style="font-family:JetBrains Mono,monospace;background:var(--surface-2, #F1F5F9);border:1px solid var(--border-soft, #E5E7EB);border-radius:4px;padding:2px 8px;font-size:12px;white-space:nowrap;">?</kbd><div>Show this help</div>' +
+        '</div>' +
+        '<div style="margin-top:18px;font-size:11px;color:var(--ink-muted, #64748B);">Press Esc to close.</div>' +
+      '</div>';
+    ov.addEventListener('click', function(e){ if(e.target === ov) ov.remove(); });
+    document.body.appendChild(ov);
+  }
+  window._shortcutsHelp = _toggleHelpOverlay;  // expose for the ? button next to footer
+
+  // Master keydown handler — routes all shortcuts.
+  document.addEventListener('keydown', function(e){
+    // IME composition: skip
+    if(e.isComposing || e.keyCode === 229) return;
+
+    const isMod = e.metaKey || e.ctrlKey;
+    const k = e.key;
+
+    // Esc — works regardless of focus, closes top modal if any.
+    if(k === 'Escape'){
+      if(_closeTopModal()){
+        e.preventDefault();
+      }
+      return;
+    }
+
+    // Ctrl/Cmd + S — save
+    if(isMod && (k === 's' || k === 'S')){
+      // Always preempt browser's "Save Page" — even if user is in an input,
+      // they probably mean "save my work" not "save the HTML".
+      e.preventDefault();
+      _doSave();
+      return;
+    }
+
+    // Ctrl/Cmd + Enter — submit (works even from inside form fields)
+    if(isMod && (k === 'Enter' || k === 'Return')){
+      e.preventDefault();
+      _doSubmit();
+      return;
+    }
+
+    // / — focus search. SKIP if user is typing in any input/textarea.
+    if(k === '/' && !isMod && !_isTypingTarget(e.target)){
+      // Skip if a modal is open — / would steal focus from modal inputs.
+      if(_anyModalOpen()) return;
+      if(_focusContextSearch()){
+        e.preventDefault();
+      }
+      return;
+    }
+
+    // ? — show help overlay (Shift+/ on most layouts). Skip if typing.
+    if(k === '?' && !_isTypingTarget(e.target)){
+      e.preventDefault();
+      _toggleHelpOverlay();
+      return;
+    }
+  });
+
+  // Inject a small ? button next to the version footer for discoverability.
+  // Runs once after DOM ready.
+  function _injectHelpButton(){
+    if(document.getElementById('shortcut-help-btn')) return;
+    const footer = document.getElementById('app-version-footer');
+    if(!footer) return;
+    const btn = document.createElement('button');
+    btn.id = 'shortcut-help-btn';
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Keyboard shortcuts');
+    btn.title = 'Keyboard shortcuts (' + META_LABEL + '+S, ' + META_LABEL + '+Enter, /, ?)';
+    btn.textContent = '?';
+    btn.style.cssText = 'position:fixed;bottom:8px;right:64px;width:24px;height:24px;border-radius:50%;border:1px solid var(--border-soft, #E5E7EB);background:var(--surface, #fff);color:var(--ink-muted, #64748B);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);line-height:1;padding:0;display:flex;align-items:center;justify-content:center;opacity:0.5;transition:opacity 120ms;z-index:50;';
+    btn.addEventListener('mouseenter', function(){ btn.style.opacity = '1'; });
+    btn.addEventListener('mouseleave', function(){ btn.style.opacity = '0.5'; });
+    btn.addEventListener('click', _toggleHelpOverlay);
+    document.body.appendChild(btn);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', _injectHelpButton);
+  } else {
+    setTimeout(_injectHelpButton, 0);
+  }
+})();
 
 /* ================================================================
    USER ALLOWLIST (first-name login, case-insensitive)
@@ -15394,9 +15789,12 @@ function renderResult(){
   try {
     if(state && state.result) state.result.confirmed = false;
     window._confirmBusy = false;
-    const _confirmBtn = document.querySelector('#section-result .action-bar .btn-action');
+    // v24.26.17: Selector updated for action-bar-v2. Confirm button now contains an SVG icon
+    // + .ab2-label span — can't reset via textContent (would wipe the SVG). Reset the label only.
+    const _confirmBtn = document.querySelector('#section-result .action-bar-v2 .ab2-btn.is-primary');
     if(_confirmBtn){
-      _confirmBtn.textContent = 'Confirm ✓';
+      const _lbl = _confirmBtn.querySelector('.ab2-label');
+      if(_lbl) _lbl.textContent = 'Confirm';
       _confirmBtn.disabled = false;
       _confirmBtn.style.opacity = '';
       _confirmBtn.style.cursor = '';
@@ -17778,11 +18176,25 @@ function confirmSelection(){
   if(window._confirmBusy)return;
   window._confirmBusy=true;
   state.result.confirmed=true;
-  const btn=document.querySelector('#section-result .action-bar .btn-action');
-  if(btn){btn.disabled=true;btn.textContent='Saving…';btn.style.opacity='0.7';btn.style.cursor='not-allowed';}
+  // v24.26.17: Selector + manipulation updated for action-bar-v2. Confirm button has SVG inside,
+  // so we change the .ab2-label text only — never textContent (would wipe the SVG).
+  const btn=document.querySelector('#section-result .action-bar-v2 .ab2-btn.is-primary');
+  if(btn){
+    btn.disabled=true;
+    const _lbl = btn.querySelector('.ab2-label');
+    if(_lbl) _lbl.textContent='Saving…';
+    btn.style.opacity='0.7';
+    btn.style.cursor='not-allowed';
+  }
   logEntry('saved',function(){
     // Update Confirm button to show success feedback briefly
-    if(btn){btn.textContent='Confirmed ✓';btn.style.background='var(--emerald)';btn.style.opacity='1';}
+    if(btn){
+      const _lbl = btn.querySelector('.ab2-label');
+      if(_lbl) _lbl.textContent='Confirmed ✓';
+      btn.style.background='var(--emerald)';
+      btn.style.borderColor='var(--emerald)';
+      btn.style.opacity='1';
+    }
     window._confirmBusy=false;
     // v21.6: After confirmation success → reset form and navigate to blank form tab
     // Small delay lets user see the "Confirmed ✓" feedback before the reset
