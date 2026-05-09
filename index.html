@@ -7450,14 +7450,14 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
 
       <!-- 8 charts in 4 rows of 2 -->
       <div class="v26-charts-grid">
-        <div class="v26-chart-card"><div class="v26-chart-head">Source split <span class="v26-chart-sub">BS-generated vs Cavitak-generated · click row to filter</span></div><div class="v26-chart-body v26-breakdown-body" id="v26-chart-source"></div></div>
-        <div class="v26-chart-card"><div class="v26-chart-head">Stage funnel <span class="v26-chart-sub">₹ + count by stage · click bar to filter</span></div><div class="v26-chart-body"><canvas id="v26-chart-stage"></canvas></div></div>
-        <div class="v26-chart-card"><div class="v26-chart-head">Region performance <span class="v26-chart-sub">click row to filter</span></div><div class="v26-chart-body v26-breakdown-body" id="v26-chart-region"></div></div>
-        <div class="v26-chart-card"><div class="v26-chart-head">Outcome split <span class="v26-chart-sub">Open · Won · Lost · On hold</span></div><div class="v26-chart-body v26-breakdown-body" id="v26-chart-outcome"></div></div>
-        <div class="v26-chart-card"><div class="v26-chart-head">Top partners <span class="v26-chart-sub">Top 10 by # cases</span></div><div class="v26-chart-body"><canvas id="v26-chart-partners"></canvas></div></div>
-        <div class="v26-chart-card"><div class="v26-chart-head">Top consultants <span class="v26-chart-sub">Top 10 by # cases</span></div><div class="v26-chart-body"><canvas id="v26-chart-consultants"></canvas></div></div>
-        <div class="v26-chart-card"><div class="v26-chart-head">Weekly trend <span class="v26-chart-sub">New vs Won · last 12 weeks</span></div><div class="v26-chart-body"><canvas id="v26-chart-trend"></canvas></div></div>
-        <div class="v26-chart-card"><div class="v26-chart-head">Time-to-close <span class="v26-chart-sub">Days from Lead → Won (won deals)</span></div><div class="v26-chart-body"><canvas id="v26-chart-ttc"></canvas></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Source split <span class="v26-chart-sub">BS-generated vs Cavitak-generated · click slice to filter</span></div><div class="v26-chart-body" id="v26-chart-source"></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Stage funnel <span class="v26-chart-sub">₹ + count by stage · click to filter</span></div><div class="v26-chart-body" id="v26-chart-stage"></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Region · India map <span class="v26-chart-sub">click state or zone pill to filter</span></div><div class="v26-chart-body" id="v26-chart-region"></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Outcome split <span class="v26-chart-sub">Open · Won · Lost · On hold</span></div><div class="v26-chart-body" id="v26-chart-outcome"></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Top partners <span class="v26-chart-sub">Top 10 by # cases</span></div><div class="v26-chart-body" id="v26-chart-partners"></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Top consultants <span class="v26-chart-sub">Top 10 by # cases</span></div><div class="v26-chart-body" id="v26-chart-consultants"></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Weekly trend <span class="v26-chart-sub">New vs Won · last 12 weeks</span></div><div class="v26-chart-body" id="v26-chart-trend"></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Time-to-close <span class="v26-chart-sub">Days from Lead → Won (won deals)</span></div><div class="v26-chart-body" id="v26-chart-ttc"></div></div>
       </div>
 
       <!-- Sales leaderboard + Stuck deals (side-by-side) -->
@@ -7892,7 +7892,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.5';  // v24.26.5 — VISUAL DIVERSITY. Migrated all 8 v26 dashboard charts from Chart.js to ECharts. New chart types: Source split is DONUT WITH CENTER TOTAL (8 deals in middle). Region performance is INDIA CHOROPLETH (lazy-loads GeoJSON from JSDelivr CDN; falls back to vertical bar if CDN fails). Outcome split is STACKED HORIZONTAL BAR (one bar split into 4 colored segments). Stage funnel is VISUAL FUNNEL (each stage narrows). Trend is AREA CHART with gradient fills. Top Partners + Top Consultants stay horizontal bar (already optimal). Time-to-close stays vertical bar histogram (already optimal). Chart.js is KEPT loaded for legacy code paths that still reference window.Chart (cockpit, c3a velocity, etc — they early-return on missing DOM but would throw on missing global). Click-through filters preserved on all new charts. Added window-resize handler that resizes all chart instances. Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.26.6';  // v24.26.6 — HOTFIX + POLISH for v24.26.5. (1) Stage funnel was empty in v26.5 because all chart canvases were still <canvas> tags from older code; ECharts needs <div> elements (echarts.init silently fails on canvas). Converted all 8 v26 chart elements to divs in HTML. (2) Stage renderer now sets explicit dom.style.height='260px' before ECharts init. (3) India choropleth: tries 4 different GeoJSON CDN sources in fallback order, with TopoJSON skip + better error handling. Shows "Loading India map…" placeholder during fetch. Falls back gracefully to vertical bar chart if all sources fail. (4) Polish: closemonth display now formats "2026-05-31T18:30:00.000Z" → "May 2026" via _formatCloseMonth helper applied at 3 sites (todo items, My Deals table, Team filtered deals table). Pairs with backend v25.13.0 — no backend changes.
+// v24.26.5 — VISUAL DIVERSITY. Migrated all 8 v26 dashboard charts from Chart.js to ECharts. New chart types: Source split is DONUT WITH CENTER TOTAL (8 deals in middle). Region performance is INDIA CHOROPLETH (lazy-loads GeoJSON from JSDelivr CDN; falls back to vertical bar if CDN fails). Outcome split is STACKED HORIZONTAL BAR (one bar split into 4 colored segments). Stage funnel is VISUAL FUNNEL (each stage narrows). Trend is AREA CHART with gradient fills. Top Partners + Top Consultants stay horizontal bar (already optimal). Time-to-close stays vertical bar histogram (already optimal). Chart.js is KEPT loaded for legacy code paths that still reference window.Chart (cockpit, c3a velocity, etc — they early-return on missing DOM but would throw on missing global). Click-through filters preserved on all new charts. Added window-resize handler that resizes all chart instances. Pairs with backend v25.13.0 — no backend changes.
 // v24.26.4 — VISUAL POLISH. Replaced 3 donut charts (Source split, Region performance, Outcome split) with owner-friendly horizontal breakdown rows. Each row shows: label · proportional bar · count · ₹ · % — no hover required to read values. Click any row to filter Team Analytics. Stage funnel + Top Partners/Consultants + Trend + TTC unchanged. Pairs with backend v25.13.0 — no backend changes.
 // v24.26.3 — THE BUG FIX. v26 module had `window.state && window.state.user` checks at 3 sites — but `state` is a top-level `var state = {...}` NOT attached to window, so `window.state` is undefined. Result: every call to _scopeForUser, _setupTabButtonsForUser, _renderMine returned `null` user → _scopeForUser returned `[]` empty array → all KPI math ran on empty data → ₹0 across the board. Fix: introduced _getStateUser() helper that prefers lexical `state` reference (closure-accessible from within the IIFE) and falls back to window. This explains the entire v26.0/.1/.2 saga — the cutoff fix was real but irrelevant because _scopeForUser was zeroing data upstream. Pairs with backend v25.13.0 — no backend changes.
 // v24.26.2 — DATA-VISIBILITY HOTFIX. v24.26.0/.1 showed all ₹0 / 0 KPIs because the global _entryAfterPipelineCutoff helper checks entry.timestamp/created/createdAt/tsMs but NOT entry.ts — and the live deals only have entry.ts populated. Result: cutoff returned false for all 7 production deals → my v26 _applyFilters filtered them all out before KPI math ran. Fix: replace the cutoff call inside v26 module with inline use of our robust _parseTs (which DOES include entry.ts in its fallback chain). The global helper stays untouched so other code paths aren't affected. Pairs with backend v25.13.0 — no backend changes.
@@ -24701,6 +24702,18 @@ if(document.readyState==='loading'){
 
   // ---- Helpers ----
   function _readEntries(){ return Array.isArray(window._centralLog) ? window._centralLog : []; }
+  // v24.26.6: Display helper — turns "2026-05-31T18:30:00.000Z" or "2026-05" into "May 2026"
+  function _formatCloseMonth(v){
+    if(v == null || v === '') return '—';
+    const s = String(v);
+    let m = s.match(/^(\d{4})-(\d{2})/);
+    if(m){
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const idx = parseInt(m[2], 10) - 1;
+      if(idx >= 0 && idx < 12) return months[idx] + ' ' + m[1];
+    }
+    return s;
+  }
   function _readDealValue(e){
     if(!e) return 0;
     const v = e.dealValueINR != null ? e.dealValueINR : (e.dealValue != null ? e.dealValue : (e.dealvalueinr != null ? e.dealvalueinr : 0));
@@ -25103,7 +25116,7 @@ if(document.readyState==='loading'){
       const stage = _esc(e.stage || '—');
       const val = _shortINR(_readDealValue(e));
       const days = _daysInStage(e);
-      const close = _esc(e.closemonth || '—');
+      const close = _esc(_formatCloseMonth(e.closemonth));
       const refId = _esc(e.refId || '');
       return '<div class="v26-todo-item" onclick="bsv26_openDeal(\'' + refId + '\')">' +
              '<div class="v26-todo-item-main">' +
@@ -25146,7 +25159,7 @@ if(document.readyState==='loading'){
              '<td>' + _esc(e.enduser || '—') + '</td>' +
              '<td><span class="v26-stage-badge v26-stage-' + _esc(String(e.stage || '').toLowerCase()) + '">' + _esc(e.stage || '—') + '</span></td>' +
              '<td class="v26-th-num">' + _formatINR(_readDealValue(e)) + '</td>' +
-             '<td>' + _esc(e.closemonth || '—') + '</td>' +
+             '<td>' + _esc(_formatCloseMonth(e.closemonth)) + '</td>' +
              '<td class="v26-th-num"' + stuckCls + '>' + days + 'd</td>' +
              '</tr>';
     }).join('');
@@ -25300,6 +25313,8 @@ if(document.readyState==='loading'){
     _destroyChart('stage');
     const dom = document.getElementById('v26-chart-stage');
     if(!dom) return;
+    dom.innerHTML = '';
+    dom.style.height = '260px';
     const open = deals.filter(function(e){ return String(e.outcome || '').toLowerCase() === 'open'; });
     const stageData = STAGES_OPEN.map(function(s){
       const stageDeals = open.filter(function(e){ return e.stage === s; });
@@ -25329,21 +25344,51 @@ if(document.readyState==='loading'){
   }
 
   /* ────────────────────── Region — INDIA CHOROPLETH (lazy-load) with vertical-bar fallback ────────────────────── */
+  // v24.26.6: Try multiple known-good GeoJSON sources. First success wins.
+  const _INDIA_GEOJSON_SOURCES = [
+    'https://cdn.jsdelivr.net/gh/markmarkoh/datamaps@master/src/js/data/ind.topo.json',  // TopoJSON
+    'https://cdn.jsdelivr.net/gh/datameet/maps@master/States/Admin2.geojson',
+    'https://cdn.jsdelivr.net/gh/geohacker/india@master/state/india_telengana.geojson',
+    'https://unpkg.com/india-atlas@1/states-india.json'
+  ];
   function _loadIndiaMap(){
     if(_v26IndiaMapLoaded) return Promise.resolve(true);
     if(_v26IndiaMapLoading) return _v26IndiaMapLoading;
-    _v26IndiaMapLoading = fetch('https://cdn.jsdelivr.net/npm/echarts-map-india@1.0.0/india.geojson')
-      .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function(geo){ echarts.registerMap('India', geo); _v26IndiaMapLoaded = true; return true; })
-      .catch(function(err){ console.warn('[v26.5] India map load failed, falling back to bar:', err); return false; });
+    _v26IndiaMapLoading = (async function(){
+      for(let i = 0; i < _INDIA_GEOJSON_SOURCES.length; i++){
+        const url = _INDIA_GEOJSON_SOURCES[i];
+        try {
+          const res = await fetch(url);
+          if(!res.ok) continue;
+          const data = await res.json();
+          // Try to handle TopoJSON OR GeoJSON. ECharts wants GeoJSON.
+          let geoJson = data;
+          if(data.type === 'Topology' && data.objects){
+            // TopoJSON detected — need topojson library to convert. Skip TopoJSON sources.
+            continue;
+          }
+          if(!data.features){
+            continue;  // not GeoJSON FeatureCollection
+          }
+          echarts.registerMap('India', geoJson);
+          _v26IndiaMapLoaded = true;
+          console.log('[v26.6] India map loaded from:', url);
+          return true;
+        } catch(err){
+          console.warn('[v26.6] India map source failed:', url, err.message);
+        }
+      }
+      console.warn('[v26.6] All India map sources failed — falling back to bar chart');
+      return false;
+    })();
     return _v26IndiaMapLoading;
   }
   // Maps Indian state names → our 5 zones. Used to color the map.
   const _STATE_ZONE_MAP = {
-    'Maharashtra': 'West', 'Gujarat': 'West', 'Goa': 'West', 'Madhya Pradesh': 'West', 'Chhattisgarh': 'West', 'Rajasthan': 'West', 'Dadra and Nagar Haveli and Daman and Diu': 'West',
-    'Delhi': 'North', 'Haryana': 'North', 'Punjab': 'North', 'Uttar Pradesh': 'North', 'Uttarakhand': 'North', 'Himachal Pradesh': 'North', 'Chandigarh': 'North', 'Jammu and Kashmir': 'North', 'Ladakh': 'North', 'Bihar': 'North', 'Jharkhand': 'North', 'NCT of Delhi': 'North',
+    'Maharashtra': 'West', 'Gujarat': 'West', 'Goa': 'West', 'Madhya Pradesh': 'West', 'Chhattisgarh': 'West', 'Rajasthan': 'West', 'Dadra and Nagar Haveli and Daman and Diu': 'West', 'Daman and Diu': 'West', 'Dadra and Nagar Haveli': 'West',
+    'Delhi': 'North', 'NCT of Delhi': 'North', 'Haryana': 'North', 'Punjab': 'North', 'Uttar Pradesh': 'North', 'Uttarakhand': 'North', 'Himachal Pradesh': 'North', 'Chandigarh': 'North', 'Jammu and Kashmir': 'North', 'Jammu & Kashmir': 'North', 'Ladakh': 'North', 'Bihar': 'North', 'Jharkhand': 'North',
     'Tamil Nadu': 'South', 'Karnataka': 'South', 'Kerala': 'South', 'Andhra Pradesh': 'South', 'Telangana': 'South', 'Puducherry': 'South', 'Lakshadweep': 'South',
-    'West Bengal': 'East', 'Odisha': 'East', 'Assam': 'East', 'Meghalaya': 'East', 'Manipur': 'East', 'Mizoram': 'East', 'Nagaland': 'East', 'Tripura': 'East', 'Arunachal Pradesh': 'East', 'Sikkim': 'East', 'Andaman and Nicobar Islands': 'East'
+    'West Bengal': 'East', 'Odisha': 'East', 'Orissa': 'East', 'Assam': 'East', 'Meghalaya': 'East', 'Manipur': 'East', 'Mizoram': 'East', 'Nagaland': 'East', 'Tripura': 'East', 'Arunachal Pradesh': 'East', 'Sikkim': 'East', 'Andaman and Nicobar Islands': 'East', 'Andaman & Nicobar': 'East'
   };
   const _ZONE_COLORS = { West: '#10B981', North: '#F59E0B', South: '#3B82F6', East: '#EF4444', International: '#8B5CF6' };
 
@@ -25351,59 +25396,58 @@ if(document.readyState==='loading'){
     _destroyChart('region');
     const dom = document.getElementById('v26-chart-region');
     if(!dom) return;
-    dom.classList.remove('v26-breakdown-body');
-    dom.style.height = '260px';
     dom.innerHTML = '';
+    dom.style.height = '300px';
+    // Show "loading map..." while CDN fetch happens
+    dom.innerHTML = '<div style="padding:80px;text-align:center;color:var(--ink-muted);font-size:13px;">Loading India map…</div>';
     // Aggregate per state
     const byState = {};
-    const byZone = { West: 0, North: 0, South: 0, East: 0, International: 0 };
-    const byZoneVal = { West: 0, North: 0, South: 0, East: 0, International: 0 };
+    const byZone = { West: { c:0, v:0 }, North: { c:0, v:0 }, South: { c:0, v:0 }, East: { c:0, v:0 }, International: { c:0, v:0 } };
     deals.forEach(function(e){
       const st = String(e.state || '').trim();
       const zone = _stateRegion(e.state);
       const v = _readDealValue(e);
       if(st){ byState[st] = (byState[st] || 0) + 1; }
-      if(zone && byZone[zone] != null){ byZone[zone]++; byZoneVal[zone] += v; }
+      if(zone && byZone[zone]){ byZone[zone].c++; byZone[zone].v += v; }
     });
-    // Render the map after India is loaded
     _loadIndiaMap().then(function(ok){
-      if(!ok){ _renderRegionFallbackBar(deals); return; }
+      if(!ok){ _renderRegionFallbackBar(deals, byZone); return; }
+      dom.innerHTML = '';
       const statesData = Object.keys(byState).map(function(s){
         const zone = _STATE_ZONE_MAP[s];
         return { name: s, value: byState[s], zone: zone };
       });
       const inst = _initECharts('v26-chart-region');
-      if(!inst) return;
+      if(!inst){ _renderRegionFallbackBar(deals, byZone); return; }
       inst.setOption({
         tooltip: { trigger: 'item', formatter: function(p){
           if(p.data && p.data.zone){ return p.name + ' (' + p.data.zone + '): ' + p.value + ' deals'; }
           if(p.value){ return p.name + ': ' + p.value + ' deals'; }
-          return p.name;
+          return p.name + ': no deals';
         }},
-        visualMap: { left: 'left', bottom: 6, min: 0, max: Math.max.apply(null, Object.values(byState).concat([1])),
-          inRange: { color: ['#E0E7FF', '#6366F1', '#3730A3'] }, calculable: true, orient: 'horizontal', textStyle: { fontSize: 10, color: '#64748B' } },
+        visualMap: { show: false, min: 0, max: Math.max.apply(null, Object.values(byState).concat([1])), inRange: { color: ['#E0E7FF', '#6366F1', '#3730A3'] } },
         series: [{
-          type: 'map', map: 'India', roam: false, aspectScale: 0.95,
-          itemStyle: { borderColor: '#94A3B8', borderWidth: 0.5, areaColor: '#F1F5F9' },
-          emphasis: { itemStyle: { borderColor: '#0F172A', borderWidth: 1.5, areaColor: '#FBBF24' }, label: { show: true, color: '#0F172A', fontWeight: 700 } },
-          select: { itemStyle: { areaColor: '#FCD34D' }, label: { show: true } },
+          type: 'map', map: 'India', roam: false, aspectScale: 0.85,
+          itemStyle: { borderColor: '#94A3B8', borderWidth: 0.5, areaColor: '#F8FAFC' },
+          emphasis: { itemStyle: { borderColor: '#0F172A', borderWidth: 1.5, areaColor: '#FBBF24' }, label: { show: true, color: '#0F172A', fontWeight: 700, fontSize: 11 } },
+          select: { itemStyle: { areaColor: '#FCD34D' } },
           label: { show: false },
           data: statesData
         }]
       });
       _v26Charts.region = inst;
-      // Click a state → zone-level filter (since we filter by zone, not state)
+      // Click a state → zone-level filter
       inst.on('click', function(params){
         const zone = _STATE_ZONE_MAP[params.name];
         if(!zone) return;
         const f = _readFilterState(); f.region = zone; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
       });
-      // Add international/zone legend overlay below the map
+      // Add zone legend overlay below the map
       const legendDiv = document.createElement('div');
       legendDiv.className = 'v26-region-zone-legend';
       legendDiv.innerHTML = Object.keys(byZone).map(function(z){
-        if(byZone[z] === 0) return '';
-        return '<span class="v26-region-zone-pill" data-zone="' + _esc(z) + '" style="background:' + _ZONE_COLORS[z] + '20;color:' + _ZONE_COLORS[z] + ';border:1px solid ' + _ZONE_COLORS[z] + '60;">' + z + ': ' + byZone[z] + ' · ' + _shortINR(byZoneVal[z]) + '</span>';
+        if(byZone[z].c === 0) return '';
+        return '<span class="v26-region-zone-pill" data-zone="' + _esc(z) + '" style="background:' + _ZONE_COLORS[z] + '20;color:' + _ZONE_COLORS[z] + ';border:1px solid ' + _ZONE_COLORS[z] + '60;">' + z + ': ' + byZone[z].c + ' · ' + _shortINR(byZone[z].v) + '</span>';
       }).join('');
       dom.appendChild(legendDiv);
       legendDiv.querySelectorAll('.v26-region-zone-pill').forEach(function(p){
@@ -25415,14 +25459,16 @@ if(document.readyState==='loading'){
       });
     });
   }
-  function _renderRegionFallbackBar(deals){
+  function _renderRegionFallbackBar(deals, byZoneAgg){
     const dom = document.getElementById('v26-chart-region');
     if(!dom) return;
-    const byZone = { West: { c:0, v:0 }, North: { c:0, v:0 }, South: { c:0, v:0 }, East: { c:0, v:0 }, International: { c:0, v:0 } };
-    deals.forEach(function(e){
-      const z = _stateRegion(e.state);
-      if(z && byZone[z]){ byZone[z].c++; byZone[z].v += _readDealValue(e); }
-    });
+    dom.innerHTML = '';
+    dom.style.height = '260px';
+    const byZone = byZoneAgg || (function(){
+      const z = { West: { c:0, v:0 }, North: { c:0, v:0 }, South: { c:0, v:0 }, East: { c:0, v:0 }, International: { c:0, v:0 } };
+      deals.forEach(function(e){ const r = _stateRegion(e.state); if(r && z[r]){ z[r].c++; z[r].v += _readDealValue(e); }});
+      return z;
+    })();
     const zones = Object.keys(byZone).filter(function(z){ return byZone[z].c > 0; });
     if(!zones.length){ dom.innerHTML = '<div style="padding:60px;text-align:center;color:var(--ink-muted);">No regional data yet</div>'; return; }
     const inst = _initECharts('v26-chart-region');
@@ -25744,7 +25790,7 @@ if(document.readyState==='loading'){
         '<td>' + _esc(e.partner || '—') + '</td>' +
         '<td><span class="v26-stage-badge v26-stage-' + _esc(String(e.stage || '').toLowerCase()) + '">' + _esc(e.stage || '—') + '</span></td>' +
         '<td class="v26-th-num">' + _formatINR(_readDealValue(e)) + '</td>' +
-        '<td>' + _esc(e.closemonth || '—') + '</td>' +
+        '<td>' + _esc(_formatCloseMonth(e.closemonth)) + '</td>' +
         '<td class="v26-th-num"' + stuckCls + '>' + days + 'd</td>' +
         '<td>' + _esc(ownerDisplay) + '</td>' +
         '</tr>';
