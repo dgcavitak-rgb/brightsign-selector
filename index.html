@@ -6278,14 +6278,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
 
 <!-- APP -->
 <div id="page-app" class="page">
-<!-- v24.19.9 (#12): Test-mode banner — sticky orange strip when user has test mode on. -->
-<!-- v24.25.3: Made screaming-obvious — bigger, animated stripe, more visual weight. Owners thinking app is broken because test data filters out are now warned at every page. -->
-<div id="test-mode-banner" style="display:none;background:repeating-linear-gradient(45deg,#F59E0B 0,#F59E0B 12px,#D97706 12px,#D97706 24px);color:#fff;padding:11px 16px;font-size:13.5px;font-weight:700;letter-spacing:0.04em;text-align:center;position:sticky;top:0;z-index:60;box-shadow:0 2px 10px rgba(245,158,11,0.40);border-bottom:2px solid #B45309;">
-  <span style="font-size:16px;animation:tm-flash 1.6s ease-in-out infinite;display:inline-block;">🧪</span>
-  <span style="margin-left:8px;">TEST MODE ACTIVE — every submission is flagged <code style="background:rgba(0,0,0,0.20);padding:2px 8px;border-radius:4px;font-family:monospace;font-size:12px;">isTest=TRUE</code> and HIDDEN from Dashboard + Review analytics.</span>
-  <button onclick="setTestMode(false)" style="margin-left:14px;background:#fff;color:#B45309;border:none;padding:5px 14px;border-radius:6px;font-size:12px;font-weight:800;cursor:pointer;letter-spacing:0.03em;text-transform:uppercase;box-shadow:0 2px 4px rgba(0,0,0,0.20);">Turn off</button>
-  <style>@keyframes tm-flash{0%,100%{opacity:1}50%{opacity:0.5}}</style>
-</div>
+<!-- v24.25.7 — Test Mode banner REMOVED entirely. Feature retired. -->
 <!-- v24.2: Branded loading splash shown during login transition -->
 <div id="login-splash" class="login-splash">
   <div class="splash-inner">
@@ -7032,10 +7025,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           <div class="cockpit-filter-cell cockpit-filter-meta">
             <span id="cockpit-window-label">—</span>
           </div>
-          <label class="cockpit-test-toggle" id="cockpit-test-toggle-wrap" title="Include test-mode data in cockpit views">
-            <input type="checkbox" id="cockpit-include-test" onchange="onCockpitTestToggle()">
-            <span>Include test data</span>
-          </label>
+          <!-- v24.25.7: cockpit "Include test data" toggle removed (Test Mode feature retired) -->
           <div class="cockpit-countdown" id="cockpit-countdown" title="Days remaining in this period">
             <span class="cockpit-countdown-num" id="cockpit-countdown-num">—</span>
             <span class="cockpit-countdown-lbl" id="cockpit-countdown-lbl">days left</span>
@@ -8961,7 +8951,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.25.6';  // v24.25.6 — Quarterly Target Settings UI on Profile/Team tab (Super-only). Input accepts ₹ raw or K/L/Cr suffix (5Cr, 50L, 500K, 50000000). Default ₹5 Cr if unset. Saves to localStorage.bs-cockpit-target-quarterly. Cockpit run-rate badge re-renders on save. Pairs with backend v25.13.0.
+const FRONTEND_VERSION = '24.25.7';  // v24.25.7 — Remove Test Mode entirely. Banner stripped. Profile cards removed (Super + non-Super). Cockpit "Include test data" toggle removed. setTestMode + _renderTestModeBanner + _initTestMode functions stubbed. _filterTestData stubbed (returns input unchanged). All isTest filter checks across cockpit/leaderboard/region/sales card removed. Form save no longer writes isTest field. 🧪 marker stripped from History. localStorage keys cleaned: bs-cockpit-include-test + per-user test mode key. The isTest column on Sheet1 stays (just unread/unwritten). User wants pre-existing test rows manually deleted from sheet for Option C clean state. Pairs with backend v25.13.0 — no backend changes.
+// v24.25.6 — Quarterly Target Settings UI on Profile/Team tab (Super-only). Input accepts ₹ raw or K/L/Cr suffix (5Cr, 50L, 500K, 50000000). Default ₹5 Cr if unset. Saves to localStorage.bs-cockpit-target-quarterly. Cockpit run-rate badge re-renders on save. Pairs with backend v25.13.0.
 // v24.25.5 — Resilience: detect HTML-not-JSON backend response (Apps Script cold-start, network blip, sleep/wake) and silent-retry once after 1.5s. Duplicate-error suppression in error_log_append (same signature within 60s → skip the second log). Friendly Review tab fallback banner when fetch fails AFTER retry, instead of silent failure or stuck "Loading review data...". Pairs with backend v25.13.0.
 // v24.25.4 — Hide duplicate #chart-pipeline card. Fix "Number of cases per stage" chart Chart.js race (override-instead-of-augment, run AFTER original destroy). Fix Model Performance field name (e.chosenModels is top-level JSON column NOT customConfig.chosenModels — verified via Faiz row BS-74688508 raw sheet data). Test Mode help tooltip + permanent Profile-tab toggle. Pairs with backend v25.13.0.
 // v24.25.3 — Header name fix · Test mode strip + cockpit toggle · Sales Person auto-default · Notification fallback in all paths · SSD/WD105 stepper alignment · Pipeline Operations trim · Review filter row balance · Region/Sales empty state actionable · Detailed Analytics: real stages (Lead→Order), stage bars colored with counts, Top Partners with ₹ + dark-mode fix, User Leaderboard split (Sales/Presales × Won-₹/Open-₹ columns), 3 model charts consolidated into 1 Model Performance card with cutoff applied. All Detailed Analytics charts honor pipeline cutoff. Pairs with backend v25.13.0.
@@ -13007,14 +12998,9 @@ function renderTeamTab(){
     subtitle.textContent='View and update your contact details.';
     renderUserProfileView(host);
   }
-  // v24.25.4 — Test Mode card. For Super users only — non-Super users already
-  // get a test-mode card inside renderUserProfileView. Without this guard,
-  // non-Super users would see DUPLICATE test-mode cards on the Profile tab.
+  // v24.25.7 — Test Mode card removed entirely (feature retired).
+  // Quarterly Target card (Super-only) stays.
   if(state.user.isSuper){
-    try { _renderTestModeProfileCard(host); } catch(_){}
-    // v24.25.6 — Quarterly Target Settings card (Super-only). Sets the value
-    // the cockpit's run-rate badge reads from localStorage. Was previously
-    // console-only.
     try { _renderQuarterlyTargetCard(host); } catch(_){}
   }
 }
@@ -13158,45 +13144,12 @@ window.clearQuarterlyTarget = function(){
   if(host) _renderQuarterlyTargetCard(host);
 };
 
-/* v24.25.4 — Permanent Test Mode toggle inside Profile / Team tab.
-   Rendered after renderSuperTeamView/renderUserProfileView so it sits at the
-   bottom of the tab content. Uses the same setTestMode() function the banner
-   uses; checkbox state and label text auto-sync via the existing IDs. */
+/* v24.25.7 — _renderTestModeProfileCard stubbed. Test Mode feature retired.
+   Function name kept so any cached/stale call site doesn't throw ReferenceError. */
 function _renderTestModeProfileCard(host){
-  if(!host) return;
-  // Avoid duplicate render if we re-enter
-  let card = document.getElementById('tm-profile-card');
-  if(card){ card.remove(); }
-  const isOn = window._testModeOn === true;
-  card = document.createElement('div');
-  card.id = 'tm-profile-card';
-  card.className = 'card';
-  card.style.cssText = 'margin-top:16px;padding:18px 20px;border:1px solid var(--border,#E5E7EB);border-radius:14px;background:linear-gradient(180deg,rgba(245,158,11,0.04),var(--surface,#FFF));';
-  card.innerHTML =
-    '<div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;">' +
-      '<div style="flex:1;min-width:240px;">' +
-        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
-          '<span style="font-size:11px;letter-spacing:0.10em;text-transform:uppercase;color:#B45309;font-weight:700;">🧪 Test Mode</span>' +
-          '<span id="test-mode-label" style="font-size:12px;font-weight:700;letter-spacing:0.05em;padding:2px 8px;border-radius:999px;' +
-            (isOn ? 'background:#FEF3C7;color:#92400E;' : 'background:#F1F5F9;color:#64748B;') +
-          '">' + (isOn ? 'ON' : 'OFF') + '</span>' +
-        '</div>' +
-        '<div style="font-size:13px;color:var(--ink,#0F172A);margin-bottom:8px;line-height:1.5;">' +
-          '<strong>What is Test Mode?</strong> When ON, every deal you save is flagged ' +
-          '<code style="background:var(--surface-2,#F1F5F9);padding:1px 6px;border-radius:3px;font-family:monospace;font-size:11.5px;">isTest=TRUE</code>. ' +
-          'Test deals are hidden from Dashboard cockpit, Review tab, and all KPI tiles. They still appear in History (with a 🧪 marker) so you can find and edit them.' +
-        '</div>' +
-        '<div style="font-size:12px;color:var(--ink-muted,#64748B);line-height:1.5;">' +
-          '<strong>When to use it:</strong> Practicing a new feature · Training a teammate · Demoing to a client · Recording a screencast. ' +
-          'Turn it OFF before submitting real deals.' +
-        '</div>' +
-      '</div>' +
-      '<label style="display:inline-flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface,#FFF);border:1px solid var(--border-strong,#CBD5E1);border-radius:10px;cursor:pointer;flex-shrink:0;font-weight:600;font-size:13px;">' +
-        '<input type="checkbox" id="test-mode-checkbox" ' + (isOn ? 'checked' : '') + ' onchange="setTestMode(this.checked)" style="width:18px;height:18px;cursor:pointer;accent-color:#F59E0B;">' +
-        '<span>Enable Test Mode</span>' +
-      '</label>' +
-    '</div>';
-  host.appendChild(card);
+  // No-op. Also remove any stale card from previous renders.
+  const stale = document.getElementById('tm-profile-card');
+  if(stale){ stale.remove(); }
 }
 
 /* Regular user's own profile */
@@ -13240,18 +13193,7 @@ function renderUserProfileView(host){
       </div>
       <div class="profile-status" id="profile-status"></div>
     </div>
-    <!-- v24.19.9 (#12): Test mode toggle card -->
-    <div class="profile-edit-card" style="margin-top:18px;border:1px solid rgba(245,158,11,0.3);background:linear-gradient(180deg,rgba(254,243,199,0.4),rgba(254,243,199,0.1));">
-      <div class="profile-section-title" style="color:#92400E;">🧪 Test mode</div>
-      <div class="profile-section-subtitle">When ON, all deals you submit are flagged as test data. They appear in History (with a 🧪 marker) but are excluded from Dashboard and Review aggregations. Use this for training, demos, or sandbox runs without polluting your KPIs.</div>
-      <div class="profile-field" style="margin-top:14px;">
-        <label style="display:flex;align-items:center;gap:10px;font-weight:600;cursor:pointer;">
-          <input type="checkbox" id="test-mode-checkbox" onchange="setTestMode(this.checked)" style="width:18px;height:18px;cursor:pointer;" ${window._testModeOn ? 'checked' : ''}>
-          <span>Test mode is <span id="test-mode-label" style="color:${window._testModeOn ? '#92400E' : 'var(--ink-muted)'};font-weight:700;">${window._testModeOn ? 'ON' : 'OFF'}</span></span>
-        </label>
-        <div style="font-size:11px;color:var(--ink-subtle);margin-top:8px;">Toggle persists across sessions on this device. Each user has their own setting.</div>
-      </div>
-    </div>`;
+    <!-- v24.25.7 — Test mode toggle card REMOVED (feature retired). -->`;
 }
 
 async function saveOwnProfile(){
@@ -17145,55 +17087,36 @@ async function refreshPricesFromSheet(){
   }
 }
 
-/* ===== v24.19.9 — Item #12: Test mode flag (per-user, localStorage) ===== */
-function _testModeKey(){
-  const u = state && state.user && state.user.loginName;
-  return u ? ('bs-test-mode__' + u) : null;
-}
-function _initTestMode(){
-  const key = _testModeKey();
-  if(!key){ window._testModeOn = false; return; }
-  let on = false;
-  try { on = localStorage.getItem(key) === 'TRUE'; } catch(e) {}
-  window._testModeOn = on;
-  _renderTestModeBanner();
-}
-function _renderTestModeBanner(){
-  const banner = document.getElementById('test-mode-banner');
-  if(banner) banner.style.display = window._testModeOn ? 'block' : 'none';
-}
+/* ===== v24.25.7 — Test Mode FEATURE RETIRED =====
+ * The 5 functions below are stubbed out (kept as no-ops with the same names so
+ * any cached/stale call site doesn't throw ReferenceError). Future cleanup may
+ * remove these stubs entirely once we're sure no code path references them.
+ *
+ * What was removed:
+ *   - Banner display logic
+ *   - localStorage persistence (per-user key + cockpit toggle key)
+ *   - _filterTestData filter (now always passes data through unchanged)
+ *
+ * The isTest column on Sheet1 stays intact (just unread/unwritten). User has
+ * been advised to manually delete pre-existing test rows for clean state.
+ */
+function _testModeKey(){ return null; }
+function _initTestMode(){ window._testModeOn = false; }
+function _renderTestModeBanner(){ /* no-op */ }
 function setTestMode(on){
-  window._testModeOn = !!on;
-  const key = _testModeKey();
-  if(key){
-    try {
-      if(window._testModeOn) localStorage.setItem(key, 'TRUE');
-      else localStorage.removeItem(key);
-    } catch(e) {}
-  }
-  _renderTestModeBanner();
-  const cb = document.getElementById('test-mode-checkbox');
-  const lbl = document.getElementById('test-mode-label');
-  if(cb) cb.checked = window._testModeOn;
-  if(lbl){
-    lbl.textContent = window._testModeOn ? 'ON' : 'OFF';
-    lbl.style.color = window._testModeOn ? '#92400E' : 'var(--ink-muted)';
-    // v24.25.4 — also update the badge background if the label is using the
-    // pill-badge style (Super card). Works for the legacy text-only label too —
-    // those don't have a backgroundColor inline, so this is a no-op for them.
-    if(lbl.style.background || lbl.style.backgroundColor){
-      lbl.style.background = window._testModeOn ? '#FEF3C7' : '#F1F5F9';
-      lbl.style.color = window._testModeOn ? '#92400E' : '#64748B';
+  // Backwards-compat stub. Setting test mode now does nothing.
+  // Old localStorage entries get cleaned up if found.
+  window._testModeOn = false;
+  try {
+    if(state && state.user && state.user.loginName){
+      localStorage.removeItem('bs-test-mode__' + state.user.loginName);
     }
-  }
-  if(typeof showSync === 'function'){
-    showSync(window._testModeOn ? '🧪 Test mode ON — submissions will be flagged' : 'Test mode OFF', window._testModeOn ? 'warn' : 'success');
-  }
+    localStorage.removeItem('bs-cockpit-include-test');
+  } catch(e) {}
 }
 function _filterTestData(entries, includeTest){
-  if(includeTest) return entries;
-  if(!Array.isArray(entries)) return entries;
-  return entries.filter(function(e){ return e && e.isTest !== true && String(e.isTest||'').toUpperCase() !== 'TRUE'; });
+  // v24.25.7 — pass-through. Test Mode retired. All deals are real deals.
+  return Array.isArray(entries) ? entries : entries;
 }
 
 /* ===== v24.19.9 — Item #11: View tracking (fire-and-forget) ===== */
@@ -17445,8 +17368,9 @@ function buildEntryPayload(status){
     outcomeReason: f.outcomeReason || '',
     outcomeReasonNote: f.outcomeReasonNote || '',
     stageNote: f.stageNote || '',
-    // v24.19.9 (#12): test-mode flag — set TRUE when user has test mode toggled on.
-    isTest: (window._testModeOn === true) ? 'TRUE' : '',
+    // v24.25.7: isTest field write removed (Test Mode retired). Always blank now.
+    // The column on Sheet1 stays for historical rows but new deals never set it.
+    isTest: '',
     // v24.20.0 (#3): Sales/Presales handoff
     salesPerson:    f.salesPerson    || '',
     presalesPerson: f.presalesPerson || ''
@@ -19681,7 +19605,7 @@ function renderLog(){
         }
       }
     } catch(_){}
-    return `<div class="log-entry${agingClass}"${canEdit?` data-entry-idx="${idx}"`:''}${e.isTest?' data-test-entry="1"':''}><div class="log-entry-top"><div class="log-date">${dateStr}<br>${timeStr}<br><span style="color:var(--ink-muted);">${e.user}</span>${e.refId?`<br><span style="font-size:10px;opacity:0.7;">${e.refId}</span>`:''}</div><div class="log-main"><div class="log-project">${e.project} <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:${statusBg};color:${statusColor};margin-left:6px;vertical-align:middle;">${statusLabel}</span>${e.isTest?'<span title="Submitted in test mode — excluded from Dashboard + Review aggregations" style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:#FEF3C7;color:#92400E;margin-left:6px;vertical-align:middle;">🧪 TEST</span>':''}${agingBadge}</div><div class="log-detail"><a href="#" onclick="event.preventDefault();event.stopPropagation();openCustomer360('${(e.enduser||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}');" style="color:var(--indigo,#4F46E5);text-decoration:none;border-bottom:1px dashed var(--indigo,#4F46E5);" title="Customer 360 — see all deals for this customer">${e.enduser}</a> · ${e.venue} · ${e.city} · ${e.partner}</div><div class="log-detail">${_formatQtyModelDisplay(e)} · ${resStr} · ${e.environment} · ${e.update} · ${e.stage} · ${e.budget}${e.os&&e.os!=='—'?' · '+(e.os==='brightsignos'?'BSOS':'Win IoT'):''}</div>${handoffStr}${metaRow}</div><div class="log-model">${_formatModelBadgeDisplay(e)}${editBtn}</div></div>${historyPanel}</div>`;
+    return `<div class="log-entry${agingClass}"${canEdit?` data-entry-idx="${idx}"`:''}><div class="log-entry-top"><div class="log-date">${dateStr}<br>${timeStr}<br><span style="color:var(--ink-muted);">${e.user}</span>${e.refId?`<br><span style="font-size:10px;opacity:0.7;">${e.refId}</span>`:''}</div><div class="log-main"><div class="log-project">${e.project} <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:${statusBg};color:${statusColor};margin-left:6px;vertical-align:middle;">${statusLabel}</span>${agingBadge}</div><div class="log-detail"><a href="#" onclick="event.preventDefault();event.stopPropagation();openCustomer360('${(e.enduser||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}');" style="color:var(--indigo,#4F46E5);text-decoration:none;border-bottom:1px dashed var(--indigo,#4F46E5);" title="Customer 360 — see all deals for this customer">${e.enduser}</a> · ${e.venue} · ${e.city} · ${e.partner}</div><div class="log-detail">${_formatQtyModelDisplay(e)} · ${resStr} · ${e.environment} · ${e.update} · ${e.stage} · ${e.budget}${e.os&&e.os!=='—'?' · '+(e.os==='brightsignos'?'BSOS':'Win IoT'):''}</div>${handoffStr}${metaRow}</div><div class="log-model">${_formatModelBadgeDisplay(e)}${editBtn}</div></div>${historyPanel}</div>`;
   }).join('');
   window._currentLogEntries=entries;
 }
@@ -24446,14 +24370,13 @@ if(document.readyState==='loading'){
   }
 
   // Filter applies pipeline cutoff (already done in window._entryAfterPipelineCutoff)
-  // + test-mode exclude + time window + region.
+  // + time window + region. (v24.25.7 — test-mode exclude removed; feature retired.)
   function _filterEntries(entries, range, region){
     const cutoffOk = (typeof window._entryAfterPipelineCutoff === 'function')
       ? window._entryAfterPipelineCutoff
       : function(){ return true; };
     return entries.filter(function(e){
       if(!cutoffOk(e)) return false;
-      if(e && e.isTest === true && window._reviewIncludeTest !== true) return false;
       // Region
       if(region && _stateToRegion(e && e.state) !== region) return false;
       return true;
@@ -25309,28 +25232,14 @@ if(document.readyState==='loading'){
     window.renderCockpit();
   };
 
-  // v24.25.3 — Include/exclude test data toggle. Sets the global flag used by
-  // every cockpit/review filter path. Persists in localStorage.
-  window.onCockpitTestToggle = function(){
-    const cb = document.getElementById('cockpit-include-test');
-    const v = !!(cb && cb.checked);
-    window._reviewIncludeTest = v;
-    try { localStorage.setItem('bs-cockpit-include-test', v ? '1' : '0'); } catch(_){}
-    window.renderCockpit();
-    // Also refresh review-tab aggregations so the toggle has cross-tab effect
-    try { if(typeof window.bsRenderReviewKPIs === 'function') window.bsRenderReviewKPIs(); } catch(_){}
-    try { if(typeof window._renderRegionCardForCurrentPick === 'function') window._renderRegionCardForCurrentPick(); } catch(_){}
-    try { if(typeof window._renderSalesCardForCurrentPick === 'function') window._renderSalesCardForCurrentPick(); } catch(_){}
-  };
-  // Restore the toggle state on load
-  (function _restoreTestToggle(){
-    try {
-      const v = localStorage.getItem('bs-cockpit-include-test') === '1';
-      window._reviewIncludeTest = v;
-      const cb = document.getElementById('cockpit-include-test');
-      if(cb) cb.checked = v;
-    } catch(_){}
-  })();
+  // v24.25.7 — onCockpitTestToggle stubbed (Test Mode retired). Pinned to false
+  // so any code path still reading window._reviewIncludeTest treats data as
+  // "no test rows to include — already gone" (the filter is now a pass-through).
+  window.onCockpitTestToggle = function(){ /* no-op */ };
+  window._reviewIncludeTest = false;
+  // Clean stale localStorage keys silently — owners may have toggled this on
+  // previously and its presence is now meaningless.
+  try { localStorage.removeItem('bs-cockpit-include-test'); } catch(_){}
 })();
 
 /* ============================================================================
