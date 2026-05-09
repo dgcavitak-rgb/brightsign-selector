@@ -8951,7 +8951,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.25.7';  // v24.25.7 — Remove Test Mode entirely. Banner stripped. Profile cards removed (Super + non-Super). Cockpit "Include test data" toggle removed. setTestMode + _renderTestModeBanner + _initTestMode functions stubbed. _filterTestData stubbed (returns input unchanged). All isTest filter checks across cockpit/leaderboard/region/sales card removed. Form save no longer writes isTest field. 🧪 marker stripped from History. localStorage keys cleaned: bs-cockpit-include-test + per-user test mode key. The isTest column on Sheet1 stays (just unread/unwritten). User wants pre-existing test rows manually deleted from sheet for Option C clean state. Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.25.8';  // v24.25.8 — Critical bug fixes from production. (1) Post-login _centralLog auto-fetch was failing silently due to async race with auth hash readiness — refreshLog() called immediately after login but getCurrentAuthHash() returned null → _readUrlWithAuth() returned null → tryFetchCentralLog short-circuited with 'No session', leaving _centralLog undefined. Fix: properly await refreshLog with retry on auth-not-ready. (2) Sales auto-default overriding user-entered values on form re-render — added _userTouchedSales flag so once user manually picks a salesPerson, auto-default never re-overwrites. (3) Chart.js canvas race on chart-models — same fix pattern as chart-dealstage v24.25.4 (rename visible canvas, hide legacy). Pairs with backend v25.13.0 — no backend changes.
+// v24.25.7 — Remove Test Mode entirely. Banner stripped. Profile cards removed (Super + non-Super). Cockpit "Include test data" toggle removed. setTestMode + _renderTestModeBanner + _initTestMode functions stubbed. _filterTestData stubbed (returns input unchanged). All isTest filter checks across cockpit/leaderboard/region/sales card removed. Form save no longer writes isTest field. 🧪 marker stripped from History. localStorage keys cleaned: bs-cockpit-include-test + per-user test mode key. The isTest column on Sheet1 stays (just unread/unwritten). User wants pre-existing test rows manually deleted from sheet for Option C clean state. Pairs with backend v25.13.0 — no backend changes.
 // v24.25.6 — Quarterly Target Settings UI on Profile/Team tab (Super-only). Input accepts ₹ raw or K/L/Cr suffix (5Cr, 50L, 500K, 50000000). Default ₹5 Cr if unset. Saves to localStorage.bs-cockpit-target-quarterly. Cockpit run-rate badge re-renders on save. Pairs with backend v25.13.0.
 // v24.25.5 — Resilience: detect HTML-not-JSON backend response (Apps Script cold-start, network blip, sleep/wake) and silent-retry once after 1.5s. Duplicate-error suppression in error_log_append (same signature within 60s → skip the second log). Friendly Review tab fallback banner when fetch fails AFTER retry, instead of silent failure or stuck "Loading review data...". Pairs with backend v25.13.0.
 // v24.25.4 — Hide duplicate #chart-pipeline card. Fix "Number of cases per stage" chart Chart.js race (override-instead-of-augment, run AFTER original destroy). Fix Model Performance field name (e.chosenModels is top-level JSON column NOT customConfig.chosenModels — verified via Faiz row BS-74688508 raw sheet data). Test Mode help tooltip + permanent Profile-tab toggle. Pairs with backend v25.13.0.
@@ -10295,11 +10296,29 @@ function _populateSalesPresalesDropdowns(){
 
   // v24.21.1 — Smart auto-defaults. Apply when: (a) NO selection exists yet, AND (b) the
   // current user's role qualifies. Critical fix: ALSO mirror to state.form so the value
-  // survives any subsequent re-render of the dropdowns. Previously only set the DOM value;
-  // a later re-population call could overwrite it because state.form was still empty.
-  // v24.25.3 — Super users are now auto-defaulted into salesPerson too. Without this,
-  // Super submissions saved with blank salesPerson (caused by required-validation hole),
-  // making deals invisible to the Sales card pivot. Super can still change the value.
+  // survives any subsequent re-render of the dropdowns.
+  // v24.25.3 — Super users are now auto-defaulted into salesPerson too.
+  // v24.25.8 — User-touched flag: once the user manually changes the dropdown, never
+  // auto-default again on subsequent re-renders. Fixes the bug where picking a
+  // non-self salesPerson (e.g. Mohd Faiz when logged in as Super) got silently
+  // overwritten back to "self" on the next form re-render (Custom BOQ path switch,
+  // model qty change, etc). Console log "[salesPerson auto-default] Applied" was
+  // firing twice — first on initial paint, second after user's manual selection got clobbered.
+  // Wire the change listener once, idempotently.
+  if(!salesSel.dataset.changeListenerWiredV258){
+    salesSel.addEventListener('change', function(){
+      salesSel.dataset.userTouched = '1';
+      if(state.form) state.form.salesPerson = String(salesSel.value || '').toLowerCase();
+    });
+    salesSel.dataset.changeListenerWiredV258 = '1';
+  }
+  if(!presalesSel.dataset.changeListenerWiredV258){
+    presalesSel.addEventListener('change', function(){
+      presalesSel.dataset.userTouched = '1';
+      if(state.form) state.form.presalesPerson = String(presalesSel.value || '').toLowerCase();
+    });
+    presalesSel.dataset.changeListenerWiredV258 = '1';
+  }
   const me = (state && state.user) ? state.user : null;
   if(me && me.loginName){
     const myLogin = String(me.loginName).toLowerCase();
@@ -10307,7 +10326,8 @@ function _populateSalesPresalesDropdowns(){
     const isSalesRole = (myRole === 'sales') || /bu.?head/i.test(myRole) || me.isSuper === true;
     const isPresalesRole = (myRole === 'presales');
 
-    if(!currentSales && isSalesRole){
+    // v24.25.8 — Skip auto-default if user has already touched the dropdown.
+    if(!currentSales && isSalesRole && salesSel.dataset.userTouched !== '1'){
       const opt = salesSel.querySelector('option[value="'+myLogin+'"]');
       if(opt){
         salesSel.value = myLogin;
@@ -10319,8 +10339,11 @@ function _populateSalesPresalesDropdowns(){
         if(state.form) state.form.salesPerson = myLogin;
         console.log('[salesPerson auto-default] Pending (option not yet present for', myLogin + ')');
       }
+    } else if(salesSel.dataset.userTouched === '1' && currentSales){
+      // User already chose someone — preserve, just mirror to state.form
+      if(state.form) state.form.salesPerson = currentSales;
     }
-    if(!currentPresales && isPresalesRole){
+    if(!currentPresales && isPresalesRole && presalesSel.dataset.userTouched !== '1'){
       const opt = presalesSel.querySelector('option[value="'+myLogin+'"]');
       if(opt){
         presalesSel.value = myLogin;
@@ -10328,6 +10351,8 @@ function _populateSalesPresalesDropdowns(){
       } else {
         if(state.form) state.form.presalesPerson = myLogin;
       }
+    } else if(presalesSel.dataset.userTouched === '1' && currentPresales){
+      if(state.form) state.form.presalesPerson = currentPresales;
     }
   }
 
@@ -12499,8 +12524,31 @@ async function _attemptRehydrate(){
     updateLoginSplash(75, 'Almost there…');
     if(typeof renderLog === 'function') renderLog();
     if(typeof startSessionTimer === 'function') startSessionTimer();
+    // v24.25.8 — Fix: refreshLog was called WITHOUT await + with synchronous catch.
+    // If getCurrentAuthHash() wasn't ready yet (race with login flow), _readUrlWithAuth
+    // returned null, tryFetchCentralLog short-circuited, _centralLog stayed undefined,
+    // and the silent catch hid the failure. Result: Dashboard/Review/leaderboards all
+    // showed empty even though sheet had data.
+    // Now: properly await the refresh, and if auth-not-ready, wait 800ms and retry once.
     if(typeof refreshLog === 'function'){
-      try{ refreshLog(); }catch(_){}
+      (async function _initialRefreshWithRetry(){
+        try {
+          await refreshLog();
+          // Verify success — if _centralLog still undefined/empty, auth race likely
+          if(!Array.isArray(window._centralLog) || window._centralLog.length === 0){
+            console.warn('[v24.25.8] First refreshLog gave empty result — retrying after 800ms');
+            await new Promise(function(r){ setTimeout(r, 800); });
+            await refreshLog();
+          }
+          if(Array.isArray(window._centralLog)){
+            console.log('[v24.25.8] _centralLog ready: ' + window._centralLog.length + ' entries');
+          } else {
+            console.warn('[v24.25.8] _centralLog STILL not an array after retry — manual ↻ Refresh may be needed');
+          }
+        } catch(e){
+          console.error('[v24.25.8] Initial refreshLog failed:', e);
+        }
+      })();
     }
 
     updateLoginSplash(100, 'Welcome back');
@@ -12693,6 +12741,28 @@ async function handleLogin(){
     updateLoginSplash(50,'Loading your data…');
 
     // v24: health check
+    // v24.25.8 — Fresh login was relying on verifyPendingSync (line 18207) to
+    // populate _centralLog as a side effect, but that only fires if the offline
+    // queue is empty. If queue had entries, _centralLog stayed undefined →
+    // Dashboard/Review/leaderboards all empty until user manually clicked
+    // ↻ Refresh. Now: explicit refreshLog with auth-readiness retry.
+    setTimeout(async function(){
+      try {
+        if(typeof refreshLog === 'function'){
+          await refreshLog();
+          if(!Array.isArray(window._centralLog) || window._centralLog.length === 0){
+            console.warn('[v24.25.8 fresh-login] First refreshLog gave empty result — retrying after 800ms');
+            await new Promise(function(r){ setTimeout(r, 800); });
+            await refreshLog();
+          }
+          if(Array.isArray(window._centralLog)){
+            console.log('[v24.25.8 fresh-login] _centralLog ready: ' + window._centralLog.length + ' entries');
+          }
+        }
+      } catch(e){
+        console.error('[v24.25.8 fresh-login] Initial refreshLog failed:', e);
+      }
+    }, 1000);
     setTimeout(()=>{
       updateLoginSplash(70,'Getting things ready…');
       checkWebhookHealth();
@@ -15512,10 +15582,11 @@ function resetForm(){
   // v24.20.1 (Bug #1): Explicitly clear Sales/Presales dropdowns BEFORE _populateSalesPresalesDropdowns
   // can re-grab them as "current selection". Without this, New Selection retained previous deal's values.
   // Also reset state.form mirror so _populateSalesPresalesDropdowns smart-defaults can re-apply cleanly.
+  // v24.25.8 — Also clear the userTouched flag so auto-default re-fires on the new deal.
   const _spS = document.getElementById('f-sales-person');
   const _spP = document.getElementById('f-presales-person');
-  if(_spS) _spS.value = '';
-  if(_spP) _spP.value = '';
+  if(_spS){ _spS.value = ''; delete _spS.dataset.userTouched; }
+  if(_spP){ _spP.value = ''; delete _spP.dataset.userTouched; }
   if(state.form){ state.form.salesPerson = ''; state.form.presalesPerson = ''; }
   ['f-project','f-enduser','f-venueType','f-partner','f-consultant','f-partnerContactName','f-partnerContactPhone','f-partnerContactEmail','f-closemonth'].forEach(id=>document.getElementById(id).value='');
   // v24.4.16: Also clear the new smart-picker selects, chips, and display
@@ -20359,7 +20430,11 @@ function animateNumber(elId,target){
 function renderCharts(entries){
   if(typeof Chart==='undefined')return;
   // Destroy all previous Chart.js instances to avoid canvas reuse errors
-  ['conversion','groups','partners','activity'].forEach(k=>{
+  // v24.25.8 — Added 'models' and 'modelsTimeline' to the destroy list. Without
+  // them, re-rendering the dashboard (filter change, refresh, tab switch and back)
+  // threw "Canvas is already in use. Chart with ID '4' must be destroyed before
+  // the canvas with ID 'chart-models' can be reused." in console.
+  ['conversion','groups','partners','activity','models','modelsTimeline'].forEach(k=>{
     if(window._charts[k]){try{window._charts[k].destroy();}catch(e){}window._charts[k]=null;}
   });
   if(!entries.length)return;
