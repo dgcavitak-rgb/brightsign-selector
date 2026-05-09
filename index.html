@@ -7813,7 +7813,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.0';  // v24.26.0 — DASHBOARD + REVIEW CLEAN REBUILD. Replaces all prior Dashboard widgets (v18 cockpit + Brand Revenue Cockpit + Detailed Analytics expander) and old Review tab (Pipeline Operations + Region/Sales cards + Bi-monthly review) with TWO clean tabs: "My Pipeline" (sales-person-first, scoped to current user) and "Team Analytics" (8 KPIs + 8 charts + leaderboard + stuck-deals table). Filter persistence via localStorage. Drill-through on all charts (click → injects into filter state). Pipeline shown as both Open (raw ₹) AND Weighted (stage-prob weighted ₹). Default tab: Super → Team Analytics, Sales → My Pipeline, Mohit (Presales) → Team Analytics scoped to handoffs, Rahul (Support) → no access to either tab. KEEPS: Customer 360, Excel export, Quarterly Target card, all v24.25.8 fixes. Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.26.1';  // v24.26.1 — HOTFIX for v24.26.0. Old renderDashboard() was still being called by refreshLog/theme-change paths and crashed on populateFilterOptions reading null.value because the filter DOM elements it targeted were removed in v26 HTML rewrite. Crash threw unhandled promise rejection that killed the render chain — Dashboard showed all ₹0 / 0 zeros because v26 code never got a chance to render. Fix: stub the OLD renderDashboard, renderReview, and the _renderDetailedV2 v2 wrapper to delegate to v26 module (or no-op). Also disabled the v2 expander DOMContentLoaded listener that referenced #dash-detail-expander (removed in v26). Pairs with backend v25.13.0 — no backend changes.
+// v24.26.0 — DASHBOARD + REVIEW CLEAN REBUILD. Replaces all prior Dashboard widgets (v18 cockpit + Brand Revenue Cockpit + Detailed Analytics expander) and old Review tab (Pipeline Operations + Region/Sales cards + Bi-monthly review) with TWO clean tabs: "My Pipeline" (sales-person-first, scoped to current user) and "Team Analytics" (8 KPIs + 8 charts + leaderboard + stuck-deals table). Filter persistence via localStorage. Drill-through on all charts (click → injects into filter state). Pipeline shown as both Open (raw ₹) AND Weighted (stage-prob weighted ₹). Default tab: Super → Team Analytics, Sales → My Pipeline, Mohit (Presales) → Team Analytics scoped to handoffs, Rahul (Support) → no access to either tab. KEEPS: Customer 360, Excel export, Quarterly Target card, all v24.25.8 fixes. Pairs with backend v25.13.0 — no backend changes.
 // v24.25.8 — Critical bug fixes from production. (1) Post-login _centralLog auto-fetch was failing silently due to async race with auth hash readiness — refreshLog() called immediately after login but getCurrentAuthHash() returned null → _readUrlWithAuth() returned null → tryFetchCentralLog short-circuited with 'No session', leaving _centralLog undefined. Fix: properly await refreshLog with retry on auth-not-ready. (2) Sales auto-default overriding user-entered values on form re-render — added _userTouchedSales flag so once user manually picks a salesPerson, auto-default never re-overwrites. (3) Chart.js canvas race on chart-models — same fix pattern as chart-dealstage v24.25.4 (rename visible canvas, hide legacy). Pairs with backend v25.13.0 — no backend changes.
 // v24.25.7 — Remove Test Mode entirely. Banner stripped. Profile cards removed (Super + non-Super). Cockpit "Include test data" toggle removed. setTestMode + _renderTestModeBanner + _initTestMode functions stubbed. _filterTestData stubbed (returns input unchanged). All isTest filter checks across cockpit/leaderboard/region/sales card removed. Form save no longer writes isTest field. 🧪 marker stripped from History. localStorage keys cleaned: bs-cockpit-include-test + per-user test mode key. The isTest column on Sheet1 stays (just unread/unwritten). User wants pre-existing test rows manually deleted from sheet for Option C clean state. Pairs with backend v25.13.0 — no backend changes.
 // v24.25.6 — Quarterly Target Settings UI on Profile/Team tab (Super-only). Input accepts ₹ raw or K/L/Cr suffix (5Cr, 50L, 500K, 50000000). Default ₹5 Cr if unset. Saves to localStorage.bs-cockpit-target-quarterly. Cockpit run-rate badge re-renders on save. Pairs with backend v25.13.0.
@@ -16477,94 +16478,11 @@ function updateReviewAdminBarVisibility_(){
   bar.style.display = (state.user && state.user.isSuper) ? '' : 'none';
 }
 
+/* v24.26.1: renderReview STUBBED. Old Review tab was consolidated into Dashboard\'s
+   "Team Analytics" inner tab in v24.26.0. Any legacy call site routes there. */
 async function renderReview(){
-  updateRelationshipCounts_();
-  updateReviewAdminBarVisibility_();
-  // v24.25.0 (item 5) — repopulate inline filter dropdowns from current data.
-  // Replaces the old chip rebuilder. `rebuildReviewFilters` may still exist for
-  // legacy paths but the dropdown row is what users see.
-  try { if(typeof window.populateReviewDropdowns === 'function') window.populateReviewDropdowns(); } catch(_){}
-  // v24.25.0 (items 6+7) — restore region + sales card pickings if any
-  try { if(typeof window._renderRegionCardForCurrentPick === 'function') window._renderRegionCardForCurrentPick(); } catch(_){}
-  try { if(typeof window._renderSalesCardForCurrentPick === 'function') window._renderSalesCardForCurrentPick(); } catch(_){}
-  
-  if(!state.user)return;
-  populateReviewPeriodSelects();
-  // v24.14.9: Render the new KPI dashboard (pure-frontend, independent of backend review_data)
-  try { if(typeof bsRenderReviewKPIs === 'function') bsRenderReviewKPIs(); } catch(e){ console.warn('bsRenderReviewKPIs failed:', e); }
-  const periodEl=document.getElementById('review-period');
-  const compareEl=document.getElementById('review-compare');
-  const host=document.getElementById('review-content');
-  if(!host||!periodEl)return;
-  const period=periodEl.value;
-  const comparePeriod=compareEl.value==='NONE'?null:compareEl.value;
-  host.innerHTML='<div class="review-loading">Loading review data…</div>';
-
-  if(!WEBHOOK_URL){
-    host.innerHTML='<div class="review-empty">Review data is currently unavailable. Please try again shortly.</div>';
-    return;
-  }
-  try{
-    const pwHash=await getCurrentAuthHash();
-    // v24.25.5 — use _safeFetchJson which detects HTML-not-JSON responses
-    // (Apps Script cold-start, network blip, sleep/wake) and silently retries
-    // once after 1.5s. Falls through to the catch block only if BOTH attempts
-    // fail. This eliminates 90%+ of the REVIEW_FETCH_FAILED noise from the
-    // error log without hiding genuine outages.
-    const data = await _safeFetchJson(WEBHOOK_URL, {
-      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({
-        action:'review_data',
-        requesterLoginName:state.user.loginName,
-        requesterPasswordHash:pwHash,
-        period:period,
-        comparePeriod:comparePeriod
-      })
-    }, { context: 'renderReview', maxRetries: 1, retryDelayMs: 1500 });
-    if(data.status!=='ok'){
-      // Better diagnostic: show what backend actually returned so we can tell if it's a
-      // stale-deploy issue (backend doesn't know the action) vs a data issue
-      let detail='unknown error';
-      if(data.message)detail=data.message;
-      else if(data.status==='error')detail='backend returned error';
-      else if(!data.status)detail='backend did not recognize this action — is the latest Apps Script deployed?';
-      else detail='backend returned status: '+data.status;
-      console.error('Review fetch returned:',data);
-      host.innerHTML='<div class="review-empty">Could not load review data.<br><small style="opacity:0.7;">'+detail+'</small></div>';
-      return;
-    }
-    renderReviewCards(host,data,period,comparePeriod);
-  }catch(err){
-    console.error('renderReview failed:',err);
-    logFrontendError('REVIEW_FETCH_FAILED',err.message||err.toString(),err.stack||'','renderReview');
-    // v24.25.5 — friendly fallback banner with actionable guidance instead of
-    // a flat "Check internet connection" line. Distinguishes between transient
-    // (Apps Script woke up slow, retry helps) vs hard outage (deployment issue).
-    const isBackendOffline = err && (err.isHtmlResponse || err.isNetworkError);
-    if(isBackendOffline){
-      host.innerHTML =
-        '<div class="review-empty" style="padding:32px 24px;line-height:1.6;">' +
-          '<div style="font-size:32px;margin-bottom:10px;">⚠️</div>' +
-          '<div style="font-weight:700;color:var(--ink,#0F172A);font-size:15px;margin-bottom:8px;">Backend temporarily unavailable</div>' +
-          '<div style="font-size:13px;color:var(--ink-muted,#64748B);max-width:460px;margin:0 auto 16px;">' +
-            'The Google Apps Script backend did not respond as expected. This is usually transient — Apps Script can take 2-3 seconds to wake up after idle. Please try again.' +
-          '</div>' +
-          '<button onclick="renderReview()" style="background:var(--indigo,#4F46E5);color:#fff;border:none;padding:9px 20px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;">↻ Retry</button>' +
-          '<div style="font-size:11px;color:var(--ink-subtle,#94A3B8);margin-top:14px;">' +
-            'If this persists for more than a few minutes, ask Dipenkumar to check the Apps Script Manage Deployments panel.' +
-          '</div>' +
-        '</div>';
-    } else {
-      host.innerHTML =
-        '<div class="review-empty" style="padding:32px 24px;line-height:1.6;">' +
-          '<div style="font-size:32px;margin-bottom:10px;">📡</div>' +
-          '<div style="font-weight:700;color:var(--ink,#0F172A);font-size:15px;margin-bottom:8px;">Could not load review data</div>' +
-          '<div style="font-size:13px;color:var(--ink-muted,#64748B);max-width:460px;margin:0 auto 16px;">' +
-            'Check your internet connection and try again. If you are connected and this keeps happening, the Apps Script deployment may need attention.' +
-          '</div>' +
-          '<button onclick="renderReview()" style="background:var(--indigo,#4F46E5);color:#fff;border:none;padding:9px 20px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;">↻ Retry</button>' +
-        '</div>';
-    }
+  if(typeof window.bsv26_renderActiveTab === 'function'){
+    try { window.bsv26_switchTab('team'); } catch(_){}
   }
 }
 
@@ -18546,70 +18464,18 @@ function renderLog(){
 }
 
 /* v23.1: renderDashboard — ALL charts and KPIs. Super sees team data + filter bar; regular sees own data only. */
+/* v24.26.1: renderDashboard STUBBED. The old function tried to access DOM elements
+   that v24.26.0 removed during the Dashboard rebuild — populateFilterOptions hit null
+   on missing #filter-* elements and threw, killing refreshLog\'s render chain. The
+   new v26 module owns Dashboard rendering entirely; we just delegate here so any
+   legacy call site (refreshLog, theme change, etc) routes to the working code. */
 function renderDashboard(){
-  if(!state.user)return;
-  // v24.25.1 — render the new Brand Revenue Cockpit on every dashboard open.
-  // Falls through to the older charts if the cockpit module isn't loaded yet.
-  try { if(typeof window.renderCockpit === 'function') window.renderCockpit(); } catch(_){}
-  const isSuper=state.user.isSuper;
-  const role=(String(state.user.role || '')).trim();
-  const seesAll=isSuper || role==='BrightSign';  // v24.14.6: BrightSign role also sees team-wide
-  const superCharts=document.getElementById('super-charts');
-  const superChartsBody=document.getElementById('super-charts-body');
-  const filterBar=document.getElementById('filter-bar');
-  const filterCount=document.getElementById('filter-count');
-  const pageTitle=document.getElementById('dashboard-page-title');
-  const pageSubtitle=document.getElementById('dashboard-page-subtitle');
-  const pageEyebrow=document.getElementById('dashboard-page-eyebrow');
-
-  const entries=getVisibleEntries();
-
-  if(pageEyebrow)pageEyebrow.textContent=seesAll?'Team analytics':'My analytics';
-  if(pageTitle)pageTitle.textContent=isSuper?'All-team dashboard':(seesAll?'Team dashboard':'My dashboard');
-  if(pageSubtitle)pageSubtitle.textContent=seesAll
-    ?'Team-wide selection analytics, pipeline funnel, model demand, and partner engagement.'
-    :'Your own selection analytics — funnel progress, models chosen, cities and partners engaged.';
-
-  if(!entries.length){
-    if(superCharts)superCharts.style.display='none';
-    if(superChartsBody)superChartsBody.style.display='none';
-    if(filterBar)filterBar.style.display='none';
-    if(filterCount)filterCount.style.display='none';
-    // Show an empty-state inline
-    let empty=document.getElementById('dashboard-empty');
-    if(!empty){
-      empty=document.createElement('div');
-      empty.id='dashboard-empty';
-      empty.className='log-empty';
-      empty.innerHTML=`<svg class="log-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9v6M15 9v6"/></svg><div class="log-empty-title">Your analytics will appear here</div><div>${isSuper?'Once your team logs some selections, charts and KPIs will populate this view.':'Run your first few selections from the "New selection" tab and this dashboard will fill in.'}</div>`;
-      const container=document.querySelector('#section-dashboard .container');
-      if(container)container.appendChild(empty);
-    }
-    empty.style.display='block';
-    return;
+  if(!state || !state.user) return;
+  // Delegate to v26 module if loaded
+  if(typeof window.bsv26_renderActiveTab === 'function'){
+    try { window.bsv26_renderActiveTab(); } catch(e){ console.warn('[v24.26.1] bsv26_renderActiveTab threw:', e); }
   }
-
-  // Hide empty state if it was shown before
-  const empty=document.getElementById('dashboard-empty');
-  if(empty)empty.style.display='none';
-
-  if(seesAll){
-    if(filterBar)filterBar.style.display='grid';
-    populateFilterOptions(entries);
-  } else {
-    if(filterBar)filterBar.style.display='none';
-  }
-  if(superCharts)superCharts.style.display='block';
-  if(superChartsBody)superChartsBody.style.display='block';
-
-  const filtered=seesAll?applyFiltersToEntries(entries):entries;
-  renderKPIs(filtered,entries);
-  renderCharts(filtered);
-  if(seesAll){
-    renderFilterCount(filtered.length,entries.length,filterCount);
-  } else if(filterCount){
-    filterCount.style.display='none';
-  }
+  // No-op fallback: nothing else needs to happen — old cockpit/v18 charts are gone
 }
 
 /* v24.22.0 (#20) — Quick stage menu. Pops a tiny floating list of the 5 stages next to
@@ -24702,31 +24568,16 @@ if(document.readyState==='loading'){
     try { _renderModelPerf(entries); } catch(e){ console.warn('[detailedV2] model perf:', e); }
   }
 
-  // Wrap renderDashboard so v2 always runs after the v18 chart paint completes.
-  // Run on a short delay so the original Chart.js renders first; we then replace
-  // chart-dealstage + chart-partners with corrected data.
-  if(typeof window.renderDashboard === 'function'){
-    const _baseRender = window.renderDashboard;
-    window.renderDashboard = function(){
-      const r = _baseRender.apply(this, arguments);
-      // Wait one tick for Chart.js to finish, then override
-      setTimeout(_renderDetailedV2, 80);
-      return r;
-    };
-  }
+  // v24.26.1: v2 wrapper DISABLED. Old _renderDetailedV2 targeted DOM elements
+  // (chart-dealstage, chart-partners, model-perf-body) that v24.26.0 removed.
+  // Calling it now throws null-reference errors. The new v26 module owns all
+  // Dashboard rendering — no overlay needed.
+  // OLD wrapper kept as comment for reference:
+  //   window.renderDashboard = function(){ ...wrap _renderDetailedV2... };
+  // The renderDashboard fn itself is now stubbed in v24.26.1 to delegate to bsv26.
 
-  // Also re-render when expander is opened (charts paint into elements that
-  // may have been display:none until expander toggle)
-  document.addEventListener('DOMContentLoaded', function(){
-    const exp = document.getElementById('dash-detail-expander');
-    if(exp){
-      exp.addEventListener('toggle', function(){
-        if(exp.open){
-          setTimeout(_renderDetailedV2, 50);
-        }
-      });
-    }
-  });
+  // v24.26.1: expander listener also no-op'd — #dash-detail-expander was removed.
+  // (No DOMContentLoaded handler needed.)
 })();
 
 /* ============================================================================
