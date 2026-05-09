@@ -4871,6 +4871,57 @@ html[data-theme="dark"] .pwd-field input{
   background:rgba(15,23,42,0.7);
   border-color:rgba(148,163,184,0.20);
 }
+
+/* v24.26.16 — Password show/hide toggle. Wraps any password input + reveal button.
+   Used on login page; can be added to forced-pwd-change modal in future via same pattern. */
+.pwd-toggle-wrap{
+  position:relative;
+  display:block;
+  width:100%;
+}
+.pwd-toggle-wrap input{
+  /* Reserve right space for the toggle button so password chars don't run under it */
+  padding-right:42px !important;
+}
+.pwd-toggle-btn{
+  position:absolute;
+  top:50%;
+  right:6px;
+  transform:translateY(-50%);
+  width:32px;
+  height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:transparent;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  padding:0;
+  font-size:16px;
+  line-height:1;
+  color:var(--ink-muted, #64748B);
+  transition:background-color 120ms, color 120ms;
+  user-select:none;
+}
+.pwd-toggle-btn:hover{
+  background:rgba(124, 58, 237, 0.08);
+  color:var(--ink, #0F172A);
+}
+.pwd-toggle-btn:focus-visible{
+  outline:2px solid #7C3AED;
+  outline-offset:1px;
+}
+.pwd-toggle-btn.is-revealed{
+  color:#7C3AED;
+}
+.pwd-toggle-icon{
+  display:inline-block;
+  pointer-events:none;
+}
+html[data-theme="dark"] .pwd-toggle-btn:hover{
+  background:rgba(167, 139, 250, 0.14);
+}
 .pwd-modal-error{
   min-height:18px;
   font-family:var(--sans);
@@ -6832,7 +6883,14 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
     </div>
     <div class="form-group">
       <label for="login-password">Password<span class="req">*</span></label>
-      <input type="password" id="login-password" placeholder="Enter password" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();handleLogin();}">
+      <!-- v24.26.16: Password show/hide toggle. Defaults to hidden; click 👁 to reveal so user
+           can verify they typed correctly before clicking Sign in. Standard browser pattern. -->
+      <div class="pwd-toggle-wrap">
+        <input type="password" id="login-password" placeholder="Enter password" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();handleLogin();}">
+        <button type="button" class="pwd-toggle-btn" id="login-pwd-toggle" aria-label="Show password" onclick="togglePasswordVisibility('login-password', this)">
+          <span class="pwd-toggle-icon" aria-hidden="true">👁</span>
+        </button>
+      </div>
     </div>
     <button class="btn-primary" onclick="handleLogin()">Sign in →</button>
     <div id="login-error" class="error-msg"></div>
@@ -8177,7 +8235,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.15';  // v24.26.15 — CRITICAL HOTFIX for Custom BOQ "Generate BOQ does nothing" bug discovered in production after v24.26.14 deploy. Root cause: runAdvancedBOQ (the Custom BOQ submit handler — separate codepath from guided runSelector) sets window._runSelectorBusy=true at line 21943 then has THREE early-return paths (Project Context validation fail, no players selected, accessory validation fail) — none of which reset the busy flag. The finally block only schedules a 10-second safety timer. So after first failed click, every subsequent click for the next 10 seconds hits `if(window._runSelectorBusy) return;` on line 21942 and silently exits. THIS was the actual cause of "I correct the value, click Generate BOQ, nothing happens, click 2-3 times" reported by Dipenkumar — NOT the field-error visual bug v24.26.14 addressed (though that fix is still valid for the perception layer). Three fixes in this hotfix: (1) Added `window._runSelectorBusy = false` before each early-return in runAdvancedBOQ — Project Context fail (line 21950), no players selected (line 21957), accessory validation fail (line 22045). (2) Added scrollIntoView({behavior:'smooth', block:'center'}) to _advValidateProjectContext when missing field's wrapper is found — Custom BOQ users click Generate BOQ at the BOTTOM of the form but Project Context fields are at the TOP, so without scroll the error banner appeared off-screen. (3) Mobile/email pattern check paths also got scrollIntoView. Note: guided runSelector path (line 14941) was already correct — it calls releaseRunSelectorLock() before the validation early-return. ONLY the advanced/custom BOQ path was broken. Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.26.16';  // v24.26.16 — PASSWORD SHOW/HIDE TOGGLE on login. Standard pattern: 👁 button at right edge of password input. Click to reveal so user can verify they typed correctly before clicking Sign in. Click again to hide. Keyboard accessible (focus-visible outline). Caret position preserved on toggle so typing flow isn't interrupted. Helper function `togglePasswordVisibility(inputId, btn)` is reusable — can be wired to the forced-password-change modal in a future release if desired. Pairs with backend v25.13.0 — no backend changes. NOTE: Keyboard shortcuts feature still pending — waiting on user clarification on scope (which shortcuts, mobile gestures, both apps).
+// v24.26.15 — CRITICAL HOTFIX for Custom BOQ "Generate BOQ does nothing" bug. Lock leak in runAdvancedBOQ — _runSelectorBusy stayed TRUE for 10 seconds on validation early-return, blocking subsequent clicks. Fixed by resetting flag at all 3 early-return paths + scrollIntoView added to _advValidateProjectContext.
 // v24.26.14 — THREE BUG FIXES (1 of 3 in user-requested release sequence). (1) CALCULATE BUTTON "needs 2-3 clicks" UX bug — added live field-error clearing on input/change. (2) EXCEL EXPORT — Sales Person + Presales Person fields ADDED to PROJECT CONTEXT block. (3) EMAIL PDF — improved error visibility.
 // v24.26.13 — REGION + OUTCOME POLISH per user feedback. (1) Region zones: dropped International tile (5→4 tiles W/N/S/E). (2) Outcome scorecard tech-style polish — JetBrains Mono numerals, sharp 4px corners, lower-saturation green (#059669), equal-weight grid, hero gradient flattened, trophy emoji removed, bracketed monospace labels [ OPEN ], HUD-style corner tick-marks, dashed zero-state tiles.
 // v24.26.12 — REGION ZONE TILES (replaces India map). India choropleth was repeatedly broken in production: GeoJSON CDN sources unreliable, echarts-gl 3D path WebGL-fragile, the existing 2D fallback occasionally rendered an empty card. Replaced with HTML zone tiles: 5 tiles in one row showing count + ₹ pipeline value + top state per zone. Pure HTML, zero CDN dependency, theme-aware via CSS vars.
@@ -11856,6 +11915,38 @@ async function authCheckOfflineSuper(loginName,password){
     return {ok:true,mustChange:false,offline:true};
   }
   return null;
+}
+
+// v24.26.16: Show/hide password helper. Used by login page eye-icon button.
+// Toggles input.type between 'password' and 'text'. Updates button aria-label + visual state.
+// Reusable — pass any password input ID + the toggle button element.
+function togglePasswordVisibility(inputId, btn){
+  const inp = document.getElementById(inputId);
+  if(!inp) return;
+  const showing = inp.type === 'text';
+  if(showing){
+    inp.type = 'password';
+    if(btn){
+      btn.setAttribute('aria-label', 'Show password');
+      btn.classList.remove('is-revealed');
+      const ic = btn.querySelector('.pwd-toggle-icon');
+      if(ic) ic.textContent = '👁';
+    }
+  } else {
+    inp.type = 'text';
+    if(btn){
+      btn.setAttribute('aria-label', 'Hide password');
+      btn.classList.add('is-revealed');
+      const ic = btn.querySelector('.pwd-toggle-icon');
+      if(ic) ic.textContent = '👁‍🗨';
+    }
+  }
+  // Restore focus + caret position so user's typing flow isn't interrupted.
+  try {
+    const pos = inp.value.length;
+    inp.focus();
+    if(typeof inp.setSelectionRange === 'function') inp.setSelectionRange(pos, pos);
+  } catch(_){}
 }
 
 async function handleLogin(){
