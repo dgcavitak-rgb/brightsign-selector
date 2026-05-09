@@ -7813,7 +7813,9 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.1';  // v24.26.1 — HOTFIX for v24.26.0. Old renderDashboard() was still being called by refreshLog/theme-change paths and crashed on populateFilterOptions reading null.value because the filter DOM elements it targeted were removed in v26 HTML rewrite. Crash threw unhandled promise rejection that killed the render chain — Dashboard showed all ₹0 / 0 zeros because v26 code never got a chance to render. Fix: stub the OLD renderDashboard, renderReview, and the _renderDetailedV2 v2 wrapper to delegate to v26 module (or no-op). Also disabled the v2 expander DOMContentLoaded listener that referenced #dash-detail-expander (removed in v26). Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.26.3';  // v24.26.3 — THE BUG FIX. v26 module had `window.state && window.state.user` checks at 3 sites — but `state` is a top-level `var state = {...}` NOT attached to window, so `window.state` is undefined. Result: every call to _scopeForUser, _setupTabButtonsForUser, _renderMine returned `null` user → _scopeForUser returned `[]` empty array → all KPI math ran on empty data → ₹0 across the board. Fix: introduced _getStateUser() helper that prefers lexical `state` reference (closure-accessible from within the IIFE) and falls back to window. This explains the entire v26.0/.1/.2 saga — the cutoff fix was real but irrelevant because _scopeForUser was zeroing data upstream. Pairs with backend v25.13.0 — no backend changes.
+// v24.26.2 — DATA-VISIBILITY HOTFIX. v24.26.0/.1 showed all ₹0 / 0 KPIs because the global _entryAfterPipelineCutoff helper checks entry.timestamp/created/createdAt/tsMs but NOT entry.ts — and the live deals only have entry.ts populated. Result: cutoff returned false for all 7 production deals → my v26 _applyFilters filtered them all out before KPI math ran. Fix: replace the cutoff call inside v26 module with inline use of our robust _parseTs (which DOES include entry.ts in its fallback chain). The global helper stays untouched so other code paths aren't affected. Pairs with backend v25.13.0 — no backend changes.
+// v24.26.1 — HOTFIX for v24.26.0. Old renderDashboard() was still being called by refreshLog/theme-change paths and crashed on populateFilterOptions reading null.value because the filter DOM elements it targeted were removed in v26 HTML rewrite. Crash threw unhandled promise rejection that killed the render chain — Dashboard showed all ₹0 / 0 zeros because v26 code never got a chance to render. Fix: stub the OLD renderDashboard, renderReview, and the _renderDetailedV2 v2 wrapper to delegate to v26 module (or no-op). Also disabled the v2 expander DOMContentLoaded listener that referenced #dash-detail-expander (removed in v26). Pairs with backend v25.13.0 — no backend changes.
 // v24.26.0 — DASHBOARD + REVIEW CLEAN REBUILD. Replaces all prior Dashboard widgets (v18 cockpit + Brand Revenue Cockpit + Detailed Analytics expander) and old Review tab (Pipeline Operations + Region/Sales cards + Bi-monthly review) with TWO clean tabs: "My Pipeline" (sales-person-first, scoped to current user) and "Team Analytics" (8 KPIs + 8 charts + leaderboard + stuck-deals table). Filter persistence via localStorage. Drill-through on all charts (click → injects into filter state). Pipeline shown as both Open (raw ₹) AND Weighted (stage-prob weighted ₹). Default tab: Super → Team Analytics, Sales → My Pipeline, Mohit (Presales) → Team Analytics scoped to handoffs, Rahul (Support) → no access to either tab. KEEPS: Customer 360, Excel export, Quarterly Target card, all v24.25.8 fixes. Pairs with backend v25.13.0 — no backend changes.
 // v24.25.8 — Critical bug fixes from production. (1) Post-login _centralLog auto-fetch was failing silently due to async race with auth hash readiness — refreshLog() called immediately after login but getCurrentAuthHash() returned null → _readUrlWithAuth() returned null → tryFetchCentralLog short-circuited with 'No session', leaving _centralLog undefined. Fix: properly await refreshLog with retry on auth-not-ready. (2) Sales auto-default overriding user-entered values on form re-render — added _userTouchedSales flag so once user manually picks a salesPerson, auto-default never re-overwrites. (3) Chart.js canvas race on chart-models — same fix pattern as chart-dealstage v24.25.4 (rename visible canvas, hide legacy). Pairs with backend v25.13.0 — no backend changes.
 // v24.25.7 — Remove Test Mode entirely. Banner stripped. Profile cards removed (Super + non-Super). Cockpit "Include test data" toggle removed. setTestMode + _renderTestModeBanner + _initTestMode functions stubbed. _filterTestData stubbed (returns input unchanged). All isTest filter checks across cockpit/leaderboard/region/sales card removed. Form save no longer writes isTest field. 🧪 marker stripped from History. localStorage keys cleaned: bs-cockpit-include-test + per-user test mode key. The isTest column on Sheet1 stays (just unread/unwritten). User wants pre-existing test rows manually deleted from sheet for Option C clean state. Pairs with backend v25.13.0 — no backend changes.
@@ -24724,10 +24726,18 @@ if(document.readyState==='loading'){
   }
   function _applyFilters(entries, f){
     if(!Array.isArray(entries)) return [];
-    const cutoffOk = (typeof window._entryAfterPipelineCutoff === 'function') ? window._entryAfterPipelineCutoff : function(){ return true; };
+    // v24.26.2: The global _entryAfterPipelineCutoff fallback chain misses `entry.ts`
+    // which is the field the live data actually uses. Result: all 7 deals filtered out
+    // → ₹0 across the board. Use our robust _parseTs (which DOES check ts) and apply
+    // the cutoff inline. This is a v26-local fix; the global fn stays untouched so we
+    // don't accidentally affect other code paths.
+    const cutoffMs = (typeof window.PIPELINE_CUTOFF_MS === 'number') ? window.PIPELINE_CUTOFF_MS : null;
     return entries.filter(function(e){
       if(!e) return false;
-      if(!cutoffOk(e)) return false;
+      if(cutoffMs != null){
+        const ts = _parseTs(e);
+        if(!ts || ts < cutoffMs) return false;
+      }
       // Time filter
       if(f.time && f.time !== 'all'){
         const ts = _parseTs(e);
@@ -24768,9 +24778,19 @@ if(document.readyState==='loading'){
     });
   }
 
+  // v24.26.3: state is declared as a top-level `var state = {...}` but NOT attached
+  // to window. So window.state is undefined. Our IIFE has lexical access to state
+  // via closure scope (since the v26 module is in the same script context). Use a
+  // helper that prefers the lexical reference and falls back to window for safety.
+  function _getStateUser(){
+    try { if(typeof state !== 'undefined' && state && state.user) return state.user; } catch(_){}
+    if(typeof window !== 'undefined' && window.state && window.state.user) return window.state.user;
+    return null;
+  }
+
   // ---- Mohit (Presales) scope filter — applied BEFORE filter state ----
   function _scopeForUser(entries){
-    const u = (window.state && window.state.user) ? window.state.user : null;
+    const u = _getStateUser();
     if(!u) return [];
     if(u.isSuper) return entries;  // Super sees everything
     const role = String(u.role || '').toLowerCase().trim();
@@ -24820,7 +24840,7 @@ if(document.readyState==='loading'){
 
   // ---- ACCESS CONTROL: who sees Team Analytics tab button? ----
   function _setupTabButtonsForUser(){
-    const u = (window.state && window.state.user) ? window.state.user : null;
+    const u = _getStateUser();
     const teamBtn = document.getElementById('v26-tab-team');
     const mineBtn = document.getElementById('v26-tab-mine');
     if(!u){
@@ -24922,7 +24942,7 @@ if(document.readyState==='loading'){
   // MY PIPELINE RENDERER
   // ============================================================================
   function _renderMine(){
-    const u = (window.state && window.state.user) ? window.state.user : null;
+    const u = _getStateUser();
     if(!u){ return; }
     const myLogin = String(u.loginName || '').toLowerCase();
     const all = _readEntries();
