@@ -6420,6 +6420,68 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
 [data-theme="dark"] .v26-stage-proposal { background: rgba(236,72,153,0.20); color: #F9A8D4; }
 [data-theme="dark"] .v26-stage-negotiation { background: rgba(245,158,11,0.20); color: #FCD34D; }
 [data-theme="dark"] .v26-stage-order { background: rgba(16,185,129,0.20); color: #6EE7B7; }
+/* v24.26.4: Horizontal breakdown rows (replaces 3 donut charts).
+   Layout: label | proportional bar | count | ₹ | % */
+.v26-breakdown-body {
+  height: auto !important;
+  min-height: 240px;
+  padding: 4px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.v26-bd-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 50px 70px 50px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px;
+  border-radius: 8px;
+  font-size: 13px;
+  transition: background 0.12s ease;
+}
+.v26-bd-row-clickable { cursor: pointer; }
+.v26-bd-row-clickable:hover { background: rgba(79,70,229,0.06); }
+.v26-bd-label {
+  font-weight: 600; color: var(--ink, #0F172A);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.v26-bd-bar-wrap {
+  position: relative; height: 8px; background: rgba(0,0,0,0.05);
+  border-radius: 4px; overflow: hidden;
+}
+.v26-bd-bar { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+.v26-bd-count {
+  text-align: right; font-weight: 700; color: var(--ink, #0F172A); font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.v26-bd-val {
+  text-align: right; font-weight: 600; color: var(--ink-muted, #64748B); font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.v26-bd-pct {
+  text-align: right; font-weight: 700; color: var(--indigo, #4F46E5); font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.v26-bd-empty {
+  padding: 32px; text-align: center; color: var(--ink-muted, #64748B); font-size: 13px;
+}
+.v26-bd-total {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 6px 4px;
+  margin-top: 6px;
+  border-top: 1px solid var(--border-soft, #E5E7EB);
+  font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--ink-muted, #64748B); font-weight: 700;
+}
+[data-theme="dark"] .v26-bd-bar-wrap { background: rgba(255,255,255,0.06); }
+[data-theme="dark"] .v26-bd-row-clickable:hover { background: rgba(99,102,241,0.10); }
+
+/* Mobile: collapse columns */
+@media (max-width: 600px) {
+  .v26-bd-row { grid-template-columns: 80px 1fr 40px 50px; }
+  .v26-bd-pct { display: none; }
+}
 
 </style>
 <!-- v24.4.2: Apply saved theme BEFORE body renders (prevents flash-of-light) — 3-state light/auto/dark -->
@@ -7371,10 +7433,10 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
 
       <!-- 8 charts in 4 rows of 2 -->
       <div class="v26-charts-grid">
-        <div class="v26-chart-card"><div class="v26-chart-head">Source split <span class="v26-chart-sub">BS-generated vs Cavitak-generated</span></div><div class="v26-chart-body"><canvas id="v26-chart-source"></canvas></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Source split <span class="v26-chart-sub">BS-generated vs Cavitak-generated · click row to filter</span></div><div class="v26-chart-body v26-breakdown-body" id="v26-chart-source"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Stage funnel <span class="v26-chart-sub">₹ + count by stage · click bar to filter</span></div><div class="v26-chart-body"><canvas id="v26-chart-stage"></canvas></div></div>
-        <div class="v26-chart-card"><div class="v26-chart-head">Region performance <span class="v26-chart-sub">click slice to filter</span></div><div class="v26-chart-body"><canvas id="v26-chart-region"></canvas></div></div>
-        <div class="v26-chart-card"><div class="v26-chart-head">Outcome split <span class="v26-chart-sub">Open · Won · Lost · On hold</span></div><div class="v26-chart-body"><canvas id="v26-chart-outcome"></canvas></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Region performance <span class="v26-chart-sub">click row to filter</span></div><div class="v26-chart-body v26-breakdown-body" id="v26-chart-region"></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Outcome split <span class="v26-chart-sub">Open · Won · Lost · On hold</span></div><div class="v26-chart-body v26-breakdown-body" id="v26-chart-outcome"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Top partners <span class="v26-chart-sub">Top 10 by # cases</span></div><div class="v26-chart-body"><canvas id="v26-chart-partners"></canvas></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Top consultants <span class="v26-chart-sub">Top 10 by # cases</span></div><div class="v26-chart-body"><canvas id="v26-chart-consultants"></canvas></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Weekly trend <span class="v26-chart-sub">New vs Won · last 12 weeks</span></div><div class="v26-chart-body"><canvas id="v26-chart-trend"></canvas></div></div>
@@ -7813,7 +7875,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.3';  // v24.26.3 — THE BUG FIX. v26 module had `window.state && window.state.user` checks at 3 sites — but `state` is a top-level `var state = {...}` NOT attached to window, so `window.state` is undefined. Result: every call to _scopeForUser, _setupTabButtonsForUser, _renderMine returned `null` user → _scopeForUser returned `[]` empty array → all KPI math ran on empty data → ₹0 across the board. Fix: introduced _getStateUser() helper that prefers lexical `state` reference (closure-accessible from within the IIFE) and falls back to window. This explains the entire v26.0/.1/.2 saga — the cutoff fix was real but irrelevant because _scopeForUser was zeroing data upstream. Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.26.4';  // v24.26.4 — VISUAL POLISH. Replaced 3 donut charts (Source split, Region performance, Outcome split) with owner-friendly horizontal breakdown rows. Each row shows: label · proportional bar · count · ₹ · % — no hover required to read values. Click any row to filter Team Analytics. Stage funnel + Top Partners/Consultants + Trend + TTC unchanged. Pairs with backend v25.13.0 — no backend changes.
+// v24.26.3 — THE BUG FIX. v26 module had `window.state && window.state.user` checks at 3 sites — but `state` is a top-level `var state = {...}` NOT attached to window, so `window.state` is undefined. Result: every call to _scopeForUser, _setupTabButtonsForUser, _renderMine returned `null` user → _scopeForUser returned `[]` empty array → all KPI math ran on empty data → ₹0 across the board. Fix: introduced _getStateUser() helper that prefers lexical `state` reference (closure-accessible from within the IIFE) and falls back to window. This explains the entire v26.0/.1/.2 saga — the cutoff fix was real but irrelevant because _scopeForUser was zeroing data upstream. Pairs with backend v25.13.0 — no backend changes.
 // v24.26.2 — DATA-VISIBILITY HOTFIX. v24.26.0/.1 showed all ₹0 / 0 KPIs because the global _entryAfterPipelineCutoff helper checks entry.timestamp/created/createdAt/tsMs but NOT entry.ts — and the live deals only have entry.ts populated. Result: cutoff returned false for all 7 production deals → my v26 _applyFilters filtered them all out before KPI math ran. Fix: replace the cutoff call inside v26 module with inline use of our robust _parseTs (which DOES include entry.ts in its fallback chain). The global helper stays untouched so other code paths aren't affected. Pairs with backend v25.13.0 — no backend changes.
 // v24.26.1 — HOTFIX for v24.26.0. Old renderDashboard() was still being called by refreshLog/theme-change paths and crashed on populateFilterOptions reading null.value because the filter DOM elements it targeted were removed in v26 HTML rewrite. Crash threw unhandled promise rejection that killed the render chain — Dashboard showed all ₹0 / 0 zeros because v26 code never got a chance to render. Fix: stub the OLD renderDashboard, renderReview, and the _renderDetailedV2 v2 wrapper to delegate to v26 module (or no-op). Also disabled the v2 expander DOMContentLoaded listener that referenced #dash-detail-expander (removed in v26). Pairs with backend v25.13.0 — no backend changes.
 // v24.26.0 — DASHBOARD + REVIEW CLEAN REBUILD. Replaces all prior Dashboard widgets (v18 cockpit + Brand Revenue Cockpit + Detailed Analytics expander) and old Review tab (Pipeline Operations + Region/Sales cards + Bi-monthly review) with TWO clean tabs: "My Pipeline" (sales-person-first, scoped to current user) and "Team Analytics" (8 KPIs + 8 charts + leaderboard + stuck-deals table). Filter persistence via localStorage. Drill-through on all charts (click → injects into filter state). Pipeline shown as both Open (raw ₹) AND Weighted (stage-prob weighted ₹). Default tab: Super → Team Analytics, Sales → My Pipeline, Mohit (Presales) → Team Analytics scoped to handoffs, Rahul (Support) → no access to either tab. KEEPS: Customer 360, Excel export, Quarterly Target card, all v24.25.8 fixes. Pairs with backend v25.13.0 — no backend changes.
@@ -25143,37 +25206,67 @@ if(document.readyState==='loading'){
     _renderChartTrend(deals);
     _renderChartTTC(deals);
   }
+  // v24.26.4: Owner-friendly horizontal breakdown — replaces donuts.
+  // Each row: label · proportional bar · count · ₹ · % · click to filter.
+  // colors[i] aligns to rows[i]. filterKey is what the filter dropdown uses.
+  function _renderBreakdown(hostId, rows, colors, filterKey){
+    const host = document.getElementById(hostId);
+    if(!host) return;
+    if(!rows || !rows.length){
+      host.innerHTML = '<div class="v26-bd-empty">No data in current filter.</div>';
+      return;
+    }
+    const totalCount = rows.reduce(function(s, r){ return s + r.count; }, 0);
+    const totalVal = rows.reduce(function(s, r){ return s + (r.value || 0); }, 0);
+    const maxCount = Math.max.apply(null, rows.map(function(r){ return r.count; }));
+    if(maxCount === 0){
+      host.innerHTML = '<div class="v26-bd-empty">No deals in current filter.</div>';
+      return;
+    }
+    // Sort rows desc by count for owner-friendly scanning
+    const sorted = rows.slice().sort(function(a, b){ return b.count - a.count; });
+    const rowsHtml = sorted.map(function(r, i){
+      const pct = totalCount > 0 ? Math.round((r.count / totalCount) * 100) : 0;
+      const widthPct = maxCount > 0 ? Math.max(2, Math.round((r.count / maxCount) * 100)) : 0;
+      const valStr = r.value > 0 ? _shortINR(r.value) : '—';
+      const color = colors[r.colorIdx != null ? r.colorIdx : i] || '#94A3B8';
+      const filterAttr = (filterKey && r.filterValue) ? ' data-v26-bd-filter="' + _esc(filterKey) + '" data-v26-bd-val="' + _esc(r.filterValue) + '"' : '';
+      const clickable = filterAttr ? ' v26-bd-row-clickable' : '';
+      return '<div class="v26-bd-row' + clickable + '"' + filterAttr + '>' +
+        '<div class="v26-bd-label" style="border-left:3px solid ' + color + ';padding-left:8px;">' + _esc(r.label) + '</div>' +
+        '<div class="v26-bd-bar-wrap"><div class="v26-bd-bar" style="width:' + widthPct + '%;background:' + color + ';"></div></div>' +
+        '<div class="v26-bd-count">' + r.count + '</div>' +
+        '<div class="v26-bd-val">' + valStr + '</div>' +
+        '<div class="v26-bd-pct">' + pct + '%</div>' +
+        '</div>';
+    }).join('');
+    const totalRow = '<div class="v26-bd-total"><span>Total</span><span>' + totalCount + ' deal' + (totalCount === 1 ? '' : 's') + ' · ' + (totalVal > 0 ? _shortINR(totalVal) : '—') + '</span></div>';
+    host.innerHTML = rowsHtml + totalRow;
+    // Wire click → filter
+    host.querySelectorAll('.v26-bd-row-clickable').forEach(function(el){
+      el.addEventListener('click', function(){
+        const fk = el.getAttribute('data-v26-bd-filter');
+        const fv = el.getAttribute('data-v26-bd-val');
+        if(!fk) return;
+        const f = _readFilterState(); f[fk] = fv; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
+      });
+    });
+  }
+
   function _renderChartSource(deals){
-    _destroyChart('source');
-    const ctx = document.getElementById('v26-chart-source');
-    if(!ctx) return;
-    const counts = { BrightSign: 0, Cavitak: 0, Other: 0 };
+    const counts = { BrightSign: { count: 0, value: 0 }, Cavitak: { count: 0, value: 0 }, Other: { count: 0, value: 0 } };
     deals.forEach(function(e){
-      const s = String(e.leadSource || '').trim();
-      if(s.toLowerCase() === 'brightsign') counts.BrightSign++;
-      else if(s.toLowerCase() === 'cavitak') counts.Cavitak++;
-      else counts.Other++;
+      const s = String(e.leadSource || '').trim().toLowerCase();
+      const v = _readDealValue(e);
+      if(s === 'brightsign'){ counts.BrightSign.count++; counts.BrightSign.value += v; }
+      else if(s === 'cavitak'){ counts.Cavitak.count++; counts.Cavitak.value += v; }
+      else { counts.Other.count++; counts.Other.value += v; }
     });
-    if(counts.Other === 0) delete counts.Other;
-    _v26Charts.source = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: Object.keys(counts),
-        datasets: [{ data: Object.values(counts), backgroundColor: ['#4F46E5','#10B981','#94A3B8'], borderWidth: 2, borderColor: '#fff' }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false, cutout: '60%',
-        plugins: { legend: { position: 'bottom', labels: { boxWidth: 14, padding: 14 } } },
-        onClick: function(_evt, els){
-          if(els && els.length){
-            const label = this.data.labels[els[0].index];
-            if(label === 'BrightSign' || label === 'Cavitak'){
-              const f = _readFilterState(); f.source = label; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
-            }
-          }
-        }
-      }
-    });
+    const rows = [];
+    if(counts.BrightSign.count) rows.push({ label: 'BrightSign', count: counts.BrightSign.count, value: counts.BrightSign.value, filterValue: 'BrightSign', colorIdx: 0 });
+    if(counts.Cavitak.count)    rows.push({ label: 'Cavitak',    count: counts.Cavitak.count,    value: counts.Cavitak.value,    filterValue: 'Cavitak',    colorIdx: 1 });
+    if(counts.Other.count)      rows.push({ label: 'Other',      count: counts.Other.count,      value: counts.Other.value,      filterValue: null,         colorIdx: 2 });
+    _renderBreakdown('v26-chart-source', rows, ['#4F46E5','#10B981','#94A3B8'], 'source');
   }
   function _renderChartStage(deals){
     _destroyChart('stage');
@@ -25212,43 +25305,34 @@ if(document.readyState==='loading'){
     });
   }
   function _renderChartRegion(deals){
-    _destroyChart('region');
-    const ctx = document.getElementById('v26-chart-region');
-    if(!ctx) return;
-    const counts = { West: 0, North: 0, South: 0, East: 0, International: 0 };
-    deals.forEach(function(e){ const r = _stateRegion(e.state); if(r && counts[r] != null) counts[r]++; });
-    _v26Charts.region = new Chart(ctx, {
-      type: 'doughnut',
-      data: { labels: Object.keys(counts), datasets: [{ data: Object.values(counts), backgroundColor: ['#10B981','#F59E0B','#3B82F6','#EF4444','#8B5CF6'], borderWidth: 2, borderColor: '#fff' }] },
-      options: {
-        responsive: true, maintainAspectRatio: false, cutout: '55%',
-        plugins: { legend: { position: 'bottom', labels: { boxWidth: 14, padding: 12, font: { size: 11 } } } },
-        onClick: function(_evt, els){
-          if(els && els.length){
-            const region = this.data.labels[els[0].index];
-            const f = _readFilterState(); f.region = region; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
-          }
-        }
-      }
+    const regions = { West: { count: 0, value: 0 }, North: { count: 0, value: 0 }, South: { count: 0, value: 0 }, East: { count: 0, value: 0 }, International: { count: 0, value: 0 } };
+    deals.forEach(function(e){
+      const r = _stateRegion(e.state);
+      if(r && regions[r]){ regions[r].count++; regions[r].value += _readDealValue(e); }
     });
+    const colors = { West: '#10B981', North: '#F59E0B', South: '#3B82F6', East: '#EF4444', International: '#8B5CF6' };
+    const rows = Object.keys(regions).filter(function(r){ return regions[r].count > 0; }).map(function(r){
+      return { label: r, count: regions[r].count, value: regions[r].value, filterValue: r, _color: colors[r] };
+    });
+    _renderBreakdown('v26-chart-region', rows, rows.map(function(r){ return r._color; }), 'region');
   }
   function _renderChartOutcome(deals){
-    _destroyChart('outcome');
-    const ctx = document.getElementById('v26-chart-outcome');
-    if(!ctx) return;
-    const counts = { Open: 0, Won: 0, Lost: 0, 'On hold': 0 };
+    const outcomes = { Open: { count: 0, value: 0 }, Won: { count: 0, value: 0 }, Lost: { count: 0, value: 0 }, 'On hold': { count: 0, value: 0 } };
     deals.forEach(function(e){
       const o = String(e.outcome || 'open').toLowerCase();
-      if(o === 'open') counts.Open++;
-      else if(o === 'won') counts.Won++;
-      else if(o === 'lost') counts.Lost++;
-      else if(o === 'on-hold' || o === 'on hold') counts['On hold']++;
+      const v = _readDealValue(e);
+      if(o === 'open'){ outcomes.Open.count++; outcomes.Open.value += v; }
+      else if(o === 'won'){ outcomes.Won.count++; outcomes.Won.value += v; }
+      else if(o === 'lost'){ outcomes.Lost.count++; outcomes.Lost.value += v; }
+      else if(o === 'on-hold' || o === 'on hold'){ outcomes['On hold'].count++; outcomes['On hold'].value += v; }
     });
-    _v26Charts.outcome = new Chart(ctx, {
-      type: 'doughnut',
-      data: { labels: Object.keys(counts), datasets: [{ data: Object.values(counts), backgroundColor: ['#3B82F6','#10B981','#EF4444','#F59E0B'], borderWidth: 2, borderColor: '#fff' }] },
-      options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 14, padding: 12 } } } }
+    const rows = [];
+    const filterValues = { Open: 'open', Won: 'won', Lost: 'lost', 'On hold': 'on-hold' };
+    const colors = ['#3B82F6','#10B981','#EF4444','#F59E0B'];
+    Object.keys(outcomes).forEach(function(k, i){
+      if(outcomes[k].count) rows.push({ label: k, count: outcomes[k].count, value: outcomes[k].value, filterValue: filterValues[k], _color: colors[i] });
     });
+    _renderBreakdown('v26-chart-outcome', rows, rows.map(function(r){ return r._color; }), 'outcome');
   }
   function _topNByCount(deals, key, n){
     const map = {};
