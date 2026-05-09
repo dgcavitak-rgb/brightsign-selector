@@ -5558,6 +5558,15 @@ html[data-theme="dark"] .dup-banner-icon{color:#FCD34D;}
   line-height:1.5;
 }
 html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
+/* v24.26.11: Dark mode overrides for Tender Spec view (audit gap fix).
+   These 6 classes had hardcoded #fff backgrounds with no dark variant — would render
+   white-on-dark in dark mode. Each gets surface/surface-2 var() so it flips correctly. */
+html[data-theme="dark"] .spec-section-count{background:var(--surface-2);color:var(--ink-muted);}
+html[data-theme="dark"] .spec-section-body{background:var(--surface);}
+html[data-theme="dark"] .clause-section{background:var(--surface);border-color:var(--border);}
+html[data-theme="dark"] .clause-count{background:var(--surface-2);color:var(--ink-muted);}
+html[data-theme="dark"] .clause-check{background:var(--surface-2);border-color:var(--border);}
+html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:var(--border);color:var(--ink);}
 .dup-banner-body strong{font-weight:700;}
 .dup-banner-hint{
   margin-top:6px;
@@ -6277,7 +6286,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
 .v26-kpis-mine { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .v26-kpis-team { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .v26-kpi {
-  padding: 16px 18px; border-radius: 12px; color: #fff;
+  padding: 16px 18px; border-radius: 12px; color: var(--surface, #fff);
   display: flex; flex-direction: column; gap: 4px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   position: relative; overflow: hidden;
@@ -6315,7 +6324,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
 }
 .v26-todo-head-red { background: rgba(239,68,68,0.08); color: #B91C1C; }
 .v26-todo-head-yellow { background: rgba(245,158,11,0.08); color: #B45309; }
-.v26-todo-head-grey { background: rgba(100,116,139,0.08); color: #475569; }
+.v26-todo-head-grey { background: rgba(100,116,139,0.08); color: var(--ink-muted, #475569); }
 .v26-todo-count {
   background: rgba(0,0,0,0.08); padding: 2px 8px; border-radius: 999px;
   font-size: 11px; font-weight: 700;
@@ -6359,7 +6368,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
 @media (max-width: 600px){ .v26-outcome-grid { grid-template-columns: 1fr; } }
 .v26-winrate-hero {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+  background: linear-gradient(180deg, var(--bg, #F8FAFC) 0%, var(--surface-2, #F1F5F9) 100%);
   border-radius: 12px; padding: 14px 10px;
   border: 1px solid var(--border-soft, #E5E7EB);
   text-align: center;
@@ -6389,8 +6398,8 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   gap: 8px;
 }
 .v26-outcome-tile {
-  background: #fff; border: 1px solid var(--border-soft, #E5E7EB);
-  border-left: 4px solid #94A3B8;
+  background: var(--surface, #fff); border: 1px solid var(--border-soft, #E5E7EB);
+  border-left: 4px solid var(--ink-subtle, #94A3B8);
   border-radius: 8px; padding: 8px 10px;
   display: flex; flex-direction: column; justify-content: center;
   cursor: pointer; transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
@@ -8093,7 +8102,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.10';  // v24.26.10 — CHART POLISH. Two changes per user feedback: (1) MOST QUOTED PLAYERS — dropped "u" suffix from bar labels; now reads "62 · 52%" instead of "62u · 52%" (tooltip still says "62 units · 52% of total" — long form keeps the meaning). (2) OUTCOME SPLIT — replaced stacked horizontal bar with HTML Outcome Scorecard. New layout: Win Rate hero (Won÷Closed) on left with color-coded big number (green ≥60%, amber 40-59%, red <40%, trophy ≥80%) + 2x2 grid of outcome tiles on right (Open / Won / Lost / On hold) showing count, % of total, and ₹ value. Zero-count tiles render greyed-out and non-interactive. Click any non-zero tile → filters Team Analytics by that outcome (preserves v26.5 drill-through). Card title "Outcome split" → "Outcome scorecard". Pure HTML — no ECharts instance for this card. Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.26.11';  // v24.26.11 — DARK MODE FIX. Four parts: (1) Replaced 6 standalone hardcoded hex values in v26 CSS block with var(--*) references using same hex as fallback (CSS auto-flips via :root theme swap when [data-theme="dark"]). Most v26 CSS already used the var() pattern — these were the gaps. (2) Added _themeColors() JS helper inside v26 module (reads document.documentElement.dataset.theme) returning theme-aware ECharts colors: ink, inkMuted, inkSubtle, splitLine, border, surface. Vibrant brand/palette colors (KPI gradients, bar palette, status badges) intentionally stay constant — they read correctly on both backgrounds. (3) 51 hardcoded chart color refs in 9 ECharts renderers (axisLabel.color, splitLine.lineStyle.color, label.color, legend.textStyle.color, emphasis.borderColor) replaced with _theme.* references; const _theme = _themeColors() injected at top of each renderer body. Theme-toggle hook at applyTheme() (existed since v24.4.18 for Chart.js) already re-renders dashboard on theme change — v26 ECharts inherit this for free since they're created/disposed inside _renderTeamCharts on each render. NO scorecard changes needed (pure HTML, theme-aware via CSS vars). (4) AUDIT GAP FIX: Added 6 [data-theme="dark"] overrides for Tender Spec view classes that had hardcoded #fff backgrounds: .spec-section-count, .spec-section-body, .clause-section, .clause-count, .clause-check, .clause-remark. All 9 other audit-flagged classes (cm-picker, notif-panel, adv-player-table-wrap, qty-stepper, pill, choice-card, number-input, os-pill) already had dark overrides — no work needed. Pairs with backend v25.13.0 — no backend changes.
+// v24.26.10 — CHART POLISH. Two changes per user feedback: (1) MOST QUOTED PLAYERS — dropped "u" suffix from bar labels; now reads "62 · 52%" instead of "62u · 52%" (tooltip still says "62 units · 52% of total" — long form keeps the meaning). (2) OUTCOME SPLIT — replaced stacked horizontal bar with HTML Outcome Scorecard. New layout: Win Rate hero (Won÷Closed) on left with color-coded big number (green ≥60%, amber 40-59%, red <40%, trophy ≥80%) + 2x2 grid of outcome tiles on right (Open / Won / Lost / On hold) showing count, % of total, and ₹ value. Zero-count tiles render greyed-out and non-interactive. Click any non-zero tile → filters Team Analytics by that outcome (preserves v26.5 drill-through). Card title "Outcome split" → "Outcome scorecard". Pure HTML — no ECharts instance for this card. Pairs with backend v25.13.0 — no backend changes.
 // v24.26.9 — MOST QUOTED PLAYERS hotfix: now sums QTY (physical units) not deal-count, for accurate inventory forecasting. Reads e.qty for guided indoor+outdoor, advancedSelectionsJson per-model qty for Custom BOQ. Each model gets distinct color from 10-color palette (was all amber). Subtitle updated to "total units quoted · for inventory forecasting". Pairs with backend v25.13.0 — no backend changes.
 // v24.26.8 — MONTH-BASED REVIEW + DEAL HISTORY + 3D MAP + PARTNER/CONSULTANT REDESIGN.
 // v24.26.7 — Confirm-on-edit fix + Most Quoted Players chart + N/A filter (carried forward).
@@ -10943,6 +10953,9 @@ function applyTheme(mode){
   // v24.4.18: Chart.js renders text on <canvas> with literal color values — CSS can't restyle them.
   // When the effective theme actually changes, destroy and re-render all charts so they pick up
   // the new theme-aware ink/muted/border colors.
+  // v24.26.11: Same applies to v26 ECharts instances (stored in module-private _v26Charts).
+  // We can't call them by reference from this scope, but renderDashboard() walks the v26 module
+  // which destroys + re-creates all 9 charts on render. So a tab re-render is sufficient.
   if(previousTheme && previousTheme!==effective && window._charts){
     try{
       Object.keys(window._charts).forEach(k=>{
@@ -25506,6 +25519,22 @@ if(document.readyState==='loading'){
       const f = _readFilterState(); f[filterKey] = fv; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
     });
   }
+  // v24.26.11: Theme-aware ECharts colors. Reads <html data-theme="dark|light"> set by applyTheme().
+  //   Used inside chart renderers for axis labels, legend text, grid splitLines, value labels.
+  //   Vibrant brand/palette colors (KPI gradients, bar colors, status badges) intentionally stay
+  //   constant across themes — they look correct on both backgrounds.
+  function _themeColors(){
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    return {
+      ink:        isDark ? '#F1F5F9' : '#0F172A',
+      inkMuted:   isDark ? '#CBD5E1' : '#64748B',
+      inkSubtle:  isDark ? '#94A3B8' : '#94A3B8',
+      splitLine:  isDark ? 'rgba(148,163,184,0.14)' : '#F1F5F9',
+      border:     isDark ? 'rgba(148,163,184,0.18)' : '#E5E7EB',
+      surface:    isDark ? '#141937' : '#FFFFFF',
+      isDark:     isDark
+    };
+  }
   function _renderTeamCharts(deals){
     if(typeof echarts === 'undefined'){
       console.warn('[v26.5] ECharts not loaded — charts skipped');
@@ -25525,6 +25554,7 @@ if(document.readyState==='loading'){
   /* ────────────────────── Source split — DONUT WITH CENTER TOTAL ────────────────────── */
   function _renderChartSource(deals){
     _destroyChart('source');
+    const _theme = _themeColors();
     const dom = document.getElementById('v26-chart-source');
     if(!dom) return;
     // The HTML had v26-chart-source as a div for breakdown (v26.4) — convert back to canvas-style for ECharts
@@ -25542,14 +25572,14 @@ if(document.readyState==='loading'){
     const data = [];
     if(counts.BrightSign.count) data.push({ name: 'BrightSign', value: counts.BrightSign.count, dealVal: counts.BrightSign.value, itemStyle: { color: '#4F46E5' } });
     if(counts.Cavitak.count) data.push({ name: 'Cavitak', value: counts.Cavitak.count, dealVal: counts.Cavitak.value, itemStyle: { color: '#10B981' } });
-    if(counts.Other.count) data.push({ name: 'Other', value: counts.Other.count, dealVal: counts.Other.value, itemStyle: { color: '#94A3B8' } });
+    if(counts.Other.count) data.push({ name: 'Other', value: counts.Other.count, dealVal: counts.Other.value, itemStyle: { color: _theme.inkSubtle } });
     const totalCount = data.reduce(function(s, d){ return s + d.value; }, 0);
     const totalVal = data.reduce(function(s, d){ return s + d.dealVal; }, 0);
     const inst = _initECharts('v26-chart-source');
     if(!inst) return;
     inst.setOption({
       tooltip: { trigger: 'item', formatter: function(p){ return p.name + ': ' + p.value + ' deals · ' + _shortINR(p.data.dealVal) + ' (' + p.percent + '%)'; } },
-      legend: { bottom: 0, itemWidth: 12, itemHeight: 12, textStyle: { color: '#64748B', fontSize: 12 } },
+      legend: { bottom: 0, itemWidth: 12, itemHeight: 12, textStyle: { color: _theme.inkMuted, fontSize: 12 } },
       graphic: { type: 'group', left: 'center', top: 'middle', children: [
         { type: 'text', style: { text: String(totalCount), fontSize: 30, fontWeight: 700, fill: '#0F172A', textAlign: 'center' }, top: -16 },
         { type: 'text', style: { text: 'deals', fontSize: 11, fill: '#64748B', textAlign: 'center' }, top: 18 }
@@ -25558,7 +25588,7 @@ if(document.readyState==='loading'){
         type: 'pie', radius: ['58%', '82%'], center: ['50%', '45%'],
         avoidLabelOverlap: true,
         itemStyle: { borderColor: '#fff', borderWidth: 2 },
-        label: { show: true, position: 'outside', formatter: '{b}: {d}%', fontSize: 11, color: '#0F172A' },
+        label: { show: true, position: 'outside', formatter: '{b}: {d}%', fontSize: 11, color: _theme.ink },
         labelLine: { length: 8, length2: 8 },
         data: data
       }]
@@ -25579,6 +25609,7 @@ if(document.readyState==='loading'){
   //   3. LEGEND: Render sidebar chips next to funnel showing all stages + counts + ₹
   function _renderChartStage(deals){
     _destroyChart('stage');
+    const _theme = _themeColors();
     const dom = document.getElementById('v26-chart-stage');
     if(!dom) return;
     dom.innerHTML = '';
@@ -25708,6 +25739,7 @@ if(document.readyState==='loading'){
 
   function _renderChartRegion(deals){
     _destroyChart('region');
+    const _theme = _themeColors();
     const dom = document.getElementById('v26-chart-region');
     if(!dom) return;
     dom.innerHTML = '';
@@ -25763,7 +25795,7 @@ if(document.readyState==='loading'){
               postEffect: { enable: true, SSAO: { enable: true, radius: 1, intensity: 1.2 } },
               viewControl: { distance: 110, alpha: 50, beta: 0, autoRotate: false, panSensitivity: 0, zoomSensitivity: 1, rotateSensitivity: 1 },
               itemStyle: { borderWidth: 1, borderColor: '#fff', areaColor: '#E0E7FF' },
-              label: { show: false, textStyle: { color: '#0F172A', fontSize: 10, fontWeight: 700 } },
+              label: { show: false, textStyle: { color: _theme.ink, fontSize: 10, fontWeight: 700 } },
               emphasis: { label: { show: true }, itemStyle: { areaColor: '#FBBF24' } },
               data: statesData
             }]
@@ -25783,7 +25815,7 @@ if(document.readyState==='loading'){
           series: [{
             type: 'map', map: 'India', roam: false, aspectScale: 0.85,
             itemStyle: { borderColor: '#94A3B8', borderWidth: 0.5, areaColor: '#F8FAFC' },
-            emphasis: { itemStyle: { borderColor: '#0F172A', borderWidth: 1.5, areaColor: '#FBBF24' }, label: { show: true, color: '#0F172A', fontWeight: 700, fontSize: 11 } },
+            emphasis: { itemStyle: { borderColor: _theme.ink, borderWidth: 1.5, areaColor: '#FBBF24' }, label: { show: true, color: _theme.ink, fontWeight: 700, fontSize: 11 } },
             label: { show: false },
             data: statesData
           }]
@@ -25830,12 +25862,12 @@ if(document.readyState==='loading'){
     inst.setOption({
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: function(p){ const z = p[0].name; return z + ': ' + byZone[z].c + ' deals · ' + _shortINR(byZone[z].v); } },
       grid: { left: 8, right: 16, top: 16, bottom: 28, containLabel: true },
-      xAxis: { type: 'category', data: zones, axisLabel: { color: '#64748B', fontSize: 11 } },
-      yAxis: { type: 'value', axisLabel: { color: '#64748B', fontSize: 11 }, splitLine: { lineStyle: { color: '#F1F5F9' } } },
+      xAxis: { type: 'category', data: zones, axisLabel: { color: _theme.inkMuted, fontSize: 11 } },
+      yAxis: { type: 'value', axisLabel: { color: _theme.inkMuted, fontSize: 11 }, splitLine: { lineStyle: { color: _theme.splitLine } } },
       series: [{
         type: 'bar', data: zones.map(function(z){ return { value: byZone[z].c, itemStyle: { color: _ZONE_COLORS[z] } }; }),
         barWidth: '50%', itemStyle: { borderRadius: [6, 6, 0, 0] },
-        label: { show: true, position: 'top', fontSize: 11, color: '#0F172A' }
+        label: { show: true, position: 'top', fontSize: 11, color: _theme.ink }
       }]
     });
     _v26Charts.region = inst;
@@ -25935,6 +25967,7 @@ if(document.readyState==='loading'){
   }
   function _renderHorizBars(domId, top, color, key){
     _destroyChart(key);
+    const _theme = _themeColors();
     const dom = document.getElementById(domId);
     if(!dom) return;
     dom.innerHTML = '';
@@ -25944,12 +25977,12 @@ if(document.readyState==='loading'){
     inst.setOption({
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
       grid: { left: 8, right: 24, top: 12, bottom: 12, containLabel: true },
-      xAxis: { type: 'value', axisLabel: { color: '#64748B', fontSize: 11 }, splitLine: { lineStyle: { color: '#F1F5F9' } } },
-      yAxis: { type: 'category', data: top.map(function(t){ return t.name; }).reverse(), axisLabel: { color: '#0F172A', fontSize: 11 } },
+      xAxis: { type: 'value', axisLabel: { color: _theme.inkMuted, fontSize: 11 }, splitLine: { lineStyle: { color: _theme.splitLine } } },
+      yAxis: { type: 'category', data: top.map(function(t){ return t.name; }).reverse(), axisLabel: { color: _theme.ink, fontSize: 11 } },
       series: [{
         type: 'bar', data: top.map(function(t){ return t.count; }).reverse(),
         itemStyle: { color: color, borderRadius: [0, 6, 6, 0] },
-        label: { show: true, position: 'right', color: '#0F172A', fontSize: 11, fontWeight: 700 }
+        label: { show: true, position: 'right', color: _theme.ink, fontSize: 11, fontWeight: 700 }
       }]
     });
     _v26Charts[key] = inst;
@@ -26056,6 +26089,7 @@ if(document.readyState==='loading'){
   //           cover region/sales drill-down.
   function _renderChartPlayers(deals){
     _destroyChart('players');
+    const _theme = _themeColors();
     const dom = document.getElementById('v26-chart-players');
     if(!dom) return;
     dom.innerHTML = '';
@@ -26102,8 +26136,8 @@ if(document.readyState==='loading'){
         return '<b>' + t.name + '</b><br/>' + t.value + ' unit' + (t.value === 1 ? '' : 's') + ' · ' + pct + '% of total';
       } },
       grid: { left: 8, right: 64, top: 12, bottom: 24, containLabel: true },
-      xAxis: { type: 'value', axisLabel: { color: '#64748B', fontSize: 11 }, splitLine: { lineStyle: { color: '#F1F5F9' } } },
-      yAxis: { type: 'category', data: top.map(function(t){ return t.name; }).reverse(), axisLabel: { color: '#0F172A', fontSize: 12, fontWeight: 700 } },
+      xAxis: { type: 'value', axisLabel: { color: _theme.inkMuted, fontSize: 11 }, splitLine: { lineStyle: { color: _theme.splitLine } } },
+      yAxis: { type: 'category', data: top.map(function(t){ return t.name; }).reverse(), axisLabel: { color: _theme.ink, fontSize: 12, fontWeight: 700 } },
       series: [{
         type: 'bar',
         data: top.map(function(t, i){
@@ -26113,7 +26147,7 @@ if(document.readyState==='loading'){
         }).reverse(),
         barWidth: '60%',
         label: {
-          show: true, position: 'right', color: '#0F172A', fontSize: 13, fontWeight: 800,
+          show: true, position: 'right', color: _theme.ink, fontSize: 13, fontWeight: 800,
           formatter: function(p){
             const pct = totalUnits ? Math.round((p.value / totalUnits) * 100) : 0;
             return p.value + ' · ' + pct + '%';
@@ -26127,6 +26161,7 @@ if(document.readyState==='loading'){
   /* ────────────────────── Trend — AREA CHART ────────────────────── */
   function _renderChartTrend(deals){
     _destroyChart('trend');
+    const _theme = _themeColors();
     const dom = document.getElementById('v26-chart-trend');
     if(!dom) return;
     dom.style.height = '260px';
@@ -26149,10 +26184,10 @@ if(document.readyState==='loading'){
     if(!inst) return;
     inst.setOption({
       tooltip: { trigger: 'axis' },
-      legend: { bottom: 0, itemWidth: 12, itemHeight: 12, textStyle: { fontSize: 11, color: '#64748B' } },
+      legend: { bottom: 0, itemWidth: 12, itemHeight: 12, textStyle: { fontSize: 11, color: _theme.inkMuted } },
       grid: { left: 8, right: 16, top: 16, bottom: 36, containLabel: true },
-      xAxis: { type: 'category', data: weeks.map(function(w){ return w.label; }), axisLabel: { color: '#64748B', fontSize: 10 } },
-      yAxis: { type: 'value', axisLabel: { color: '#64748B', fontSize: 11 }, splitLine: { lineStyle: { color: '#F1F5F9' } } },
+      xAxis: { type: 'category', data: weeks.map(function(w){ return w.label; }), axisLabel: { color: _theme.inkMuted, fontSize: 10 } },
+      yAxis: { type: 'value', axisLabel: { color: _theme.inkMuted, fontSize: 11 }, splitLine: { lineStyle: { color: _theme.splitLine } } },
       series: [
         { name: 'New', type: 'line', smooth: 0.3, data: newCounts, symbol: 'circle', symbolSize: 6,
           areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(59,130,246,0.4)' }, { offset: 1, color: 'rgba(59,130,246,0.02)' }] } },
@@ -26168,6 +26203,7 @@ if(document.readyState==='loading'){
   /* ────────────────────── Time-to-close — VERTICAL BAR HISTOGRAM (kept) ────────────────────── */
   function _renderChartTTC(deals){
     _destroyChart('ttc');
+    const _theme = _themeColors();
     const dom = document.getElementById('v26-chart-ttc');
     if(!dom) return;
     dom.style.height = '260px';
@@ -26190,12 +26226,12 @@ if(document.readyState==='loading'){
     inst.setOption({
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
       grid: { left: 8, right: 16, top: 16, bottom: 24, containLabel: true },
-      xAxis: { type: 'category', data: Object.keys(buckets), axisLabel: { color: '#64748B', fontSize: 11 } },
-      yAxis: { type: 'value', axisLabel: { color: '#64748B', fontSize: 11 }, splitLine: { lineStyle: { color: '#F1F5F9' } } },
+      xAxis: { type: 'category', data: Object.keys(buckets), axisLabel: { color: _theme.inkMuted, fontSize: 11 } },
+      yAxis: { type: 'value', axisLabel: { color: _theme.inkMuted, fontSize: 11 }, splitLine: { lineStyle: { color: _theme.splitLine } } },
       series: [{
         type: 'bar', data: Object.values(buckets), barWidth: '50%',
         itemStyle: { color: '#F59E0B', borderRadius: [6, 6, 0, 0] },
-        label: { show: true, position: 'top', fontSize: 11, color: '#0F172A' }
+        label: { show: true, position: 'top', fontSize: 11, color: _theme.ink }
       }]
     });
     _v26Charts.ttc = inst;
