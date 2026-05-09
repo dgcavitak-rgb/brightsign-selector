@@ -6351,6 +6351,71 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
 .v26-chart-sub { font-size: 11px; font-weight: 500; color: var(--ink-muted, #64748B); }
 .v26-chart-body { height: 240px; position: relative; }
 
+/* v24.26.10 — Outcome Scorecard (replaces stacked bar) */
+.v26-outcome-grid {
+  display: grid; grid-template-columns: 200px 1fr; gap: 16px;
+  height: 100%; align-items: stretch;
+}
+@media (max-width: 600px){ .v26-outcome-grid { grid-template-columns: 1fr; } }
+.v26-winrate-hero {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+  border-radius: 12px; padding: 14px 10px;
+  border: 1px solid var(--border-soft, #E5E7EB);
+  text-align: center;
+}
+.v26-winrate-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--ink-muted, #64748B);
+  margin-bottom: 6px;
+}
+.v26-winrate-pct {
+  font-size: 42px; font-weight: 800; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 6px;
+}
+.v26-winrate-trophy { font-size: 22px; margin-bottom: 4px; opacity: 0.9; }
+.v26-winrate-detail {
+  font-size: 11px; color: var(--ink-muted, #64748B); font-weight: 500;
+  line-height: 1.35;
+}
+.v26-winrate-empty {
+  font-size: 28px; font-weight: 700; color: var(--ink-muted, #94A3B8);
+  margin-bottom: 4px;
+}
+.v26-outcome-tiles {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.v26-outcome-tile {
+  background: #fff; border: 1px solid var(--border-soft, #E5E7EB);
+  border-left: 4px solid #94A3B8;
+  border-radius: 8px; padding: 8px 10px;
+  display: flex; flex-direction: column; justify-content: center;
+  cursor: pointer; transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+  min-height: 0;
+}
+.v26-outcome-tile:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+.v26-outcome-tile.is-zero { opacity: 0.5; cursor: default; }
+.v26-outcome-tile.is-zero:hover { transform: none; box-shadow: none; }
+.v26-tile-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--ink-muted, #64748B);
+  margin-bottom: 2px;
+}
+.v26-tile-count {
+  font-size: 22px; font-weight: 800; color: var(--ink, #0F172A);
+  line-height: 1; font-variant-numeric: tabular-nums;
+}
+.v26-tile-meta {
+  font-size: 11px; font-weight: 600; color: var(--ink-muted, #64748B);
+  margin-top: 3px;
+}
+
 /* Bottom row (Leaderboard + Stuck) */
 .v26-bottom-row {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -7587,7 +7652,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         <div class="v26-chart-card"><div class="v26-chart-head">Source split <span class="v26-chart-sub">BS-generated vs Cavitak-generated · click slice to filter</span></div><div class="v26-chart-body" id="v26-chart-source"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Stage funnel <span class="v26-chart-sub">₹ + count by stage · click to filter</span></div><div class="v26-chart-body" id="v26-chart-stage"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Region · India map <span class="v26-chart-sub">click state or zone pill to filter</span></div><div class="v26-chart-body" id="v26-chart-region"></div></div>
-        <div class="v26-chart-card"><div class="v26-chart-head">Outcome split <span class="v26-chart-sub">Open · Won · Lost · On hold</span></div><div class="v26-chart-body" id="v26-chart-outcome"></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Outcome scorecard <span class="v26-chart-sub">win rate · pipeline by outcome</span></div><div class="v26-chart-body" id="v26-chart-outcome"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Top partners <span class="v26-chart-sub">Top 10 by # cases</span></div><div class="v26-chart-body" id="v26-chart-partners"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Top consultants <span class="v26-chart-sub">Top 10 by # cases</span></div><div class="v26-chart-body" id="v26-chart-consultants"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Most quoted players <span class="v26-chart-sub">total units quoted · for inventory forecasting</span></div><div class="v26-chart-body" id="v26-chart-players"></div></div>
@@ -8028,7 +8093,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.9';  // v24.26.9 — MOST QUOTED PLAYERS hotfix: now sums QTY (physical units) not deal-count, for accurate inventory forecasting. Reads e.qty for guided indoor+outdoor, advancedSelectionsJson per-model qty for Custom BOQ. Each model gets distinct color from 10-color palette (was all amber). Subtitle updated to "total units quoted · for inventory forecasting". Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.26.10';  // v24.26.10 — CHART POLISH. Two changes per user feedback: (1) MOST QUOTED PLAYERS — dropped "u" suffix from bar labels; now reads "62 · 52%" instead of "62u · 52%" (tooltip still says "62 units · 52% of total" — long form keeps the meaning). (2) OUTCOME SPLIT — replaced stacked horizontal bar with HTML Outcome Scorecard. New layout: Win Rate hero (Won÷Closed) on left with color-coded big number (green ≥60%, amber 40-59%, red <40%, trophy ≥80%) + 2x2 grid of outcome tiles on right (Open / Won / Lost / On hold) showing count, % of total, and ₹ value. Zero-count tiles render greyed-out and non-interactive. Click any non-zero tile → filters Team Analytics by that outcome (preserves v26.5 drill-through). Card title "Outcome split" → "Outcome scorecard". Pure HTML — no ECharts instance for this card. Pairs with backend v25.13.0 — no backend changes.
+// v24.26.9 — MOST QUOTED PLAYERS hotfix: now sums QTY (physical units) not deal-count, for accurate inventory forecasting. Reads e.qty for guided indoor+outdoor, advancedSelectionsJson per-model qty for Custom BOQ. Each model gets distinct color from 10-color palette (was all amber). Subtitle updated to "total units quoted · for inventory forecasting". Pairs with backend v25.13.0 — no backend changes.
 // v24.26.8 — MONTH-BASED REVIEW + DEAL HISTORY + 3D MAP + PARTNER/CONSULTANT REDESIGN.
 // v24.26.7 — Confirm-on-edit fix + Most Quoted Players chart + N/A filter (carried forward).
 // v24.26.6 — Stage funnel + India map retry + close-month format.
@@ -25778,7 +25844,11 @@ if(document.readyState==='loading'){
 
   /* ────────────────────── Outcome — STACKED SINGLE BAR ────────────────────── */
   function _renderChartOutcome(deals){
-    _destroyChart('outcome');
+    // v24.26.10: Replaced stacked horizontal bar (v26.5) with HTML scorecard.
+    //   Hero: Win Rate % (Won / Won+Lost) — color-coded green ≥60 / amber 40-59 / red <40, trophy ≥80.
+    //   4 tiles: Open / Won / Lost / On hold — count + %total + ₹value, left-edge color, click→filter.
+    //   Zero-count tiles render greyed-out (no click). Pure HTML — no ECharts instance for this card.
+    _destroyChart('outcome');  // safety: ensure no stale ECharts instance from previous v26 paint
     const dom = document.getElementById('v26-chart-outcome');
     if(!dom) return;
     dom.classList.remove('v26-breakdown-body');
@@ -25796,40 +25866,57 @@ if(document.readyState==='loading'){
     });
     const total = counts.Open + counts.Won + counts.Lost + counts['On hold'];
     if(!total){ dom.innerHTML = '<div style="padding:60px;text-align:center;color:var(--ink-muted);">No deals to chart</div>'; return; }
+    const closed = counts.Won + counts.Lost;
+    const winRate = closed > 0 ? Math.round((counts.Won / closed) * 100) : null;
+    let winColor = '#94A3B8', trophy = '';
+    if(winRate !== null){
+      if(winRate >= 80){ winColor = '#10B981'; trophy = '🏆'; }
+      else if(winRate >= 60){ winColor = '#10B981'; }
+      else if(winRate >= 40){ winColor = '#F59E0B'; }
+      else { winColor = '#EF4444'; }
+    }
     const colors = { Open: '#3B82F6', Won: '#10B981', Lost: '#EF4444', 'On hold': '#F59E0B' };
     const filterValues = { Open: 'open', Won: 'won', Lost: 'lost', 'On hold': 'on-hold' };
-    const series = ['Open','Won','Lost','On hold'].map(function(k){
-      return {
-        name: k, type: 'bar', stack: 'total', barWidth: 56,
-        data: [counts[k]],
-        itemStyle: { color: colors[k] },
-        label: {
-          show: counts[k] > 0,
-          position: 'inside',
-          formatter: function(p){
-            const pct = Math.round((p.value / total) * 100);
-            return p.value >= 1 ? (k + ': ' + p.value + ' (' + pct + '%)') : '';
-          },
-          color: '#fff', fontWeight: 700, fontSize: 11
-        },
-        emphasis: { focus: 'series' }
-      };
-    });
-    const inst = _initECharts('v26-chart-outcome');
-    if(!inst) return;
-    inst.setOption({
-      tooltip: { trigger: 'item', formatter: function(p){ const k = p.seriesName; return k + ': ' + counts[k] + ' deals · ' + _shortINR(vals[k]) + ' · ' + Math.round((counts[k]/total)*100) + '%'; } },
-      legend: { bottom: 0, itemWidth: 12, itemHeight: 12, textStyle: { fontSize: 11, color: '#64748B' } },
-      grid: { left: 16, right: 16, top: 60, bottom: 50, containLabel: true },
-      xAxis: { type: 'value', show: false, max: total },
-      yAxis: { type: 'category', data: [''], axisLine: { show: false }, axisTick: { show: false }, axisLabel: { show: false } },
-      series: series
-    });
-    _v26Charts.outcome = inst;
-    inst.on('click', function(p){
-      const fv = filterValues[p.seriesName];
-      if(!fv) return;
-      const f = _readFilterState(); f.outcome = fv; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
+    function _esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    const heroHtml = winRate !== null
+      ? '<div class="v26-winrate-hero">' +
+          (trophy ? '<div class="v26-winrate-trophy">' + trophy + '</div>' : '') +
+          '<div class="v26-winrate-label">Win Rate</div>' +
+          '<div class="v26-winrate-pct" style="color:' + winColor + '">' + winRate + '%</div>' +
+          '<div class="v26-winrate-detail">' + counts.Won + ' won of ' + closed + ' closed deal' + (closed === 1 ? '' : 's') + '</div>' +
+        '</div>'
+      : '<div class="v26-winrate-hero">' +
+          '<div class="v26-winrate-label">Win Rate</div>' +
+          '<div class="v26-winrate-empty">—</div>' +
+          '<div class="v26-winrate-detail">No closed deals yet</div>' +
+        '</div>';
+    function tile(name){
+      const c = counts[name], v = vals[name];
+      const pct = Math.round((c / total) * 100);
+      const isZero = c === 0;
+      return '<div class="v26-outcome-tile' + (isZero ? ' is-zero' : '') + '" ' +
+             'data-outcome="' + filterValues[name] + '" ' +
+             'style="border-left-color:' + colors[name] + '">' +
+             '<div class="v26-tile-label">' + _esc(name) + '</div>' +
+             '<div class="v26-tile-count" style="color:' + (isZero ? '#94A3B8' : '#0F172A') + '">' + c + '</div>' +
+             '<div class="v26-tile-meta">' + pct + '% · ' + _shortINR(v) + '</div>' +
+           '</div>';
+    }
+    dom.innerHTML =
+      '<div class="v26-outcome-grid">' +
+        heroHtml +
+        '<div class="v26-outcome-tiles">' +
+          tile('Open') + tile('Won') + tile('Lost') + tile('On hold') +
+        '</div>' +
+      '</div>';
+    // Wire click-to-filter — preserves v26.5 drill-through behavior.
+    Array.prototype.forEach.call(dom.querySelectorAll('.v26-outcome-tile'), function(el){
+      if(el.classList.contains('is-zero')) return;  // zero tiles aren't actionable
+      el.addEventListener('click', function(){
+        const fv = el.getAttribute('data-outcome');
+        if(!fv) return;
+        const f = _readFilterState(); f.outcome = fv; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
+      });
     });
   }
 
@@ -26029,7 +26116,7 @@ if(document.readyState==='loading'){
           show: true, position: 'right', color: '#0F172A', fontSize: 13, fontWeight: 800,
           formatter: function(p){
             const pct = totalUnits ? Math.round((p.value / totalUnits) * 100) : 0;
-            return p.value + 'u · ' + pct + '%';
+            return p.value + ' · ' + pct + '%';
           }
         }
       }]
