@@ -14,6 +14,8 @@
      Cleanup of dead Chart.js code can come in a future release. ~+400KB total. -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<!-- v24.26.8: echarts-gl for 3D India map (Geo3D extruded states) -->
+<script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
 <!-- v24.18.1: html2canvas for ₹-faithful PDF rendering (browser fonts contain U+20B9; jsPDF fonts don't) -->
@@ -6487,7 +6489,138 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   .v26-bd-row { grid-template-columns: 80px 1fr 40px 50px; }
   .v26-bd-pct { display: none; }
 }
-/* v24.26.5: India region map zone legend */
+/* v24.26.8: Top Partners + Top Consultants — Option B (KPI strip + ₹-sorted bars) */
+.v26-ob-kpi-strip {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+  margin-bottom: 12px;
+}
+.v26-ob-kpi {
+  background: var(--surface-2, #F8FAFC); border: 1px solid var(--border-soft, #E5E7EB);
+  border-radius: 8px; padding: 8px 10px; text-align: center;
+}
+.v26-ob-kpi-num {
+  font-size: 22px; font-weight: 800; color: var(--ink, #0F172A); line-height: 1.1;
+}
+.v26-ob-kpi-lbl {
+  font-size: 10px; color: var(--ink-muted, #64748B); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px;
+}
+.v26-ob-kpi-sub {
+  font-size: 10px; color: var(--ink-muted, #94A3B8); margin-top: 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.v26-ob-list {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.v26-ob-row {
+  display: grid; grid-template-columns: 110px 1fr 70px 60px;
+  gap: 8px; align-items: center;
+  padding: 6px 8px; border-radius: 6px; cursor: pointer;
+  transition: background 0.12s ease;
+}
+.v26-ob-row:hover { background: var(--surface-2, #F8FAFC); }
+.v26-ob-row-name {
+  font-size: 12px; font-weight: 600; color: var(--ink, #0F172A);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.v26-ob-row-bar {
+  height: 8px; background: var(--surface-2, #F1F5F9); border-radius: 4px; overflow: hidden;
+}
+.v26-ob-row-fill {
+  height: 100%; border-radius: 4px; transition: width 0.4s ease;
+}
+.v26-ob-row-val {
+  font-size: 13px; font-weight: 700; color: var(--ink, #0F172A); text-align: right;
+}
+.v26-ob-row-cnt {
+  font-size: 11px; color: var(--ink-muted, #64748B); text-align: right;
+}
+.v26-ob-more {
+  text-align: center; font-size: 11px; color: var(--ink-muted, #94A3B8);
+  padding: 6px; font-style: italic;
+}
+
+/* v24.26.8: Per-chart sub-filter dropdowns */
+.v26-chart-subfilters {
+  display: flex; gap: 6px; margin: -4px 0 8px;
+}
+.v26-subfilter-select {
+  padding: 4px 8px; border: 1px solid var(--border-soft, #E5E7EB); border-radius: 6px;
+  background: var(--surface, #fff); color: var(--ink, #0F172A); font-size: 11px;
+  font-family: inherit; cursor: pointer;
+}
+
+/* v24.26.8: Stage funnel sidebar legend */
+.v26-stage-legend-side {
+  flex: 0 0 130px;
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 8px 4px 8px 0; min-width: 0;
+  overflow-y: auto;
+}
+.v26-stage-legend-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 8px; border-radius: 8px;
+  background: var(--surface-2, rgba(0,0,0,0.02));
+  border: 1px solid var(--border-soft, transparent);
+  cursor: pointer; transition: background 0.12s ease, transform 0.12s ease;
+}
+.v26-stage-legend-item:hover { background: var(--surface-2, rgba(0,0,0,0.05)); transform: translateX(-1px); }
+.v26-stage-legend-empty { opacity: 0.45; }
+.v26-stage-legend-chip {
+  flex-shrink: 0; width: 12px; height: 12px; border-radius: 3px;
+}
+.v26-stage-legend-text { min-width: 0; flex: 1; }
+.v26-stage-legend-name { font-size: 11px; font-weight: 700; color: var(--ink, #0F172A); line-height: 1.3; }
+.v26-stage-legend-count { font-size: 10px; color: var(--ink-muted, #64748B); margin-top: 1px; line-height: 1.3; }
+
+[data-theme="dark"] .v26-stage-legend-item { background: rgba(255,255,255,0.04); }
+[data-theme="dark"] .v26-stage-legend-item:hover { background: rgba(255,255,255,0.08); }
+
+/* v24.26.8: Deal History modal */
+.v26-history-modal-overlay {
+  position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  animation: v26-fade-in 0.18s ease-out;
+}
+.v26-history-modal {
+  background: var(--surface, #fff); border-radius: 14px; max-width: 540px; width: 90vw;
+  max-height: 80vh; overflow-y: auto; box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+}
+.v26-history-modal-head {
+  padding: 18px 22px; border-bottom: 1px solid var(--border-soft, #E5E7EB);
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+}
+.v26-history-modal-title { font-size: 18px; font-weight: 800; color: var(--ink, #0F172A); }
+.v26-history-modal-sub { font-size: 12px; color: var(--ink-muted, #64748B); margin-top: 4px; }
+.v26-history-modal-close {
+  background: transparent; border: none; cursor: pointer; font-size: 22px;
+  color: var(--ink-muted, #64748B); padding: 0; line-height: 1;
+}
+.v26-history-modal-body { padding: 20px 22px; }
+.v26-history-event {
+  position: relative; padding: 10px 0 14px 28px;
+  border-left: 2px solid var(--border-soft, #E5E7EB);
+  margin-left: 10px;
+}
+.v26-history-event::before {
+  content: ''; position: absolute; left: -7px; top: 14px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--indigo, #4F46E5); border: 2px solid var(--surface, #fff);
+}
+.v26-history-event-now::before { background: #10B981; box-shadow: 0 0 0 4px rgba(16,185,129,0.2); }
+.v26-history-event-date { font-size: 11px; color: var(--ink-muted, #64748B); font-weight: 600; }
+.v26-history-event-action { font-size: 14px; font-weight: 700; color: var(--ink, #0F172A); margin: 2px 0; }
+.v26-history-event-detail { font-size: 12px; color: var(--ink-muted, #64748B); }
+.v26-history-event-gap { font-size: 10px; color: var(--ink-muted, #94A3B8); margin: 4px 0 4px 30px; font-style: italic; }
+.v26-history-modal-foot {
+  padding: 14px 22px; border-top: 1px solid var(--border-soft, #E5E7EB);
+  background: rgba(0,0,0,0.02); border-radius: 0 0 14px 14px;
+  font-size: 12px; color: var(--ink-muted, #64748B);
+}
+
+[data-theme="dark"] .v26-history-modal-foot { background: rgba(255,255,255,0.03); }
+
+/* v24.26.8: India region map zone legend */
 .v26-region-zone-legend {
   display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
   padding: 6px 8px 0;
@@ -7307,31 +7440,31 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           <div class="v26-kpi-sub" id="v26-mine-kpi-rate-sub">— resolved</div>
         </div>
         <div class="v26-kpi v26-kpi-orange">
-          <div class="v26-kpi-label">Closing This Week</div>
+          <div class="v26-kpi-label">Closing This Month</div>
           <div class="v26-kpi-value" id="v26-mine-kpi-week">—</div>
-          <div class="v26-kpi-sub" id="v26-mine-kpi-week-sub">— deals due ≤7 days</div>
+          <div class="v26-kpi-sub" id="v26-mine-kpi-week-sub">— deals due this month</div>
         </div>
       </div>
 
-      <!-- To-do list (3 sections) -->
+      <!-- To-do list (3 sections) — v24.26.8 month-based -->
       <div class="v26-todo-wrap">
         <div class="v26-todo-section">
           <div class="v26-todo-head v26-todo-head-red">
-            <span>🔴 Closing this week</span>
+            <span>🔴 Closing this month</span>
             <span class="v26-todo-count" id="v26-mine-todo-closing-count">0</span>
           </div>
           <div class="v26-todo-body" id="v26-mine-todo-closing">—</div>
         </div>
         <div class="v26-todo-section">
           <div class="v26-todo-head v26-todo-head-yellow">
-            <span>🟡 Stuck &gt;14 days</span>
+            <span>🟡 Closing next month</span>
             <span class="v26-todo-count" id="v26-mine-todo-stuck-count">0</span>
           </div>
           <div class="v26-todo-body" id="v26-mine-todo-stuck">—</div>
         </div>
         <div class="v26-todo-section">
           <div class="v26-todo-head v26-todo-head-grey">
-            <span>⚪ Stale &gt;30 days</span>
+            <span>⚠ Slipped (overdue)</span>
             <span class="v26-todo-count" id="v26-mine-todo-stale-count">0</span>
           </div>
           <div class="v26-todo-body" id="v26-mine-todo-stale">—</div>
@@ -7354,10 +7487,11 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
                 <th data-sort="dealValue" class="v26-th-num">Deal value</th>
                 <th data-sort="closemonth">Close</th>
                 <th data-sort="daysInStage" class="v26-th-num">Days in stage</th>
+                <th style="text-align:center;width:48px;">📜</th>
               </tr>
             </thead>
             <tbody id="v26-mine-tbody">
-              <tr><td colspan="6" style="padding:32px;text-align:center;color:var(--ink-muted);">Loading…</td></tr>
+              <tr><td colspan="7" style="padding:32px;text-align:center;color:var(--ink-muted);">Loading…</td></tr>
             </tbody>
           </table>
         </div>
@@ -7456,7 +7590,7 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
         <div class="v26-chart-card"><div class="v26-chart-head">Outcome split <span class="v26-chart-sub">Open · Won · Lost · On hold</span></div><div class="v26-chart-body" id="v26-chart-outcome"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Top partners <span class="v26-chart-sub">Top 10 by # cases</span></div><div class="v26-chart-body" id="v26-chart-partners"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Top consultants <span class="v26-chart-sub">Top 10 by # cases</span></div><div class="v26-chart-body" id="v26-chart-consultants"></div></div>
-        <div class="v26-chart-card"><div class="v26-chart-head">Most quoted players <span class="v26-chart-sub">BrightSign models recommended · click bar to filter</span></div><div class="v26-chart-body" id="v26-chart-players"></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Most quoted players <span class="v26-chart-sub">BrightSign models recommended</span></div><div class="v26-chart-body" id="v26-chart-players"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Weekly trend <span class="v26-chart-sub">New vs Won · last 12 weeks</span></div><div class="v26-chart-body" id="v26-chart-trend"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Time-to-close <span class="v26-chart-sub">Days from Lead → Won (won deals)</span></div><div class="v26-chart-body" id="v26-chart-ttc"></div></div>
       </div>
@@ -7473,10 +7607,10 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
           </div>
         </div>
         <div class="v26-bottom-card">
-          <div class="v26-bottom-head">Stuck deals <span class="v26-chart-sub">&gt;30 days in current stage · oldest first · click to open</span></div>
+          <div class="v26-bottom-head">Stuck &amp; slipped <span class="v26-chart-sub">overdue closeMonth or no stage change &gt;30d · click to open</span></div>
           <div style="overflow-x:auto;">
             <table class="v26-table v26-table-compact" id="v26-team-stuck">
-              <thead><tr><th>Project</th><th>Stage</th><th class="v26-th-num">₹</th><th class="v26-th-num">Days stuck</th><th>Owner</th></tr></thead>
+              <thead><tr><th>Project</th><th>Stage</th><th class="v26-th-num">₹</th><th>Status</th><th>Owner</th></tr></thead>
               <tbody id="v26-team-stuck-tbody"><tr><td colspan="5" style="padding:18px;text-align:center;color:var(--ink-muted);">Loading…</td></tr></tbody>
             </table>
           </div>
@@ -7504,10 +7638,11 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
                 <th data-sort="closemonth">Close</th>
                 <th data-sort="daysInStage" class="v26-th-num">Days in stage</th>
                 <th data-sort="user">Owner</th>
+                <th style="text-align:center;width:48px;">📜</th>
               </tr>
             </thead>
             <tbody id="v26-team-tbody">
-              <tr><td colspan="8" style="padding:32px;text-align:center;color:var(--ink-muted);">Loading…</td></tr>
+              <tr><td colspan="9" style="padding:32px;text-align:center;color:var(--ink-muted);">Loading…</td></tr>
             </tbody>
           </table>
         </div>
@@ -7893,7 +8028,14 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.7';  // v24.26.7 — THREE FIXES: (1) PRODUCTION BUG: editing a previously-confirmed deal showed 'Confirmed ✓' button stuck disabled — could not re-save changes. Root cause: same DOM button element across navigations; once confirmSelection() set text='Confirmed ✓' + disabled=true on first save, it never reset. Fix: at top of renderResult(), reset state.result.confirmed=false + window._confirmBusy=false + button text/disabled/styles to default. (2) NEW CHART: Most Quoted Players — horizontal bar showing which BrightSign models get recommended most across all deals. Reads entry.model + entry.outdoorModel + advanced selections JSON. Sized to top 10. Owner intel for inventory + product mix decisions. (3) PARTNER/CONSULTANT bar polish: _topNByCount now filters all N/A variants (NA, N/A, n/a, none, nil, —, -) from Top Partners + Top Consultants display so blank/placeholder rows don't clutter the chart. Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.26.8';  // v24.26.8 — MONTH-BASED REVIEW + DEAL HISTORY + 3D MAP + PARTNER/CONSULTANT REDESIGN. Six changes: (1) MY PIPELINE TO-DOS now month-based — was days-based (Closing this week / Stuck >14d / Stale >30d). New labels: Closing this month / Closing next month / Slipped overdue. KPI tile "Closing This Week" → "Closing This Month". (2) TEAM ANALYTICS STUCK DEALS card → "Stuck & slipped" — combines slipped (closeMonth past + open) AND stage-frozen >30d. Sorted slipped-first, status column shows "Slipped · was Apr 2026" or "45d in Lead". (3) DEAL HISTORY MODAL — new 📜 button on every row in My Deals + Team filtered table. Modal shows stage timeline (Created → Stage changes → NOW) with day gaps. Reads from window._stageTransitions if backend has it; falls back to minimal Created+Now view. Footer shows total age + time-in-stage with ⚠ if ≥30d. (4) TOP PARTNERS + TOP CONSULTANTS — replaced flat horizontal bars with KPI strip (Total / Repeat / Pipeline / Top share %) plus ₹-sorted bars. Click row → filters Team Analytics by that entity name (via search). Bars now sorted by ₹ pipeline value, not deal count. (5) 3D INDIA MAP — region chart attempts echarts-gl 3D map3D series with extruded states; falls back to 2D map if echarts-gl not available; falls back to vertical bar if GeoJSON CDN fails. (6) Close month formatting carried forward from v26.6 (May 2026 not ISO). Pairs with backend v25.13.0 — no backend changes.
+// v24.26.7 — Confirm-on-edit fix + Most Quoted Players chart + N/A filter (carried forward).
+// v24.26.6 — Stage funnel + India map retry + close-month format.
+// v24.26.5 — ECharts migration.
+// v24.26.4 — donut → breakdown rows.
+// v24.26.3 — THE bug: window.state undefined in v26 module.
+// v24.26.0–v24.26.2 — Dashboard rebuild (My Pipeline + Team Analytics).
+// v24.26.7 — THREE FIXES: (1) PRODUCTION BUG: editing a previously-confirmed deal showed 'Confirmed ✓' button stuck disabled — could not re-save changes. Root cause: same DOM button element across navigations; once confirmSelection() set text='Confirmed ✓' + disabled=true on first save, it never reset. Fix: at top of renderResult(), reset state.result.confirmed=false + window._confirmBusy=false + button text/disabled/styles to default. (2) NEW CHART: Most Quoted Players — horizontal bar showing which BrightSign models get recommended most across all deals. Reads entry.model + entry.outdoorModel + advanced selections JSON. Sized to top 10. Owner intel for inventory + product mix decisions. (3) PARTNER/CONSULTANT bar polish: _topNByCount now filters all N/A variants (NA, N/A, n/a, none, nil, —, -) from Top Partners + Top Consultants display so blank/placeholder rows don't clutter the chart. Pairs with backend v25.13.0 — no backend changes.
 // v24.26.6 — HOTFIX + POLISH for v24.26.5. (1) Stage funnel was empty in v26.5 because all chart canvases were still <canvas> tags from older code; ECharts needs <div> elements (echarts.init silently fails on canvas). Converted all 8 v26 chart elements to divs in HTML. (2) Stage renderer now sets explicit dom.style.height='260px' before ECharts init. (3) India choropleth: tries 4 different GeoJSON CDN sources in fallback order, with TopoJSON skip + better error handling. Shows "Loading India map…" placeholder during fetch. Falls back gracefully to vertical bar chart if all sources fail. (4) Polish: closemonth display now formats "2026-05-31T18:30:00.000Z" → "May 2026" via _formatCloseMonth helper applied at 3 sites (todo items, My Deals table, Team filtered deals table). Pairs with backend v25.13.0 — no backend changes.
 // v24.26.5 — VISUAL DIVERSITY. Migrated all 8 v26 dashboard charts from Chart.js to ECharts. New chart types: Source split is DONUT WITH CENTER TOTAL (8 deals in middle). Region performance is INDIA CHOROPLETH (lazy-loads GeoJSON from JSDelivr CDN; falls back to vertical bar if CDN fails). Outcome split is STACKED HORIZONTAL BAR (one bar split into 4 colored segments). Stage funnel is VISUAL FUNNEL (each stage narrows). Trend is AREA CHART with gradient fills. Top Partners + Top Consultants stay horizontal bar (already optimal). Time-to-close stays vertical bar histogram (already optimal). Chart.js is KEPT loaded for legacy code paths that still reference window.Chart (cockpit, c3a velocity, etc — they early-return on missing DOM but would throw on missing global). Click-through filters preserved on all new charts. Added window-resize handler that resizes all chart instances. Pairs with backend v25.13.0 — no backend changes.
 // v24.26.4 — VISUAL POLISH. Replaced 3 donut charts (Source split, Region performance, Outcome split) with owner-friendly horizontal breakdown rows. Each row shows: label · proportional bar · count · ₹ · % — no hover required to read values. Click any row to filter Team Analytics. Stage funnel + Top Partners/Consultants + Trend + TTC unchanged. Pairs with backend v25.13.0 — no backend changes.
@@ -24736,6 +24878,38 @@ if(document.readyState==='loading'){
     }
     return s;
   }
+  // v24.26.8: Parse closeMonth/closemonth field → numeric YYYYMM (e.g. 202605) for month math
+  function _parseCloseYM(v){
+    if(v == null || v === '') return 0;
+    const m = String(v).match(/^(\d{4})-(\d{2})/);
+    if(!m) return 0;
+    return parseInt(m[1], 10) * 100 + parseInt(m[2], 10);
+  }
+  // v24.26.8: Current month / next / last as YYYYMM numbers — for month-based filtering
+  function _currentYM(){
+    const d = new Date();
+    return d.getFullYear() * 100 + (d.getMonth() + 1);
+  }
+  function _nextYM(){
+    const d = new Date(); d.setMonth(d.getMonth() + 1);
+    return d.getFullYear() * 100 + (d.getMonth() + 1);
+  }
+  function _lastYM(){
+    const d = new Date(); d.setMonth(d.getMonth() - 1);
+    return d.getFullYear() * 100 + (d.getMonth() + 1);
+  }
+  // v24.26.8: Days since stage last changed. Uses stageEnteredAt if backend provides; falls back to ts.
+  // Returns 0 if no timestamp data exists.
+  function _daysInCurrentStage(e){
+    if(!e) return 0;
+    const cand = e.stageEnteredAt || e.stageChangedAt;
+    if(cand){
+      const d = new Date(cand);
+      if(!isNaN(d.getTime())) return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+    }
+    // fallback: use deal creation timestamp
+    return _daysSince(_parseTs(e));
+  }
   function _readDealValue(e){
     if(!e) return 0;
     const v = e.dealValueINR != null ? e.dealValueINR : (e.dealValue != null ? e.dealValue : (e.dealvalueinr != null ? e.dealvalueinr : 0));
@@ -25092,16 +25266,15 @@ if(document.readyState==='loading'){
     const wonAll = resolved.filter(function(e){ return String(e.outcome || '').toLowerCase() === 'won'; });
     const winRate = resolved.length ? Math.round((wonAll.length / resolved.length) * 100) : null;
     // Closing this week (≤7 days from today)
-    const sevenDaysOut = Date.now() + 7 * 24 * 60 * 60 * 1000;
-    const closingWeek = open.filter(function(e){
-      const cm = e.closemonth || e.closeMonth;
-      if(!cm) return false;
-      // Parse YYYY-MM
-      const m = String(cm).match(/^(\d{4})-(\d{2})/);
-      if(!m) return false;
-      const lastDay = new Date(parseInt(m[1]), parseInt(m[2]), 0).getTime();
-      return lastDay <= sevenDaysOut;
-    });
+    // v24.26.8: MONTH-BASED to-do segmentation (was days-based — wrong for Cavitak's monthly cadence).
+    //   Closing this month = closeMonth = current YYYYMM
+    //   Closing next month = closeMonth = next YYYYMM
+    //   Slipped (overdue)  = closeMonth < current YYYYMM AND outcome=open
+    const curYM = _currentYM();
+    const nxtYM = _nextYM();
+    const closingThisMonth = open.filter(function(e){ return _parseCloseYM(e.closemonth || e.closeMonth) === curYM; });
+    const closingNextMonth = open.filter(function(e){ return _parseCloseYM(e.closemonth || e.closeMonth) === nxtYM; });
+    const slipped = open.filter(function(e){ const ym = _parseCloseYM(e.closemonth || e.closeMonth); return ym > 0 && ym < curYM; });
 
     // Paint KPIs
     _setText('v26-mine-kpi-open', _shortINR(openVal));
@@ -25110,15 +25283,13 @@ if(document.readyState==='loading'){
     _setText('v26-mine-kpi-won-sub', wonThisQ.length + ' win' + (wonThisQ.length === 1 ? '' : 's'));
     _setText('v26-mine-kpi-rate', winRate == null ? '—' : (winRate + '%'));
     _setText('v26-mine-kpi-rate-sub', resolved.length + ' resolved');
-    _setText('v26-mine-kpi-week', closingWeek.length);
-    _setText('v26-mine-kpi-week-sub', closingWeek.length === 0 ? 'nothing due ≤7 days' : 'deals due ≤7 days');
+    _setText('v26-mine-kpi-week', closingThisMonth.length);
+    _setText('v26-mine-kpi-week-sub', closingThisMonth.length === 0 ? 'nothing due this month' : 'closing this month');
 
-    // To-do lists
-    _renderTodoSection('v26-mine-todo-closing', 'v26-mine-todo-closing-count', closingWeek);
-    const stuck = open.filter(function(e){ return _daysInStage(e) >= 14 && _daysInStage(e) < 30; });
-    _renderTodoSection('v26-mine-todo-stuck', 'v26-mine-todo-stuck-count', stuck);
-    const stale = open.filter(function(e){ return _daysInStage(e) >= 30; });
-    _renderTodoSection('v26-mine-todo-stale', 'v26-mine-todo-stale-count', stale);
+    // v24.26.8: To-do lists — month-based segments
+    _renderTodoSection('v26-mine-todo-closing', 'v26-mine-todo-closing-count', closingThisMonth);
+    _renderTodoSection('v26-mine-todo-stuck', 'v26-mine-todo-stuck-count', closingNextMonth);
+    _renderTodoSection('v26-mine-todo-stale', 'v26-mine-todo-stale-count', slipped);
 
     // Deals table
     _renderMyTable(mine);
@@ -25176,13 +25347,14 @@ if(document.readyState==='loading'){
     tbody.innerHTML = sorted.map(function(e){
       const days = _daysInStage(e);
       const stuckCls = days >= 30 ? ' style="color:#DC2626;font-weight:700;"' : (days >= 14 ? ' style="color:#D97706;font-weight:600;"' : '');
-      return '<tr onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')">' +
-             '<td>' + _esc(e.project || '—') + '</td>' +
-             '<td>' + _esc(e.enduser || '—') + '</td>' +
-             '<td><span class="v26-stage-badge v26-stage-' + _esc(String(e.stage || '').toLowerCase()) + '">' + _esc(e.stage || '—') + '</span></td>' +
-             '<td class="v26-th-num">' + _formatINR(_readDealValue(e)) + '</td>' +
-             '<td>' + _esc(_formatCloseMonth(e.closemonth)) + '</td>' +
-             '<td class="v26-th-num"' + stuckCls + '>' + days + 'd</td>' +
+      return '<tr>' +
+             '<td onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')" style="cursor:pointer;">' + _esc(e.project || '—') + '</td>' +
+             '<td onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')" style="cursor:pointer;">' + _esc(e.enduser || '—') + '</td>' +
+             '<td onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')" style="cursor:pointer;"><span class="v26-stage-badge v26-stage-' + _esc(String(e.stage || '').toLowerCase()) + '">' + _esc(e.stage || '—') + '</span></td>' +
+             '<td class="v26-th-num" onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')" style="cursor:pointer;">' + _formatINR(_readDealValue(e)) + '</td>' +
+             '<td onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')" style="cursor:pointer;">' + _esc(_formatCloseMonth(e.closemonth)) + '</td>' +
+             '<td class="v26-th-num" onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')" style="cursor:pointer;"' + stuckCls + '>' + days + 'd</td>' +
+             '<td style="text-align:center;"><button onclick="event.stopPropagation();bsv26_openDealHistory(\'' + _esc(e.refId || '') + '\')" title="View deal journey" style="background:transparent;border:1px solid var(--border-soft);border-radius:6px;padding:2px 8px;cursor:pointer;font-size:14px;">📜</button></td>' +
              '</tr>';
     }).join('');
   }
@@ -25332,38 +25504,90 @@ if(document.readyState==='loading'){
   }
 
   /* ────────────────────── Stage funnel — VISUAL FUNNEL ────────────────────── */
+  /* ────────────────────── Stage funnel — FIXED ORDER + BIG NUMBERS + LEGEND ────────────────────── */
+  // v24.26.8: Three fixes for v26.7 funnel:
+  //   1. ORDER: Always Lead→Opportunity→Proposal→Negotiation→Order regardless of count
+  //      (sales pipeline progression — not a "biggest first" ranking)
+  //   2. NUMBERS: Big 24px count + small stage name below (number-focused per request)
+  //   3. LEGEND: Render sidebar chips next to funnel showing all stages + counts + ₹
   function _renderChartStage(deals){
     _destroyChart('stage');
     const dom = document.getElementById('v26-chart-stage');
     if(!dom) return;
     dom.innerHTML = '';
-    dom.style.height = '260px';
+    dom.style.height = '300px';
     const open = deals.filter(function(e){ return String(e.outcome || '').toLowerCase() === 'open'; });
+    // Build data in PIPELINE ORDER, not count order. Stages with 0 deals omitted from funnel
+    // (ECharts funnel can't render 0-value), but appear in legend.
     const stageData = STAGES_OPEN.map(function(s){
       const stageDeals = open.filter(function(e){ return e.stage === s; });
       const val = stageDeals.reduce(function(t, e){ return t + _readDealValue(e); }, 0);
       return { name: s, value: stageDeals.length, dealVal: val };
-    }).filter(function(d){ return d.value > 0; });
-    if(!stageData.length){
+    });
+    const funnelData = stageData.filter(function(d){ return d.value > 0; });
+    if(!funnelData.length){
       dom.innerHTML = '<div style="padding:60px;text-align:center;color:var(--ink-muted);">No open deals to chart</div>';
       return;
     }
-    const inst = _initECharts('v26-chart-stage');
-    if(!inst) return;
+
+    // Layout: split into 2 columns — funnel chart (left ~70%) + legend sidebar (right ~30%)
+    dom.style.display = 'flex';
+    dom.style.flexDirection = 'row';
+    dom.style.gap = '8px';
+    dom.style.alignItems = 'stretch';
+    const funnelHost = document.createElement('div');
+    funnelHost.style.flex = '1 1 70%';
+    funnelHost.style.minWidth = '0';
+    funnelHost.style.height = '300px';
+    funnelHost.id = 'v26-chart-stage-funnel-host';
+    dom.appendChild(funnelHost);
+    const legendHost = document.createElement('div');
+    legendHost.className = 'v26-stage-legend-side';
+    dom.appendChild(legendHost);
+
+    const stageColors = { Lead: '#6366F1', Opportunity: '#7C3AED', Proposal: '#A855F7', Negotiation: '#C026D3', Order: '#DB2777' };
+    const inst = echarts.init(funnelHost, null, { renderer: 'svg' });
     inst.setOption({
-      tooltip: { trigger: 'item', formatter: function(p){ return p.name + ': ' + p.value + ' deals · ' + _shortINR(p.data.dealVal); } },
+      tooltip: { trigger: 'item', formatter: function(p){ return p.name + ': ' + p.value + ' deal' + (p.value === 1 ? '' : 's') + ' · ' + _shortINR(p.data.dealVal); } },
       series: [{
         type: 'funnel', left: '8%', right: '8%', top: 12, bottom: 8,
-        sort: 'descending', gap: 4, minSize: '20%', maxSize: '100%',
-        label: { show: true, position: 'inside', formatter: function(p){ return p.name + '\n' + p.value + ' deal' + (p.value === 1 ? '' : 's'); }, color: '#fff', fontWeight: 700, fontSize: 12 },
+        sort: 'none',  // CRITICAL: 'none' = render in data order (pipeline order), not by count
+        gap: 4, minSize: '20%', maxSize: '100%',
+        label: {
+          show: true, position: 'inside',
+          formatter: function(p){ return '{n|' + p.value + '}\n{s|' + p.name + '}'; },
+          rich: {
+            n: { fontSize: 24, fontWeight: 700, color: '#fff', lineHeight: 28 },
+            s: { fontSize: 12, color: '#fff', opacity: 0.92, lineHeight: 16, fontWeight: 500 }
+          }
+        },
         labelLine: { show: false },
         itemStyle: { borderColor: '#fff', borderWidth: 2 },
-        data: stageData,
-        color: ['#6366F1','#7C3AED','#A855F7','#C026D3','#DB2777']
+        data: funnelData.map(function(d){ return { name: d.name, value: d.value, dealVal: d.dealVal, itemStyle: { color: stageColors[d.name] || '#94A3B8' } }; })
       }]
     });
     _v26Charts.stage = inst;
-    _wireClickFilter(inst, 'stage', function(p){ return p.name; });
+    inst.on('click', function(p){ if(!p || !p.name) return; const f = _readFilterState(); f.stage = p.name; _saveFilterState(f); _restoreFilterUI(); _renderTeam(); });
+
+    // Build sidebar legend — all 5 stages, color chip + name + count + ₹
+    legendHost.innerHTML = stageData.map(function(d){
+      const color = stageColors[d.name] || '#94A3B8';
+      const isEmpty = d.value === 0;
+      return '<div class="v26-stage-legend-item' + (isEmpty ? ' v26-stage-legend-empty' : '') + '" data-stage="' + _esc(d.name) + '">' +
+        '<span class="v26-stage-legend-chip" style="background:' + color + ';"></span>' +
+        '<div class="v26-stage-legend-text">' +
+          '<div class="v26-stage-legend-name">' + _esc(d.name) + '</div>' +
+          '<div class="v26-stage-legend-count">' + d.value + ' · ' + _shortINR(d.dealVal) + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    legendHost.querySelectorAll('.v26-stage-legend-item').forEach(function(item){
+      item.addEventListener('click', function(){
+        const stage = item.getAttribute('data-stage');
+        if(!stage) return;
+        const f = _readFilterState(); f.stage = stage; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
+      });
+    });
   }
 
   /* ────────────────────── Region — INDIA CHOROPLETH (lazy-load) with vertical-bar fallback ────────────────────── */
@@ -25420,7 +25644,7 @@ if(document.readyState==='loading'){
     const dom = document.getElementById('v26-chart-region');
     if(!dom) return;
     dom.innerHTML = '';
-    dom.style.height = '300px';
+    dom.style.height = '320px';
     // Show "loading map..." while CDN fetch happens
     dom.innerHTML = '<div style="padding:80px;text-align:center;color:var(--ink-muted);font-size:13px;">Loading India map…</div>';
     // Aggregate per state
@@ -25436,30 +25660,70 @@ if(document.readyState==='loading'){
     _loadIndiaMap().then(function(ok){
       if(!ok){ _renderRegionFallbackBar(deals, byZone); return; }
       dom.innerHTML = '';
+      // v24.26.8: Detect echarts-gl availability for 3D rendering. Falls back to 2D map if not loaded.
+      const has3D = typeof echarts !== 'undefined' && echarts.GLController != null;
+      const hasGL = (typeof echarts !== 'undefined' && typeof window.echartsgl !== 'undefined') ||
+                    (typeof echarts !== 'undefined' && Object.keys(echarts).indexOf('GLController') >= 0) ||
+                    (typeof echarts !== 'undefined' && echarts.use && echarts.getMap);  // generic check
+      // Best detection: try registering and see if map3D exists
+      const try3D = typeof echarts !== 'undefined' && echarts.getMap('India');
       const statesData = Object.keys(byState).map(function(s){
         const zone = _STATE_ZONE_MAP[s];
         return { name: s, value: byState[s], zone: zone };
       });
+      const maxVal = Math.max.apply(null, Object.values(byState).concat([1]));
       const inst = _initECharts('v26-chart-region');
       if(!inst){ _renderRegionFallbackBar(deals, byZone); return; }
-      inst.setOption({
-        tooltip: { trigger: 'item', formatter: function(p){
-          if(p.data && p.data.zone){ return p.name + ' (' + p.data.zone + '): ' + p.value + ' deals'; }
-          if(p.value){ return p.name + ': ' + p.value + ' deals'; }
-          return p.name + ': no deals';
-        }},
-        visualMap: { show: false, min: 0, max: Math.max.apply(null, Object.values(byState).concat([1])), inRange: { color: ['#E0E7FF', '#6366F1', '#3730A3'] } },
-        series: [{
-          type: 'map', map: 'India', roam: false, aspectScale: 0.85,
-          itemStyle: { borderColor: '#94A3B8', borderWidth: 0.5, areaColor: '#F8FAFC' },
-          emphasis: { itemStyle: { borderColor: '#0F172A', borderWidth: 1.5, areaColor: '#FBBF24' }, label: { show: true, color: '#0F172A', fontWeight: 700, fontSize: 11 } },
-          select: { itemStyle: { areaColor: '#FCD34D' } },
-          label: { show: false },
-          data: statesData
-        }]
-      });
+      // Try 3D map first; if echarts-gl loaded the series will render. Otherwise ECharts will warn and we fall back.
+      let used3D = false;
+      try {
+        // Probe: setOption with map3D — if echarts-gl is registered, the renderer accepts it
+        if(typeof echartsgl !== 'undefined' || (echarts.registerCoordinateSystem && echarts.getCoordinateSystemCreators && echarts.getCoordinateSystemCreators().geo3D)){
+          inst.setOption({
+            tooltip: { trigger: 'item', formatter: function(p){
+              if(p.data && p.data.zone){ return p.name + ' (' + p.data.zone + '): ' + (p.value || 0) + ' deals'; }
+              if(p.value){ return p.name + ': ' + p.value + ' deals'; }
+              return p.name + ': no deals';
+            }},
+            visualMap: { show: false, min: 0, max: maxVal, inRange: { color: ['#E0E7FF', '#6366F1', '#3730A3'] } },
+            series: [{
+              type: 'map3D', map: 'India',
+              boxDepth: 65, boxHeight: 8, boxWidth: 100,
+              regionHeight: 3,  // base height of all states
+              shading: 'realistic',
+              realisticMaterial: { roughness: 0.6, metalness: 0 },
+              light: { main: { intensity: 1.4, shadow: true, alpha: 50, beta: 30 }, ambient: { intensity: 0.4 } },
+              postEffect: { enable: true, SSAO: { enable: true, radius: 1, intensity: 1.2 } },
+              viewControl: { distance: 110, alpha: 50, beta: 0, autoRotate: false, panSensitivity: 0, zoomSensitivity: 1, rotateSensitivity: 1 },
+              itemStyle: { borderWidth: 1, borderColor: '#fff', areaColor: '#E0E7FF' },
+              label: { show: false, textStyle: { color: '#0F172A', fontSize: 10, fontWeight: 700 } },
+              emphasis: { label: { show: true }, itemStyle: { areaColor: '#FBBF24' } },
+              data: statesData
+            }]
+          });
+          used3D = true;
+        }
+      } catch(err){ console.warn('[v26.8] 3D India map failed, falling back to 2D:', err.message); used3D = false; }
+      if(!used3D){
+        // Fallback to 2D map (still works, just flat)
+        inst.setOption({
+          tooltip: { trigger: 'item', formatter: function(p){
+            if(p.data && p.data.zone){ return p.name + ' (' + p.data.zone + '): ' + p.value + ' deals'; }
+            if(p.value){ return p.name + ': ' + p.value + ' deals'; }
+            return p.name + ': no deals';
+          }},
+          visualMap: { show: false, min: 0, max: maxVal, inRange: { color: ['#E0E7FF', '#6366F1', '#3730A3'] } },
+          series: [{
+            type: 'map', map: 'India', roam: false, aspectScale: 0.85,
+            itemStyle: { borderColor: '#94A3B8', borderWidth: 0.5, areaColor: '#F8FAFC' },
+            emphasis: { itemStyle: { borderColor: '#0F172A', borderWidth: 1.5, areaColor: '#FBBF24' }, label: { show: true, color: '#0F172A', fontWeight: 700, fontSize: 11 } },
+            label: { show: false },
+            data: statesData
+          }]
+        });
+      }
       _v26Charts.region = inst;
-      // Click a state → zone-level filter
+      // Click a state → zone-level filter (works for both 2D and 3D)
       inst.on('click', function(params){
         const zone = _STATE_ZONE_MAP[params.name];
         if(!zone) return;
@@ -25602,38 +25866,118 @@ if(document.readyState==='loading'){
     });
     _v26Charts[key] = inst;
   }
+  /* ────────────────────── Top Partners + Top Consultants — v24.26.8 OPTION B ──────────────────────
+   * KPI STRIP (4 cards) + ₹-sorted bars. Tells the concentration & pipeline story.
+   *   Total = unique entities · Repeat = entities with 2+ deals · Pipeline = ₹ total · Top share = % from #1
+   * Bars sorted by ₹ pipeline (not count). Click row → filters to that partner/consultant.
+   * Why ditched "Top N by count": at small data scale all bars equal-length, useless.
+   *   ₹ sorting reveals StreamSoft's ₹32.6L vs Regale's ₹0.5L — actionable. */
+  function _aggregateByEntity(deals, key){
+    // Returns { name: { count, value, lastTs } }
+    const acc = {};
+    deals.forEach(function(e){
+      let k = String(e[key] || '').trim();
+      if(!k) return;
+      const kLower = k.toLowerCase().replace(/[\s\.\-\/]/g, '');
+      if(kLower === '' || kLower === 'na' || kLower === 'none' || kLower === 'nil' || k === '—' || k === '-') return;
+      if(!acc[k]) acc[k] = { count: 0, value: 0, lastTs: 0 };
+      acc[k].count++;
+      acc[k].value += _readDealValue(e);
+      const ts = _parseTs(e);
+      if(ts > acc[k].lastTs) acc[k].lastTs = ts;
+    });
+    return acc;
+  }
+  function _renderEntityCardOptionB(domId, deals, key, accentColor){
+    const host = document.getElementById(domId);
+    if(!host) return;
+    host.innerHTML = '';
+    host.style.height = 'auto';
+    host.style.minHeight = '260px';
+    const agg = _aggregateByEntity(deals, key);
+    const entities = Object.keys(agg).map(function(name){
+      return { name: name, count: agg[name].count, value: agg[name].value, lastTs: agg[name].lastTs };
+    }).sort(function(a, b){ return b.value - a.value; });
+
+    if(!entities.length){
+      host.innerHTML = '<div style="padding:60px;text-align:center;color:var(--ink-muted);font-size:13px;">No data yet</div>';
+      return;
+    }
+
+    const total = entities.length;
+    const repeat = entities.filter(function(e){ return e.count >= 2; }).length;
+    const pipeline = entities.reduce(function(s, e){ return s + e.value; }, 0);
+    const topPct = pipeline > 0 ? Math.round((entities[0].value / pipeline) * 100) : 0;
+    const topName = entities[0].name;
+    const maxVal = entities[0].value || 1;
+
+    // Build KPI strip
+    let html = '<div class="v26-ob-kpi-strip">' +
+      '<div class="v26-ob-kpi"><div class="v26-ob-kpi-num">' + total + '</div><div class="v26-ob-kpi-lbl">Total</div><div class="v26-ob-kpi-sub">unique</div></div>' +
+      '<div class="v26-ob-kpi"><div class="v26-ob-kpi-num">' + repeat + '</div><div class="v26-ob-kpi-lbl">Repeat</div><div class="v26-ob-kpi-sub">2+ deals</div></div>' +
+      '<div class="v26-ob-kpi"><div class="v26-ob-kpi-num" style="font-size:18px;">' + _shortINR(pipeline) + '</div><div class="v26-ob-kpi-lbl">Pipeline</div><div class="v26-ob-kpi-sub">total ₹</div></div>' +
+      '<div class="v26-ob-kpi"><div class="v26-ob-kpi-num">' + topPct + '%</div><div class="v26-ob-kpi-lbl">Top share</div><div class="v26-ob-kpi-sub" title="' + _esc(topName) + '">' + _esc(topName.length > 12 ? topName.substring(0, 11) + '…' : topName) + '</div></div>' +
+      '</div>';
+
+    // Build bars (top 8 to fit nicely)
+    html += '<div class="v26-ob-list">';
+    entities.slice(0, 8).forEach(function(e){
+      const pct = (e.value / maxVal) * 100;
+      html += '<div class="v26-ob-row" data-name="' + _esc(e.name) + '" title="Click to filter to ' + _esc(e.name) + '">' +
+        '<div class="v26-ob-row-name">' + _esc(e.name) + '</div>' +
+        '<div class="v26-ob-row-bar"><div class="v26-ob-row-fill" style="width:' + pct.toFixed(1) + '%;background:' + accentColor + ';"></div></div>' +
+        '<div class="v26-ob-row-val">' + _shortINR(e.value) + '</div>' +
+        '<div class="v26-ob-row-cnt">' + e.count + ' deal' + (e.count === 1 ? '' : 's') + '</div>' +
+        '</div>';
+    });
+    if(entities.length > 8){
+      html += '<div class="v26-ob-more">+ ' + (entities.length - 8) + ' more</div>';
+    }
+    html += '</div>';
+
+    host.innerHTML = html;
+
+    // Click rows → filter
+    host.querySelectorAll('.v26-ob-row').forEach(function(row){
+      row.addEventListener('click', function(){
+        const name = row.getAttribute('data-name');
+        if(!name) return;
+        // Reuse search filter — sets the search to entity name
+        const f = _readFilterState();
+        f.search = name;
+        _saveFilterState(f);
+        _restoreFilterUI();
+        _renderTeam();
+      });
+    });
+  }
   function _renderChartPartners(deals){
-    const dom = document.getElementById('v26-chart-partners');
-    if(!dom) return;
-    dom.style.height = '260px';
-    _renderHorizBars('v26-chart-partners', _topNByCount(deals, 'partner', 10), '#3B82F6', 'partners');
+    _destroyChart('partners');
+    _renderEntityCardOptionB('v26-chart-partners', deals, 'partner', '#3B82F6');
   }
   function _renderChartConsultants(deals){
-    const dom = document.getElementById('v26-chart-consultants');
-    if(!dom) return;
-    dom.style.height = '260px';
-    _renderHorizBars('v26-chart-consultants', _topNByCount(deals, 'consultant', 10), '#8B5CF6', 'consultants');
+    _destroyChart('consultants');
+    _renderEntityCardOptionB('v26-chart-consultants', deals, 'consultant', '#8B5CF6');
   }
 
   /* ────────────────────── Most Quoted Players — HORIZONTAL BAR ────────────────────── */
   // v24.26.7: Product-mix intel for Cavitak ownership. Shows which BrightSign models
   // are being recommended most. Reads from entry.model + entry.outdoorModel + advanced
   // selections JSON (when deals were saved as Custom BOQ).
+  // v24.26.8: REVERTED Open/Won split — current chart is fine; main filters above
+  //           cover region/sales drill-down.
   function _renderChartPlayers(deals){
     _destroyChart('players');
     const dom = document.getElementById('v26-chart-players');
     if(!dom) return;
     dom.innerHTML = '';
     dom.style.height = '260px';
-    // Aggregate model counts across all deals
     const modelCounts = {};
     deals.forEach(function(e){
-      // Standard guided-mode fields
       const m1 = String(e.model || '').trim();
       const m2 = String(e.outdoorModel || '').trim();
       if(m1 && m1.toLowerCase() !== 'na'){ modelCounts[m1] = (modelCounts[m1] || 0) + 1; }
       if(m2 && m2.toLowerCase() !== 'na' && m2 !== m1){ modelCounts[m2] = (modelCounts[m2] || 0) + 1; }
-      // Advanced/Custom BOQ — JSON list of model selections with qty
       try {
         const advJson = e.advancedSelectionsJson || e.advancedSelectionsJSON || '';
         if(advJson && String(advJson).trim()){
@@ -25810,18 +26154,37 @@ if(document.readyState==='loading'){
   }
 
   // ---- Stuck deals ----
+  // v24.26.8: Stuck deals = SLIPPED (closeMonth past) OR stage unchanged >30 days.
+  // Stale by Cavitak's monthly cadence. Sorted: slipped first, then by days-in-stage desc.
   function _renderTeamStuck(deals){
     const tbody = document.getElementById('v26-team-stuck-tbody');
     if(!tbody) return;
+    const curYM = _currentYM();
     const stuck = deals.filter(function(e){
-      return String(e.outcome || '').toLowerCase() === 'open' && _daysInStage(e) >= 30;
-    }).sort(function(a, b){ return _daysInStage(b) - _daysInStage(a); }).slice(0, 10);
+      if(String(e.outcome || '').toLowerCase() !== 'open') return false;
+      const ym = _parseCloseYM(e.closemonth || e.closeMonth);
+      const slipped = ym > 0 && ym < curYM;
+      const stageFrozen = _daysInCurrentStage(e) >= 30;
+      return slipped || stageFrozen;
+    }).sort(function(a, b){
+      const ymA = _parseCloseYM(a.closemonth || a.closeMonth);
+      const ymB = _parseCloseYM(b.closemonth || b.closeMonth);
+      const slipA = ymA > 0 && ymA < curYM;
+      const slipB = ymB > 0 && ymB < curYM;
+      if(slipA && !slipB) return -1;
+      if(!slipA && slipB) return 1;
+      // Both slipped or both stage-frozen — sort by days-in-stage desc
+      return _daysInCurrentStage(b) - _daysInCurrentStage(a);
+    }).slice(0, 10);
     if(!stuck.length){
       tbody.innerHTML = '<tr><td colspan="5" style="padding:18px;text-align:center;color:var(--ink-muted);">No leakage 🔥</td></tr>';
       return;
     }
     tbody.innerHTML = stuck.map(function(e){
-      const days = _daysInStage(e);
+      const days = _daysInCurrentStage(e);
+      const ym = _parseCloseYM(e.closemonth || e.closeMonth);
+      const isSlipped = ym > 0 && ym < curYM;
+      const reason = isSlipped ? ('Slipped · was ' + _formatCloseMonth(e.closemonth || e.closeMonth)) : (days + 'd in ' + (e.stage || '—'));
       const owner = e.salesPerson || e.loginName || '—';
       let ownerDisplay = owner;
       if(Array.isArray(window._allUsers)){
@@ -25832,7 +26195,7 @@ if(document.readyState==='loading'){
         '<td>' + _esc(e.project || '—') + '</td>' +
         '<td><span class="v26-stage-badge v26-stage-' + _esc(String(e.stage || '').toLowerCase()) + '">' + _esc(e.stage || '—') + '</span></td>' +
         '<td class="v26-th-num">' + _shortINR(_readDealValue(e)) + '</td>' +
-        '<td class="v26-th-num" style="color:#DC2626;font-weight:700;">' + days + 'd</td>' +
+        '<td style="color:#DC2626;font-weight:700;font-size:11px;">' + _esc(reason) + '</td>' +
         '<td>' + _esc(ownerDisplay) + '</td>' +
         '</tr>';
     }).join('');
@@ -25845,7 +26208,7 @@ if(document.readyState==='loading'){
     if(counter) counter.textContent = deals.length + ' deal' + (deals.length === 1 ? '' : 's');
     if(!tbody) return;
     if(!deals.length){
-      tbody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:var(--ink-muted);">No deals match these filters.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="padding:32px;text-align:center;color:var(--ink-muted);">No deals match these filters.</td></tr>';
       return;
     }
     const sortCol = _activeSort.team.col;
@@ -25868,15 +26231,16 @@ if(document.readyState==='loading'){
         const u = window._allUsers.find(function(x){ return String(x.loginName || '').toLowerCase() === String(owner).toLowerCase(); });
         if(u && u.fullName) ownerDisplay = u.fullName;
       }
-      return '<tr onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')">' +
-        '<td>' + _esc(e.project || '—') + '</td>' +
-        '<td>' + _esc(e.enduser || '—') + '</td>' +
-        '<td>' + _esc(e.partner || '—') + '</td>' +
-        '<td><span class="v26-stage-badge v26-stage-' + _esc(String(e.stage || '').toLowerCase()) + '">' + _esc(e.stage || '—') + '</span></td>' +
-        '<td class="v26-th-num">' + _formatINR(_readDealValue(e)) + '</td>' +
-        '<td>' + _esc(_formatCloseMonth(e.closemonth)) + '</td>' +
-        '<td class="v26-th-num"' + stuckCls + '>' + days + 'd</td>' +
-        '<td>' + _esc(ownerDisplay) + '</td>' +
+      return '<tr>' +
+        '<td onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')" style="cursor:pointer;">' + _esc(e.project || '—') + '</td>' +
+        '<td onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')" style="cursor:pointer;">' + _esc(e.enduser || '—') + '</td>' +
+        '<td onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')" style="cursor:pointer;">' + _esc(e.partner || '—') + '</td>' +
+        '<td onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')" style="cursor:pointer;"><span class="v26-stage-badge v26-stage-' + _esc(String(e.stage || '').toLowerCase()) + '">' + _esc(e.stage || '—') + '</span></td>' +
+        '<td class="v26-th-num" onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')" style="cursor:pointer;">' + _formatINR(_readDealValue(e)) + '</td>' +
+        '<td onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')" style="cursor:pointer;">' + _esc(_formatCloseMonth(e.closemonth)) + '</td>' +
+        '<td class="v26-th-num" onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')" style="cursor:pointer;"' + stuckCls + '>' + days + 'd</td>' +
+        '<td onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')" style="cursor:pointer;">' + _esc(ownerDisplay) + '</td>' +
+        '<td style="text-align:center;"><button onclick="event.stopPropagation();bsv26_openDealHistory(\'' + _esc(e.refId || '') + '\')" title="View deal journey" style="background:transparent;border:1px solid var(--border-soft);border-radius:6px;padding:2px 8px;cursor:pointer;font-size:14px;">📜</button></td>' +
         '</tr>';
     }).join('');
   }
@@ -25946,6 +26310,88 @@ if(document.readyState==='loading'){
       });
     });
   }
+
+  // v24.26.8: Deal History modal — shows stage journey for one deal.
+  // Reads from window._stageTransitions if backend has it, else builds a minimal
+  // 2-event view (created → current stage) from the deal record alone.
+  window.bsv26_openDealHistory = function(refId){
+    if(!refId) return;
+    const all = _readEntries();
+    const deal = all.find(function(e){ return String(e.refId) === String(refId); });
+    if(!deal){ return; }
+    // Build event list. Each event: { date, action, detail }.
+    // Source 1: window._stageTransitions (if populated by backend) — preferred
+    // Source 2: deal record alone — minimal "created" + "current stage"
+    let events = [];
+    if(Array.isArray(window._stageTransitions)){
+      const trans = window._stageTransitions.filter(function(t){ return String(t.refId || '') === String(refId); });
+      trans.sort(function(a, b){ return new Date(a.timestamp || 0) - new Date(b.timestamp || 0); });
+      trans.forEach(function(t){
+        events.push({ date: new Date(t.timestamp), action: 'STAGE CHANGED', detail: (t.fromStage || '?') + ' → ' + (t.toStage || '?') + (t.user ? ' · by ' + t.user : ''), notes: t.notes || '' });
+      });
+    }
+    // Always prepend Created event
+    const createdMs = _parseTs(deal);
+    if(createdMs){
+      events.unshift({ date: new Date(createdMs), action: 'CREATED', detail: 'Initial stage: ' + (deal.stage || 'Lead') + (deal.loginName ? ' · by ' + deal.loginName : '') });
+    }
+    // If no transitions and deal stage isn't Lead, add a synthetic note
+    if(events.length <= 1 && deal.stage && deal.stage !== 'Lead'){
+      events.push({ date: new Date(), action: 'CURRENT STAGE', detail: deal.stage + ' (transition history not tracked yet)' });
+    }
+    // Render
+    let body = '';
+    let prevDate = null;
+    events.forEach(function(ev, i){
+      if(prevDate){
+        const days = Math.floor((ev.date.getTime() - prevDate.getTime()) / (1000*60*60*24));
+        if(days > 0){ body += '<div class="v26-history-event-gap">↓ ' + days + ' day' + (days === 1 ? '' : 's') + '</div>'; }
+      }
+      const dateLabel = ev.date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      body += '<div class="v26-history-event">' +
+        '<div class="v26-history-event-date">' + _esc(dateLabel) + '</div>' +
+        '<div class="v26-history-event-action">' + _esc(ev.action) + '</div>' +
+        '<div class="v26-history-event-detail">' + _esc(ev.detail) + '</div>' +
+        (ev.notes ? '<div class="v26-history-event-detail" style="margin-top:3px;font-style:italic;">"' + _esc(ev.notes) + '"</div>' : '') +
+        '</div>';
+      prevDate = ev.date;
+    });
+    // Add NOW marker
+    if(prevDate){
+      const daysSinceLast = Math.floor((Date.now() - prevDate.getTime()) / (1000*60*60*24));
+      if(daysSinceLast > 0){ body += '<div class="v26-history-event-gap">↓ ' + daysSinceLast + ' day' + (daysSinceLast === 1 ? '' : 's') + '</div>'; }
+    }
+    body += '<div class="v26-history-event v26-history-event-now">' +
+      '<div class="v26-history-event-date">Today · ' + new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) + '</div>' +
+      '<div class="v26-history-event-action">NOW</div>' +
+      '<div class="v26-history-event-detail">Currently in: ' + _esc(deal.stage || 'Lead') + ' · Outcome: ' + _esc(deal.outcome || 'open') + '</div>' +
+      '</div>';
+
+    // Footer summary
+    const totalAge = createdMs ? Math.floor((Date.now() - createdMs) / (1000*60*60*24)) : 0;
+    const daysInCurrentStage = _daysInCurrentStage(deal);
+    const footerNote = 'Total deal age: ' + totalAge + ' day' + (totalAge === 1 ? '' : 's') +
+      ' · Time in current stage: ' + daysInCurrentStage + ' day' + (daysInCurrentStage === 1 ? '' : 's') +
+      (daysInCurrentStage >= 30 ? ' ⚠' : '');
+
+    // Build the modal
+    const overlay = document.createElement('div');
+    overlay.className = 'v26-history-modal-overlay';
+    overlay.innerHTML =
+      '<div class="v26-history-modal" onclick="event.stopPropagation()">' +
+        '<div class="v26-history-modal-head">' +
+          '<div>' +
+            '<div class="v26-history-modal-title">📜 ' + _esc(deal.project || '(no project name)') + '</div>' +
+            '<div class="v26-history-modal-sub">' + _esc(deal.refId || '') + ' · ' + _esc(deal.enduser || '—') + ' · ' + _formatINR(_readDealValue(deal)) + '</div>' +
+          '</div>' +
+          '<button class="v26-history-modal-close" onclick="this.closest(\'.v26-history-modal-overlay\').remove()">✕</button>' +
+        '</div>' +
+        '<div class="v26-history-modal-body">' + body + '</div>' +
+        '<div class="v26-history-modal-foot">' + _esc(footerNote) + '</div>' +
+      '</div>';
+    overlay.addEventListener('click', function(){ overlay.remove(); });
+    document.body.appendChild(overlay);
+  };
 
   // ---- INIT ----
   function bsv26_init(){
