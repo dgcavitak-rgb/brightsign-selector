@@ -8177,7 +8177,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.14';  // v24.26.14 — THREE BUG FIXES (1 of 3 in user-requested release sequence). (1) CALCULATE BUTTON "needs 2-3 clicks" bug. Root cause: only pill/choice-card widgets cleared `.field-error` class on user input — plain text inputs and selects kept the red border even after user typed correct values, making users think the form was still invalid → they clicked Calculate multiple times. Functionally the click WAS registering; it was a UX trust issue. Fix: delegated input/change listener on #section-form clears `.field-error` from any field's wrapper as soon as user touches it (matches existing pill widget behavior). Also dismisses top-of-form error banner on first input. Also: validation-focus setTimeout now stored in window._validationFocusTimer so it can be cancelled by user input — was at 420ms after validation reject and could steal focus mid-typing if user was fast. (2) EXCEL EXPORT — Sales Person + Presales Person fields ADDED to PROJECT CONTEXT block (rows 6-7 of Excel summary sheet). Were missing entirely. Resolves loginName → "Full Name (loginName)" via window._allUsers cache when available, else loginName, else "—". (3) EMAIL PDF — improved error visibility. Previously: generic "PDF generation failed" hid actual reason. Now: try/catch wraps exportQuotePDF call, surfaces specific reason in error message + console log (no recommendation, BOM not built yet, jsPDF missing, html2canvas missing, or empty base64 output). Helps Dipenkumar diagnose the suspected PDF email bug — if it still fails, console will show the actual cause. NOTE: v24.26.15 will tackle sales role rules (auto-default behavior matrix). v24.26.16 will tackle Excel theme/logo + button styling parity. Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.26.15';  // v24.26.15 — CRITICAL HOTFIX for Custom BOQ "Generate BOQ does nothing" bug discovered in production after v24.26.14 deploy. Root cause: runAdvancedBOQ (the Custom BOQ submit handler — separate codepath from guided runSelector) sets window._runSelectorBusy=true at line 21943 then has THREE early-return paths (Project Context validation fail, no players selected, accessory validation fail) — none of which reset the busy flag. The finally block only schedules a 10-second safety timer. So after first failed click, every subsequent click for the next 10 seconds hits `if(window._runSelectorBusy) return;` on line 21942 and silently exits. THIS was the actual cause of "I correct the value, click Generate BOQ, nothing happens, click 2-3 times" reported by Dipenkumar — NOT the field-error visual bug v24.26.14 addressed (though that fix is still valid for the perception layer). Three fixes in this hotfix: (1) Added `window._runSelectorBusy = false` before each early-return in runAdvancedBOQ — Project Context fail (line 21950), no players selected (line 21957), accessory validation fail (line 22045). (2) Added scrollIntoView({behavior:'smooth', block:'center'}) to _advValidateProjectContext when missing field's wrapper is found — Custom BOQ users click Generate BOQ at the BOTTOM of the form but Project Context fields are at the TOP, so without scroll the error banner appeared off-screen. (3) Mobile/email pattern check paths also got scrollIntoView. Note: guided runSelector path (line 14941) was already correct — it calls releaseRunSelectorLock() before the validation early-return. ONLY the advanced/custom BOQ path was broken. Pairs with backend v25.13.0 — no backend changes.
+// v24.26.14 — THREE BUG FIXES (1 of 3 in user-requested release sequence). (1) CALCULATE BUTTON "needs 2-3 clicks" UX bug — added live field-error clearing on input/change. (2) EXCEL EXPORT — Sales Person + Presales Person fields ADDED to PROJECT CONTEXT block. (3) EMAIL PDF — improved error visibility.
 // v24.26.13 — REGION + OUTCOME POLISH per user feedback. (1) Region zones: dropped International tile (5→4 tiles W/N/S/E). (2) Outcome scorecard tech-style polish — JetBrains Mono numerals, sharp 4px corners, lower-saturation green (#059669), equal-weight grid, hero gradient flattened, trophy emoji removed, bracketed monospace labels [ OPEN ], HUD-style corner tick-marks, dashed zero-state tiles.
 // v24.26.12 — REGION ZONE TILES (replaces India map). India choropleth was repeatedly broken in production: GeoJSON CDN sources unreliable, echarts-gl 3D path WebGL-fragile, the existing 2D fallback occasionally rendered an empty card. Replaced with HTML zone tiles: 5 tiles in one row showing count + ₹ pipeline value + top state per zone. Pure HTML, zero CDN dependency, theme-aware via CSS vars.
 // v24.26.11 — DARK MODE FIX. Four parts: (1) Replaced 6 standalone hardcoded hex values in v26 CSS block with var(--*) references using same hex as fallback (CSS auto-flips via :root theme swap when [data-theme="dark"]). Most v26 CSS already used the var() pattern — these were the gaps. (2) Added _themeColors() JS helper inside v26 module (reads document.documentElement.dataset.theme) returning theme-aware ECharts colors: ink, inkMuted, inkSubtle, splitLine, border, surface. Vibrant brand/palette colors (KPI gradients, bar palette, status badges) intentionally stay constant — they read correctly on both backgrounds. (3) 51 hardcoded chart color refs in 9 ECharts renderers (axisLabel.color, splitLine.lineStyle.color, label.color, legend.textStyle.color, emphasis.borderColor) replaced with _theme.* references; const _theme = _themeColors() injected at top of each renderer body. Theme-toggle hook at applyTheme() (existed since v24.4.18 for Chart.js) already re-renders dashboard on theme change — v26 ECharts inherit this for free since they're created/disposed inside _renderTeamCharts on each render. NO scorecard changes needed (pure HTML, theme-aware via CSS vars). (4) AUDIT GAP FIX: Added 6 [data-theme="dark"] overrides for Tender Spec view classes that had hardcoded #fff backgrounds.
@@ -21883,8 +21884,15 @@ function _advValidateProjectContext(){
     const v = (el.value || '').toString().trim();
     if(!v){
       const wrap = el.closest('.form-group, .field');
-      if(wrap) wrap.classList.add('field-error');
-      try { el.focus(); } catch(_){}
+      if(wrap){
+        wrap.classList.add('field-error');
+        // v24.26.15 HOTFIX: Scroll the missing field into view. Custom BOQ users typically
+        // click "Generate BOQ" at the BOTTOM of the form — but Project Context fields are
+        // at the TOP. Without scroll, error banner appears off-screen and user thinks the
+        // button did nothing. Mirrors the guided runSelector path (line 15083).
+        try { wrap.scrollIntoView({behavior:'smooth', block:'center'}); } catch(_){}
+      }
+      try { el.focus({preventScroll:true}); } catch(_){}
       return `Please fill in ${fld.label}.`;
     }
   }
@@ -21892,13 +21900,19 @@ function _advValidateProjectContext(){
   const mobileEl = document.getElementById('f-partnerContactPhone');
   if(mobileEl && !/^\d{10}$/.test(mobileEl.value)){
     const wrap = mobileEl.closest('.form-group, .field');
-    if(wrap) wrap.classList.add('field-error');
+    if(wrap){
+      wrap.classList.add('field-error');
+      try { wrap.scrollIntoView({behavior:'smooth', block:'center'}); } catch(_){}
+    }
     return 'Partner Contact Mobile must be 10 digits.';
   }
   const emailEl = document.getElementById('f-partnerContactEmail');
   if(emailEl && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailEl.value)){
     const wrap = emailEl.closest('.form-group, .field');
-    if(wrap) wrap.classList.add('field-error');
+    if(wrap){
+      wrap.classList.add('field-error');
+      try { wrap.scrollIntoView({behavior:'smooth', block:'center'}); } catch(_){}
+    }
     return 'Partner Contact Email is not a valid format.';
   }
   return null;
@@ -21947,6 +21961,11 @@ async function runAdvancedBOQ(){
     if(ctxErr){
       const err = document.getElementById('form-error');
       if(err){ err.textContent = ctxErr; err.classList.add('show'); }
+      // v24.26.15 HOTFIX: Release lock immediately so user can re-click after fixing the field.
+      // Was leaking — _runSelectorBusy stayed TRUE for 10 seconds (safety timer) — meaning
+      // every retry click hit `if(window._runSelectorBusy) return;` on line 21942 and silently
+      // exited. THIS was the actual cause of "Generate BOQ does nothing on click".
+      window._runSelectorBusy = false;
       return;
     }
     // 2. At least one player selected
@@ -21954,6 +21973,7 @@ async function runAdvancedBOQ(){
     if(selections.length === 0){
       const err = document.getElementById('form-error');
       if(err){ err.textContent = 'Pick at least one player by setting its quantity above zero.'; err.classList.add('show'); }
+      window._runSelectorBusy = false;  // v24.26.15 HOTFIX: same lock-leak fix
       return;
     }
 
@@ -22023,6 +22043,7 @@ async function runAdvancedBOQ(){
           }, 350);
         } catch(_){}
       }
+      window._runSelectorBusy = false;  // v24.26.15 HOTFIX: same lock-leak fix
       return;
     }
 
