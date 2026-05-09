@@ -6215,6 +6215,212 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   background: linear-gradient(90deg, rgba(254,226,226,0.5) 0%, transparent 25%);
 }
 
+/* ==================================================================
+ * v24.26.0 — Dashboard + Review clean rebuild styles
+ * ================================================================== */
+.v26-tabs-wrap {
+  display: flex; gap: 6px; margin-bottom: 18px;
+  border-bottom: 1px solid var(--border-soft, #E5E7EB);
+  padding-bottom: 0;
+}
+.v26-tab {
+  padding: 10px 20px; background: transparent; border: none;
+  font-size: 14px; font-weight: 600; color: var(--ink-muted, #64748B);
+  cursor: pointer; border-bottom: 2px solid transparent;
+  margin-bottom: -1px; transition: all 0.15s ease;
+}
+.v26-tab:hover { color: var(--ink, #0F172A); }
+.v26-tab-active {
+  color: var(--indigo, #4F46E5);
+  border-bottom-color: var(--indigo, #4F46E5);
+}
+.v26-pane { animation: v26-fade-in 0.18s ease-out; }
+@keyframes v26-fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Filter bar */
+.v26-filters {
+  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px; margin-bottom: 18px;
+  background: var(--surface, #fff); border: 1px solid var(--border-soft, #E5E7EB);
+  border-radius: 12px; padding: 12px 14px;
+}
+.v26-filter-cell { display: flex; flex-direction: column; gap: 4px; }
+.v26-filter-cell-end { flex-direction: row; align-items: end; justify-content: flex-end; gap: 6px; }
+.v26-filter-label {
+  font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--ink-subtle, #94A3B8); font-weight: 700;
+}
+.v26-filters select {
+  padding: 8px 10px; border: 1px solid var(--border-soft, #E5E7EB); border-radius: 8px;
+  background: var(--surface, #fff); color: var(--ink, #0F172A); font-size: 13px;
+  font-family: inherit; cursor: pointer;
+}
+.v26-btn-clear, .v26-btn-refresh, .v26-btn-secondary {
+  padding: 8px 12px; border: 1px solid var(--border-soft, #E5E7EB); border-radius: 8px;
+  background: var(--surface, #fff); color: var(--ink, #0F172A); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s ease;
+}
+.v26-btn-clear:hover, .v26-btn-refresh:hover, .v26-btn-secondary:hover {
+  border-color: var(--indigo, #4F46E5); color: var(--indigo, #4F46E5);
+}
+.v26-btn-refresh { font-size: 16px; padding: 8px 12px; }
+
+/* KPI tiles */
+.v26-kpis { display: grid; gap: 12px; margin-bottom: 20px; }
+.v26-kpis-mine { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.v26-kpis-team { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.v26-kpi {
+  padding: 16px 18px; border-radius: 12px; color: #fff;
+  display: flex; flex-direction: column; gap: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  position: relative; overflow: hidden;
+}
+.v26-kpi::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+  pointer-events: none;
+}
+.v26-kpi > * { position: relative; z-index: 1; }
+.v26-kpi-label { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; opacity: 0.92; }
+.v26-kpi-value { font-size: 28px; font-weight: 800; line-height: 1.1; }
+.v26-kpi-sub { font-size: 11px; opacity: 0.85; margin-top: 2px; }
+.v26-kpi-blue { background: linear-gradient(135deg, #3B82F6, #2563EB); }
+.v26-kpi-green { background: linear-gradient(135deg, #10B981, #059669); }
+.v26-kpi-purple { background: linear-gradient(135deg, #8B5CF6, #7C3AED); }
+.v26-kpi-indigo { background: linear-gradient(135deg, #6366F1, #4F46E5); }
+.v26-kpi-orange { background: linear-gradient(135deg, #F59E0B, #D97706); }
+.v26-kpi-amber { background: linear-gradient(135deg, #F97316, #EA580C); }
+.v26-kpi-teal { background: linear-gradient(135deg, #14B8A6, #0D9488); }
+.v26-kpi-cyan { background: linear-gradient(135deg, #06B6D4, #0891B2); }
+
+/* To-do sections (My Pipeline) */
+.v26-todo-wrap {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px; margin-bottom: 20px;
+}
+.v26-todo-section {
+  background: var(--surface, #fff); border: 1px solid var(--border-soft, #E5E7EB);
+  border-radius: 12px; overflow: hidden;
+}
+.v26-todo-head {
+  padding: 10px 14px; font-size: 13px; font-weight: 700;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.v26-todo-head-red { background: rgba(239,68,68,0.08); color: #B91C1C; }
+.v26-todo-head-yellow { background: rgba(245,158,11,0.08); color: #B45309; }
+.v26-todo-head-grey { background: rgba(100,116,139,0.08); color: #475569; }
+.v26-todo-count {
+  background: rgba(0,0,0,0.08); padding: 2px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 700;
+}
+.v26-todo-body { padding: 8px 0; min-height: 60px; max-height: 280px; overflow-y: auto; }
+.v26-todo-empty { padding: 20px 14px; text-align: center; color: var(--ink-muted, #64748B); font-size: 12px; }
+.v26-todo-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  cursor: pointer; transition: background 0.12s ease;
+  border-bottom: 1px solid var(--border-soft, #F1F5F9);
+}
+.v26-todo-item:last-child { border-bottom: none; }
+.v26-todo-item:hover { background: rgba(79,70,229,0.04); }
+.v26-todo-item-main { flex: 1; min-width: 0; }
+.v26-todo-item-title { font-size: 13px; font-weight: 600; color: var(--ink, #0F172A); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v26-todo-item-meta { font-size: 11px; color: var(--ink-muted, #64748B); margin-top: 2px; }
+.v26-todo-item-action { font-size: 16px; color: var(--ink-muted, #94A3B8); flex-shrink: 0; }
+.v26-todo-more { padding: 8px 14px; font-size: 11px; color: var(--ink-muted, #94A3B8); text-align: center; font-style: italic; }
+
+/* Charts grid (Team Analytics) */
+.v26-charts-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px; margin-bottom: 20px;
+}
+.v26-chart-card {
+  background: var(--surface, #fff); border: 1px solid var(--border-soft, #E5E7EB);
+  border-radius: 12px; padding: 14px;
+}
+.v26-chart-head {
+  font-size: 13px; font-weight: 700; color: var(--ink, #0F172A);
+  margin-bottom: 10px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px;
+}
+.v26-chart-sub { font-size: 11px; font-weight: 500; color: var(--ink-muted, #64748B); }
+.v26-chart-body { height: 240px; position: relative; }
+
+/* Bottom row (Leaderboard + Stuck) */
+.v26-bottom-row {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px; margin-bottom: 20px;
+}
+.v26-bottom-card {
+  background: var(--surface, #fff); border: 1px solid var(--border-soft, #E5E7EB);
+  border-radius: 12px; padding: 14px;
+}
+.v26-bottom-head {
+  font-size: 13px; font-weight: 700; color: var(--ink, #0F172A);
+  margin-bottom: 10px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px;
+}
+
+/* Tables */
+.v26-table-wrap {
+  background: var(--surface, #fff); border: 1px solid var(--border-soft, #E5E7EB);
+  border-radius: 12px; overflow: hidden; margin-bottom: 20px;
+}
+.v26-table-head {
+  padding: 12px 16px; font-size: 13px; display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid var(--border-soft, #E5E7EB);
+}
+.v26-table-counter { font-size: 12px; color: var(--ink-muted, #64748B); font-weight: 500; }
+.v26-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.v26-table thead th {
+  padding: 10px 14px; text-align: left; font-size: 11px; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--ink-muted, #64748B); font-weight: 700;
+  background: rgba(0,0,0,0.02); border-bottom: 1px solid var(--border-soft, #E5E7EB);
+  white-space: nowrap;
+}
+.v26-table thead th[data-sort]:hover { background: rgba(79,70,229,0.06); color: var(--indigo, #4F46E5); }
+.v26-table tbody tr {
+  cursor: pointer; transition: background 0.12s ease;
+  border-bottom: 1px solid var(--border-soft, #F1F5F9);
+}
+.v26-table tbody tr:last-child { border-bottom: none; }
+.v26-table tbody tr:hover { background: rgba(79,70,229,0.04); }
+.v26-table tbody td { padding: 10px 14px; color: var(--ink, #0F172A); }
+.v26-th-num { text-align: right !important; }
+.v26-table-compact thead th { padding: 8px 10px; font-size: 10px; }
+.v26-table-compact tbody td { padding: 7px 10px; font-size: 12px; }
+
+/* Stage badges */
+.v26-stage-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
+}
+.v26-stage-lead { background: #DBEAFE; color: #1E40AF; }
+.v26-stage-opportunity { background: #EDE9FE; color: #5B21B6; }
+.v26-stage-proposal { background: #FCE7F3; color: #9D174D; }
+.v26-stage-negotiation { background: #FEF3C7; color: #92400E; }
+.v26-stage-order { background: #D1FAE5; color: #065F46; }
+
+/* Mobile responsive */
+@media (max-width: 1024px) {
+  .v26-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .v26-kpis-mine, .v26-kpis-team { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .v26-charts-grid, .v26-bottom-row, .v26-todo-wrap { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .v26-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .v26-filters, .v26-kpis-mine, .v26-kpis-team { grid-template-columns: 1fr; }
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .v26-table thead th { background: rgba(255,255,255,0.04); }
+[data-theme="dark"] .v26-table tbody tr:hover { background: rgba(99,102,241,0.12); }
+[data-theme="dark"] .v26-todo-item:hover { background: rgba(99,102,241,0.10); }
+[data-theme="dark"] .v26-stage-lead { background: rgba(59,130,246,0.20); color: #93C5FD; }
+[data-theme="dark"] .v26-stage-opportunity { background: rgba(139,92,246,0.20); color: #C4B5FD; }
+[data-theme="dark"] .v26-stage-proposal { background: rgba(236,72,153,0.20); color: #F9A8D4; }
+[data-theme="dark"] .v26-stage-negotiation { background: rgba(245,158,11,0.20); color: #FCD34D; }
+[data-theme="dark"] .v26-stage-order { background: rgba(16,185,129,0.20); color: #6EE7B7; }
+
 </style>
 <!-- v24.4.2: Apply saved theme BEFORE body renders (prevents flash-of-light) — 3-state light/auto/dark -->
 <script>
@@ -6363,7 +6569,8 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
       <span id="dashboard-tab-label">Dashboard</span>
     </button>
-    <button id="tab-review" onclick="showTab('review')" style="display:none;" role="tab" aria-selected="false" aria-controls="section-review">
+    <!-- v24.26.0: Review tab consolidated into Dashboard's Team Analytics inner tab. Button hidden permanently. -->
+    <button id="tab-review" onclick="showTab('review')" style="display:none !important;" role="tab" aria-selected="false" aria-controls="section-review" data-v26-deprecated="1">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
       <span>Review</span>
     </button>
@@ -6982,1091 +7189,250 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   </div>
 
 
-<!-- v23.1: Dashboard section (split out from History) — super-user sees all-team, regular users see own -->
+<!-- v24.26.0: Clean rebuild — Dashboard + Review combined into one section with two internal tabs.
+     "My Pipeline" (sales-person-first, scoped to current user) and "Team Analytics"
+     (8 KPIs + 8 charts + leaderboard + stuck-deals table). Filter persistence via
+     localStorage. Drill-through on charts. Replaces all v18 / Brand Revenue Cockpit
+     / Detailed Analytics widgets — single renderer, single filter system, no legacy. -->
 <div id="section-dashboard" style="display:none;" role="tabpanel" aria-labelledby="tab-dashboard">
   <div class="container">
-    <div class="page-header">
-      <div class="page-eyebrow" id="dashboard-page-eyebrow">Dashboard</div>
-      <div class="page-title" id="dashboard-page-title">Brand revenue cockpit</div>
-      <div class="page-subtitle" id="dashboard-page-subtitle">Pipeline health · funnel flow · regional momentum · what's moving — at a glance for director and owner reviews.</div>
+    <!-- v26-tabs — inner tab switcher for My Pipeline / Team Analytics -->
+    <div class="v26-tabs-wrap">
+      <button class="v26-tab" data-v26-tab="mine" id="v26-tab-mine" onclick="bsv26_switchTab('mine')">My Pipeline</button>
+      <button class="v26-tab" data-v26-tab="team" id="v26-tab-team" onclick="bsv26_switchTab('team')" style="display:none;">Team Analytics</button>
     </div>
 
-      <!-- v24.25.1 — BRAND REVENUE COCKPIT
-           v24.25.2 — Owner-grade upgrades: Top Wins ribbon, Quarter close countdown,
-           Commit/Early split inside Open Pipeline, Risk tile (6th KPI), Run-rate
-           vs target, Engagement layer (Active customers/Repeat ratio/Partner
-           engagement/Consultant engagement), Top Repeat Customers panel, Partner
-           & Consultant relationship board (Active vs Dormant). -->
-      <div id="cockpit" class="cockpit-wrap">
-        <!-- Filter bar -->
-        <div class="cockpit-filters">
-          <div class="cockpit-filter-cell">
-            <label class="cockpit-filter-label" for="cockpit-window">Time window</label>
-            <select id="cockpit-window" onchange="onCockpitFilterChange()">
-              <option value="thisMonth">This month</option>
-              <option value="lastMonth">Last month</option>
-              <option value="thisQuarter" selected>This quarter</option>
-              <option value="lastQuarter">Last quarter</option>
-              <option value="last6m">Last 6 months</option>
-              <option value="thisFY">This FY</option>
-            </select>
-          </div>
-          <div class="cockpit-filter-cell">
-            <label class="cockpit-filter-label" for="cockpit-region">Region</label>
-            <select id="cockpit-region" onchange="onCockpitFilterChange()">
-              <option value="">All regions</option>
-              <option value="West">West</option>
-              <option value="North">North</option>
-              <option value="South">South</option>
-              <option value="East">East</option>
-              <option value="International">International</option>
-            </select>
-          </div>
-          <div class="cockpit-filter-cell cockpit-filter-meta">
-            <span id="cockpit-window-label">—</span>
-          </div>
-          <!-- v24.25.7: cockpit "Include test data" toggle removed (Test Mode feature retired) -->
-          <div class="cockpit-countdown" id="cockpit-countdown" title="Days remaining in this period">
-            <span class="cockpit-countdown-num" id="cockpit-countdown-num">—</span>
-            <span class="cockpit-countdown-lbl" id="cockpit-countdown-lbl">days left</span>
-          </div>
-          <button type="button" class="cockpit-refresh" onclick="renderCockpit()" title="Refresh">↻</button>
+    <!-- ============================ MY PIPELINE ============================ -->
+    <div id="v26-pane-mine" class="v26-pane">
+      <div class="page-header">
+        <div class="page-eyebrow">My Pipeline</div>
+        <div class="page-title">My deals at a glance</div>
+        <div class="page-subtitle">Your open deals, deals due to close this week, and stuck items needing attention.</div>
+      </div>
+
+      <!-- 4 KPI tiles -->
+      <div class="v26-kpis v26-kpis-mine">
+        <div class="v26-kpi v26-kpi-blue">
+          <div class="v26-kpi-label">My Open Pipeline</div>
+          <div class="v26-kpi-value" id="v26-mine-kpi-open">—</div>
+          <div class="v26-kpi-sub" id="v26-mine-kpi-open-sub">— deals</div>
         </div>
-
-        <!-- Top Wins ribbon -->
-        <div class="cockpit-wins-ribbon" id="cockpit-wins-ribbon">
-          <div class="cockpit-wins-badge">🏆 LIVE</div>
-          <div class="cockpit-wins-track" id="cockpit-wins-track"><div class="cockpit-wins-empty">Recent wins will appear here</div></div>
+        <div class="v26-kpi v26-kpi-green">
+          <div class="v26-kpi-label">My Won This Quarter</div>
+          <div class="v26-kpi-value" id="v26-mine-kpi-won">—</div>
+          <div class="v26-kpi-sub" id="v26-mine-kpi-won-sub">— wins</div>
         </div>
-
-        <!-- Row 1 — 6 KPI tiles (Open Pipeline w/Commit split, Open Deals, New, Win Rate, Won, Risk) -->
-        <div class="cockpit-kpi-strip" id="cockpit-kpi-strip">
-          <div class="cockpit-kpi" data-tone="open"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">Open Pipeline</div><div class="cockpit-kpi-value" id="ck-open-val">—</div><div class="cockpit-kpi-sub" id="ck-open-sub">—</div><div class="cockpit-kpi-split" id="ck-open-split"></div></div>
-          <div class="cockpit-kpi" data-tone="count"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">Open Deals</div><div class="cockpit-kpi-value" id="ck-open-count">—</div><div class="cockpit-kpi-sub" id="ck-open-count-sub">active in funnel</div></div>
-          <div class="cockpit-kpi" data-tone="new"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">New This Period</div><div class="cockpit-kpi-value" id="ck-new-val">—</div><div class="cockpit-kpi-sub" id="ck-new-sub">—</div></div>
-          <div class="cockpit-kpi" data-tone="winrate"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">Win Rate</div><div class="cockpit-kpi-value" id="ck-winrate">—</div><div class="cockpit-kpi-sub" id="ck-winrate-sub">— resolved</div></div>
-          <div class="cockpit-kpi" data-tone="won"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">Won This Period</div><div class="cockpit-kpi-value" id="ck-won-val">—</div><div class="cockpit-kpi-sub" id="ck-won-sub">—</div><div class="cockpit-kpi-target" id="ck-won-target"></div></div>
-          <div class="cockpit-kpi" data-tone="risk" id="ck-risk-tile"><div class="cockpit-kpi-glow"></div><div class="cockpit-kpi-label">Stuck > 30 days</div><div class="cockpit-kpi-value" id="ck-risk-count">—</div><div class="cockpit-kpi-sub" id="ck-risk-sub">leakage signal</div></div>
+        <div class="v26-kpi v26-kpi-purple">
+          <div class="v26-kpi-label">My Win Rate</div>
+          <div class="v26-kpi-value" id="v26-mine-kpi-rate">—</div>
+          <div class="v26-kpi-sub" id="v26-mine-kpi-rate-sub">— resolved</div>
         </div>
-
-        <!-- Row 2 — Engagement & retention layer (4 tiles) -->
-        <div class="cockpit-section-head"><span class="cockpit-section-eyebrow">Relationships</span><span class="cockpit-section-title">Customer · Partner · Consultant engagement</span></div>
-        <div class="cockpit-eng-strip">
-          <div class="cockpit-eng" data-tone="cust"><div class="cockpit-eng-icon">👥</div><div class="cockpit-eng-content"><div class="cockpit-eng-label">Active Customers</div><div class="cockpit-eng-value" id="ck-eng-cust">—</div><div class="cockpit-eng-sub" id="ck-eng-cust-sub">— new · — returning</div></div></div>
-          <div class="cockpit-eng" data-tone="repeat"><div class="cockpit-eng-icon">🔁</div><div class="cockpit-eng-content"><div class="cockpit-eng-label">Repeat Ratio</div><div class="cockpit-eng-value" id="ck-eng-repeat">—</div><div class="cockpit-eng-sub" id="ck-eng-repeat-sub">stickiness signal</div></div></div>
-          <div class="cockpit-eng" data-tone="partner"><div class="cockpit-eng-icon">🤝</div><div class="cockpit-eng-content"><div class="cockpit-eng-label">Active Partners</div><div class="cockpit-eng-value" id="ck-eng-partner">—</div><div class="cockpit-eng-sub" id="ck-eng-partner-sub">— dormant 60d+</div></div></div>
-          <div class="cockpit-eng" data-tone="consult"><div class="cockpit-eng-icon">💼</div><div class="cockpit-eng-content"><div class="cockpit-eng-label">Active Consultants</div><div class="cockpit-eng-value" id="ck-eng-consult">—</div><div class="cockpit-eng-sub" id="ck-eng-consult-sub">— attached deals</div></div></div>
-        </div>
-
-        <!-- Row 3 — Stage-wise breakdown (5 colored cards, funnel-depth gradient) -->
-        <div class="cockpit-section-head"><span class="cockpit-section-eyebrow">Funnel breakdown</span><span class="cockpit-section-title">Open pipeline by stage</span></div>
-        <div class="cockpit-stage-strip" id="cockpit-stage-strip"></div>
-
-        <!-- Row 4 — Funnel chart + Trend line side by side -->
-        <div class="cockpit-row-2">
-          <div class="cockpit-card">
-            <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#4F46E5,#7C3AED);">▤</span><span class="cockpit-card-title">Funnel · count + ₹</span></div>
-            <div class="cockpit-card-body" id="cockpit-funnel"></div>
-          </div>
-          <div class="cockpit-card">
-            <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#0D9488,#0EA5E9);">📈</span><span class="cockpit-card-title">Trend · new vs won</span></div>
-            <div class="cockpit-card-body" id="cockpit-trend"></div>
-          </div>
-        </div>
-
-        <!-- Row 5 — Region performance + Source split -->
-        <div class="cockpit-row-2">
-          <div class="cockpit-card">
-            <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#D97706,#F59E0B);">◉</span><span class="cockpit-card-title">Regional performance & engagement</span></div>
-            <div class="cockpit-card-body" id="cockpit-region-table"></div>
-          </div>
-          <div class="cockpit-card">
-            <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#DB2777,#F472B6);">◐</span><span class="cockpit-card-title">Business source split</span></div>
-            <div class="cockpit-card-body" id="cockpit-source"></div>
-          </div>
-        </div>
-
-        <!-- Row 6 — Top Repeat Customers + Partner/Consultant Relationship Board -->
-        <div class="cockpit-row-2">
-          <div class="cockpit-card">
-            <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#7C3AED,#A855F7);">⭐</span><span class="cockpit-card-title">Top repeat customers · lifetime ₹</span><span class="cockpit-card-sub">All-time across cutoff data</span></div>
-            <div class="cockpit-card-body" id="cockpit-repeat"></div>
-          </div>
-          <div class="cockpit-card">
-            <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#059669,#10B981);">🤝</span><span class="cockpit-card-title">Partner & Consultant board</span><span class="cockpit-card-sub">Active vs Dormant (60d+)</span></div>
-            <div class="cockpit-card-body" id="cockpit-relationships"></div>
-          </div>
-        </div>
-
-        <!-- Row 7 — Aging spotlight (full width) -->
-        <div class="cockpit-card">
-          <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#DC2626,#F59E0B);">⏰</span><span class="cockpit-card-title">Aging spotlight · oldest open deals</span><span class="cockpit-card-sub">Click any row to open the deal</span></div>
-          <div class="cockpit-card-body" id="cockpit-aging"></div>
-        </div>
-
-        <!-- Row 8 — What's moving (full width) -->
-        <div class="cockpit-card">
-          <div class="cockpit-card-head"><span class="cockpit-card-icon" style="background:linear-gradient(135deg,#7C3AED,#EC4899);">⚡</span><span class="cockpit-card-title">What's moving · last 10 stage transitions</span></div>
-          <div class="cockpit-card-body" id="cockpit-moving"></div>
+        <div class="v26-kpi v26-kpi-orange">
+          <div class="v26-kpi-label">Closing This Week</div>
+          <div class="v26-kpi-value" id="v26-mine-kpi-week">—</div>
+          <div class="v26-kpi-sub" id="v26-mine-kpi-week-sub">— deals due ≤7 days</div>
         </div>
       </div>
 
-      <style>
-        /* ============ v24.25.2 — Detailed Analytics Expander ============ */
-        .dash-expander{
-          margin-top:24px; background:var(--surface,#FFF);
-          border:1px solid var(--border,#E5E7EB); border-radius:14px;
-          box-shadow:0 1px 2px rgba(15,23,42,0.04);
-          overflow:hidden;
-        }
-        .dash-expander-summary{
-          display:flex; align-items:center; gap:12px; flex-wrap:wrap;
-          padding:14px 18px; cursor:pointer; user-select:none;
-          font-size:14px; font-weight:600; color:var(--ink,#0F172A);
-          list-style:none;
-          transition:background 140ms;
-        }
-        .dash-expander-summary::-webkit-details-marker{display:none;}
-        .dash-expander-summary:hover{background:var(--surface-2,#F8FAFC);}
-        .dash-expander-icon{font-size:18px; flex-shrink:0;}
-        .dash-expander-title{flex-shrink:0;}
-        .dash-expander-meta{
-          flex:1; font-size:12px; font-weight:500; color:var(--ink-muted,#64748B);
-          font-style:italic; min-width:0;
-          overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-        }
-        .dash-expander-caret{
-          flex-shrink:0; font-size:14px; color:var(--ink-muted,#64748B);
-          transition:transform 200ms ease;
-        }
-        details[open] .dash-expander-caret{transform:rotate(180deg);}
-        .dash-expander-body{
-          padding:18px; border-top:1px solid var(--border-soft,#E2E8F0);
-        }
-        /* Compact-mode: when v18 dashboard is inside the expander, drop top hero spacing */
-        .dashboard-v18-compact{margin-top:0 !important; padding-top:0 !important;}
-        .dashboard-v18-compact .dash-section-head:first-of-type{margin-top:0 !important;}
-
-        /* ============ v24.25.1 — Brand Revenue Cockpit ============ */
-        .cockpit-wrap{margin-bottom:24px;}
-        .cockpit-filters{
-          position:sticky; top:8px; z-index:5;
-          display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;
-          padding:14px 18px; margin-bottom:18px;
-          background:linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(124,58,237,0.05) 100%), var(--surface,#FFF);
-          border:1px solid var(--border,#E5E7EB);
-          border-radius:14px;
-          box-shadow:0 2px 4px rgba(15,23,42,0.04), 0 8px 20px rgba(99,102,241,0.06);
-          backdrop-filter:blur(12px);
-        }
-        .cockpit-filter-cell{display:flex; flex-direction:column; min-width:180px;}
-        .cockpit-filter-label{
-          font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
-          color:var(--ink-muted,#64748B); font-weight:700; margin-bottom:5px;
-        }
-        .cockpit-filters select{
-          min-height:var(--btn-h,40px); padding:0 12px;
-          font-size:13px; font-weight:600; font-family:var(--sans,system-ui),sans-serif;
-          background:var(--surface,#FFF); color:var(--ink,#0F172A);
-          border:1px solid var(--border-strong,#CBD5E1); border-radius:var(--radius,8px);
-          box-shadow:0 1px 2px rgba(15,23,42,0.04);
-          cursor:pointer; transition:border-color 140ms, box-shadow 140ms;
-        }
-        .cockpit-filters select:hover{border-color:var(--indigo,#4F46E5);}
-        .cockpit-filters select:focus{outline:none; border-color:var(--indigo,#4F46E5); box-shadow:0 0 0 3px rgba(79,70,229,0.18);}
-        .cockpit-filter-meta{flex:1; align-items:flex-end; padding-bottom:8px;}
-        .cockpit-filter-meta span{
-          font-size:12px; color:var(--ink-muted,#64748B); font-style:italic;
-        }
-        .cockpit-refresh{
-          width:var(--btn-h,40px); height:var(--btn-h,40px);
-          border:1px solid var(--border-strong,#CBD5E1); border-radius:var(--radius,8px);
-          background:var(--surface,#FFF); color:var(--ink-muted,#64748B);
-          cursor:pointer; font-size:18px; line-height:1;
-          transition:transform 200ms, color 140ms, border-color 140ms;
-        }
-        .cockpit-refresh:hover{
-          color:var(--indigo,#4F46E5); border-color:var(--indigo,#4F46E5);
-          transform:rotate(90deg);
-        }
-
-        /* Row 1 — KPI strip with gradient tiles */
-        .cockpit-kpi-strip{
-          display:grid; grid-template-columns:repeat(5, 1fr); gap:14px;
-          margin-bottom:24px;
-        }
-        @media (max-width:920px){.cockpit-kpi-strip{grid-template-columns:repeat(2,1fr);}}
-        @media (max-width:480px){.cockpit-kpi-strip{grid-template-columns:1fr;}}
-        .cockpit-kpi{
-          position:relative; overflow:hidden;
-          padding:18px 20px;
-          border-radius:16px;
-          color:#fff;
-          box-shadow:0 4px 12px rgba(15,23,42,0.10), 0 12px 32px rgba(15,23,42,0.08);
-          transition:transform 220ms, box-shadow 220ms;
-        }
-        .cockpit-kpi:hover{transform:translateY(-2px); box-shadow:0 8px 18px rgba(15,23,42,0.12), 0 24px 48px rgba(15,23,42,0.12);}
-        .cockpit-kpi[data-tone="open"]   {background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%);}
-        .cockpit-kpi[data-tone="count"]  {background:linear-gradient(135deg,#7C3AED 0%,#A855F7 100%);}
-        .cockpit-kpi[data-tone="new"]    {background:linear-gradient(135deg,#0D9488 0%,#0EA5E9 100%);}
-        .cockpit-kpi[data-tone="winrate"]{background:linear-gradient(135deg,#059669 0%,#10B981 100%);}
-        .cockpit-kpi[data-tone="won"]    {background:linear-gradient(135deg,#D97706 0%,#F59E0B 100%);}
-        .cockpit-kpi-glow{
-          position:absolute; top:-50%; right:-30%; width:240px; height:240px;
-          background:radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 70%);
-          pointer-events:none;
-        }
-        .cockpit-kpi-label{
-          position:relative; font-size:10.5px; letter-spacing:0.10em; text-transform:uppercase;
-          font-weight:700; opacity:0.85; margin-bottom:8px;
-        }
-        .cockpit-kpi-value{
-          position:relative; font-size:28px; font-weight:700;
-          font-family:var(--serif,Georgia,serif); letter-spacing:-0.02em;
-          line-height:1.05; font-variant-numeric:tabular-nums;
-        }
-        .cockpit-kpi-sub{
-          position:relative; font-size:11px; opacity:0.85; margin-top:6px;
-          font-weight:500;
-        }
-
-        /* Section heads */
-        .cockpit-section-head{
-          display:flex; align-items:baseline; gap:10px; margin:20px 0 12px;
-          padding-bottom:8px; border-bottom:1px solid var(--border,#E5E7EB);
-        }
-        .cockpit-section-eyebrow{
-          font-size:10px; letter-spacing:0.10em; text-transform:uppercase;
-          color:var(--ink-subtle,#94A3B8); font-weight:700;
-        }
-        .cockpit-section-title{
-          font-size:15px; font-weight:600; color:var(--ink,#0F172A);
-          font-family:var(--serif,Georgia,serif); letter-spacing:-0.01em;
-        }
-
-        /* Row 2 — Stage breakdown strip (5 cards with funnel-depth color progression) */
-        .cockpit-stage-strip{
-          display:grid; grid-template-columns:repeat(5, 1fr); gap:12px;
-          margin-bottom:24px;
-        }
-        @media (max-width:920px){.cockpit-stage-strip{grid-template-columns:repeat(2, 1fr);}}
-        @media (max-width:480px){.cockpit-stage-strip{grid-template-columns:1fr;}}
-        .cockpit-stage{
-          position:relative; padding:14px 16px;
-          background:var(--surface,#FFF); border:1px solid var(--border,#E5E7EB);
-          border-radius:14px;
-          box-shadow:0 1px 2px rgba(15,23,42,0.04), 0 6px 18px rgba(15,23,42,0.05);
-          overflow:hidden;
-          transition:transform 200ms, box-shadow 200ms;
-        }
-        .cockpit-stage:hover{transform:translateY(-1px); box-shadow:0 4px 8px rgba(15,23,42,0.06), 0 16px 32px rgba(15,23,42,0.08);}
-        .cockpit-stage::before{
-          content:""; position:absolute; top:0; left:0; right:0; height:4px;
-          background:var(--stg-accent);
-        }
-        .cockpit-stage[data-stage="Lead"]       {--stg-accent:linear-gradient(90deg,#6366F1,#818CF8);}
-        .cockpit-stage[data-stage="Opportunity"]{--stg-accent:linear-gradient(90deg,#5B21B6,#7C3AED);}
-        .cockpit-stage[data-stage="Proposal"]   {--stg-accent:linear-gradient(90deg,#7C3AED,#A855F7);}
-        .cockpit-stage[data-stage="Negotiation"]{--stg-accent:linear-gradient(90deg,#C026D3,#E879F9);}
-        .cockpit-stage[data-stage="Order"]      {--stg-accent:linear-gradient(90deg,#DB2777,#F472B6);}
-        .cockpit-stage-name{
-          font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
-          color:var(--ink-muted,#64748B); font-weight:700; margin-bottom:8px;
-        }
-        .cockpit-stage-count{
-          font-size:32px; font-weight:700; line-height:1;
-          font-family:var(--serif,Georgia,serif); letter-spacing:-0.02em;
-          font-variant-numeric:tabular-nums; margin-bottom:4px;
-        }
-        .cockpit-stage[data-stage="Lead"]       .cockpit-stage-count{color:#4F46E5;}
-        .cockpit-stage[data-stage="Opportunity"] .cockpit-stage-count{color:#6D28D9;}
-        .cockpit-stage[data-stage="Proposal"]   .cockpit-stage-count{color:#7C3AED;}
-        .cockpit-stage[data-stage="Negotiation"] .cockpit-stage-count{color:#C026D3;}
-        .cockpit-stage[data-stage="Order"]      .cockpit-stage-count{color:#DB2777;}
-        .cockpit-stage-val{
-          font-size:13px; color:var(--ink,#0F172A); font-weight:600;
-          font-variant-numeric:tabular-nums; margin-bottom:8px;
-        }
-        .cockpit-stage-pct{
-          height:4px; background:var(--surface-2,#F1F5F9);
-          border-radius:2px; overflow:hidden; margin-bottom:4px;
-        }
-        .cockpit-stage-pct-fill{
-          height:100%; background:var(--stg-accent);
-          border-radius:2px;
-          transition:width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .cockpit-stage-pct-label{
-          font-size:10px; color:var(--ink-muted,#64748B); font-weight:600;
-        }
-
-        /* Row 3+ — generic cockpit-card */
-        .cockpit-row-2{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px;}
-        @media (max-width:920px){.cockpit-row-2{grid-template-columns:1fr;}}
-        .cockpit-card{
-          background:var(--surface,#FFF); border:1px solid var(--border,#E5E7EB);
-          border-radius:14px; overflow:hidden; margin-bottom:18px;
-          box-shadow:0 1px 2px rgba(15,23,42,0.04), 0 8px 24px rgba(15,23,42,0.05);
-        }
-        .cockpit-card-head{
-          display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-          padding:14px 18px; border-bottom:1px solid var(--border-soft,#E2E8F0);
-        }
-        .cockpit-card-icon{
-          width:32px; height:32px; border-radius:8px;
-          display:inline-flex; align-items:center; justify-content:center;
-          font-size:15px; color:#fff; flex-shrink:0;
-          box-shadow:0 4px 10px rgba(79,70,229,0.25), inset 0 1px 0 rgba(255,255,255,0.20);
-        }
-        .cockpit-card-title{
-          font-size:14px; font-weight:600; color:var(--ink,#0F172A);
-          letter-spacing:-0.005em; flex:1; min-width:120px;
-        }
-        .cockpit-card-sub{
-          font-size:11px; color:var(--ink-muted,#64748B);
-          font-style:italic;
-        }
-        .cockpit-card-body{padding:18px;}
-
-        /* Funnel chart */
-        .cockpit-funnel-row{margin-bottom:12px;}
-        .cockpit-funnel-row:last-child{margin-bottom:0;}
-        .cockpit-funnel-meta{
-          display:flex; justify-content:space-between; gap:8px;
-          font-size:12.5px; margin-bottom:4px;
-        }
-        .cockpit-funnel-stage{font-weight:600; color:var(--ink,#0F172A);}
-        .cockpit-funnel-vals{color:var(--ink-muted,#64748B); font-variant-numeric:tabular-nums; font-weight:500;}
-        .cockpit-funnel-track{
-          height:10px; background:var(--surface-2,#F1F5F9); border-radius:5px; overflow:hidden;
-        }
-        .cockpit-funnel-fill{
-          height:100%; border-radius:5px;
-          transition:width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-          box-shadow:inset 0 1px 0 rgba(255,255,255,0.20);
-        }
-
-        /* Trend chart (SVG line) */
-        .cockpit-trend-svg{width:100%; height:200px;}
-        .cockpit-trend-legend{
-          display:flex; gap:16px; margin-top:8px; font-size:11.5px;
-          color:var(--ink-muted,#64748B);
-        }
-        .cockpit-trend-legend-dot{
-          display:inline-block; width:10px; height:10px; border-radius:50%;
-          margin-right:6px; vertical-align:middle;
-        }
-
-        /* Region table */
-        .cockpit-region-table{width:100%; border-collapse:collapse; font-size:13px;}
-        .cockpit-region-table th{
-          text-align:left; padding:8px 10px;
-          font-size:10.5px; letter-spacing:0.06em; text-transform:uppercase;
-          color:var(--ink-muted,#64748B); font-weight:700;
-          border-bottom:1px solid var(--border,#E5E7EB);
-        }
-        .cockpit-region-table th.num{text-align:right;}
-        .cockpit-region-table td{
-          padding:10px;
-          border-bottom:1px solid var(--border-soft,#E2E8F0);
-          font-variant-numeric:tabular-nums;
-        }
-        .cockpit-region-table tr:last-child td{border-bottom:none;}
-        .cockpit-region-table td.num{text-align:right; font-weight:600;}
-        .cockpit-region-name{
-          display:inline-flex; align-items:center; gap:8px;
-          font-weight:600; color:var(--ink,#0F172A);
-        }
-        .cockpit-region-dot{width:8px; height:8px; border-radius:50%;}
-        .cockpit-region-dot[data-region="West"]   {background:linear-gradient(135deg,#4F46E5,#7C3AED);}
-        .cockpit-region-dot[data-region="North"]  {background:linear-gradient(135deg,#0D9488,#0891B2);}
-        .cockpit-region-dot[data-region="South"]  {background:linear-gradient(135deg,#D97706,#CA8A04);}
-        .cockpit-region-dot[data-region="East"]   {background:linear-gradient(135deg,#DC2626,#DB2777);}
-        .cockpit-region-dot[data-region="International"]{background:linear-gradient(135deg,#334155,#64748B);}
-
-        /* Source split */
-        .cockpit-source-bar{
-          display:flex; height:32px; border-radius:8px; overflow:hidden;
-          box-shadow:0 1px 2px rgba(15,23,42,0.06);
-          margin-bottom:14px;
-        }
-        .cockpit-source-seg{
-          display:flex; align-items:center; justify-content:center;
-          color:#fff; font-size:13px; font-weight:700;
-          transition:flex 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .cockpit-source-seg[data-src="BrightSign"]{background:linear-gradient(135deg,#4F46E5,#7C3AED);}
-        .cockpit-source-seg[data-src="Cavitak"]   {background:linear-gradient(135deg,#D97706,#F59E0B);}
-        .cockpit-source-legend{display:flex; gap:12px; font-size:12px; flex-wrap:wrap;}
-        .cockpit-source-leg{display:flex; align-items:center; gap:6px;}
-        .cockpit-source-leg-dot{width:10px; height:10px; border-radius:50%;}
-        .cockpit-source-leg-name{color:var(--ink,#0F172A); font-weight:600;}
-        .cockpit-source-leg-val{color:var(--ink-muted,#64748B); font-variant-numeric:tabular-nums;}
-
-        /* Aging spotlight */
-        .cockpit-aging-row{
-          display:flex; align-items:center; gap:12px;
-          padding:10px 0;
-          border-bottom:1px solid var(--border-soft,#E2E8F0);
-          font-size:13px; cursor:pointer;
-          transition:background 120ms, padding-left 160ms;
-        }
-        .cockpit-aging-row:hover{background:rgba(79,70,229,0.04); padding-left:6px;}
-        .cockpit-aging-row:last-child{border-bottom:none;}
-        .cockpit-aging-proj{flex:1; min-width:0; font-weight:600; color:var(--ink,#0F172A); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-        .cockpit-aging-cust{font-size:11.5px; color:var(--ink-muted,#64748B); font-weight:500; min-width:100px; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-        .cockpit-aging-stage{
-          padding:3px 9px; border-radius:999px; font-size:10.5px; font-weight:700;
-          flex-shrink:0;
-        }
-        .cockpit-aging-days{
-          padding:3px 10px; border-radius:999px; font-size:11px; font-weight:700;
-          font-variant-numeric:tabular-nums;
-          flex-shrink:0;
-        }
-        .cockpit-aging-days[data-tier="green"]{background:rgba(5,150,105,0.10); color:#047857;}
-        .cockpit-aging-days[data-tier="amber"]{background:rgba(217,119,6,0.12); color:#B45309;}
-        .cockpit-aging-days[data-tier="red"]  {background:rgba(220,38,38,0.14); color:#991B1B;}
-
-        /* What's moving */
-        .cockpit-mov-row{
-          display:flex; align-items:center; gap:10px;
-          padding:10px 0; border-bottom:1px solid var(--border-soft,#E2E8F0);
-          font-size:12.5px;
-        }
-        .cockpit-mov-row:last-child{border-bottom:none;}
-        .cockpit-mov-arrow{color:var(--ink-subtle,#94A3B8); font-size:14px; flex-shrink:0;}
-        .cockpit-mov-who{font-weight:600; color:var(--ink,#0F172A); flex-shrink:0;}
-        .cockpit-mov-detail{flex:1; color:var(--ink-muted,#64748B); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-        .cockpit-mov-when{font-size:11px; color:var(--ink-subtle,#94A3B8); flex-shrink:0;}
-
-        .cockpit-empty{padding:32px 20px; text-align:center; color:var(--ink-subtle,#94A3B8); font-size:13px; font-style:italic;}
-
-        /* Dark mode */
-        html[data-theme="dark"] .cockpit-card{background:rgba(20,25,55,0.92);}
-        html[data-theme="dark"] .cockpit-stage{background:rgba(20,25,55,0.92);}
-        html[data-theme="dark"] .cockpit-filters{background:linear-gradient(135deg, rgba(99,102,241,0.10) 0%, rgba(124,58,237,0.07) 100%), var(--surface,#141937);}
-
-        /* ============ v24.25.2 — Owner-grade additions ============ */
-        /* v24.25.3 — Cockpit test-data include toggle */
-        .cockpit-test-toggle{
-          display:inline-flex; align-items:center; gap:8px;
-          padding:6px 12px;
-          background:var(--surface-2,#F8FAFC);
-          border:1px solid var(--border,#E5E7EB);
-          border-radius:8px;
-          font-size:11.5px; font-weight:600; color:var(--ink-muted,#64748B);
-          cursor:pointer; user-select:none;
-          transition:background 140ms, border-color 140ms;
-        }
-        .cockpit-test-toggle:hover{border-color:#F59E0B;}
-        .cockpit-test-toggle input[type="checkbox"]{
-          width:14px; height:14px; accent-color:#F59E0B; cursor:pointer; margin:0;
-        }
-        .cockpit-test-toggle:has(input:checked){
-          background:rgba(245,158,11,0.10); color:#B45309; border-color:#F59E0B;
-        }
-        /* Quarter close countdown (in filter bar) */
-        .cockpit-countdown{
-          display:inline-flex; flex-direction:column; align-items:flex-end;
-          padding:6px 14px;
-          background:linear-gradient(135deg, rgba(220,38,38,0.10) 0%, rgba(217,119,6,0.10) 100%);
-          border:1px solid rgba(220,38,38,0.20);
-          border-radius:10px;
-          line-height:1.1;
-        }
-        .cockpit-countdown-num{
-          font-family:var(--serif,Georgia,serif);
-          font-size:20px; font-weight:700; letter-spacing:-0.02em;
-          background:linear-gradient(135deg,#DC2626,#D97706);
-          -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
-          font-variant-numeric:tabular-nums;
-        }
-        .cockpit-countdown-lbl{
-          font-size:10px; letter-spacing:0.06em; text-transform:uppercase;
-          font-weight:700; color:#B45309;
-        }
-
-        /* Top Wins Ribbon */
-        .cockpit-wins-ribbon{
-          display:flex; align-items:center; gap:14px;
-          padding:12px 18px; margin-bottom:18px;
-          background:linear-gradient(90deg, rgba(217,119,6,0.10) 0%, rgba(245,158,11,0.06) 50%, rgba(217,119,6,0.10) 100%);
-          border:1px solid rgba(217,119,6,0.25);
-          border-radius:12px;
-          overflow:hidden;
-        }
-        .cockpit-wins-badge{
-          display:inline-flex; align-items:center; gap:5px;
-          padding:5px 11px;
-          background:linear-gradient(135deg,#D97706,#F59E0B);
-          color:#fff; font-size:11px; font-weight:800; letter-spacing:0.06em;
-          border-radius:999px;
-          box-shadow:0 2px 6px rgba(217,119,6,0.30);
-          flex-shrink:0;
-          animation:wins-pulse 2.4s ease-in-out infinite;
-        }
-        @keyframes wins-pulse{
-          0%,100%{box-shadow:0 2px 6px rgba(217,119,6,0.30), 0 0 0 0 rgba(217,119,6,0.40);}
-          50%{box-shadow:0 2px 6px rgba(217,119,6,0.30), 0 0 0 8px rgba(217,119,6,0);}
-        }
-        .cockpit-wins-track{
-          flex:1; min-width:0; overflow:hidden;
-          font-size:13px; font-weight:500; color:var(--ink,#0F172A);
-          display:flex; gap:24px; flex-wrap:nowrap;
-          white-space:nowrap;
-        }
-        .cockpit-wins-item{
-          display:inline-flex; align-items:center; gap:6px; flex-shrink:0;
-        }
-        .cockpit-wins-item-rel{font-size:11px; color:var(--ink-muted,#64748B); font-style:italic;}
-        .cockpit-wins-item-proj{color:var(--ink,#0F172A); font-weight:600;}
-        .cockpit-wins-item-cust{color:var(--ink-muted,#64748B);}
-        .cockpit-wins-item-val{
-          background:linear-gradient(135deg,#059669,#10B981);
-          -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
-          font-weight:700; font-variant-numeric:tabular-nums;
-        }
-        .cockpit-wins-empty{
-          color:var(--ink-muted,#64748B); font-size:13px; font-style:italic;
-        }
-        .cockpit-wins-sep{color:var(--ink-subtle,#CBD5E1); flex-shrink:0;}
-
-        /* KPI strip — extend to 6 columns */
-        .cockpit-kpi-strip{grid-template-columns:repeat(6, 1fr) !important;}
-        @media (max-width:1180px){.cockpit-kpi-strip{grid-template-columns:repeat(3, 1fr) !important;}}
-        @media (max-width:780px) {.cockpit-kpi-strip{grid-template-columns:repeat(2, 1fr) !important;}}
-        @media (max-width:480px) {.cockpit-kpi-strip{grid-template-columns:1fr !important;}}
-
-        /* Risk tile — color shifts with severity */
-        .cockpit-kpi[data-tone="risk"]{background:linear-gradient(135deg,#475569 0%,#64748B 100%);}
-        .cockpit-kpi[data-tone="risk"][data-severity="amber"]{background:linear-gradient(135deg,#D97706 0%,#F59E0B 100%);}
-        .cockpit-kpi[data-tone="risk"][data-severity="red"]{background:linear-gradient(135deg,#DC2626 0%,#F87171 100%);}
-        .cockpit-kpi[data-tone="risk"][data-severity="green"]{background:linear-gradient(135deg,#059669 0%,#10B981 100%);}
-
-        /* Open Pipeline tile — Commit/Early split row */
-        .cockpit-kpi-split{
-          position:relative; margin-top:10px; padding-top:10px;
-          border-top:1px solid rgba(255,255,255,0.20);
-          display:flex; gap:10px; font-size:10.5px;
-        }
-        .cockpit-kpi-split-cell{flex:1; min-width:0;}
-        .cockpit-kpi-split-lbl{
-          opacity:0.85; letter-spacing:0.06em; text-transform:uppercase;
-          font-weight:700; margin-bottom:1px;
-        }
-        .cockpit-kpi-split-val{
-          font-size:13px; font-weight:700; font-variant-numeric:tabular-nums;
-          line-height:1.1;
-        }
-
-        /* Won tile — target progress bar */
-        .cockpit-kpi-target{
-          position:relative; margin-top:10px; padding-top:8px;
-          border-top:1px solid rgba(255,255,255,0.20);
-          font-size:11px;
-        }
-        .cockpit-kpi-target-lbl{
-          opacity:0.85; letter-spacing:0.06em; text-transform:uppercase;
-          font-weight:700; margin-bottom:4px;
-          display:flex; justify-content:space-between; align-items:center;
-        }
-        .cockpit-kpi-target-bar{
-          height:5px; background:rgba(255,255,255,0.20); border-radius:3px; overflow:hidden;
-        }
-        .cockpit-kpi-target-fill{
-          height:100%; background:rgba(255,255,255,0.85); border-radius:3px;
-          transition:width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        /* Engagement strip (4 tiles) */
-        .cockpit-eng-strip{
-          display:grid; grid-template-columns:repeat(4, 1fr); gap:12px;
-          margin-bottom:24px;
-        }
-        @media (max-width:920px){.cockpit-eng-strip{grid-template-columns:repeat(2,1fr);}}
-        @media (max-width:480px){.cockpit-eng-strip{grid-template-columns:1fr;}}
-        .cockpit-eng{
-          position:relative;
-          display:flex; gap:14px; align-items:center;
-          padding:14px 16px;
-          background:var(--surface,#FFF);
-          border:1px solid var(--border,#E5E7EB);
-          border-radius:14px;
-          box-shadow:0 1px 2px rgba(15,23,42,0.04), 0 6px 16px rgba(15,23,42,0.04);
-          overflow:hidden;
-          transition:transform 200ms, box-shadow 200ms;
-        }
-        .cockpit-eng:hover{transform:translateY(-1px); box-shadow:0 4px 8px rgba(15,23,42,0.06), 0 14px 30px rgba(15,23,42,0.07);}
-        .cockpit-eng::before{
-          content:""; position:absolute; top:0; left:0; bottom:0; width:4px;
-          background:var(--eng-accent);
-        }
-        .cockpit-eng[data-tone="cust"]   {--eng-accent:linear-gradient(180deg,#4F46E5,#7C3AED); --eng-icon-bg:linear-gradient(135deg,rgba(79,70,229,0.12),rgba(124,58,237,0.12));}
-        .cockpit-eng[data-tone="repeat"] {--eng-accent:linear-gradient(180deg,#7C3AED,#A855F7); --eng-icon-bg:linear-gradient(135deg,rgba(124,58,237,0.12),rgba(168,85,247,0.12));}
-        .cockpit-eng[data-tone="partner"]{--eng-accent:linear-gradient(180deg,#0D9488,#0EA5E9); --eng-icon-bg:linear-gradient(135deg,rgba(13,148,136,0.12),rgba(14,165,233,0.12));}
-        .cockpit-eng[data-tone="consult"]{--eng-accent:linear-gradient(180deg,#D97706,#F59E0B); --eng-icon-bg:linear-gradient(135deg,rgba(217,119,6,0.12),rgba(245,158,11,0.12));}
-        .cockpit-eng-icon{
-          width:42px; height:42px; border-radius:12px;
-          display:inline-flex; align-items:center; justify-content:center;
-          font-size:20px; flex-shrink:0;
-          background:var(--eng-icon-bg);
-        }
-        .cockpit-eng-content{min-width:0; flex:1;}
-        .cockpit-eng-label{
-          font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
-          color:var(--ink-muted,#64748B); font-weight:700; margin-bottom:2px;
-        }
-        .cockpit-eng-value{
-          font-size:24px; font-weight:700; line-height:1.1;
-          font-family:var(--serif,Georgia,serif); letter-spacing:-0.02em;
-          font-variant-numeric:tabular-nums;
-          color:var(--ink,#0F172A);
-        }
-        .cockpit-eng[data-tone="cust"]    .cockpit-eng-value{background:linear-gradient(135deg,#4F46E5,#7C3AED); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
-        .cockpit-eng[data-tone="repeat"]  .cockpit-eng-value{background:linear-gradient(135deg,#7C3AED,#A855F7); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
-        .cockpit-eng[data-tone="partner"] .cockpit-eng-value{background:linear-gradient(135deg,#0D9488,#0EA5E9); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
-        .cockpit-eng[data-tone="consult"] .cockpit-eng-value{background:linear-gradient(135deg,#D97706,#F59E0B); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
-        .cockpit-eng-sub{
-          font-size:11px; color:var(--ink-muted,#64748B);
-          font-weight:500; margin-top:2px;
-        }
-
-        /* Top Repeat Customers panel */
-        .cockpit-repeat-row{
-          display:flex; align-items:center; gap:12px;
-          padding:10px 0;
-          border-bottom:1px solid var(--border-soft,#E2E8F0);
-          font-size:13px; cursor:pointer;
-          transition:background 120ms, padding-left 160ms;
-        }
-        .cockpit-repeat-row:last-child{border-bottom:none;}
-        .cockpit-repeat-row:hover{background:rgba(124,58,237,0.04); padding-left:6px;}
-        .cockpit-repeat-rank{
-          display:inline-flex; align-items:center; justify-content:center;
-          width:26px; height:26px; border-radius:8px;
-          color:#fff; font-size:11px; font-weight:800;
-          flex-shrink:0;
-          background:linear-gradient(135deg,var(--ink-muted,#64748B),var(--slate,#334155));
-        }
-        .cockpit-repeat-row:nth-child(1) .cockpit-repeat-rank{background:linear-gradient(135deg,#D97706,#F59E0B); box-shadow:0 2px 6px rgba(217,119,6,0.30);}
-        .cockpit-repeat-row:nth-child(2) .cockpit-repeat-rank{background:linear-gradient(135deg,#64748B,#94A3B8);}
-        .cockpit-repeat-row:nth-child(3) .cockpit-repeat-rank{background:linear-gradient(135deg,#92400E,#B45309);}
-        .cockpit-repeat-info{flex:1; min-width:0;}
-        .cockpit-repeat-name{
-          font-weight:600; color:var(--ink,#0F172A);
-          overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-        }
-        .cockpit-repeat-meta{
-          font-size:11px; color:var(--ink-muted,#64748B); font-weight:500; margin-top:2px;
-        }
-        .cockpit-repeat-val{
-          font-variant-numeric:tabular-nums; font-weight:700;
-          color:var(--ink,#0F172A);
-          background:linear-gradient(135deg,#059669,#10B981);
-          -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
-          flex-shrink:0;
-        }
-
-        /* Partner & Consultant Relationship Board */
-        .cockpit-rels{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
-        @media (max-width:640px){.cockpit-rels{grid-template-columns:1fr;}}
-        .cockpit-rel-col{}
-        .cockpit-rel-col-title{
-          font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase;
-          font-weight:700; margin-bottom:8px; padding-bottom:6px;
-          border-bottom:1px solid var(--border-soft,#E2E8F0);
-          display:flex; gap:6px; align-items:center;
-        }
-        .cockpit-rel-col-title-dot{
-          display:inline-block; width:8px; height:8px; border-radius:50%;
-        }
-        .cockpit-rel-col[data-state="active"] .cockpit-rel-col-title{color:#047857;}
-        .cockpit-rel-col[data-state="active"] .cockpit-rel-col-title-dot{background:linear-gradient(135deg,#059669,#10B981);}
-        .cockpit-rel-col[data-state="dormant"] .cockpit-rel-col-title{color:#B45309;}
-        .cockpit-rel-col[data-state="dormant"] .cockpit-rel-col-title-dot{background:linear-gradient(135deg,#D97706,#F59E0B);}
-        .cockpit-rel-section{margin-bottom:14px;}
-        .cockpit-rel-section:last-child{margin-bottom:0;}
-        .cockpit-rel-section-head{
-          font-size:10.5px; letter-spacing:0.04em;
-          color:var(--ink-muted,#64748B); font-weight:600;
-          margin-bottom:5px;
-        }
-        .cockpit-rel-list{margin:0; padding:0; list-style:none; font-size:12.5px;}
-        .cockpit-rel-list li{
-          display:flex; justify-content:space-between; gap:8px;
-          padding:5px 0; border-bottom:1px dashed var(--border-soft,#E2E8F0);
-        }
-        .cockpit-rel-list li:last-child{border-bottom:none;}
-        .cockpit-rel-list .name{
-          color:var(--ink,#0F172A); font-weight:500;
-          overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;
-        }
-        .cockpit-rel-list .val{
-          color:var(--ink-muted,#64748B);
-          font-variant-numeric:tabular-nums; font-weight:600;
-          flex-shrink:0;
-        }
-        .cockpit-rel-empty{font-size:11.5px; font-style:italic; color:var(--ink-subtle,#94A3B8); padding:4px 0;}
-
-        /* Region table — engagement column */
-        .cockpit-region-table .eng-bar{
-          display:inline-flex; align-items:center; gap:6px;
-        }
-        .cockpit-region-table .eng-bar-track{
-          width:60px; height:4px; background:var(--surface-2,#F1F5F9); border-radius:2px; overflow:hidden;
-        }
-        .cockpit-region-table .eng-bar-fill{
-          height:100%; border-radius:2px;
-          background:linear-gradient(90deg,#0D9488,#0EA5E9);
-        }
-        .cockpit-region-table .eng-score{
-          font-variant-numeric:tabular-nums; font-weight:700;
-          color:#0F766E;
-        }
-
-        /* ============ v24.25.3 — Detailed Analytics v2 ============ */
-        /* Split leaderboard (sales / presales) — Won ₹ + Open ₹ side-by-side */
-        .leaderboard-v2{display:flex; flex-direction:column; gap:8px; padding:4px 0;}
-        .lb-v2-empty{
-          padding:24px 20px; text-align:center;
-          color:var(--ink-subtle,#94A3B8); font-size:12.5px; font-style:italic;
-        }
-        .lb-v2-row{
-          display:grid; grid-template-columns:28px minmax(0,1.5fr) 1fr 1fr;
-          align-items:center; gap:10px;
-          padding:8px 12px;
-          background:var(--surface,#FFF);
-          border:1px solid var(--border-soft,#E2E8F0);
-          border-radius:10px;
-          transition:border-color 140ms, transform 140ms, box-shadow 140ms;
-        }
-        .lb-v2-row:hover{
-          border-color:var(--indigo,#4F46E5);
-          transform:translateY(-1px);
-          box-shadow:0 4px 10px rgba(15,23,42,0.06);
-        }
-        .lb-v2-rank{
-          display:inline-flex; align-items:center; justify-content:center;
-          width:24px; height:24px; border-radius:7px;
-          color:#fff; font-size:11px; font-weight:800;
-          background:linear-gradient(135deg,var(--ink-muted,#64748B),var(--slate,#334155));
-        }
-        .lb-v2-row[data-rank="1"] .lb-v2-rank{background:linear-gradient(135deg,#D97706,#F59E0B); box-shadow:0 2px 6px rgba(217,119,6,0.30);}
-        .lb-v2-row[data-rank="2"] .lb-v2-rank{background:linear-gradient(135deg,#64748B,#94A3B8);}
-        .lb-v2-row[data-rank="3"] .lb-v2-rank{background:linear-gradient(135deg,#92400E,#B45309);}
-        .lb-v2-name-block{min-width:0;}
-        .lb-v2-name{
-          font-weight:700; font-size:13px; color:var(--ink,#0F172A);
-          overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-        }
-        .lb-v2-meta{
-          font-size:10.5px; color:var(--ink-muted,#64748B);
-          margin-top:1px; font-weight:500;
-        }
-        .lb-v2-cell{display:flex; flex-direction:column; gap:1px; min-width:0;}
-        .lb-v2-cell-label{
-          font-size:9px; letter-spacing:0.08em; text-transform:uppercase;
-          color:var(--ink-muted,#64748B); font-weight:700;
-        }
-        .lb-v2-cell-val{
-          font-size:13px; font-weight:700; line-height:1.1;
-          font-variant-numeric:tabular-nums;
-        }
-        .lb-v2-cell[data-tone="won"] .lb-v2-cell-val{
-          background:linear-gradient(135deg,#059669,#10B981);
-          -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
-        }
-        .lb-v2-cell[data-tone="open"] .lb-v2-cell-val{
-          background:linear-gradient(135deg,#4F46E5,#7C3AED);
-          -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
-        }
-        .lb-v2-cell-sub{
-          font-size:10px; color:var(--ink-muted,#64748B);
-          font-weight:500;
-        }
-
-        /* Model Performance — sortable bars + tier color + sparkline */
-        .model-perf-sort-btn{
-          padding:4px 10px; font-size:11px; font-weight:700;
-          background:transparent; border:1px solid var(--border-strong,#CBD5E1);
-          color:var(--ink-muted,#64748B);
-          border-radius:6px; cursor:pointer; letter-spacing:0.04em;
-          transition:all 140ms;
-        }
-        .model-perf-sort-btn:hover{border-color:var(--indigo,#4F46E5);color:var(--indigo,#4F46E5);}
-        .model-perf-sort-btn.active{
-          background:var(--indigo,#4F46E5); color:#fff; border-color:var(--indigo,#4F46E5);
-          box-shadow:0 2px 4px rgba(79,70,229,0.25);
-        }
-        .mp-empty{
-          padding:32px 20px; text-align:center;
-          color:var(--ink-subtle,#94A3B8); font-size:13px; font-style:italic;
-        }
-        .mp-row{
-          display:grid;
-          grid-template-columns:64px 70px minmax(0,1fr) 110px 90px;
-          align-items:center; gap:12px;
-          padding:10px 14px;
-          border-bottom:1px solid var(--border-soft,#E2E8F0);
-          transition:background 120ms;
-        }
-        .mp-row:hover{background:var(--surface-2,#F8FAFC);}
-        .mp-row:last-child{border-bottom:none;}
-        .mp-model{
-          font-weight:800; font-size:13px;
-          color:var(--ink,#0F172A); font-family:var(--mono,monospace);
-        }
-        .mp-tier{
-          display:inline-block; padding:3px 9px; border-radius:999px;
-          font-size:10px; font-weight:700; letter-spacing:0.04em;
-          text-align:center;
-        }
-        .mp-tier[data-tier="Basic"]{background:rgba(100,116,139,0.12);color:#475569;}
-        .mp-tier[data-tier="Standard"]{background:rgba(79,70,229,0.12);color:#4338CA;}
-        .mp-tier[data-tier="Performance"]{background:rgba(124,58,237,0.12);color:#6D28D9;}
-        .mp-tier[data-tier="Flagship"]{background:rgba(219,39,119,0.12);color:#BE185D;}
-        .mp-tier[data-tier="Other"]{background:rgba(100,116,139,0.10);color:#64748B;}
-        .mp-bar-track{
-          position:relative;
-          height:8px; background:var(--surface-2,#F1F5F9);
-          border-radius:4px; overflow:hidden;
-        }
-        .mp-bar-fill{
-          position:absolute; left:0; top:0; bottom:0;
-          border-radius:4px;
-          transition:width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .mp-bar-fill[data-tier="Basic"]      {background:linear-gradient(90deg,#64748B,#94A3B8);}
-        .mp-bar-fill[data-tier="Standard"]   {background:linear-gradient(90deg,#4F46E5,#7C3AED);}
-        .mp-bar-fill[data-tier="Performance"]{background:linear-gradient(90deg,#7C3AED,#A855F7);}
-        .mp-bar-fill[data-tier="Flagship"]   {background:linear-gradient(90deg,#DB2777,#F472B6);}
-        .mp-bar-fill[data-tier="Other"]      {background:linear-gradient(90deg,#64748B,#94A3B8);}
-        .mp-bar-meta{
-          display:flex; justify-content:space-between; align-items:center;
-          font-size:11px; color:var(--ink-muted,#64748B); margin-bottom:3px;
-          font-variant-numeric:tabular-nums;
-        }
-        .mp-bar-meta b{color:var(--ink,#0F172A); font-weight:700;}
-        .mp-revenue{
-          font-size:12.5px; font-weight:700; font-variant-numeric:tabular-nums;
-          background:linear-gradient(135deg,#059669,#10B981);
-          -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
-          text-align:right;
-        }
-        .mp-spark{width:90px; height:28px;}
-        .mp-spark-line{stroke:var(--indigo,#4F46E5); stroke-width:1.5; fill:none;}
-        .mp-spark-fill{fill:rgba(79,70,229,0.12); stroke:none;}
-        .mp-spark-dot{fill:var(--indigo,#4F46E5);}
-
-        @media (max-width:720px){
-          .mp-row{grid-template-columns:60px minmax(0,1fr) 90px; gap:8px;}
-          .mp-tier{display:none;}
-          .mp-bar-track{display:none;}
-          .mp-spark{display:none;}
-        }
-        html[data-theme="dark"] .lb-v2-row{background:rgba(20,25,55,0.50);}
-        html[data-theme="dark"] .mp-row{border-bottom-color:rgba(148,163,184,0.10);}
-      </style>
-
-      <!-- v24.25.2 — DETAILED ANALYTICS EXPANDER
-           The cockpit above is the primary view. v18 charts (Model Distribution,
-           User Leaderboard, Top Partners, City Distribution, Activity Timeline,
-           Model Demand, Top Models Monthly) are kept here as drill-down detail.
-           Default collapsed. The old hero + KPI strip are hidden because cockpit
-           replaced them. The v18 filter bar is moved INTO the expander since it
-           only filters the v18 charts. -->
-      <details id="dash-detail-expander" class="dash-expander">
-        <summary class="dash-expander-summary">
-          <span class="dash-expander-icon">📊</span>
-          <span class="dash-expander-title">Detailed analytics</span>
-          <span class="dash-expander-meta">Models · Users · Partners · Cities · Activity · Model demand</span>
-          <span class="dash-expander-caret">▾</span>
-        </summary>
-        <div class="dash-expander-body">
-
-      <!-- v18 Premium Dashboard: hero + KPI strip + filter + 7 charts -->
-      <!-- v24.25.2 — Hero + KPI strip hidden (duplicates cockpit). Filter bar
-           moved inside expander. Only chart cards visible when expanded. -->
-      <div id="super-charts" class="dashboard-v18 dashboard-v18-compact" style="display:none;">
-        <!-- Hero header with live pulse and gradient mesh -->
-        <div class="dash-hero" style="display:none;" aria-hidden="true">
-          <div class="dash-hero-eyebrow"><span class="dash-hero-pulse"></span> Live Analytics · <span id="dash-hero-tz">Real-time sync</span></div>
-          <div class="dash-hero-title">Sales Intelligence Dashboard</div>
-          <div class="dash-hero-sub">End-to-end visibility into BrightSign selections — from first view through confirmed deal. Filter, drill down, export.</div>
-          <div class="dash-hero-meta">
-            <span>Last updated: <strong id="dash-last-update">—</strong></span>
-            <span>Active users (30d): <strong id="dash-active-users">—</strong></span>
-            <span>Total selections: <strong id="dash-total-selections">—</strong></span>
+      <!-- To-do list (3 sections) -->
+      <div class="v26-todo-wrap">
+        <div class="v26-todo-section">
+          <div class="v26-todo-head v26-todo-head-red">
+            <span>🔴 Closing this week</span>
+            <span class="v26-todo-count" id="v26-mine-todo-closing-count">0</span>
           </div>
+          <div class="v26-todo-body" id="v26-mine-todo-closing">—</div>
         </div>
-
-        <!-- v20: KPI STRIP — hidden, cockpit replaces this -->
-        <div class="dash-section-head" style="display:none;" aria-hidden="true"><div class="dash-section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div><div class="dash-section-title">Key Performance Indicators</div><div class="dash-section-line"></div></div>
-        <div class="kpi-strip" style="display:none;" aria-hidden="true">
-          <div class="kpi-tile">
-            <div class="kpi-label"><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>Total Projects</div>
-            <div class="kpi-value" id="kpi-projects">0</div>
-            <div class="kpi-trend" id="kpi-projects-trend">—</div>
+        <div class="v26-todo-section">
+          <div class="v26-todo-head v26-todo-head-yellow">
+            <span>🟡 Stuck &gt;14 days</span>
+            <span class="v26-todo-count" id="v26-mine-todo-stuck-count">0</span>
           </div>
-          <div class="kpi-tile">
-            <div class="kpi-label"><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Consultants</div>
-            <div class="kpi-value" id="kpi-consultants">0</div>
-            <div class="kpi-trend" id="kpi-consultants-trend">—</div>
+          <div class="v26-todo-body" id="v26-mine-todo-stuck">—</div>
+        </div>
+        <div class="v26-todo-section">
+          <div class="v26-todo-head v26-todo-head-grey">
+            <span>⚪ Stale &gt;30 days</span>
+            <span class="v26-todo-count" id="v26-mine-todo-stale-count">0</span>
           </div>
-          <div class="kpi-tile">
-            <div class="kpi-label"><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg></span>Partners / SI</div>
-            <div class="kpi-value" id="kpi-partners">0</div>
-            <div class="kpi-trend" id="kpi-partners-trend">—</div>
-          </div>
-          <div class="kpi-tile">
-            <div class="kpi-label"><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>Cities</div>
-            <div class="kpi-value" id="kpi-cities">0</div>
-            <div class="kpi-trend" id="kpi-cities-trend">—</div>
-          </div>
-          <div class="kpi-tile">
-            <div class="kpi-label"><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></span>End-users</div>
-            <div class="kpi-value" id="kpi-endusers">0</div>
-            <div class="kpi-trend" id="kpi-endusers-trend">—</div>
-          </div>
+          <div class="v26-todo-body" id="v26-mine-todo-stale">—</div>
         </div>
       </div>
 
-      <!-- v18: Premium filter bar -->
-      <div id="filter-bar" class="filter-bar filter-bar-v18" style="display:none;">
-        <div class="filter-field">
-          <div class="filter-label">Date range</div>
-          <select id="flt-daterange" class="filter-select" onchange="applyFilters()">
-            <option value="all">All time</option>
-            <option value="30d">Last 30 days</option>
-            <option value="quarter">Last quarter (90d)</option>
-            <option value="year">Last year</option>
+      <!-- My deals table -->
+      <div class="v26-table-wrap">
+        <div class="v26-table-head">
+          <span style="font-weight:700;">My Deals</span>
+          <span class="v26-table-counter" id="v26-mine-table-counter">— deals</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="v26-table" id="v26-mine-table">
+            <thead>
+              <tr>
+                <th data-sort="project">Project</th>
+                <th data-sort="enduser">End-user</th>
+                <th data-sort="stage">Stage</th>
+                <th data-sort="dealValue" class="v26-th-num">Deal value</th>
+                <th data-sort="closemonth">Close</th>
+                <th data-sort="daysInStage" class="v26-th-num">Days in stage</th>
+              </tr>
+            </thead>
+            <tbody id="v26-mine-tbody">
+              <tr><td colspan="6" style="padding:32px;text-align:center;color:var(--ink-muted);">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================ TEAM ANALYTICS ============================ -->
+    <div id="v26-pane-team" class="v26-pane" style="display:none;">
+      <div class="page-header">
+        <div class="page-eyebrow">Team Analytics</div>
+        <div class="page-title" id="v26-team-title">All-team dashboard</div>
+        <div class="page-subtitle" id="v26-team-subtitle">Pipeline · funnel · partner concentration · regional split · trends — for director and owner reviews.</div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="v26-filters">
+        <div class="v26-filter-cell">
+          <label class="v26-filter-label">Time</label>
+          <select id="v26-f-time" onchange="bsv26_onFilterChange()">
+            <option value="month">This Month</option>
+            <option value="quarter" selected>This Quarter</option>
+            <option value="fy">This FY</option>
+            <option value="lastfy">Last FY</option>
+            <option value="all">All Time</option>
           </select>
         </div>
-        <div class="filter-field">
-          <div class="filter-label">State / Region</div>
-          <select id="flt-city" class="filter-select" onchange="applyFilters()"><option value="">All</option></select>
+        <div class="v26-filter-cell">
+          <label class="v26-filter-label">Region</label>
+          <select id="v26-f-region" onchange="bsv26_onFilterChange()">
+            <option value="all">All regions</option>
+            <option value="West">West</option>
+            <option value="North">North</option>
+            <option value="South">South</option>
+            <option value="East">East</option>
+            <option value="International">International</option>
+          </select>
         </div>
-        <div class="filter-field">
-          <div class="filter-label">User</div>
-          <select id="flt-user" class="filter-select" onchange="applyFilters()"><option value="">All</option></select>
+        <div class="v26-filter-cell">
+          <label class="v26-filter-label">Source</label>
+          <select id="v26-f-source" onchange="bsv26_onFilterChange()">
+            <option value="all">All sources</option>
+            <option value="BrightSign">BrightSign</option>
+            <option value="Cavitak">Cavitak</option>
+          </select>
         </div>
-        <div class="filter-field">
-          <div class="filter-label">Project</div>
-          <select id="flt-project" class="filter-select" onchange="applyFilters()"><option value="">All</option></select>
+        <div class="v26-filter-cell">
+          <label class="v26-filter-label">Sales</label>
+          <select id="v26-f-sales" onchange="bsv26_onFilterChange()">
+            <option value="all">All sales</option>
+          </select>
         </div>
-        <div class="filter-field">
-          <div class="filter-label">Partner / SI</div>
-          <select id="flt-partner" class="filter-select" onchange="applyFilters()"><option value="">All</option></select>
+        <div class="v26-filter-cell">
+          <label class="v26-filter-label">Outcome</label>
+          <select id="v26-f-outcome" onchange="bsv26_onFilterChange()">
+            <option value="all">All outcomes</option>
+            <option value="open">Open</option>
+            <option value="won">Won</option>
+            <option value="lost">Lost</option>
+            <option value="on-hold">On hold</option>
+          </select>
         </div>
-        <div class="filter-field">
-          <div class="filter-label">Consultant</div>
-          <select id="flt-consultant" class="filter-select" onchange="applyFilters()"><option value="">All</option></select>
+        <div class="v26-filter-cell">
+          <label class="v26-filter-label">Stage</label>
+          <select id="v26-f-stage" onchange="bsv26_onFilterChange()">
+            <option value="all">All stages</option>
+            <option value="Lead">Lead</option>
+            <option value="Opportunity">Opportunity</option>
+            <option value="Proposal">Proposal</option>
+            <option value="Negotiation">Negotiation</option>
+            <option value="Order">Order</option>
+          </select>
         </div>
-        <button class="filter-clear" onclick="clearFilters()">Clear</button>
-      </div>
-      <div id="filter-count" class="filter-result-count" style="display:none;"></div>
-
-      <!-- v18 Premium charts — separate container rendered after filters -->
-      <!-- v24.25.3 — Detailed Analytics consolidation:
-           · Stage funnel uses real stages (Lead/Opportunity/Proposal/Negotiation/Order)
-           · Model Distribution donut + Top Models Monthly line REMOVED (duplicated Model Demand)
-           · User Leaderboard split: Sales (Won ₹ + Open ₹) | Presales
-           · Top Partners shows ₹ + sort + placeholder filter
-           · All charts apply pipeline cutoff (Apr 1 2026) -->
-      <div id="super-charts-body" class="dashboard-v18" style="display:none;">
-        <!-- Row 1: Conversion funnel + Pipeline stages (Model Distribution removed — was duplicate of Model Demand) -->
-        <div class="dash-section-head"><div class="dash-section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 12 13 21 6"/><path d="M3 6v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6"/></svg></div><div class="dash-section-title">Performance & Mix</div><div class="dash-section-line"></div></div>
-        <!-- v24.25.4 — chart-pipeline card removed from view (data + visuals duplicated cockpit + new "Number of cases per stage" chart). Stage chart now goes full width. The original element is still in the DOM (display:none) so any legacy renderer references don't error. -->
-        <div class="charts-row-2" style="grid-template-columns:1fr;">
-          <div class="chart-card-v18">
-            <div class="chart-v18-head">
-              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-emerald"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 17 9 11 13 15 21 7"/></svg></span>Number of cases per stage</div>
-            </div>
-            <div class="chart-v18-subtitle">Lead → Opportunity → Proposal → Negotiation → Order · post Apr 1, 2026</div>
-            <div class="chart-v18-body" style="height:280px;"><canvas id="chart-dealstage-v2"></canvas></div>
-          </div>
-        </div>
-        <!-- v24.25.4 — Old chart-pipeline kept in DOM but hidden. Original element keeps Chart.js refs alive, prevents undefined-element errors in legacy renderer. -->
-        <div style="display:none;" aria-hidden="true">
-          <div id="chart-pipeline" class="funnel-container"></div>
-          <canvas id="chart-dealstage"></canvas>
-        </div>
-        <!-- Hidden duplicate: Model Distribution donut (data is in Model Performance below) -->
-        <div style="display:none;"><canvas id="chart-groups"></canvas></div>
-
-        <!-- Row 2: User leaderboard (split into Sales + Presales) + Top partners -->
-        <div class="dash-section-head"><div class="dash-section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div class="dash-section-title">Team & Channel</div><div class="dash-section-line"></div></div>
-        <div class="charts-row-2">
-          <div class="chart-card-v18">
-            <div class="chart-v18-head">
-              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-indigo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3 6 6 1-4.5 4.5 1 6.5L12 17l-5.5 3 1-6.5L3 9l6-1z"/></svg></span>Sales reps · ranked by ₹</div>
-            </div>
-            <div class="chart-v18-subtitle">Won ₹ (closed) + Open ₹ (driving) per sales rep</div>
-            <div class="chart-v18-body" style="height:auto;min-height:280px;"><div id="chart-leaderboard" class="leaderboard-v2"></div></div>
-          </div>
-          <div class="chart-card-v18">
-            <div class="chart-v18-head">
-              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-rose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></span>Top Partners / SI · by ₹</div>
-            </div>
-            <div class="chart-v18-subtitle">Channel partners ranked by total deal ₹ (open + won), high to low</div>
-            <div class="chart-v18-body" style="height:320px;"><canvas id="chart-partners"></canvas></div>
-          </div>
-        </div>
-
-        <!-- Row 2b: Presales reps (separate row so doesn't squish leaderboard column) -->
-        <div class="charts-row-2">
-          <div class="chart-card-v18">
-            <div class="chart-v18-head">
-              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/></svg></span>Presales reps · ranked by ₹</div>
-            </div>
-            <div class="chart-v18-subtitle">Won ₹ + Open ₹ per presales rep</div>
-            <div class="chart-v18-body" style="height:auto;min-height:240px;"><div id="chart-presales-leaderboard" class="leaderboard-v2"></div></div>
-          </div>
-          <div class="chart-card-v18" style="visibility:hidden;"></div>
-        </div>
-
-        <!-- Row 3: City heatmap + Activity timeline (kept as-is — these have unique value) -->
-        <div class="dash-section-head"><div class="dash-section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div class="dash-section-title">Geography & Velocity</div><div class="dash-section-line"></div></div>
-        <div class="charts-row-2">
-          <div class="chart-card-v18">
-            <div class="chart-v18-head">
-              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-slate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="9" y2="21"/></svg></span>City Distribution</div>
-            </div>
-            <div class="chart-v18-subtitle">Selections by city/state · post-cutoff</div>
-            <div class="chart-v18-body" style="height:auto;min-height:200px;"><div id="chart-cities" class="city-heatmap"></div></div>
-          </div>
-          <div class="chart-card-v18">
-            <div class="chart-v18-head">
-              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-emerald"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Activity Timeline</div>
-            </div>
-            <div class="chart-v18-subtitle">Daily deal-creation volume · last 30 days</div>
-            <div class="chart-v18-body"><canvas id="chart-activity"></canvas></div>
-          </div>
-        </div>
-
-        <!-- Row 4: Product Demand — ONE consolidated Model Performance card (replaces 2 prior charts) -->
-        <div class="dash-section-head"><div class="dash-section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3h18v18H3z"/><path d="M9 17V7"/><path d="M13 17v-5"/><path d="M17 17V9"/></svg></div><div class="dash-section-title">Product Demand</div><div class="dash-section-line"></div></div>
-        <div class="chart-card-v18">
-          <div class="chart-v18-head">
-            <div class="chart-v18-title"><span class="chart-v18-title-icon ci-indigo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>Model Performance</div>
-            <div style="margin-left:auto;display:flex;gap:6px;align-items:center;font-size:11.5px;">
-              <span style="color:var(--ink-subtle,#94A3B8);">Sort:</span>
-              <button type="button" id="model-perf-sort-count" class="model-perf-sort-btn active" onclick="setModelPerfSort('count')">Count</button>
-              <button type="button" id="model-perf-sort-rev" class="model-perf-sort-btn" onclick="setModelPerfSort('rev')">₹</button>
-            </div>
-          </div>
-          <div class="chart-v18-subtitle">All models quoted post Apr 1, 2026 · count + ₹ + 6-month sparkline · sortable · color-coded by tier</div>
-          <div class="chart-v18-body" id="model-perf-body" style="height:auto;min-height:240px;padding:8px 0;">Loading…</div>
-        </div>
-        <!-- Hidden originals -->
-        <div style="display:none;">
-          <canvas id="chart-models"></canvas>
-          <canvas id="chart-models-timeline"></canvas>
+        <div class="v26-filter-cell v26-filter-cell-end">
+          <button type="button" class="v26-btn-clear" onclick="bsv26_clearFilters()" title="Reset all filters">Clear</button>
+          <button type="button" class="v26-btn-refresh" onclick="bsv26_refresh()" title="Refresh data">↻</button>
         </div>
       </div>
-        </div><!-- /.dash-expander-body -->
-      </details><!-- /#dash-detail-expander -->
+
+      <!-- 8 KPI tiles -->
+      <div class="v26-kpis v26-kpis-team">
+        <div class="v26-kpi v26-kpi-green"><div class="v26-kpi-label">Won</div><div class="v26-kpi-value" id="v26-team-kpi-won">—</div><div class="v26-kpi-sub" id="v26-team-kpi-won-sub">— wins</div></div>
+        <div class="v26-kpi v26-kpi-blue"><div class="v26-kpi-label">Open Pipeline</div><div class="v26-kpi-value" id="v26-team-kpi-open">—</div><div class="v26-kpi-sub" id="v26-team-kpi-open-sub">— deals</div></div>
+        <div class="v26-kpi v26-kpi-indigo"><div class="v26-kpi-label">Weighted Pipeline</div><div class="v26-kpi-value" id="v26-team-kpi-weighted">—</div><div class="v26-kpi-sub">stage-prob weighted</div></div>
+        <div class="v26-kpi v26-kpi-purple"><div class="v26-kpi-label">Win Rate</div><div class="v26-kpi-value" id="v26-team-kpi-rate">—</div><div class="v26-kpi-sub" id="v26-team-kpi-rate-sub">— resolved</div></div>
+        <div class="v26-kpi v26-kpi-teal"><div class="v26-kpi-label">Active Partners</div><div class="v26-kpi-value" id="v26-team-kpi-partners">—</div><div class="v26-kpi-sub">in open pipeline</div></div>
+        <div class="v26-kpi v26-kpi-cyan"><div class="v26-kpi-label">Active Consultants</div><div class="v26-kpi-value" id="v26-team-kpi-consultants">—</div><div class="v26-kpi-sub">in open pipeline</div></div>
+        <div class="v26-kpi v26-kpi-amber"><div class="v26-kpi-label">End-customers</div><div class="v26-kpi-value" id="v26-team-kpi-customers">—</div><div class="v26-kpi-sub">unique in pipeline</div></div>
+        <div class="v26-kpi v26-kpi-orange"><div class="v26-kpi-label">Days to Q Close</div><div class="v26-kpi-value" id="v26-team-kpi-qclose">—</div><div class="v26-kpi-sub" id="v26-team-kpi-qclose-sub">—</div></div>
+      </div>
+
+      <!-- 8 charts in 4 rows of 2 -->
+      <div class="v26-charts-grid">
+        <div class="v26-chart-card"><div class="v26-chart-head">Source split <span class="v26-chart-sub">BS-generated vs Cavitak-generated</span></div><div class="v26-chart-body"><canvas id="v26-chart-source"></canvas></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Stage funnel <span class="v26-chart-sub">₹ + count by stage · click bar to filter</span></div><div class="v26-chart-body"><canvas id="v26-chart-stage"></canvas></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Region performance <span class="v26-chart-sub">click slice to filter</span></div><div class="v26-chart-body"><canvas id="v26-chart-region"></canvas></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Outcome split <span class="v26-chart-sub">Open · Won · Lost · On hold</span></div><div class="v26-chart-body"><canvas id="v26-chart-outcome"></canvas></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Top partners <span class="v26-chart-sub">Top 10 by # cases</span></div><div class="v26-chart-body"><canvas id="v26-chart-partners"></canvas></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Top consultants <span class="v26-chart-sub">Top 10 by # cases</span></div><div class="v26-chart-body"><canvas id="v26-chart-consultants"></canvas></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Weekly trend <span class="v26-chart-sub">New vs Won · last 12 weeks</span></div><div class="v26-chart-body"><canvas id="v26-chart-trend"></canvas></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Time-to-close <span class="v26-chart-sub">Days from Lead → Won (won deals)</span></div><div class="v26-chart-body"><canvas id="v26-chart-ttc"></canvas></div></div>
+      </div>
+
+      <!-- Sales leaderboard + Stuck deals (side-by-side) -->
+      <div class="v26-bottom-row">
+        <div class="v26-bottom-card">
+          <div class="v26-bottom-head">Sales leaderboard <span class="v26-chart-sub">Top performers · ranked by ₹ won</span></div>
+          <div style="overflow-x:auto;">
+            <table class="v26-table v26-table-compact" id="v26-team-leaderboard">
+              <thead><tr><th>#</th><th>Sales person</th><th class="v26-th-num"># Open</th><th class="v26-th-num">₹ Open</th><th class="v26-th-num"># Won</th><th class="v26-th-num">₹ Won</th><th class="v26-th-num">Win %</th></tr></thead>
+              <tbody id="v26-team-leaderboard-tbody"><tr><td colspan="7" style="padding:18px;text-align:center;color:var(--ink-muted);">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="v26-bottom-card">
+          <div class="v26-bottom-head">Stuck deals <span class="v26-chart-sub">&gt;30 days in current stage · oldest first · click to open</span></div>
+          <div style="overflow-x:auto;">
+            <table class="v26-table v26-table-compact" id="v26-team-stuck">
+              <thead><tr><th>Project</th><th>Stage</th><th class="v26-th-num">₹</th><th class="v26-th-num">Days stuck</th><th>Owner</th></tr></thead>
+              <tbody id="v26-team-stuck-tbody"><tr><td colspan="5" style="padding:18px;text-align:center;color:var(--ink-muted);">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtered deals table at the bottom -->
+      <div class="v26-table-wrap">
+        <div class="v26-table-head">
+          <span style="font-weight:700;">All filtered deals</span>
+          <span class="v26-table-counter" id="v26-team-table-counter">— deals</span>
+          <span style="margin-left:auto;display:flex;gap:6px;">
+            <button class="v26-btn-secondary" onclick="bsv26_exportTeamCSV()" title="Export filtered deals to CSV">📥 Export CSV</button>
+          </span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="v26-table" id="v26-team-table">
+            <thead>
+              <tr>
+                <th data-sort="project">Project</th>
+                <th data-sort="enduser">End-user</th>
+                <th data-sort="partner">Partner</th>
+                <th data-sort="stage">Stage</th>
+                <th data-sort="dealValue" class="v26-th-num">Deal value</th>
+                <th data-sort="closemonth">Close</th>
+                <th data-sort="daysInStage" class="v26-th-num">Days in stage</th>
+                <th data-sort="user">Owner</th>
+              </tr>
+            </thead>
+            <tbody id="v26-team-tbody">
+              <tr><td colspan="8" style="padding:32px;text-align:center;color:var(--ink-muted);">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
   </div>
 </div>
@@ -8336,513 +7702,9 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   </div>
 </div>
 
-<div id="section-review" style="display:none;" role="tabpanel" aria-labelledby="tab-review">
-  <div class="container">
-    <div class="page-header">
-      <div class="page-eyebrow">Review</div>
-      <div class="page-title" id="review-page-title">Channel review</div>
-      <div class="page-subtitle" id="review-page-subtitle">Filter by source, region, FY, sales rep or outcome — drill into region or sales-rep performance, then work the deals through Pipeline Operations below.</div>
-    </div>
-
-    <!-- v24.25.2 — Hidden. The 3 relationship-count cards (Active Partners /
-         Consultants / End-Users) are now in the cockpit Engagement row plus
-         shown per-region in the Region card. Keep the DOM elements so legacy
-         updateRelationshipCounts_ JS keeps working without errors. -->
-    <div id="review-relationship-counts" style="display:none; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:18px;">
-      <div class="kpi-card" style="background:var(--surface-2,#F5F3FF); border:1px solid var(--border,#E5E7EB); border-radius:12px; padding:16px;">
-        <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Active Partners / SI</div>
-        <div id="kpi-active-partners" style="font-size:28px; font-weight:700; color:var(--indigo,#4F46E5); font-family:var(--serif,Georgia,serif); margin-top:4px;">—</div>
-        <div style="font-size:11px; color:var(--ink-subtle,#94A3B8);">in open funnel</div>
-      </div>
-      <div class="kpi-card" style="background:var(--surface-2,#F5F3FF); border:1px solid var(--border,#E5E7EB); border-radius:12px; padding:16px;">
-        <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Active Consultants</div>
-        <div id="kpi-active-consultants" style="font-size:28px; font-weight:700; color:var(--indigo,#4F46E5); font-family:var(--serif,Georgia,serif); margin-top:4px;">—</div>
-        <div style="font-size:11px; color:var(--ink-subtle,#94A3B8);">in open funnel</div>
-      </div>
-      <div class="kpi-card" style="background:var(--surface-2,#F5F3FF); border:1px solid var(--border,#E5E7EB); border-radius:12px; padding:16px;">
-        <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Active End-Users</div>
-        <div id="kpi-active-endusers" style="font-size:28px; font-weight:700; color:var(--indigo,#4F46E5); font-family:var(--serif,Georgia,serif); margin-top:4px;">—</div>
-        <div style="font-size:11px; color:var(--ink-subtle,#94A3B8);">in open funnel</div>
-      </div>
-    </div>
-    <!-- v24.25.2 — Period bar hidden. Filter row dropdowns + cockpit time-window cover this. Kept in DOM for renderReview() backend fetch logic. -->
-    <div id="review-period-bar" class="review-period-bar" style="display:none;">
-      <div class="review-period-group">
-        <label>Period</label>
-        <select id="review-period" onchange="renderReview()"></select>
-      </div>
-      <div class="review-period-group">
-        <label>Compare to</label>
-        <select id="review-compare" onchange="renderReview()"></select>
-      </div>
-      <button class="btn-secondary" onclick="renderReview()" style="margin-left:auto;">↻ Refresh</button>
-    </div>
-
-    <!-- v24.25.0 (item 5) — Inline dropdown filter row. Replaces the v24.21.2 chip
-         panel. 8 controls in a single row (search + Source + FY + Region + State
-         + Sales + Presales + Outcome). Wraps to 2-up on mobile. Filters apply on
-         change — no Apply button. Persists in localStorage 'bs-review-filters-v1'. -->
-    <div id="review-filters-wrap" style="margin:0 0 14px 0; padding:14px 16px; background:var(--surface,#FFF); border:1px solid var(--border,#E5E7EB); border-radius:12px; box-shadow:var(--shadow-sm,0 1px 2px rgba(0,0,0,0.04));">
-      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
-        <span style="font-size:13px; font-weight:600; color:var(--ink,#0F172A);">Filters</span>
-        <span id="review-filters-summary" style="font-size:12px; color:var(--ink-subtle,#94A3B8); flex:1;">— No filters applied</span>
-        <button type="button" class="btn-secondary" onclick="clearAllReviewFilters()" style="font-size:12px; padding:6px 12px;">Clear all</button>
-      </div>
-      <div class="rf-grid">
-        <div class="rf-cell">
-          <label class="rf-label" for="rf-search">Search</label>
-          <input type="text" id="rf-search" placeholder="project, customer, partner…" oninput="onReviewSearchChange()" autocomplete="off">
-        </div>
-        <div class="rf-cell">
-          <label class="rf-label" for="rf-d-leadSource">Source</label>
-          <select id="rf-d-leadSource" onchange="onReviewDropdownChange('leadSource', this.value)">
-            <option value="">All sources</option>
-            <option value="BrightSign">BrightSign</option>
-            <option value="Cavitak">Cavitak</option>
-          </select>
-        </div>
-        <div class="rf-cell">
-          <label class="rf-label" for="rf-d-fy">FY</label>
-          <select id="rf-d-fy" onchange="onReviewDropdownChange('fy', this.value)">
-            <option value="">All FYs</option>
-            <option value="FY26-27">FY26-27</option>
-            <option value="FY27-28">FY27-28</option>
-          </select>
-        </div>
-        <div class="rf-cell">
-          <label class="rf-label" for="rf-d-region">Region</label>
-          <select id="rf-d-region" onchange="onReviewDropdownChange('region', this.value)">
-            <option value="">All regions</option>
-            <option value="West">West</option>
-            <option value="North">North</option>
-            <option value="South">South</option>
-            <option value="East">East</option>
-            <option value="International">International</option>
-          </select>
-        </div>
-        <div class="rf-cell">
-          <label class="rf-label" for="rf-d-state">State</label>
-          <select id="rf-d-state" onchange="onReviewDropdownChange('state', this.value)">
-            <option value="">All states</option>
-          </select>
-        </div>
-        <div class="rf-cell">
-          <label class="rf-label" for="rf-d-salesPerson">Sales</label>
-          <select id="rf-d-salesPerson" onchange="onReviewDropdownChange('salesPerson', this.value)">
-            <option value="">All sales</option>
-          </select>
-        </div>
-        <div class="rf-cell">
-          <label class="rf-label" for="rf-d-presalesPerson">Presales</label>
-          <select id="rf-d-presalesPerson" onchange="onReviewDropdownChange('presalesPerson', this.value)">
-            <option value="">All presales</option>
-          </select>
-        </div>
-        <div class="rf-cell">
-          <label class="rf-label" for="rf-d-outcome">Outcome</label>
-          <select id="rf-d-outcome" onchange="onReviewDropdownChange('outcome', this.value)">
-            <option value="">All outcomes</option>
-            <option value="open">Open</option>
-            <option value="won">Won</option>
-            <option value="lost">Lost</option>
-            <option value="on-hold">On hold</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <style>
-      /* ============ v24.25.1 — Review filter row, polished ============ */
-      #review-filters-wrap{
-        position:relative;
-        background:linear-gradient(135deg, rgba(99,102,241,0.05) 0%, rgba(124,58,237,0.04) 50%, rgba(217,70,239,0.03) 100%), var(--surface,#FFF);
-        border:1px solid var(--border,#E5E7EB);
-        border-radius:14px;
-        box-shadow:0 1px 2px rgba(15,23,42,0.04), 0 4px 14px rgba(99,102,241,0.06);
-        overflow:hidden;
-      }
-      #review-filters-wrap::before{
-        content:"";position:absolute;top:0;left:0;right:0;height:3px;
-        background:linear-gradient(90deg,#4F46E5 0%,#7C3AED 50%,#DB2777 100%);
-      }
-      #review-filters-wrap .rf-grid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px;}
-      #review-filters-wrap .rf-cell{display:flex; flex-direction:column; min-width:0;}
-      #review-filters-wrap .rf-label{
-        font-size:10px; letter-spacing:0.06em; text-transform:uppercase;
-        color:var(--ink-muted,#64748B); font-weight:700; margin-bottom:5px;
-      }
-      #review-filters-wrap select,
-      #review-filters-wrap input[type="text"]{
-        width:100%; min-height:var(--btn-h,40px);
-        padding:0 12px; font-size:13px; font-weight:500; font-family:var(--sans,system-ui),sans-serif;
-        background:var(--surface,#FFF); color:var(--ink,#0F172A);
-        border:1px solid var(--border-strong,#CBD5E1); border-radius:var(--radius,8px);
-        box-shadow:0 1px 2px rgba(15,23,42,0.04);
-        transition:border-color 140ms, box-shadow 140ms;
-      }
-      #review-filters-wrap select:hover,
-      #review-filters-wrap input[type="text"]:hover{border-color:var(--indigo-soft,#312E81);}
-      #review-filters-wrap select:focus,
-      #review-filters-wrap input[type="text"]:focus{
-        outline:none; border-color:var(--indigo,#4F46E5);
-        box-shadow:0 0 0 3px rgba(79,70,229,0.18);
-      }
-      #review-filters-wrap select:not([value=""]):not(:invalid){
-        border-color:var(--indigo,#4F46E5);
-        background:linear-gradient(0deg, rgba(79,70,229,0.04), rgba(79,70,229,0.04)), var(--surface,#FFF);
-        font-weight:600;
-      }
-      @media (max-width:1024px){
-        #review-filters-wrap .rf-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
-      }
-      @media (max-width:720px){
-        #review-filters-wrap .rf-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
-      }
-      @media (max-width:480px){
-        #review-filters-wrap .rf-grid{grid-template-columns:1fr;}
-      }
-
-      /* ============ v24.25.1 — Region + Sales card, polished ============ */
-      #review-rs-wrap{
-        display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:0 0 18px 0;
-      }
-      @media (max-width:920px){#review-rs-wrap{grid-template-columns:1fr;}}
-
-      .rs-card{
-        position:relative;
-        background:linear-gradient(180deg, rgba(255,255,255,0.94) 0%, var(--surface,#FFF) 100%);
-        border:1px solid var(--border,#E5E7EB);
-        border-radius:16px; padding:0; overflow:hidden;
-        box-shadow:0 2px 4px rgba(15,23,42,0.04), 0 12px 32px rgba(15,23,42,0.06);
-        transition:box-shadow 220ms ease, transform 220ms ease;
-      }
-      .rs-card:hover{box-shadow:0 4px 8px rgba(15,23,42,0.06), 0 20px 40px rgba(15,23,42,0.08);}
-      .rs-card::before{
-        content:"";position:absolute;top:0;left:0;right:0;height:4px;
-        background:var(--rs-accent, linear-gradient(90deg,#4F46E5 0%,#7C3AED 100%));
-      }
-      /* Region card — violet gradient (changes per pick via JS data-attribute) */
-      .rs-card[data-region="West"]{--rs-accent:linear-gradient(90deg,#4F46E5 0%,#7C3AED 100%);}
-      .rs-card[data-region="North"]{--rs-accent:linear-gradient(90deg,#0D9488 0%,#0891B2 100%);}
-      .rs-card[data-region="South"]{--rs-accent:linear-gradient(90deg,#D97706 0%,#CA8A04 100%);}
-      .rs-card[data-region="East"]{--rs-accent:linear-gradient(90deg,#DC2626 0%,#DB2777 100%);}
-      .rs-card[data-region="International"]{--rs-accent:linear-gradient(90deg,#334155 0%,#64748B 100%);}
-      /* Sales card — teal/cyan signature */
-      #review-sales-card{--rs-accent:linear-gradient(90deg,#0D9488 0%,#0EA5E9 100%);}
-
-      .rs-card-head{
-        display:flex; align-items:center; gap:12px;
-        padding:18px 20px 14px;
-        border-bottom:1px solid var(--border-soft,#E2E8F0);
-        flex-wrap:wrap;
-      }
-      .rs-card-icon{
-        width:38px; height:38px; border-radius:10px;
-        display:inline-flex; align-items:center; justify-content:center;
-        font-size:18px; color:#fff; flex-shrink:0;
-        box-shadow:0 4px 12px rgba(79,70,229,0.30), inset 0 1px 0 rgba(255,255,255,0.20);
-      }
-      .rs-card-title{
-        font-size:15px; font-weight:600; color:var(--ink,#0F172A);
-        flex:1; min-width:120px; letter-spacing:-0.005em;
-      }
-      .rs-card-pick{
-        min-height:var(--btn-h,40px); padding:0 12px;
-        font-size:13px; font-weight:600;
-        border:1px solid var(--border-strong,#CBD5E1);
-        border-radius:var(--radius,8px);
-        background:var(--surface,#FFF); color:var(--ink,#0F172A);
-        cursor:pointer;
-        box-shadow:0 1px 2px rgba(15,23,42,0.04);
-        transition:border-color 140ms, box-shadow 140ms;
-        max-width:200px;
-      }
-      .rs-card-pick:hover{border-color:var(--indigo,#4F46E5);}
-      .rs-card-pick:focus{
-        outline:none; border-color:var(--indigo,#4F46E5);
-        box-shadow:0 0 0 3px rgba(79,70,229,0.18);
-      }
-
-      .rs-body{padding:18px 20px 20px;}
-
-      .rs-tile-grid{
-        display:grid; grid-template-columns:repeat(4,1fr); gap:10px;
-        margin-bottom:18px;
-      }
-      @media (max-width:480px){.rs-tile-grid{grid-template-columns:repeat(2,1fr);}}
-      .rs-tile{
-        position:relative; overflow:hidden;
-        background:linear-gradient(180deg, var(--rs-tile-bg, rgba(79,70,229,0.06)) 0%, transparent 100%), var(--surface,#FFF);
-        border:1px solid var(--rs-tile-border, rgba(79,70,229,0.15));
-        border-radius:12px; padding:12px 12px 10px;
-        transition:transform 160ms ease, box-shadow 160ms ease;
-      }
-      .rs-tile:hover{transform:translateY(-1px); box-shadow:0 4px 12px rgba(15,23,42,0.06);}
-      /* Per-tile color theming: total=indigo, open=violet, won=emerald, win-rate=amber */
-      .rs-tile[data-tone="total"]{--rs-tile-bg:rgba(79,70,229,0.07); --rs-tile-border:rgba(79,70,229,0.18);}
-      .rs-tile[data-tone="total"] .rs-tile-value{background:linear-gradient(135deg,#4F46E5,#7C3AED); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
-      .rs-tile[data-tone="open"]{--rs-tile-bg:rgba(124,58,237,0.07); --rs-tile-border:rgba(124,58,237,0.18);}
-      .rs-tile[data-tone="open"] .rs-tile-value{background:linear-gradient(135deg,#7C3AED,#A855F7); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
-      .rs-tile[data-tone="won"]{--rs-tile-bg:rgba(5,150,105,0.07); --rs-tile-border:rgba(5,150,105,0.20);}
-      .rs-tile[data-tone="won"] .rs-tile-value{background:linear-gradient(135deg,#059669,#10B981); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
-      .rs-tile[data-tone="rate"]{--rs-tile-bg:rgba(217,119,6,0.07); --rs-tile-border:rgba(217,119,6,0.20);}
-      .rs-tile[data-tone="rate"] .rs-tile-value{background:linear-gradient(135deg,#D97706,#F59E0B); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
-      .rs-tile-label{
-        font-size:9.5px; letter-spacing:0.08em; text-transform:uppercase;
-        color:var(--ink-muted,#64748B); font-weight:700; margin-bottom:4px;
-      }
-      .rs-tile-value{
-        font-size:22px; font-weight:700; color:var(--ink,#0F172A);
-        font-variant-numeric:tabular-nums; line-height:1.1;
-        font-family:var(--serif,Georgia,serif); letter-spacing:-0.015em;
-      }
-      .rs-tile-sub{
-        font-size:10px; color:var(--ink-muted,#64748B); margin-top:3px;
-        font-weight:500;
-      }
-
-      .rs-section{margin-top:16px;}
-      .rs-section-title{
-        font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase;
-        color:var(--ink-muted,#64748B); font-weight:700;
-        margin-bottom:8px; padding-bottom:6px;
-        border-bottom:1px solid var(--border-soft,#E2E8F0);
-      }
-      .rs-list{margin:0; padding:0; list-style:none; font-size:13px;}
-      .rs-list li{
-        display:flex; justify-content:space-between; align-items:center; gap:8px;
-        padding:8px 0; border-bottom:1px dashed var(--border-soft,#E2E8F0);
-      }
-      .rs-list li:last-child{border-bottom:none;}
-      .rs-list li .rs-list-rank{
-        display:inline-flex; align-items:center; justify-content:center;
-        width:22px; height:22px; border-radius:6px;
-        background:linear-gradient(135deg, var(--ink-muted,#64748B), var(--slate,#334155));
-        color:#fff; font-size:11px; font-weight:700;
-        flex-shrink:0;
-      }
-      .rs-list li:nth-child(1) .rs-list-rank{background:linear-gradient(135deg,#D97706,#F59E0B);}
-      .rs-list li:nth-child(2) .rs-list-rank{background:linear-gradient(135deg,#64748B,#94A3B8);}
-      .rs-list li:nth-child(3) .rs-list-rank{background:linear-gradient(135deg,#92400E,#B45309);}
-      .rs-list li .rs-list-name{
-        color:var(--ink,#0F172A); font-weight:600; flex:1;
-        min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-      }
-      .rs-list li .rs-list-val{
-        color:var(--ink-muted,#475569); font-variant-numeric:tabular-nums;
-        white-space:nowrap; font-weight:600; font-size:12.5px;
-      }
-
-      /* Stage breakdown bars */
-      .rs-stage-bar{margin-bottom:10px;}
-      .rs-stage-bar-row{
-        display:flex; justify-content:space-between; align-items:baseline;
-        font-size:12.5px; margin-bottom:4px; gap:8px;
-      }
-      .rs-stage-bar-label{color:var(--ink,#0F172A); font-weight:600;}
-      .rs-stage-bar-meta{color:var(--ink-muted,#64748B); font-variant-numeric:tabular-nums; font-weight:500;}
-      .rs-stage-bar-track{
-        position:relative; height:8px; background:var(--surface-2,#F1F5F9);
-        border-radius:4px; overflow:hidden;
-      }
-      .rs-stage-bar-fill{
-        position:absolute; top:0; left:0; bottom:0;
-        border-radius:4px;
-        transition:width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        box-shadow:inset 0 1px 0 rgba(255,255,255,0.20);
-      }
-      .rs-stage-bar-fill[data-stage="Lead"]       {background:linear-gradient(90deg,#6366F1,#818CF8);}
-      .rs-stage-bar-fill[data-stage="Opportunity"]{background:linear-gradient(90deg,#5B21B6,#7C3AED);}
-      .rs-stage-bar-fill[data-stage="Proposal"]   {background:linear-gradient(90deg,#7C3AED,#A855F7);}
-      .rs-stage-bar-fill[data-stage="Negotiation"]{background:linear-gradient(90deg,#C026D3,#E879F9);}
-      .rs-stage-bar-fill[data-stage="Order"]      {background:linear-gradient(90deg,#DB2777,#F472B6);}
-
-      /* Deal list */
-      .rs-deals{
-        max-height:280px; overflow-y:auto;
-        border:1px solid var(--border,#E5E7EB);
-        border-radius:10px; background:var(--surface,#FFF);
-      }
-      .rs-deals::-webkit-scrollbar{width:6px;}
-      .rs-deals::-webkit-scrollbar-track{background:transparent;}
-      .rs-deals::-webkit-scrollbar-thumb{background:var(--border-strong,#CBD5E1); border-radius:3px;}
-      .rs-deal-row{
-        display:flex; align-items:center; gap:10px;
-        padding:10px 14px; border-bottom:1px solid var(--border-soft,#E2E8F0);
-        cursor:pointer; font-size:12.5px;
-        transition:background 120ms ease, padding-left 160ms ease;
-      }
-      .rs-deal-row:hover{
-        background:linear-gradient(90deg,rgba(79,70,229,0.06),transparent);
-        padding-left:18px;
-      }
-      .rs-deal-row:last-child{border-bottom:none;}
-      .rs-deal-proj{
-        flex:1; min-width:0; font-weight:600; color:var(--ink,#0F172A);
-        overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-      }
-      .rs-deal-stage{
-        padding:3px 9px; border-radius:999px; font-size:10.5px; font-weight:700;
-        flex-shrink:0; letter-spacing:0.02em;
-      }
-      .rs-deal-stage[data-stage="Lead"]       {background:rgba(99,102,241,0.12);  color:#4F46E5;}
-      .rs-deal-stage[data-stage="Opportunity"]{background:rgba(124,58,237,0.12);  color:#6D28D9;}
-      .rs-deal-stage[data-stage="Proposal"]   {background:rgba(168,85,247,0.12);  color:#7C3AED;}
-      .rs-deal-stage[data-stage="Negotiation"]{background:rgba(217,119,6,0.12);   color:#B45309;}
-      .rs-deal-stage[data-stage="Order"]      {background:rgba(5,150,105,0.12);   color:#047857;}
-      .rs-deal-stage[data-outcome="won"]      {background:rgba(5,150,105,0.18);   color:#065F46;}
-      .rs-deal-stage[data-outcome="lost"]     {background:rgba(220,38,38,0.12);   color:#991B1B;}
-      .rs-deal-stage[data-outcome="on-hold"]  {background:rgba(100,116,139,0.14); color:#475569;}
-      .rs-deal-val{
-        color:var(--ink-muted,#475569); font-variant-numeric:tabular-nums;
-        white-space:nowrap; font-weight:600; flex-shrink:0;
-      }
-      .rs-empty{
-        padding:32px 20px; text-align:center;
-        color:var(--ink-subtle,#94A3B8); font-size:13px; font-style:italic;
-      }
-      .rs-empty-strong{
-        padding:32px 20px; text-align:center;
-        background:var(--surface-2,#F8FAFC); border-radius:10px;
-        border:1px dashed var(--border-strong,#CBD5E1);
-        color:var(--ink-muted,#64748B); font-size:13px;
-      }
-      .rs-empty-strong-icon{font-size:28px; margin-bottom:8px; opacity:0.5;}
-
-      /* Dark mode */
-      html[data-theme="dark"] #review-filters-wrap{
-        background:linear-gradient(135deg, rgba(99,102,241,0.10) 0%, rgba(124,58,237,0.07) 50%, rgba(217,70,239,0.05) 100%), var(--surface,#141937);
-      }
-      html[data-theme="dark"] .rs-card{
-        background:linear-gradient(180deg, rgba(20,25,55,0.94) 0%, var(--surface,#141937) 100%);
-      }
-      html[data-theme="dark"] .rs-tile{background:rgba(20,25,55,0.50);}
-    </style>
-
-    <!-- v24.25.0 (items 6+7) — Region + Sales person review cards. Populated by
-         renderReviewRegionSalesCards() on tab open + after every filter change. -->
-    <div id="review-rs-wrap">
-      <div class="rs-card" id="review-region-card">
-        <div class="rs-card-head">
-          <div class="rs-card-icon" style="background:linear-gradient(135deg,#7C3AED 0%,#5B21B6 100%);">◉</div>
-          <div class="rs-card-title">Region performance</div>
-          <select id="rs-region-pick" class="rs-card-pick" onchange="renderReviewRegionCard(this.value)">
-            <option value="">— Pick a region —</option>
-            <option value="West">West</option>
-            <option value="North">North</option>
-            <option value="South">South</option>
-            <option value="East">East</option>
-            <option value="International">International</option>
-          </select>
-        </div>
-        <div id="rs-region-body" class="rs-empty">Select a region to see deal count, pipeline value, win rate, top reps, and the deal list.</div>
-      </div>
-      <div class="rs-card" id="review-sales-card">
-        <div class="rs-card-head">
-          <div class="rs-card-icon" style="background:linear-gradient(135deg,#0D9488 0%,#0F766E 100%);">☰</div>
-          <div class="rs-card-title">Sales person performance</div>
-          <select id="rs-sales-pick" class="rs-card-pick" onchange="renderReviewSalesCard(this.value)">
-            <option value="">— Pick a sales person —</option>
-          </select>
-        </div>
-        <div id="rs-sales-body" class="rs-empty">Select a sales person to see their tagged deals, pipeline value, win rate, and stage breakdown.</div>
-      </div>
-    </div>
-    <!-- v24.14.9: Bi-monthly Review KPI dashboard — pure frontend, reads window._centralLog -->
-    <div id="bs-kpi-wrap" style="margin:18px 0 8px; padding:0; background:transparent; border:none; box-shadow:none;">
-      <div style="display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:6px; padding:0 4px;">
-        <div style="font-size:11px; letter-spacing:0.10em; text-transform:uppercase; color:var(--ink-muted,#64748B); font-weight:700;">Pipeline operations</div>
-        <div style="flex:1;height:1px;background:var(--border,#E5E7EB);min-width:30px;"></div>
-        <div style="font-size:12px; color:var(--ink-subtle,#94A3B8);">Plan of Action · Drilldown · Velocity · Trend</div>
-      </div>
-      <div style="display:none; gap:8px; align-items:center; flex-wrap:wrap;">
-        <select id="bs-kpi-period" onchange="bsKpiOnPeriodChange()" style="padding:8px 12px; border:1px solid var(--border-strong,#CBD5E1); border-radius:8px; font-size:13px; background:var(--surface,#FFF); color:var(--ink,#0F172A);">
-          <option value="currentFY">Current FY (default)</option>
-          <option value="thisBimonth">This bi-month</option>
-          <option value="thisQuarter">This quarter</option>
-          <option value="last6m">Last 6 months</option>
-          <option value="custom">Custom range…</option>
-        </select>
-        <input type="month" id="bs-kpi-custom-start" style="display:none;" onchange="bsRenderReviewKPIs()" aria-label="Custom range start month">
-        <input type="month" id="bs-kpi-custom-end" style="display:none;" onchange="bsRenderReviewKPIs()" aria-label="Custom range end month">
-        <span id="bs-kpi-period-label" style="font-size:11px; color:var(--ink-subtle,#94A3B8);">—</span>
-      </div>
-      <div id="bs-kpi-strip" style="display:none;"></div>
-      <div id="bs-kpi-grid" style="display:none;">
-        <div id="bs-kpi-card-stage"></div>
-        <div id="bs-kpi-card-owner"></div>
-        <div id="bs-kpi-card-aging"></div>
-        <div id="bs-kpi-card-models"></div>
-      </div>
-    </div>
-    <!-- /v24.14.9 KPI dashboard -->
-
-    <!-- v24.16.0 — SAP/C2a Actuals KPI widget removed.
-         Was previously: comparison dropdown + Actuals/Pipeline KPI cards (Cycle 2a).
-         Backend sales_history_aggregate became a stub in v25.0.5 — UI showed "—" for everyone.
-         Plan of Action, drilldown, velocity, and trend below are unaffected. -->
-    <div id="bs-c2a-wrap" style="margin:18px 0 12px; padding:16px 18px; background:var(--surface-2,#F5F3FF); border:1px solid var(--border,#E5E7EB); border-radius:12px;">
-      <div style="margin-top:0; padding-top:0;">
-        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
-          <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Plan of Action<span class="help-icon" data-tip="Per-period strategic commentary for this review window. Use to capture team blockers, focus areas, or notes for the next leadership review. Auto-saves on blur. Visible to all users; only Super can edit." style="text-transform:none;letter-spacing:0;">?</span> <span id="bs-c2a-poa-period" style="font-weight:500; text-transform:none; letter-spacing:0; color:var(--ink-muted,#64748B);"></span></div>
-          <div id="bs-c2a-poa-status" style="font-size:11px; color:var(--ink-subtle,#94A3B8);"></div>
-        </div>
-        <textarea id="bs-c2a-poa" rows="3" placeholder="Super only — write the plan / commentary for this review period. Saves automatically on blur." style="width:100%; padding:10px; border:1px solid var(--border-strong,#CBD5E1); border-radius:8px; font-family:inherit; font-size:13px; resize:vertical; box-sizing:border-box;"></textarea>
-        <div id="bs-c2a-poa-meta" style="font-size:11px; color:var(--ink-subtle,#94A3B8); margin-top:4px; min-height:14px;"></div>
-      </div>
-      <!-- v24.10 Cycle 2b+2d — drilldown + export -->
-      <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border,#E5E7EB);">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:8px;">
-          <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Open pipeline <span id="bs-c2b-count" style="font-weight:500; text-transform:none; letter-spacing:0; color:var(--ink-muted,#64748B);"></span></div>
-          <div style="display:flex; gap:8px; align-items:center;">
-            <input id="bs-c2b-filter" type="text" placeholder="Filter by project / partner / end-user…" oninput="bsC2bRender()" style="padding:7px 10px; border:1px solid var(--border-strong,#CBD5E1); border-radius:6px; font-size:12px; min-width:220px;">
-            <button id="bs-c2d-export" onclick="bsC2dExport()" style="padding:8px 14px; background:var(--indigo,#4F46E5); color:#fff; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">📥 Export Review to Excel</button>
-          </div>
-        </div>
-        <div style="overflow-x:auto; border:1px solid var(--border,#E5E7EB); border-radius:8px;">
-          <table id="bs-c2b-table" style="width:100%; border-collapse:collapse; font-size:12px; min-width:720px;">
-            <thead>
-              <tr style="background:var(--surface-2,#F5F3FF);">
-                <th data-sort="project"     style="padding:8px 10px; text-align:left; cursor:pointer; user-select:none; white-space:nowrap; border-bottom:1px solid var(--border,#E5E7EB);">Project ⇅</th>
-                <th data-sort="enduser"     style="padding:8px 10px; text-align:left; cursor:pointer; user-select:none; white-space:nowrap; border-bottom:1px solid var(--border,#E5E7EB);">End-user ⇅</th>
-                <th data-sort="partner"     style="padding:8px 10px; text-align:left; cursor:pointer; user-select:none; white-space:nowrap; border-bottom:1px solid var(--border,#E5E7EB);">Partner ⇅</th>
-                <th data-sort="stage"       style="padding:8px 10px; text-align:left; cursor:pointer; user-select:none; white-space:nowrap; border-bottom:1px solid var(--border,#E5E7EB);">Stage ⇅</th>
-                <th data-sort="dealValueINR" style="padding:8px 10px; text-align:right; cursor:pointer; user-select:none; white-space:nowrap; border-bottom:1px solid var(--border,#E5E7EB);">Deal value ⇅</th>
-                <th data-sort="closemonth"  style="padding:8px 10px; text-align:left; cursor:pointer; user-select:none; white-space:nowrap; border-bottom:1px solid var(--border,#E5E7EB);">Expected close ⇅</th>
-                <th data-sort="daysInStage" style="padding:8px 10px; text-align:right; cursor:pointer; user-select:none; white-space:nowrap; border-bottom:1px solid var(--border,#E5E7EB);">Days in stage ⇅</th>
-                <th data-sort="user"        style="padding:8px 10px; text-align:left; cursor:pointer; user-select:none; white-space:nowrap; border-bottom:1px solid var(--border,#E5E7EB);">Owner ⇅</th>
-              </tr>
-            </thead>
-            <tbody id="bs-c2b-tbody"><tr><td colspan="8" style="padding:18px; text-align:center; color:var(--ink-subtle,#94A3B8);">Loading…</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-      <!-- v24.12 Cycle 3A — Stage velocity histogram (Super only) -->
-      <div id="bs-c3a-velocity-wrap" style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border,#E5E7EB); display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:8px;">
-          <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Stage velocity <span id="bs-c3a-velocity-caption" style="font-weight:500; text-transform:none; letter-spacing:0; color:var(--ink-muted,#64748B);"></span></div>
-        </div>
-        <div id="bs-c3a-velocity-body" style="background:var(--surface-1,#FAFAFA); border:1px solid var(--border,#E5E7EB); border-radius:8px; padding:14px;">
-          <div style="height:220px; position:relative;"><canvas id="bs-c3a-velocity-chart"></canvas></div>
-          <div id="bs-c3a-velocity-empty" style="display:none; padding:28px 14px; text-align:center; color:var(--ink-subtle,#94A3B8); font-size:13px;">Not enough recorded transitions yet — velocity will populate as deals move through stages.</div>
-        </div>
-      </div>
-
-      <!-- v25.1.0 Cycle 3D — Pipeline trend (last 26 weekly snapshots) -->
-      <div id="bs-c3d-trend-wrap" style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border,#E5E7EB); display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:8px;">
-          <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-subtle,#94A3B8); font-weight:600;">Pipeline trend <span id="bs-c3d-trend-caption" style="font-weight:500; text-transform:none; letter-spacing:0; color:var(--ink-muted,#64748B);"></span></div>
-        </div>
-        <div id="bs-c3d-trend-body" style="background:var(--surface-1,#FAFAFA); border:1px solid var(--border,#E5E7EB); border-radius:8px; padding:14px;">
-          <div style="height:220px; position:relative;"><canvas id="bs-c3d-trend-chart"></canvas></div>
-          <div id="bs-c3d-trend-empty" style="display:none; padding:28px 14px; text-align:center; color:var(--ink-subtle,#94A3B8); font-size:13px;">Pipeline trend will appear here as weekly snapshots accumulate.</div>
-        </div>
-      </div>
-    </div>
-
-    <div id="review-content"><div class="review-loading">Loading review data…</div></div>
-  </div>
-</div>
+<!-- v24.26.0: Old Review tab REMOVED. Functionality moved into section-dashboard's "Team Analytics" inner tab.
+     Hidden empty section kept so showTab('review') logic doesn't throw — clicks redirect to dashboard via showTab override below. -->
+<div id="section-review" style="display:none;" role="tabpanel" aria-labelledby="tab-review"></div>
 </div>
 
 <!-- v24.23.0 (#19) — Customer 360 modal. Hidden by default; opened via openCustomer360(name).
@@ -8951,7 +7813,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.25.8';  // v24.25.8 — Critical bug fixes from production. (1) Post-login _centralLog auto-fetch was failing silently due to async race with auth hash readiness — refreshLog() called immediately after login but getCurrentAuthHash() returned null → _readUrlWithAuth() returned null → tryFetchCentralLog short-circuited with 'No session', leaving _centralLog undefined. Fix: properly await refreshLog with retry on auth-not-ready. (2) Sales auto-default overriding user-entered values on form re-render — added _userTouchedSales flag so once user manually picks a salesPerson, auto-default never re-overwrites. (3) Chart.js canvas race on chart-models — same fix pattern as chart-dealstage v24.25.4 (rename visible canvas, hide legacy). Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.26.0';  // v24.26.0 — DASHBOARD + REVIEW CLEAN REBUILD. Replaces all prior Dashboard widgets (v18 cockpit + Brand Revenue Cockpit + Detailed Analytics expander) and old Review tab (Pipeline Operations + Region/Sales cards + Bi-monthly review) with TWO clean tabs: "My Pipeline" (sales-person-first, scoped to current user) and "Team Analytics" (8 KPIs + 8 charts + leaderboard + stuck-deals table). Filter persistence via localStorage. Drill-through on all charts (click → injects into filter state). Pipeline shown as both Open (raw ₹) AND Weighted (stage-prob weighted ₹). Default tab: Super → Team Analytics, Sales → My Pipeline, Mohit (Presales) → Team Analytics scoped to handoffs, Rahul (Support) → no access to either tab. KEEPS: Customer 360, Excel export, Quarterly Target card, all v24.25.8 fixes. Pairs with backend v25.13.0 — no backend changes.
+// v24.25.8 — Critical bug fixes from production. (1) Post-login _centralLog auto-fetch was failing silently due to async race with auth hash readiness — refreshLog() called immediately after login but getCurrentAuthHash() returned null → _readUrlWithAuth() returned null → tryFetchCentralLog short-circuited with 'No session', leaving _centralLog undefined. Fix: properly await refreshLog with retry on auth-not-ready. (2) Sales auto-default overriding user-entered values on form re-render — added _userTouchedSales flag so once user manually picks a salesPerson, auto-default never re-overwrites. (3) Chart.js canvas race on chart-models — same fix pattern as chart-dealstage v24.25.4 (rename visible canvas, hide legacy). Pairs with backend v25.13.0 — no backend changes.
 // v24.25.7 — Remove Test Mode entirely. Banner stripped. Profile cards removed (Super + non-Super). Cockpit "Include test data" toggle removed. setTestMode + _renderTestModeBanner + _initTestMode functions stubbed. _filterTestData stubbed (returns input unchanged). All isTest filter checks across cockpit/leaderboard/region/sales card removed. Form save no longer writes isTest field. 🧪 marker stripped from History. localStorage keys cleaned: bs-cockpit-include-test + per-user test mode key. The isTest column on Sheet1 stays (just unread/unwritten). User wants pre-existing test rows manually deleted from sheet for Option C clean state. Pairs with backend v25.13.0 — no backend changes.
 // v24.25.6 — Quarterly Target Settings UI on Profile/Team tab (Super-only). Input accepts ₹ raw or K/L/Cr suffix (5Cr, 50L, 500K, 50000000). Default ₹5 Cr if unset. Saves to localStorage.bs-cockpit-target-quarterly. Cockpit run-rate badge re-renders on save. Pairs with backend v25.13.0.
 // v24.25.5 — Resilience: detect HTML-not-JSON backend response (Apps Script cold-start, network blip, sleep/wake) and silent-retry once after 1.5s. Duplicate-error suppression in error_log_append (same signature within 60s → skip the second log). Friendly Review tab fallback banner when fetch fails AFTER retry, instead of silent failure or stuck "Loading review data...". Pairs with backend v25.13.0.
@@ -12402,16 +11265,15 @@ function _applyPostLoginUI(){
   const dirTab = document.getElementById('tab-directory');
   if(dirTab) dirTab.style.display = '';
   const dashTab = document.getElementById('tab-dashboard');
-  if(dashTab) dashTab.style.display = 'inline-flex';
-  const reviewTab = document.getElementById('tab-review');
-  if(reviewTab){
+  // v24.26.0: dashboard tab hidden for Support role; everyone else sees it
+  if(dashTab){
     const role = (String(u.role || '')).trim();
-    // v24.21.4 — BU Head needs Review tab to see their region's data and team analytics.
-    // Without this, the v25.10.0 region+reportsTo backend work delivered to a tab they
-    // couldn't access. Pattern: Super OR BrightSign OR BU Head (any case/spacing variant).
-    const showReview = u.isSuper || role === 'BrightSign' || /BU.?Head/i.test(role);
-    reviewTab.style.display = showReview ? 'inline-flex' : 'none';
+    const isSupport = /support/i.test(role);
+    dashTab.style.display = isSupport ? 'none' : 'inline-flex';
   }
+  const reviewTab = document.getElementById('tab-review');
+  // v24.26.0: Review tab CONSOLIDATED into Dashboard's Team Analytics subtab. Permanently hidden.
+  if(reviewTab) reviewTab.style.display = 'none';
   document.getElementById('page-login').classList.remove('active');
   document.getElementById('page-app').classList.add('active');
   // v24.17.0: Wire up draft autosave + show resume banner if a draft exists for this user.
@@ -12710,17 +11572,16 @@ async function handleLogin(){
     // v24.8.0: Show Directory tab (all logged-in users)
     const dirTab=document.getElementById('tab-directory');
     if(dirTab)dirTab.style.display='';
-    // v23.1: Show Dashboard tab for all users (content differs by role)
+    // v24.26.0: Dashboard tab hidden for Support role; everyone else sees it
     const dashTab=document.getElementById('tab-dashboard');
-    if(dashTab){dashTab.style.display='inline-flex';}
-    // v24.4.9: Review tab restricted to Super + OEM only (channel-level analytics).
-    // Presales/Sales/Support have their own Dashboard tab — Review would be redundant for them.
-    const reviewTab=document.getElementById('tab-review');
-    if(reviewTab){
-      const role=(String(state.user.role || '')).trim();
-      const showReview=state.user.isSuper || role==='BrightSign';
-      reviewTab.style.display=showReview?'inline-flex':'none';
+    if(dashTab){
+      const role0=(String(state.user.role || '')).trim();
+      const isSupport=/support/i.test(role0);
+      dashTab.style.display = isSupport ? 'none' : 'inline-flex';
     }
+    // v24.26.0: Review tab CONSOLIDATED into Dashboard's Team Analytics subtab. Permanently hidden.
+    const reviewTab=document.getElementById('tab-review');
+    if(reviewTab) reviewTab.style.display='none';
 
     document.getElementById('page-login').classList.remove('active');
     document.getElementById('page-app').classList.add('active');
@@ -15086,7 +13947,10 @@ function showTab(which){
     }
   }
   if(which==='dashboard'){
-    renderDashboard();
+    // v24.26.0: New clean renderer handles both inner tabs (My Pipeline + Team Analytics).
+    if(typeof bsv26_renderActiveTab === 'function'){
+      bsv26_renderActiveTab();
+    }
     if(WEBHOOK_URL && state.user){
       refreshLog();
     }
@@ -15097,11 +13961,11 @@ function showTab(which){
     if(typeof refreshCustomers==='function'){refreshCustomers();}
   }
   if(which==='review'){
-    // v24.14.6: Double-guard — only Super + BrightSign-role can render review
-    const role=state.user?(String(state.user.role || '')).trim():'';
-    const canReview=state.user && (state.user.isSuper || role==='BrightSign');
-    if(canReview){renderReview();bsC2aRender();}  // v24.16.0: bsC2aRender now only drives drilldown+velocity+trend
-    else{showTab('log');return;}
+    // v24.26.0: Old Review tab REMOVED. "Team Analytics" subtab inside Dashboard
+    // section now houses what Review used to do. Redirect clicks here.
+    showTab('dashboard');
+    setTimeout(function(){ try { if(typeof bsv26_switchTab==='function') bsv26_switchTab('team'); } catch(_){} }, 50);
+    return;
   }
   window.scrollTo(0,0);
 }
@@ -25864,6 +24728,966 @@ if(document.readyState==='loading'){
     }
   });
 })();
+
+/* ============================================================================
+ * v24.26.0 — DASHBOARD + REVIEW CLEAN REBUILD MODULE
+ * ============================================================================
+ * Single, self-contained module that owns the entire Dashboard section.
+ * No interactions with v18 / cockpit / Detailed Analytics code paths.
+ * Reads directly from window._centralLog. Writes filter state to localStorage.
+ *
+ * Public API:
+ *   bsv26_init()             — wire up tab buttons + restore filter state
+ *   bsv26_renderActiveTab()  — render whichever subtab is active
+ *   bsv26_switchTab(which)   — programmatic switch ('mine' | 'team')
+ *   bsv26_onFilterChange()   — fired by filter dropdowns
+ *   bsv26_clearFilters()     — reset all filters to "all"
+ *   bsv26_refresh()          — re-fetch _centralLog then re-render
+ *   bsv26_exportTeamCSV()    — export filtered team deals to CSV
+ *
+ * Persistence: localStorage key 'bsv26-team-filters' (JSON).
+ *
+ * Stage probability weights (locked):
+ *   Lead 10% / Opportunity 25% / Proposal 50% / Negotiation 75% / Order 90%
+ * ============================================================================
+ */
+(function(){
+  'use strict';
+
+  const STAGE_WEIGHTS = { Lead: 0.10, Opportunity: 0.25, Proposal: 0.50, Negotiation: 0.75, Order: 0.90 };
+  const STAGES_OPEN = ['Lead', 'Opportunity', 'Proposal', 'Negotiation', 'Order'];
+  const FILTER_KEY = 'bsv26-team-filters';
+
+  // Active subtab — set by bsv26_switchTab. Persisted in localStorage.
+  let _activeTab = (function(){
+    try { return localStorage.getItem('bsv26-active-tab') || 'team'; } catch(_){ return 'team'; }
+  })();
+  let _activeSort = { mine: { col: 'closemonth', dir: 'asc' }, team: { col: 'dealValue', dir: 'desc' } };
+  let _v26Charts = {};  // Chart.js instance store
+
+  // ---- Helpers ----
+  function _readEntries(){ return Array.isArray(window._centralLog) ? window._centralLog : []; }
+  function _readDealValue(e){
+    if(!e) return 0;
+    const v = e.dealValueINR != null ? e.dealValueINR : (e.dealValue != null ? e.dealValue : (e.dealvalueinr != null ? e.dealvalueinr : 0));
+    const n = parseFloat(v);
+    return isFinite(n) && n > 0 ? n : 0;
+  }
+  function _stateRegion(s){
+    if(typeof window._stateToRegion === 'function'){ try { return window._stateToRegion(s); } catch(_){} }
+    // Fallback minimal region map
+    if(!s) return null;
+    const W = ['Maharashtra','Gujarat','Goa','Madhya Pradesh','Chhattisgarh','Rajasthan'];
+    const N = ['Delhi','Haryana','Punjab','Uttar Pradesh','Uttarakhand','Himachal Pradesh','Chandigarh','Jammu & Kashmir','Ladakh','Bihar','Jharkhand'];
+    const S = ['Tamil Nadu','Karnataka','Kerala','Andhra Pradesh','Telangana','Puducherry'];
+    const E = ['West Bengal','Odisha','Assam','Meghalaya','Manipur','Mizoram','Nagaland','Tripura','Arunachal Pradesh','Sikkim'];
+    if(W.indexOf(s) >= 0) return 'West';
+    if(N.indexOf(s) >= 0) return 'North';
+    if(S.indexOf(s) >= 0) return 'South';
+    if(E.indexOf(s) >= 0) return 'East';
+    return 'International';
+  }
+  function _formatINR(n){
+    if(typeof window.formatINR === 'function'){ try { return window.formatINR(n); } catch(_){} }
+    if(!isFinite(n) || !n) return '₹0';
+    return '₹' + Math.round(n).toLocaleString('en-IN');
+  }
+  function _shortINR(n){
+    // Owner-friendly short form for tile values
+    if(!isFinite(n) || !n) return '₹0';
+    const abs = Math.abs(n);
+    if(abs >= 10000000) return '₹' + (n/10000000).toFixed(2) + ' Cr';
+    if(abs >= 100000) return '₹' + (n/100000).toFixed(1) + ' L';
+    if(abs >= 1000) return '₹' + (n/1000).toFixed(0) + 'K';
+    return '₹' + Math.round(n);
+  }
+  function _esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+  function _parseTs(e){
+    if(!e) return 0;
+    const cands = [e.timestamp, e.ts, e.created, e.createdAt];
+    for(let i = 0; i < cands.length; i++){
+      const v = cands[i];
+      if(v == null || v === '') continue;
+      const d = (v instanceof Date) ? v : new Date(v);
+      if(!isNaN(d.getTime())) return d.getTime();
+    }
+    return 0;
+  }
+  function _daysSince(ms){
+    if(!ms) return 0;
+    return Math.floor((Date.now() - ms) / (1000 * 60 * 60 * 24));
+  }
+  // Days in current stage = days since last stage transition (or since timestamp if no transitions known)
+  function _daysInStage(e){
+    if(!e) return 0;
+    // Use stageEnteredAt if backend provides it; else fall back to timestamp
+    const candidate = e.stageEnteredAt || e.stageChangedAt || e.timestamp || e.ts;
+    const d = candidate ? new Date(candidate) : null;
+    if(!d || isNaN(d.getTime())) return 0;
+    return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+  }
+  // Extract Cavitak FY from a date. FY April-March. e.g. April 2026 = FY 26-27
+  function _fyOf(ms){
+    if(!ms) return null;
+    const d = new Date(ms);
+    const y = d.getFullYear();
+    const m = d.getMonth(); // 0-11
+    return m >= 3 ? y : y - 1; // returns starting year (2026 for FY26-27)
+  }
+  function _quarterClose(){
+    // Cavitak FY April-March, quarters: Apr-Jun, Jul-Sep, Oct-Dec, Jan-Mar
+    const now = new Date();
+    const m = now.getMonth();
+    let endMonth, endYear;
+    if(m >= 0 && m <= 2)        { endMonth = 2;  endYear = now.getFullYear(); }       // Q4 closes Mar
+    else if(m >= 3 && m <= 5)   { endMonth = 5;  endYear = now.getFullYear(); }       // Q1 closes Jun
+    else if(m >= 6 && m <= 8)   { endMonth = 8;  endYear = now.getFullYear(); }       // Q2 closes Sep
+    else                        { endMonth = 11; endYear = now.getFullYear(); }       // Q3 closes Dec
+    const closeDate = new Date(endYear, endMonth + 1, 0);
+    const days = Math.ceil((closeDate.getTime() - Date.now()) / (1000*60*60*24));
+    let qLabel;
+    if(m >= 3 && m <= 5)        qLabel = 'Q1';
+    else if(m >= 6 && m <= 8)   qLabel = 'Q2';
+    else if(m >= 9 && m <= 11)  qLabel = 'Q3';
+    else                        qLabel = 'Q4';
+    return { days: Math.max(0, days), label: qLabel };
+  }
+  function _readFilterState(){
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(FILTER_KEY) || '{}'); } catch(_){}
+    return {
+      time: saved.time || 'quarter',
+      region: saved.region || 'all',
+      source: saved.source || 'all',
+      sales: saved.sales || 'all',
+      outcome: saved.outcome || 'all',
+      stage: saved.stage || 'all'
+    };
+  }
+  function _saveFilterState(state){
+    try { localStorage.setItem(FILTER_KEY, JSON.stringify(state)); } catch(_){}
+  }
+  function _applyFilters(entries, f){
+    if(!Array.isArray(entries)) return [];
+    const cutoffOk = (typeof window._entryAfterPipelineCutoff === 'function') ? window._entryAfterPipelineCutoff : function(){ return true; };
+    return entries.filter(function(e){
+      if(!e) return false;
+      if(!cutoffOk(e)) return false;
+      // Time filter
+      if(f.time && f.time !== 'all'){
+        const ts = _parseTs(e);
+        const now = new Date();
+        if(f.time === 'month'){
+          const start = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+          if(ts < start) return false;
+        } else if(f.time === 'quarter'){
+          const m = now.getMonth();
+          let qStartMonth = m >= 0 && m <= 2 ? 0 : (m >= 3 && m <= 5 ? 3 : (m >= 6 && m <= 8 ? 6 : 9));
+          const start = new Date(now.getFullYear(), qStartMonth, 1).getTime();
+          if(ts < start) return false;
+        } else if(f.time === 'fy'){
+          const fyStart = (now.getMonth() >= 3) ? new Date(now.getFullYear(), 3, 1).getTime() : new Date(now.getFullYear()-1, 3, 1).getTime();
+          if(ts < fyStart) return false;
+        } else if(f.time === 'lastfy'){
+          const fyStartCur = (now.getMonth() >= 3) ? new Date(now.getFullYear(), 3, 1).getTime() : new Date(now.getFullYear()-1, 3, 1).getTime();
+          const fyStartLast = (new Date(fyStartCur)).setFullYear(new Date(fyStartCur).getFullYear() - 1);
+          if(ts < fyStartLast || ts >= fyStartCur) return false;
+        }
+      }
+      if(f.region && f.region !== 'all'){
+        if(_stateRegion(e.state) !== f.region) return false;
+      }
+      if(f.source && f.source !== 'all'){
+        if(String(e.leadSource || '').toLowerCase() !== f.source.toLowerCase()) return false;
+      }
+      if(f.sales && f.sales !== 'all'){
+        if(String(e.salesPerson || '').toLowerCase() !== f.sales.toLowerCase()) return false;
+      }
+      if(f.outcome && f.outcome !== 'all'){
+        if(String(e.outcome || '').toLowerCase() !== f.outcome.toLowerCase()) return false;
+      }
+      if(f.stage && f.stage !== 'all'){
+        if(String(e.stage || '') !== f.stage) return false;
+      }
+      return true;
+    });
+  }
+
+  // ---- Mohit (Presales) scope filter — applied BEFORE filter state ----
+  function _scopeForUser(entries){
+    const u = (window.state && window.state.user) ? window.state.user : null;
+    if(!u) return [];
+    if(u.isSuper) return entries;  // Super sees everything
+    const role = String(u.role || '').toLowerCase().trim();
+    const myLogin = String(u.loginName || '').toLowerCase();
+    // Mohit (Presales) — only deals where presalesPerson = me
+    if(role === 'presales'){
+      return entries.filter(function(e){ return String(e.presalesPerson || '').toLowerCase() === myLogin; });
+    }
+    // BU Head, BrightSign — see all (data-rich access)
+    if(/bu.?head/i.test(role) || role === 'brightsign'){ return entries; }
+    // Sales — only their own deals (won't normally see Team Analytics anyway)
+    if(role === 'sales'){
+      return entries.filter(function(e){
+        const owner = String(e.loginName || '').toLowerCase();
+        const sales = String(e.salesPerson || '').toLowerCase();
+        return owner === myLogin || sales === myLogin;
+      });
+    }
+    // Default — own deals only
+    return entries.filter(function(e){ return String(e.loginName || '').toLowerCase() === myLogin; });
+  }
+
+  // ---- TAB SWITCHING + ROUTING ----
+  function bsv26_switchTab(which){
+    if(which !== 'mine' && which !== 'team') which = 'mine';
+    _activeTab = which;
+    try { localStorage.setItem('bsv26-active-tab', which); } catch(_){}
+    // Toggle pane visibility
+    const paneMine = document.getElementById('v26-pane-mine');
+    const paneTeam = document.getElementById('v26-pane-team');
+    if(paneMine) paneMine.style.display = (which === 'mine') ? 'block' : 'none';
+    if(paneTeam) paneTeam.style.display = (which === 'team') ? 'block' : 'none';
+    // Toggle button active state
+    document.querySelectorAll('.v26-tab').forEach(function(b){
+      b.classList.toggle('v26-tab-active', b.getAttribute('data-v26-tab') === which);
+    });
+    // Render the active pane
+    bsv26_renderActiveTab();
+  }
+  window.bsv26_switchTab = bsv26_switchTab;
+
+  function bsv26_renderActiveTab(){
+    if(_activeTab === 'mine') _renderMine();
+    else _renderTeam();
+  }
+  window.bsv26_renderActiveTab = bsv26_renderActiveTab;
+
+  // ---- ACCESS CONTROL: who sees Team Analytics tab button? ----
+  function _setupTabButtonsForUser(){
+    const u = (window.state && window.state.user) ? window.state.user : null;
+    const teamBtn = document.getElementById('v26-tab-team');
+    const mineBtn = document.getElementById('v26-tab-mine');
+    if(!u){
+      if(teamBtn) teamBtn.style.display = 'none';
+      return;
+    }
+    const role = String(u.role || '').toLowerCase().trim();
+    const isSupport = /support/i.test(role);
+    const isSales = role === 'sales';
+    // Hide BOTH tabs from Support — they shouldn't even see this section
+    if(isSupport){
+      if(teamBtn) teamBtn.style.display = 'none';
+      if(mineBtn) mineBtn.style.display = 'none';
+      return;
+    }
+    // Mine button visible to everyone except Support
+    if(mineBtn) mineBtn.style.display = '';
+    // Team button visible to: Super, BU Head, BrightSign, Presales (scoped). Sales sees only My Pipeline.
+    const showTeam = u.isSuper || /bu.?head/i.test(role) || role === 'brightsign' || role === 'presales';
+    if(teamBtn) teamBtn.style.display = showTeam ? '' : 'none';
+    // Default tab routing: Super/BU Head/BrightSign land on team; Sales/Presales on mine
+    let defaultTab = _activeTab;
+    if(!_activeTab || _activeTab === 'team' && !showTeam){
+      defaultTab = (u.isSuper || /bu.?head/i.test(role) || role === 'brightsign') ? 'team' : 'mine';
+      _activeTab = defaultTab;
+    }
+    // For Mohit (Presales) — title hint that data is scoped to handoffs
+    if(role === 'presales'){
+      const t = document.getElementById('v26-team-title');
+      const s = document.getElementById('v26-team-subtitle');
+      if(t) t.textContent = 'My handoffs · Team Analytics';
+      if(s) s.textContent = 'Showing only deals where you are tagged as Presales. Filters apply within this scope.';
+    }
+  }
+
+  // ---- FILTER CHANGE HANDLERS ----
+  function bsv26_onFilterChange(){
+    const f = {
+      time: (document.getElementById('v26-f-time') || {}).value || 'quarter',
+      region: (document.getElementById('v26-f-region') || {}).value || 'all',
+      source: (document.getElementById('v26-f-source') || {}).value || 'all',
+      sales: (document.getElementById('v26-f-sales') || {}).value || 'all',
+      outcome: (document.getElementById('v26-f-outcome') || {}).value || 'all',
+      stage: (document.getElementById('v26-f-stage') || {}).value || 'all'
+    };
+    _saveFilterState(f);
+    if(_activeTab === 'team') _renderTeam();
+  }
+  window.bsv26_onFilterChange = bsv26_onFilterChange;
+
+  function bsv26_clearFilters(){
+    _saveFilterState({ time: 'quarter', region: 'all', source: 'all', sales: 'all', outcome: 'all', stage: 'all' });
+    _restoreFilterUI();
+    if(_activeTab === 'team') _renderTeam();
+  }
+  window.bsv26_clearFilters = bsv26_clearFilters;
+
+  function bsv26_refresh(){
+    if(typeof window.refreshLog === 'function'){
+      window.refreshLog().then ? window.refreshLog().then(bsv26_renderActiveTab) : (function(){
+        setTimeout(bsv26_renderActiveTab, 600);
+      })();
+    } else {
+      bsv26_renderActiveTab();
+    }
+  }
+  window.bsv26_refresh = bsv26_refresh;
+
+  function _restoreFilterUI(){
+    const f = _readFilterState();
+    ['time','region','source','sales','outcome','stage'].forEach(function(k){
+      const el = document.getElementById('v26-f-' + k);
+      if(el) el.value = f[k] || 'all';
+    });
+  }
+  function _populateSalesFilter(entries){
+    const sel = document.getElementById('v26-f-sales');
+    if(!sel) return;
+    const current = sel.value;
+    const seen = {};
+    entries.forEach(function(e){
+      const sp = String(e.salesPerson || '').toLowerCase().trim();
+      if(sp) seen[sp] = true;
+    });
+    const opts = Object.keys(seen).sort();
+    sel.innerHTML = '<option value="all">All sales</option>' + opts.map(function(s){
+      // Try to resolve to fullName via _allUsers cache
+      let label = s;
+      if(Array.isArray(window._allUsers)){
+        const u = window._allUsers.find(function(x){ return String(x.loginName || '').toLowerCase() === s; });
+        if(u && u.fullName) label = u.fullName;
+      }
+      return '<option value="' + _esc(s) + '">' + _esc(label) + '</option>';
+    }).join('');
+    if(current && opts.indexOf(current) >= 0) sel.value = current;
+  }
+
+  // ============================================================================
+  // MY PIPELINE RENDERER
+  // ============================================================================
+  function _renderMine(){
+    const u = (window.state && window.state.user) ? window.state.user : null;
+    if(!u){ return; }
+    const myLogin = String(u.loginName || '').toLowerCase();
+    const all = _readEntries();
+    const mine = all.filter(function(e){
+      if(!e) return false;
+      const owner = String(e.loginName || '').toLowerCase();
+      const sales = String(e.salesPerson || '').toLowerCase();
+      return owner === myLogin || sales === myLogin;
+    });
+
+    // KPI calculations
+    const open = mine.filter(function(e){ return String(e.outcome || '').toLowerCase() === 'open'; });
+    const openVal = open.reduce(function(s, e){ return s + _readDealValue(e); }, 0);
+    // This quarter wins
+    const qStart = (function(){
+      const now = new Date();
+      const m = now.getMonth();
+      const qStartMonth = m >= 0 && m <= 2 ? 0 : (m >= 3 && m <= 5 ? 3 : (m >= 6 && m <= 8 ? 6 : 9));
+      return new Date(now.getFullYear(), qStartMonth, 1).getTime();
+    })();
+    const wonThisQ = mine.filter(function(e){
+      if(String(e.outcome || '').toLowerCase() !== 'won') return false;
+      return _parseTs(e) >= qStart;
+    });
+    const wonVal = wonThisQ.reduce(function(s, e){ return s + _readDealValue(e); }, 0);
+    // Win rate
+    const resolved = mine.filter(function(e){
+      const o = String(e.outcome || '').toLowerCase();
+      return o === 'won' || o === 'lost';
+    });
+    const wonAll = resolved.filter(function(e){ return String(e.outcome || '').toLowerCase() === 'won'; });
+    const winRate = resolved.length ? Math.round((wonAll.length / resolved.length) * 100) : null;
+    // Closing this week (≤7 days from today)
+    const sevenDaysOut = Date.now() + 7 * 24 * 60 * 60 * 1000;
+    const closingWeek = open.filter(function(e){
+      const cm = e.closemonth || e.closeMonth;
+      if(!cm) return false;
+      // Parse YYYY-MM
+      const m = String(cm).match(/^(\d{4})-(\d{2})/);
+      if(!m) return false;
+      const lastDay = new Date(parseInt(m[1]), parseInt(m[2]), 0).getTime();
+      return lastDay <= sevenDaysOut;
+    });
+
+    // Paint KPIs
+    _setText('v26-mine-kpi-open', _shortINR(openVal));
+    _setText('v26-mine-kpi-open-sub', open.length + ' deal' + (open.length === 1 ? '' : 's'));
+    _setText('v26-mine-kpi-won', _shortINR(wonVal));
+    _setText('v26-mine-kpi-won-sub', wonThisQ.length + ' win' + (wonThisQ.length === 1 ? '' : 's'));
+    _setText('v26-mine-kpi-rate', winRate == null ? '—' : (winRate + '%'));
+    _setText('v26-mine-kpi-rate-sub', resolved.length + ' resolved');
+    _setText('v26-mine-kpi-week', closingWeek.length);
+    _setText('v26-mine-kpi-week-sub', closingWeek.length === 0 ? 'nothing due ≤7 days' : 'deals due ≤7 days');
+
+    // To-do lists
+    _renderTodoSection('v26-mine-todo-closing', 'v26-mine-todo-closing-count', closingWeek);
+    const stuck = open.filter(function(e){ return _daysInStage(e) >= 14 && _daysInStage(e) < 30; });
+    _renderTodoSection('v26-mine-todo-stuck', 'v26-mine-todo-stuck-count', stuck);
+    const stale = open.filter(function(e){ return _daysInStage(e) >= 30; });
+    _renderTodoSection('v26-mine-todo-stale', 'v26-mine-todo-stale-count', stale);
+
+    // Deals table
+    _renderMyTable(mine);
+  }
+
+  function _renderTodoSection(bodyId, countId, deals){
+    const body = document.getElementById(bodyId);
+    const cnt = document.getElementById(countId);
+    if(cnt) cnt.textContent = String(deals.length);
+    if(!body) return;
+    if(!deals.length){
+      body.innerHTML = '<div class="v26-todo-empty">No deals here ✓</div>';
+      return;
+    }
+    const html = deals.slice(0, 5).map(function(e, idx){
+      const title = _esc(e.project || '(no project name)');
+      const stage = _esc(e.stage || '—');
+      const val = _shortINR(_readDealValue(e));
+      const days = _daysInStage(e);
+      const close = _esc(e.closemonth || '—');
+      const refId = _esc(e.refId || '');
+      return '<div class="v26-todo-item" onclick="bsv26_openDeal(\'' + refId + '\')">' +
+             '<div class="v26-todo-item-main">' +
+               '<div class="v26-todo-item-title">' + title + '</div>' +
+               '<div class="v26-todo-item-meta">' + stage + ' · ' + val + ' · close ' + close + ' · ' + days + 'd in stage</div>' +
+             '</div>' +
+             '<div class="v26-todo-item-action">→</div>' +
+             '</div>';
+    }).join('');
+    const more = deals.length > 5 ? '<div class="v26-todo-more">+ ' + (deals.length - 5) + ' more</div>' : '';
+    body.innerHTML = html + more;
+  }
+
+  function _renderMyTable(deals){
+    const tbody = document.getElementById('v26-mine-tbody');
+    const counter = document.getElementById('v26-mine-table-counter');
+    if(counter) counter.textContent = deals.length + ' deal' + (deals.length === 1 ? '' : 's');
+    if(!tbody) return;
+    if(!deals.length){
+      tbody.innerHTML = '<tr><td colspan="6" style="padding:32px;text-align:center;color:var(--ink-muted);">No deals yet — go to "+ New selection" to start one.</td></tr>';
+      return;
+    }
+    // Sort
+    const sortCol = _activeSort.mine.col;
+    const sortDir = _activeSort.mine.dir;
+    const sorted = deals.slice().sort(function(a, b){
+      let av = a[sortCol], bv = b[sortCol];
+      if(sortCol === 'dealValue'){ av = _readDealValue(a); bv = _readDealValue(b); }
+      if(sortCol === 'daysInStage'){ av = _daysInStage(a); bv = _daysInStage(b); }
+      if(av == null) av = '';
+      if(bv == null) bv = '';
+      if(typeof av === 'number' && typeof bv === 'number'){ return sortDir === 'asc' ? av - bv : bv - av; }
+      return sortDir === 'asc' ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av));
+    });
+    tbody.innerHTML = sorted.map(function(e){
+      const days = _daysInStage(e);
+      const stuckCls = days >= 30 ? ' style="color:#DC2626;font-weight:700;"' : (days >= 14 ? ' style="color:#D97706;font-weight:600;"' : '');
+      return '<tr onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')">' +
+             '<td>' + _esc(e.project || '—') + '</td>' +
+             '<td>' + _esc(e.enduser || '—') + '</td>' +
+             '<td><span class="v26-stage-badge v26-stage-' + _esc(String(e.stage || '').toLowerCase()) + '">' + _esc(e.stage || '—') + '</span></td>' +
+             '<td class="v26-th-num">' + _formatINR(_readDealValue(e)) + '</td>' +
+             '<td>' + _esc(e.closemonth || '—') + '</td>' +
+             '<td class="v26-th-num"' + stuckCls + '>' + days + 'd</td>' +
+             '</tr>';
+    }).join('');
+  }
+
+  // ============================================================================
+  // TEAM ANALYTICS RENDERER
+  // ============================================================================
+  function _renderTeam(){
+    const all = _readEntries();
+    const scoped = _scopeForUser(all);
+    _populateSalesFilter(scoped);
+    _restoreFilterUI();
+    const f = _readFilterState();
+    const filtered = _applyFilters(scoped, f);
+
+    _renderTeamKPIs(filtered);
+    _renderTeamCharts(filtered);
+    _renderTeamLeaderboard(filtered);
+    _renderTeamStuck(filtered);
+    _renderTeamTable(filtered);
+  }
+
+  function _renderTeamKPIs(deals){
+    const open = deals.filter(function(e){ return String(e.outcome || '').toLowerCase() === 'open'; });
+    const won = deals.filter(function(e){ return String(e.outcome || '').toLowerCase() === 'won'; });
+    const lost = deals.filter(function(e){ return String(e.outcome || '').toLowerCase() === 'lost'; });
+
+    const openVal = open.reduce(function(s, e){ return s + _readDealValue(e); }, 0);
+    const wonVal = won.reduce(function(s, e){ return s + _readDealValue(e); }, 0);
+    const weightedVal = open.reduce(function(s, e){
+      const w = STAGE_WEIGHTS[e.stage] || 0;
+      return s + (_readDealValue(e) * w);
+    }, 0);
+    const winRate = (won.length + lost.length) > 0 ? Math.round((won.length / (won.length + lost.length)) * 100) : null;
+    const partners = {};
+    const consultants = {};
+    const customers = {};
+    open.forEach(function(e){
+      const p = String(e.partner || '').trim();
+      const c = String(e.consultant || '').trim();
+      const cust = String(e.enduser || '').trim();
+      if(p && p.toLowerCase() !== 'na') partners[p.toLowerCase()] = true;
+      if(c && c.toLowerCase() !== 'na') consultants[c.toLowerCase()] = true;
+      if(cust && cust.toLowerCase() !== 'na') customers[cust.toLowerCase()] = true;
+    });
+    const qc = _quarterClose();
+
+    _setText('v26-team-kpi-won', _shortINR(wonVal));
+    _setText('v26-team-kpi-won-sub', won.length + ' win' + (won.length === 1 ? '' : 's'));
+    _setText('v26-team-kpi-open', _shortINR(openVal));
+    _setText('v26-team-kpi-open-sub', open.length + ' deal' + (open.length === 1 ? '' : 's'));
+    _setText('v26-team-kpi-weighted', _shortINR(weightedVal));
+    _setText('v26-team-kpi-rate', winRate == null ? '—' : (winRate + '%'));
+    _setText('v26-team-kpi-rate-sub', (won.length + lost.length) + ' resolved');
+    _setText('v26-team-kpi-partners', Object.keys(partners).length);
+    _setText('v26-team-kpi-consultants', Object.keys(consultants).length);
+    _setText('v26-team-kpi-customers', Object.keys(customers).length);
+    _setText('v26-team-kpi-qclose', qc.days);
+    _setText('v26-team-kpi-qclose-sub', 'days to ' + qc.label + ' close');
+  }
+
+  // ---- 8 CHARTS ----
+  function _destroyChart(key){
+    if(_v26Charts[key]){ try { _v26Charts[key].destroy(); } catch(_){} _v26Charts[key] = null; }
+  }
+  function _renderTeamCharts(deals){
+    if(typeof Chart === 'undefined') return;
+    _renderChartSource(deals);
+    _renderChartStage(deals);
+    _renderChartRegion(deals);
+    _renderChartOutcome(deals);
+    _renderChartPartners(deals);
+    _renderChartConsultants(deals);
+    _renderChartTrend(deals);
+    _renderChartTTC(deals);
+  }
+  function _renderChartSource(deals){
+    _destroyChart('source');
+    const ctx = document.getElementById('v26-chart-source');
+    if(!ctx) return;
+    const counts = { BrightSign: 0, Cavitak: 0, Other: 0 };
+    deals.forEach(function(e){
+      const s = String(e.leadSource || '').trim();
+      if(s.toLowerCase() === 'brightsign') counts.BrightSign++;
+      else if(s.toLowerCase() === 'cavitak') counts.Cavitak++;
+      else counts.Other++;
+    });
+    if(counts.Other === 0) delete counts.Other;
+    _v26Charts.source = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(counts),
+        datasets: [{ data: Object.values(counts), backgroundColor: ['#4F46E5','#10B981','#94A3B8'], borderWidth: 2, borderColor: '#fff' }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '60%',
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 14, padding: 14 } } },
+        onClick: function(_evt, els){
+          if(els && els.length){
+            const label = this.data.labels[els[0].index];
+            if(label === 'BrightSign' || label === 'Cavitak'){
+              const f = _readFilterState(); f.source = label; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
+            }
+          }
+        }
+      }
+    });
+  }
+  function _renderChartStage(deals){
+    _destroyChart('stage');
+    const ctx = document.getElementById('v26-chart-stage');
+    if(!ctx) return;
+    const open = deals.filter(function(e){ return String(e.outcome || '').toLowerCase() === 'open'; });
+    const counts = STAGES_OPEN.map(function(s){ return open.filter(function(e){ return e.stage === s; }).length; });
+    const vals = STAGES_OPEN.map(function(s){
+      return open.filter(function(e){ return e.stage === s; }).reduce(function(t, e){ return t + _readDealValue(e); }, 0);
+    });
+    _v26Charts.stage = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: STAGES_OPEN,
+        datasets: [{
+          label: '# Deals',
+          data: counts,
+          backgroundColor: ['#6366F1','#7C3AED','#A855F7','#C026D3','#DB2777'],
+          borderRadius: 6
+        }]
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: function(c){ const v = vals[c.dataIndex]; return c.parsed.x + ' deals · ' + _shortINR(v); } } }
+        },
+        scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
+        onClick: function(_evt, els){
+          if(els && els.length){
+            const stage = STAGES_OPEN[els[0].index];
+            const f = _readFilterState(); f.stage = stage; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
+          }
+        }
+      }
+    });
+  }
+  function _renderChartRegion(deals){
+    _destroyChart('region');
+    const ctx = document.getElementById('v26-chart-region');
+    if(!ctx) return;
+    const counts = { West: 0, North: 0, South: 0, East: 0, International: 0 };
+    deals.forEach(function(e){ const r = _stateRegion(e.state); if(r && counts[r] != null) counts[r]++; });
+    _v26Charts.region = new Chart(ctx, {
+      type: 'doughnut',
+      data: { labels: Object.keys(counts), datasets: [{ data: Object.values(counts), backgroundColor: ['#10B981','#F59E0B','#3B82F6','#EF4444','#8B5CF6'], borderWidth: 2, borderColor: '#fff' }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '55%',
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 14, padding: 12, font: { size: 11 } } } },
+        onClick: function(_evt, els){
+          if(els && els.length){
+            const region = this.data.labels[els[0].index];
+            const f = _readFilterState(); f.region = region; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
+          }
+        }
+      }
+    });
+  }
+  function _renderChartOutcome(deals){
+    _destroyChart('outcome');
+    const ctx = document.getElementById('v26-chart-outcome');
+    if(!ctx) return;
+    const counts = { Open: 0, Won: 0, Lost: 0, 'On hold': 0 };
+    deals.forEach(function(e){
+      const o = String(e.outcome || 'open').toLowerCase();
+      if(o === 'open') counts.Open++;
+      else if(o === 'won') counts.Won++;
+      else if(o === 'lost') counts.Lost++;
+      else if(o === 'on-hold' || o === 'on hold') counts['On hold']++;
+    });
+    _v26Charts.outcome = new Chart(ctx, {
+      type: 'doughnut',
+      data: { labels: Object.keys(counts), datasets: [{ data: Object.values(counts), backgroundColor: ['#3B82F6','#10B981','#EF4444','#F59E0B'], borderWidth: 2, borderColor: '#fff' }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '55%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 14, padding: 12 } } } }
+    });
+  }
+  function _topNByCount(deals, key, n){
+    const map = {};
+    deals.forEach(function(e){
+      const k = String(e[key] || '').trim();
+      if(!k || k.toLowerCase() === 'na') return;
+      map[k] = (map[k] || 0) + 1;
+    });
+    return Object.keys(map).sort(function(a, b){ return map[b] - map[a]; }).slice(0, n).map(function(k){ return { name: k, count: map[k] }; });
+  }
+  function _renderChartPartners(deals){
+    _destroyChart('partners');
+    const ctx = document.getElementById('v26-chart-partners');
+    if(!ctx) return;
+    const top = _topNByCount(deals, 'partner', 10);
+    if(!top.length){ ctx.parentNode.innerHTML = '<div style="padding:32px;text-align:center;color:var(--ink-muted);">No partner data yet</div>'; return; }
+    _v26Charts.partners = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: top.map(function(t){ return t.name; }), datasets: [{ data: top.map(function(t){ return t.count; }), backgroundColor: '#3B82F6', borderRadius: 6 }] },
+      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+  }
+  function _renderChartConsultants(deals){
+    _destroyChart('consultants');
+    const ctx = document.getElementById('v26-chart-consultants');
+    if(!ctx) return;
+    const top = _topNByCount(deals, 'consultant', 10);
+    if(!top.length){ ctx.parentNode.innerHTML = '<div style="padding:32px;text-align:center;color:var(--ink-muted);">No consultant data yet</div>'; return; }
+    _v26Charts.consultants = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: top.map(function(t){ return t.name; }), datasets: [{ data: top.map(function(t){ return t.count; }), backgroundColor: '#8B5CF6', borderRadius: 6 }] },
+      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+  }
+  function _renderChartTrend(deals){
+    _destroyChart('trend');
+    const ctx = document.getElementById('v26-chart-trend');
+    if(!ctx) return;
+    // Last 12 weeks — count of new deals (by ts) and won deals (outcome=won, by ts)
+    const weeks = [];
+    const now = new Date();
+    for(let i = 11; i >= 0; i--){
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (i*7));
+      const start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 6);
+      weeks.push({ start: start.getTime(), end: end.getTime() + 24*60*60*1000 - 1, label: (start.getMonth()+1) + '/' + start.getDate() });
+    }
+    const newCounts = weeks.map(function(w){ return deals.filter(function(e){ const t = _parseTs(e); return t >= w.start && t <= w.end; }).length; });
+    const wonCounts = weeks.map(function(w){
+      return deals.filter(function(e){
+        if(String(e.outcome || '').toLowerCase() !== 'won') return false;
+        const t = _parseTs(e); return t >= w.start && t <= w.end;
+      }).length;
+    });
+    _v26Charts.trend = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: weeks.map(function(w){ return w.label; }),
+        datasets: [
+          { label: 'New', data: newCounts, borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.3, fill: true },
+          { label: 'Won', data: wonCounts, borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)', tension: 0.3, fill: true }
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+  }
+  function _renderChartTTC(deals){
+    _destroyChart('ttc');
+    const ctx = document.getElementById('v26-chart-ttc');
+    if(!ctx) return;
+    const won = deals.filter(function(e){ return String(e.outcome || '').toLowerCase() === 'won'; });
+    if(!won.length){ ctx.parentNode.innerHTML = '<div style="padding:32px;text-align:center;color:var(--ink-muted);">No won deals yet — time-to-close will populate after wins.</div>'; return; }
+    // Crude approximation: ts is the latest log time; use it. Without leadCreatedAt we can only show "days since first log of refId" — for now bucket by time-since-creation.
+    // Buckets: <30, 30-60, 60-90, 90-180, 180+
+    const buckets = { '<30d': 0, '30-60d': 0, '60-90d': 0, '90-180d': 0, '180+d': 0 };
+    won.forEach(function(e){
+      const t = _parseTs(e);
+      if(!t) return;
+      const days = Math.floor((Date.now() - t) / (1000*60*60*24));
+      if(days < 30) buckets['<30d']++;
+      else if(days < 60) buckets['30-60d']++;
+      else if(days < 90) buckets['60-90d']++;
+      else if(days < 180) buckets['90-180d']++;
+      else buckets['180+d']++;
+    });
+    _v26Charts.ttc = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: Object.keys(buckets), datasets: [{ data: Object.values(buckets), backgroundColor: '#F59E0B', borderRadius: 6 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+  }
+
+  // ---- Sales leaderboard ----
+  function _renderTeamLeaderboard(deals){
+    const tbody = document.getElementById('v26-team-leaderboard-tbody');
+    if(!tbody) return;
+    const map = {};
+    deals.forEach(function(e){
+      const sp = String(e.salesPerson || '').toLowerCase().trim();
+      if(!sp) return;
+      if(!map[sp]) map[sp] = { name: sp, openCount: 0, openVal: 0, wonCount: 0, wonVal: 0, lostCount: 0 };
+      const o = String(e.outcome || '').toLowerCase();
+      if(o === 'open'){ map[sp].openCount++; map[sp].openVal += _readDealValue(e); }
+      else if(o === 'won'){ map[sp].wonCount++; map[sp].wonVal += _readDealValue(e); }
+      else if(o === 'lost'){ map[sp].lostCount++; }
+    });
+    const list = Object.values(map);
+    if(Array.isArray(window._allUsers)){
+      list.forEach(function(r){
+        const u = window._allUsers.find(function(x){ return String(x.loginName || '').toLowerCase() === r.name; });
+        if(u && u.fullName) r.display = u.fullName;
+        else r.display = r.name;
+      });
+    } else {
+      list.forEach(function(r){ r.display = r.name; });
+    }
+    list.sort(function(a, b){ return b.wonVal - a.wonVal; });
+    const top = list.slice(0, 10);
+    if(!top.length){
+      tbody.innerHTML = '<tr><td colspan="7" style="padding:18px;text-align:center;color:var(--ink-muted);">No salesperson data in this filter.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = top.map(function(r, i){
+      const total = r.wonCount + r.lostCount;
+      const winPct = total ? Math.round((r.wonCount/total)*100) + '%' : '—';
+      return '<tr>' +
+        '<td>' + (i+1) + '</td>' +
+        '<td>' + _esc(r.display) + '</td>' +
+        '<td class="v26-th-num">' + r.openCount + '</td>' +
+        '<td class="v26-th-num">' + _shortINR(r.openVal) + '</td>' +
+        '<td class="v26-th-num">' + r.wonCount + '</td>' +
+        '<td class="v26-th-num">' + _shortINR(r.wonVal) + '</td>' +
+        '<td class="v26-th-num">' + winPct + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  // ---- Stuck deals ----
+  function _renderTeamStuck(deals){
+    const tbody = document.getElementById('v26-team-stuck-tbody');
+    if(!tbody) return;
+    const stuck = deals.filter(function(e){
+      return String(e.outcome || '').toLowerCase() === 'open' && _daysInStage(e) >= 30;
+    }).sort(function(a, b){ return _daysInStage(b) - _daysInStage(a); }).slice(0, 10);
+    if(!stuck.length){
+      tbody.innerHTML = '<tr><td colspan="5" style="padding:18px;text-align:center;color:var(--ink-muted);">No leakage 🔥</td></tr>';
+      return;
+    }
+    tbody.innerHTML = stuck.map(function(e){
+      const days = _daysInStage(e);
+      const owner = e.salesPerson || e.loginName || '—';
+      let ownerDisplay = owner;
+      if(Array.isArray(window._allUsers)){
+        const u = window._allUsers.find(function(x){ return String(x.loginName || '').toLowerCase() === String(owner).toLowerCase(); });
+        if(u && u.fullName) ownerDisplay = u.fullName;
+      }
+      return '<tr onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')">' +
+        '<td>' + _esc(e.project || '—') + '</td>' +
+        '<td><span class="v26-stage-badge v26-stage-' + _esc(String(e.stage || '').toLowerCase()) + '">' + _esc(e.stage || '—') + '</span></td>' +
+        '<td class="v26-th-num">' + _shortINR(_readDealValue(e)) + '</td>' +
+        '<td class="v26-th-num" style="color:#DC2626;font-weight:700;">' + days + 'd</td>' +
+        '<td>' + _esc(ownerDisplay) + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  // ---- All filtered deals table ----
+  function _renderTeamTable(deals){
+    const tbody = document.getElementById('v26-team-tbody');
+    const counter = document.getElementById('v26-team-table-counter');
+    if(counter) counter.textContent = deals.length + ' deal' + (deals.length === 1 ? '' : 's');
+    if(!tbody) return;
+    if(!deals.length){
+      tbody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:var(--ink-muted);">No deals match these filters.</td></tr>';
+      return;
+    }
+    const sortCol = _activeSort.team.col;
+    const sortDir = _activeSort.team.dir;
+    const sorted = deals.slice().sort(function(a, b){
+      let av = a[sortCol], bv = b[sortCol];
+      if(sortCol === 'dealValue'){ av = _readDealValue(a); bv = _readDealValue(b); }
+      if(sortCol === 'daysInStage'){ av = _daysInStage(a); bv = _daysInStage(b); }
+      if(sortCol === 'user'){ av = a.salesPerson || a.loginName; bv = b.salesPerson || b.loginName; }
+      if(av == null) av = ''; if(bv == null) bv = '';
+      if(typeof av === 'number' && typeof bv === 'number'){ return sortDir === 'asc' ? av - bv : bv - av; }
+      return sortDir === 'asc' ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av));
+    });
+    tbody.innerHTML = sorted.map(function(e){
+      const days = _daysInStage(e);
+      const stuckCls = days >= 30 ? ' style="color:#DC2626;font-weight:700;"' : (days >= 14 ? ' style="color:#D97706;font-weight:600;"' : '');
+      const owner = e.salesPerson || e.loginName || '—';
+      let ownerDisplay = owner;
+      if(Array.isArray(window._allUsers)){
+        const u = window._allUsers.find(function(x){ return String(x.loginName || '').toLowerCase() === String(owner).toLowerCase(); });
+        if(u && u.fullName) ownerDisplay = u.fullName;
+      }
+      return '<tr onclick="bsv26_openDeal(\'' + _esc(e.refId || '') + '\')">' +
+        '<td>' + _esc(e.project || '—') + '</td>' +
+        '<td>' + _esc(e.enduser || '—') + '</td>' +
+        '<td>' + _esc(e.partner || '—') + '</td>' +
+        '<td><span class="v26-stage-badge v26-stage-' + _esc(String(e.stage || '').toLowerCase()) + '">' + _esc(e.stage || '—') + '</span></td>' +
+        '<td class="v26-th-num">' + _formatINR(_readDealValue(e)) + '</td>' +
+        '<td>' + _esc(e.closemonth || '—') + '</td>' +
+        '<td class="v26-th-num"' + stuckCls + '>' + days + 'd</td>' +
+        '<td>' + _esc(ownerDisplay) + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  // ---- Misc helpers ----
+  function _setText(id, txt){ const el = document.getElementById(id); if(el) el.textContent = txt; }
+
+  // ---- Open deal modal helper (delegates to existing modal logic) ----
+  window.bsv26_openDeal = function(refId){
+    if(!refId) return;
+    const idx = _readEntries().findIndex(function(e){ return String(e.refId) === String(refId); });
+    if(idx < 0) return;
+    if(typeof window.openLogEntryDetail === 'function'){ try { window.openLogEntryDetail(idx); return; } catch(_){} }
+    if(typeof window.editEntry === 'function'){ try { window.editEntry(idx); return; } catch(_){} }
+  };
+
+  // ---- CSV export ----
+  window.bsv26_exportTeamCSV = function(){
+    const all = _readEntries();
+    const scoped = _scopeForUser(all);
+    const f = _readFilterState();
+    const filtered = _applyFilters(scoped, f);
+    if(!filtered.length){ alert('No deals to export with current filters.'); return; }
+    const headers = ['refId','project','enduser','partner','consultant','stage','dealValue','closemonth','outcome','source','region','salesPerson','daysInStage','timestamp'];
+    const rows = filtered.map(function(e){
+      return [
+        e.refId || '', e.project || '', e.enduser || '', e.partner || '', e.consultant || '',
+        e.stage || '', _readDealValue(e), e.closemonth || '', e.outcome || '',
+        e.leadSource || '', _stateRegion(e.state) || '', e.salesPerson || '', _daysInStage(e),
+        new Date(_parseTs(e)).toISOString()
+      ];
+    });
+    const csv = [headers.concat(['']).slice(0,-1)].concat(rows).map(function(r){
+      return r.map(function(c){ return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
+    }).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'bs-team-analytics-' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ---- Sort header wiring ----
+  function _wireSortHeaders(){
+    document.querySelectorAll('#v26-mine-table th[data-sort]').forEach(function(th){
+      if(th.dataset.v26SortWired) return;
+      th.dataset.v26SortWired = '1';
+      th.style.cursor = 'pointer';
+      th.addEventListener('click', function(){
+        const col = th.getAttribute('data-sort');
+        if(_activeSort.mine.col === col) _activeSort.mine.dir = _activeSort.mine.dir === 'asc' ? 'desc' : 'asc';
+        else { _activeSort.mine.col = col; _activeSort.mine.dir = 'asc'; }
+        _renderMine();
+      });
+    });
+    document.querySelectorAll('#v26-team-table th[data-sort]').forEach(function(th){
+      if(th.dataset.v26SortWired) return;
+      th.dataset.v26SortWired = '1';
+      th.style.cursor = 'pointer';
+      th.addEventListener('click', function(){
+        const col = th.getAttribute('data-sort');
+        if(_activeSort.team.col === col) _activeSort.team.dir = _activeSort.team.dir === 'asc' ? 'desc' : 'asc';
+        else { _activeSort.team.col = col; _activeSort.team.dir = 'asc'; }
+        _renderTeam();
+      });
+    });
+  }
+
+  // ---- INIT ----
+  function bsv26_init(){
+    _setupTabButtonsForUser();
+    _restoreFilterUI();
+    // Show the right pane based on default tab (set by _setupTabButtonsForUser)
+    const paneMine = document.getElementById('v26-pane-mine');
+    const paneTeam = document.getElementById('v26-pane-team');
+    if(paneMine) paneMine.style.display = (_activeTab === 'mine') ? 'block' : 'none';
+    if(paneTeam) paneTeam.style.display = (_activeTab === 'team') ? 'block' : 'none';
+    document.querySelectorAll('.v26-tab').forEach(function(b){
+      b.classList.toggle('v26-tab-active', b.getAttribute('data-v26-tab') === _activeTab);
+    });
+    _wireSortHeaders();
+  }
+  window.bsv26_init = bsv26_init;
+
+  // Auto-init on DOMContentLoaded — and also re-init whenever Dashboard tab is opened
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', bsv26_init);
+  } else {
+    setTimeout(bsv26_init, 0);
+  }
+
+  // Hook into showTab so we always re-init when section becomes visible (sets up sales filter etc)
+  const _origShowTab = window.showTab;
+  if(typeof _origShowTab === 'function'){
+    window.showTab = function(which){
+      const r = _origShowTab.apply(this, arguments);
+      if(which === 'dashboard'){
+        setTimeout(function(){ try { bsv26_init(); bsv26_renderActiveTab(); } catch(_){} }, 60);
+      }
+      return r;
+    };
+  }
+})();
 </script>
 </body>
 </html>
+
