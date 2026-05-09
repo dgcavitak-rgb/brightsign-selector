@@ -8,7 +8,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<!-- v24.26.5: ECharts ADDED for v26 dashboard charts. Chart.js KEPT because legacy
+     dead-code paths (cockpit, v18 detailed analytics) still reference window.Chart
+     — they early-return when their DOM is absent, but a missing global would throw.
+     Cleanup of dead Chart.js code can come in a future release. ~+400KB total. -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
 <!-- v24.18.1: html2canvas for ₹-faithful PDF rendering (browser fonts contain U+20B9; jsPDF fonts don't) -->
@@ -6482,6 +6487,18 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
   .v26-bd-row { grid-template-columns: 80px 1fr 40px 50px; }
   .v26-bd-pct { display: none; }
 }
+/* v24.26.5: India region map zone legend */
+.v26-region-zone-legend {
+  display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+  padding: 6px 8px 0;
+  margin-top: -8px;
+}
+.v26-region-zone-pill {
+  padding: 3px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
+  cursor: pointer; transition: transform 0.12s ease;
+}
+.v26-region-zone-pill:hover { transform: translateY(-1px); }
 
 </style>
 <!-- v24.4.2: Apply saved theme BEFORE body renders (prevents flash-of-light) — 3-state light/auto/dark -->
@@ -7875,7 +7892,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.4';  // v24.26.4 — VISUAL POLISH. Replaced 3 donut charts (Source split, Region performance, Outcome split) with owner-friendly horizontal breakdown rows. Each row shows: label · proportional bar · count · ₹ · % — no hover required to read values. Click any row to filter Team Analytics. Stage funnel + Top Partners/Consultants + Trend + TTC unchanged. Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.26.5';  // v24.26.5 — VISUAL DIVERSITY. Migrated all 8 v26 dashboard charts from Chart.js to ECharts. New chart types: Source split is DONUT WITH CENTER TOTAL (8 deals in middle). Region performance is INDIA CHOROPLETH (lazy-loads GeoJSON from JSDelivr CDN; falls back to vertical bar if CDN fails). Outcome split is STACKED HORIZONTAL BAR (one bar split into 4 colored segments). Stage funnel is VISUAL FUNNEL (each stage narrows). Trend is AREA CHART with gradient fills. Top Partners + Top Consultants stay horizontal bar (already optimal). Time-to-close stays vertical bar histogram (already optimal). Chart.js is KEPT loaded for legacy code paths that still reference window.Chart (cockpit, c3a velocity, etc — they early-return on missing DOM but would throw on missing global). Click-through filters preserved on all new charts. Added window-resize handler that resizes all chart instances. Pairs with backend v25.13.0 — no backend changes.
+// v24.26.4 — VISUAL POLISH. Replaced 3 donut charts (Source split, Region performance, Outcome split) with owner-friendly horizontal breakdown rows. Each row shows: label · proportional bar · count · ₹ · % — no hover required to read values. Click any row to filter Team Analytics. Stage funnel + Top Partners/Consultants + Trend + TTC unchanged. Pairs with backend v25.13.0 — no backend changes.
 // v24.26.3 — THE BUG FIX. v26 module had `window.state && window.state.user` checks at 3 sites — but `state` is a top-level `var state = {...}` NOT attached to window, so `window.state` is undefined. Result: every call to _scopeForUser, _setupTabButtonsForUser, _renderMine returned `null` user → _scopeForUser returned `[]` empty array → all KPI math ran on empty data → ₹0 across the board. Fix: introduced _getStateUser() helper that prefers lexical `state` reference (closure-accessible from within the IIFE) and falls back to window. This explains the entire v26.0/.1/.2 saga — the cutoff fix was real but irrelevant because _scopeForUser was zeroing data upstream. Pairs with backend v25.13.0 — no backend changes.
 // v24.26.2 — DATA-VISIBILITY HOTFIX. v24.26.0/.1 showed all ₹0 / 0 KPIs because the global _entryAfterPipelineCutoff helper checks entry.timestamp/created/createdAt/tsMs but NOT entry.ts — and the live deals only have entry.ts populated. Result: cutoff returned false for all 7 production deals → my v26 _applyFilters filtered them all out before KPI math ran. Fix: replace the cutoff call inside v26 module with inline use of our robust _parseTs (which DOES include entry.ts in its fallback chain). The global helper stays untouched so other code paths aren't affected. Pairs with backend v25.13.0 — no backend changes.
 // v24.26.1 — HOTFIX for v24.26.0. Old renderDashboard() was still being called by refreshLog/theme-change paths and crashed on populateFilterOptions reading null.value because the filter DOM elements it targeted were removed in v26 HTML rewrite. Crash threw unhandled promise rejection that killed the render chain — Dashboard showed all ₹0 / 0 zeros because v26 code never got a chance to render. Fix: stub the OLD renderDashboard, renderReview, and the _renderDetailedV2 v2 wrapper to delegate to v26 module (or no-op). Also disabled the v2 expander DOMContentLoaded listener that referenced #dash-detail-expander (removed in v26). Pairs with backend v25.13.0 — no backend changes.
@@ -25191,12 +25209,34 @@ if(document.readyState==='loading'){
     _setText('v26-team-kpi-qclose-sub', 'days to ' + qc.label + ' close');
   }
 
-  // ---- 8 CHARTS ----
+  // ---- 8 CHARTS — v24.26.5 ECharts migration ----
+  // Each chart is owned by ECharts. Chart instances stored on _v26Charts; destroy() on re-render.
+  // India choropleth lazy-loads GeoJSON from JSDelivr CDN; falls back to vertical bar if CDN fails.
+  let _v26IndiaMapLoaded = false;       // tracks whether echarts.registerMap('India', ...) succeeded
+  let _v26IndiaMapLoading = null;        // shared promise so concurrent calls dedupe
+
   function _destroyChart(key){
-    if(_v26Charts[key]){ try { _v26Charts[key].destroy(); } catch(_){} _v26Charts[key] = null; }
+    if(_v26Charts[key]){ try { _v26Charts[key].dispose(); } catch(_){} _v26Charts[key] = null; }
+  }
+  function _initECharts(domId){
+    if(typeof echarts === 'undefined') return null;
+    const dom = document.getElementById(domId);
+    if(!dom) return null;
+    return echarts.init(dom, null, { renderer: 'svg' });
+  }
+  function _wireClickFilter(chartInstance, filterKey, getFilterValueFromParams){
+    if(!chartInstance) return;
+    chartInstance.on('click', function(params){
+      const fv = getFilterValueFromParams(params);
+      if(!fv) return;
+      const f = _readFilterState(); f[filterKey] = fv; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
+    });
   }
   function _renderTeamCharts(deals){
-    if(typeof Chart === 'undefined') return;
+    if(typeof echarts === 'undefined'){
+      console.warn('[v26.5] ECharts not loaded — charts skipped');
+      return;
+    }
     _renderChartSource(deals);
     _renderChartStage(deals);
     _renderChartRegion(deals);
@@ -25206,54 +25246,16 @@ if(document.readyState==='loading'){
     _renderChartTrend(deals);
     _renderChartTTC(deals);
   }
-  // v24.26.4: Owner-friendly horizontal breakdown — replaces donuts.
-  // Each row: label · proportional bar · count · ₹ · % · click to filter.
-  // colors[i] aligns to rows[i]. filterKey is what the filter dropdown uses.
-  function _renderBreakdown(hostId, rows, colors, filterKey){
-    const host = document.getElementById(hostId);
-    if(!host) return;
-    if(!rows || !rows.length){
-      host.innerHTML = '<div class="v26-bd-empty">No data in current filter.</div>';
-      return;
-    }
-    const totalCount = rows.reduce(function(s, r){ return s + r.count; }, 0);
-    const totalVal = rows.reduce(function(s, r){ return s + (r.value || 0); }, 0);
-    const maxCount = Math.max.apply(null, rows.map(function(r){ return r.count; }));
-    if(maxCount === 0){
-      host.innerHTML = '<div class="v26-bd-empty">No deals in current filter.</div>';
-      return;
-    }
-    // Sort rows desc by count for owner-friendly scanning
-    const sorted = rows.slice().sort(function(a, b){ return b.count - a.count; });
-    const rowsHtml = sorted.map(function(r, i){
-      const pct = totalCount > 0 ? Math.round((r.count / totalCount) * 100) : 0;
-      const widthPct = maxCount > 0 ? Math.max(2, Math.round((r.count / maxCount) * 100)) : 0;
-      const valStr = r.value > 0 ? _shortINR(r.value) : '—';
-      const color = colors[r.colorIdx != null ? r.colorIdx : i] || '#94A3B8';
-      const filterAttr = (filterKey && r.filterValue) ? ' data-v26-bd-filter="' + _esc(filterKey) + '" data-v26-bd-val="' + _esc(r.filterValue) + '"' : '';
-      const clickable = filterAttr ? ' v26-bd-row-clickable' : '';
-      return '<div class="v26-bd-row' + clickable + '"' + filterAttr + '>' +
-        '<div class="v26-bd-label" style="border-left:3px solid ' + color + ';padding-left:8px;">' + _esc(r.label) + '</div>' +
-        '<div class="v26-bd-bar-wrap"><div class="v26-bd-bar" style="width:' + widthPct + '%;background:' + color + ';"></div></div>' +
-        '<div class="v26-bd-count">' + r.count + '</div>' +
-        '<div class="v26-bd-val">' + valStr + '</div>' +
-        '<div class="v26-bd-pct">' + pct + '%</div>' +
-        '</div>';
-    }).join('');
-    const totalRow = '<div class="v26-bd-total"><span>Total</span><span>' + totalCount + ' deal' + (totalCount === 1 ? '' : 's') + ' · ' + (totalVal > 0 ? _shortINR(totalVal) : '—') + '</span></div>';
-    host.innerHTML = rowsHtml + totalRow;
-    // Wire click → filter
-    host.querySelectorAll('.v26-bd-row-clickable').forEach(function(el){
-      el.addEventListener('click', function(){
-        const fk = el.getAttribute('data-v26-bd-filter');
-        const fv = el.getAttribute('data-v26-bd-val');
-        if(!fk) return;
-        const f = _readFilterState(); f[fk] = fv; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
-      });
-    });
-  }
 
+  /* ────────────────────── Source split — DONUT WITH CENTER TOTAL ────────────────────── */
   function _renderChartSource(deals){
+    _destroyChart('source');
+    const dom = document.getElementById('v26-chart-source');
+    if(!dom) return;
+    // The HTML had v26-chart-source as a div for breakdown (v26.4) — convert back to canvas-style for ECharts
+    dom.classList.remove('v26-breakdown-body');
+    dom.style.height = '260px';
+    dom.innerHTML = '';
     const counts = { BrightSign: { count: 0, value: 0 }, Cavitak: { count: 0, value: 0 }, Other: { count: 0, value: 0 } };
     deals.forEach(function(e){
       const s = String(e.leadSource || '').trim().toLowerCase();
@@ -25262,78 +25264,242 @@ if(document.readyState==='loading'){
       else if(s === 'cavitak'){ counts.Cavitak.count++; counts.Cavitak.value += v; }
       else { counts.Other.count++; counts.Other.value += v; }
     });
-    const rows = [];
-    if(counts.BrightSign.count) rows.push({ label: 'BrightSign', count: counts.BrightSign.count, value: counts.BrightSign.value, filterValue: 'BrightSign', colorIdx: 0 });
-    if(counts.Cavitak.count)    rows.push({ label: 'Cavitak',    count: counts.Cavitak.count,    value: counts.Cavitak.value,    filterValue: 'Cavitak',    colorIdx: 1 });
-    if(counts.Other.count)      rows.push({ label: 'Other',      count: counts.Other.count,      value: counts.Other.value,      filterValue: null,         colorIdx: 2 });
-    _renderBreakdown('v26-chart-source', rows, ['#4F46E5','#10B981','#94A3B8'], 'source');
+    const data = [];
+    if(counts.BrightSign.count) data.push({ name: 'BrightSign', value: counts.BrightSign.count, dealVal: counts.BrightSign.value, itemStyle: { color: '#4F46E5' } });
+    if(counts.Cavitak.count) data.push({ name: 'Cavitak', value: counts.Cavitak.count, dealVal: counts.Cavitak.value, itemStyle: { color: '#10B981' } });
+    if(counts.Other.count) data.push({ name: 'Other', value: counts.Other.count, dealVal: counts.Other.value, itemStyle: { color: '#94A3B8' } });
+    const totalCount = data.reduce(function(s, d){ return s + d.value; }, 0);
+    const totalVal = data.reduce(function(s, d){ return s + d.dealVal; }, 0);
+    const inst = _initECharts('v26-chart-source');
+    if(!inst) return;
+    inst.setOption({
+      tooltip: { trigger: 'item', formatter: function(p){ return p.name + ': ' + p.value + ' deals · ' + _shortINR(p.data.dealVal) + ' (' + p.percent + '%)'; } },
+      legend: { bottom: 0, itemWidth: 12, itemHeight: 12, textStyle: { color: '#64748B', fontSize: 12 } },
+      graphic: { type: 'group', left: 'center', top: 'middle', children: [
+        { type: 'text', style: { text: String(totalCount), fontSize: 30, fontWeight: 700, fill: '#0F172A', textAlign: 'center' }, top: -16 },
+        { type: 'text', style: { text: 'deals', fontSize: 11, fill: '#64748B', textAlign: 'center' }, top: 18 }
+      ]},
+      series: [{
+        type: 'pie', radius: ['58%', '82%'], center: ['50%', '45%'],
+        avoidLabelOverlap: true,
+        itemStyle: { borderColor: '#fff', borderWidth: 2 },
+        label: { show: true, position: 'outside', formatter: '{b}: {d}%', fontSize: 11, color: '#0F172A' },
+        labelLine: { length: 8, length2: 8 },
+        data: data
+      }]
+    });
+    _v26Charts.source = inst;
+    _wireClickFilter(inst, 'source', function(p){
+      if(p.name === 'BrightSign' || p.name === 'Cavitak') return p.name;
+      return null;
+    });
   }
+
+  /* ────────────────────── Stage funnel — VISUAL FUNNEL ────────────────────── */
   function _renderChartStage(deals){
     _destroyChart('stage');
-    const ctx = document.getElementById('v26-chart-stage');
-    if(!ctx) return;
+    const dom = document.getElementById('v26-chart-stage');
+    if(!dom) return;
     const open = deals.filter(function(e){ return String(e.outcome || '').toLowerCase() === 'open'; });
-    const counts = STAGES_OPEN.map(function(s){ return open.filter(function(e){ return e.stage === s; }).length; });
-    const vals = STAGES_OPEN.map(function(s){
-      return open.filter(function(e){ return e.stage === s; }).reduce(function(t, e){ return t + _readDealValue(e); }, 0);
+    const stageData = STAGES_OPEN.map(function(s){
+      const stageDeals = open.filter(function(e){ return e.stage === s; });
+      const val = stageDeals.reduce(function(t, e){ return t + _readDealValue(e); }, 0);
+      return { name: s, value: stageDeals.length, dealVal: val };
+    }).filter(function(d){ return d.value > 0; });
+    if(!stageData.length){
+      dom.innerHTML = '<div style="padding:60px;text-align:center;color:var(--ink-muted);">No open deals to chart</div>';
+      return;
+    }
+    const inst = _initECharts('v26-chart-stage');
+    if(!inst) return;
+    inst.setOption({
+      tooltip: { trigger: 'item', formatter: function(p){ return p.name + ': ' + p.value + ' deals · ' + _shortINR(p.data.dealVal); } },
+      series: [{
+        type: 'funnel', left: '8%', right: '8%', top: 12, bottom: 8,
+        sort: 'descending', gap: 4, minSize: '20%', maxSize: '100%',
+        label: { show: true, position: 'inside', formatter: function(p){ return p.name + '\n' + p.value + ' deal' + (p.value === 1 ? '' : 's'); }, color: '#fff', fontWeight: 700, fontSize: 12 },
+        labelLine: { show: false },
+        itemStyle: { borderColor: '#fff', borderWidth: 2 },
+        data: stageData,
+        color: ['#6366F1','#7C3AED','#A855F7','#C026D3','#DB2777']
+      }]
     });
-    _v26Charts.stage = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: STAGES_OPEN,
-        datasets: [{
-          label: '# Deals',
-          data: counts,
-          backgroundColor: ['#6366F1','#7C3AED','#A855F7','#C026D3','#DB2777'],
-          borderRadius: 6
-        }]
-      },
-      options: {
-        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { label: function(c){ const v = vals[c.dataIndex]; return c.parsed.x + ' deals · ' + _shortINR(v); } } }
-        },
-        scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
-        onClick: function(_evt, els){
-          if(els && els.length){
-            const stage = STAGES_OPEN[els[0].index];
-            const f = _readFilterState(); f.stage = stage; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
-          }
-        }
-      }
-    });
+    _v26Charts.stage = inst;
+    _wireClickFilter(inst, 'stage', function(p){ return p.name; });
   }
+
+  /* ────────────────────── Region — INDIA CHOROPLETH (lazy-load) with vertical-bar fallback ────────────────────── */
+  function _loadIndiaMap(){
+    if(_v26IndiaMapLoaded) return Promise.resolve(true);
+    if(_v26IndiaMapLoading) return _v26IndiaMapLoading;
+    _v26IndiaMapLoading = fetch('https://cdn.jsdelivr.net/npm/echarts-map-india@1.0.0/india.geojson')
+      .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function(geo){ echarts.registerMap('India', geo); _v26IndiaMapLoaded = true; return true; })
+      .catch(function(err){ console.warn('[v26.5] India map load failed, falling back to bar:', err); return false; });
+    return _v26IndiaMapLoading;
+  }
+  // Maps Indian state names → our 5 zones. Used to color the map.
+  const _STATE_ZONE_MAP = {
+    'Maharashtra': 'West', 'Gujarat': 'West', 'Goa': 'West', 'Madhya Pradesh': 'West', 'Chhattisgarh': 'West', 'Rajasthan': 'West', 'Dadra and Nagar Haveli and Daman and Diu': 'West',
+    'Delhi': 'North', 'Haryana': 'North', 'Punjab': 'North', 'Uttar Pradesh': 'North', 'Uttarakhand': 'North', 'Himachal Pradesh': 'North', 'Chandigarh': 'North', 'Jammu and Kashmir': 'North', 'Ladakh': 'North', 'Bihar': 'North', 'Jharkhand': 'North', 'NCT of Delhi': 'North',
+    'Tamil Nadu': 'South', 'Karnataka': 'South', 'Kerala': 'South', 'Andhra Pradesh': 'South', 'Telangana': 'South', 'Puducherry': 'South', 'Lakshadweep': 'South',
+    'West Bengal': 'East', 'Odisha': 'East', 'Assam': 'East', 'Meghalaya': 'East', 'Manipur': 'East', 'Mizoram': 'East', 'Nagaland': 'East', 'Tripura': 'East', 'Arunachal Pradesh': 'East', 'Sikkim': 'East', 'Andaman and Nicobar Islands': 'East'
+  };
+  const _ZONE_COLORS = { West: '#10B981', North: '#F59E0B', South: '#3B82F6', East: '#EF4444', International: '#8B5CF6' };
+
   function _renderChartRegion(deals){
-    const regions = { West: { count: 0, value: 0 }, North: { count: 0, value: 0 }, South: { count: 0, value: 0 }, East: { count: 0, value: 0 }, International: { count: 0, value: 0 } };
+    _destroyChart('region');
+    const dom = document.getElementById('v26-chart-region');
+    if(!dom) return;
+    dom.classList.remove('v26-breakdown-body');
+    dom.style.height = '260px';
+    dom.innerHTML = '';
+    // Aggregate per state
+    const byState = {};
+    const byZone = { West: 0, North: 0, South: 0, East: 0, International: 0 };
+    const byZoneVal = { West: 0, North: 0, South: 0, East: 0, International: 0 };
     deals.forEach(function(e){
-      const r = _stateRegion(e.state);
-      if(r && regions[r]){ regions[r].count++; regions[r].value += _readDealValue(e); }
+      const st = String(e.state || '').trim();
+      const zone = _stateRegion(e.state);
+      const v = _readDealValue(e);
+      if(st){ byState[st] = (byState[st] || 0) + 1; }
+      if(zone && byZone[zone] != null){ byZone[zone]++; byZoneVal[zone] += v; }
     });
-    const colors = { West: '#10B981', North: '#F59E0B', South: '#3B82F6', East: '#EF4444', International: '#8B5CF6' };
-    const rows = Object.keys(regions).filter(function(r){ return regions[r].count > 0; }).map(function(r){
-      return { label: r, count: regions[r].count, value: regions[r].value, filterValue: r, _color: colors[r] };
+    // Render the map after India is loaded
+    _loadIndiaMap().then(function(ok){
+      if(!ok){ _renderRegionFallbackBar(deals); return; }
+      const statesData = Object.keys(byState).map(function(s){
+        const zone = _STATE_ZONE_MAP[s];
+        return { name: s, value: byState[s], zone: zone };
+      });
+      const inst = _initECharts('v26-chart-region');
+      if(!inst) return;
+      inst.setOption({
+        tooltip: { trigger: 'item', formatter: function(p){
+          if(p.data && p.data.zone){ return p.name + ' (' + p.data.zone + '): ' + p.value + ' deals'; }
+          if(p.value){ return p.name + ': ' + p.value + ' deals'; }
+          return p.name;
+        }},
+        visualMap: { left: 'left', bottom: 6, min: 0, max: Math.max.apply(null, Object.values(byState).concat([1])),
+          inRange: { color: ['#E0E7FF', '#6366F1', '#3730A3'] }, calculable: true, orient: 'horizontal', textStyle: { fontSize: 10, color: '#64748B' } },
+        series: [{
+          type: 'map', map: 'India', roam: false, aspectScale: 0.95,
+          itemStyle: { borderColor: '#94A3B8', borderWidth: 0.5, areaColor: '#F1F5F9' },
+          emphasis: { itemStyle: { borderColor: '#0F172A', borderWidth: 1.5, areaColor: '#FBBF24' }, label: { show: true, color: '#0F172A', fontWeight: 700 } },
+          select: { itemStyle: { areaColor: '#FCD34D' }, label: { show: true } },
+          label: { show: false },
+          data: statesData
+        }]
+      });
+      _v26Charts.region = inst;
+      // Click a state → zone-level filter (since we filter by zone, not state)
+      inst.on('click', function(params){
+        const zone = _STATE_ZONE_MAP[params.name];
+        if(!zone) return;
+        const f = _readFilterState(); f.region = zone; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
+      });
+      // Add international/zone legend overlay below the map
+      const legendDiv = document.createElement('div');
+      legendDiv.className = 'v26-region-zone-legend';
+      legendDiv.innerHTML = Object.keys(byZone).map(function(z){
+        if(byZone[z] === 0) return '';
+        return '<span class="v26-region-zone-pill" data-zone="' + _esc(z) + '" style="background:' + _ZONE_COLORS[z] + '20;color:' + _ZONE_COLORS[z] + ';border:1px solid ' + _ZONE_COLORS[z] + '60;">' + z + ': ' + byZone[z] + ' · ' + _shortINR(byZoneVal[z]) + '</span>';
+      }).join('');
+      dom.appendChild(legendDiv);
+      legendDiv.querySelectorAll('.v26-region-zone-pill').forEach(function(p){
+        p.addEventListener('click', function(){
+          const zone = p.getAttribute('data-zone');
+          if(!zone) return;
+          const f = _readFilterState(); f.region = zone; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
+        });
+      });
     });
-    _renderBreakdown('v26-chart-region', rows, rows.map(function(r){ return r._color; }), 'region');
   }
+  function _renderRegionFallbackBar(deals){
+    const dom = document.getElementById('v26-chart-region');
+    if(!dom) return;
+    const byZone = { West: { c:0, v:0 }, North: { c:0, v:0 }, South: { c:0, v:0 }, East: { c:0, v:0 }, International: { c:0, v:0 } };
+    deals.forEach(function(e){
+      const z = _stateRegion(e.state);
+      if(z && byZone[z]){ byZone[z].c++; byZone[z].v += _readDealValue(e); }
+    });
+    const zones = Object.keys(byZone).filter(function(z){ return byZone[z].c > 0; });
+    if(!zones.length){ dom.innerHTML = '<div style="padding:60px;text-align:center;color:var(--ink-muted);">No regional data yet</div>'; return; }
+    const inst = _initECharts('v26-chart-region');
+    if(!inst) return;
+    inst.setOption({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: function(p){ const z = p[0].name; return z + ': ' + byZone[z].c + ' deals · ' + _shortINR(byZone[z].v); } },
+      grid: { left: 8, right: 16, top: 16, bottom: 28, containLabel: true },
+      xAxis: { type: 'category', data: zones, axisLabel: { color: '#64748B', fontSize: 11 } },
+      yAxis: { type: 'value', axisLabel: { color: '#64748B', fontSize: 11 }, splitLine: { lineStyle: { color: '#F1F5F9' } } },
+      series: [{
+        type: 'bar', data: zones.map(function(z){ return { value: byZone[z].c, itemStyle: { color: _ZONE_COLORS[z] } }; }),
+        barWidth: '50%', itemStyle: { borderRadius: [6, 6, 0, 0] },
+        label: { show: true, position: 'top', fontSize: 11, color: '#0F172A' }
+      }]
+    });
+    _v26Charts.region = inst;
+    _wireClickFilter(inst, 'region', function(p){ return p.name; });
+  }
+
+  /* ────────────────────── Outcome — STACKED SINGLE BAR ────────────────────── */
   function _renderChartOutcome(deals){
-    const outcomes = { Open: { count: 0, value: 0 }, Won: { count: 0, value: 0 }, Lost: { count: 0, value: 0 }, 'On hold': { count: 0, value: 0 } };
+    _destroyChart('outcome');
+    const dom = document.getElementById('v26-chart-outcome');
+    if(!dom) return;
+    dom.classList.remove('v26-breakdown-body');
+    dom.style.height = '260px';
+    dom.innerHTML = '';
+    const counts = { Open: 0, Won: 0, Lost: 0, 'On hold': 0 };
+    const vals = { Open: 0, Won: 0, Lost: 0, 'On hold': 0 };
     deals.forEach(function(e){
       const o = String(e.outcome || 'open').toLowerCase();
       const v = _readDealValue(e);
-      if(o === 'open'){ outcomes.Open.count++; outcomes.Open.value += v; }
-      else if(o === 'won'){ outcomes.Won.count++; outcomes.Won.value += v; }
-      else if(o === 'lost'){ outcomes.Lost.count++; outcomes.Lost.value += v; }
-      else if(o === 'on-hold' || o === 'on hold'){ outcomes['On hold'].count++; outcomes['On hold'].value += v; }
+      if(o === 'open'){ counts.Open++; vals.Open += v; }
+      else if(o === 'won'){ counts.Won++; vals.Won += v; }
+      else if(o === 'lost'){ counts.Lost++; vals.Lost += v; }
+      else if(o === 'on-hold' || o === 'on hold'){ counts['On hold']++; vals['On hold'] += v; }
     });
-    const rows = [];
+    const total = counts.Open + counts.Won + counts.Lost + counts['On hold'];
+    if(!total){ dom.innerHTML = '<div style="padding:60px;text-align:center;color:var(--ink-muted);">No deals to chart</div>'; return; }
+    const colors = { Open: '#3B82F6', Won: '#10B981', Lost: '#EF4444', 'On hold': '#F59E0B' };
     const filterValues = { Open: 'open', Won: 'won', Lost: 'lost', 'On hold': 'on-hold' };
-    const colors = ['#3B82F6','#10B981','#EF4444','#F59E0B'];
-    Object.keys(outcomes).forEach(function(k, i){
-      if(outcomes[k].count) rows.push({ label: k, count: outcomes[k].count, value: outcomes[k].value, filterValue: filterValues[k], _color: colors[i] });
+    const series = ['Open','Won','Lost','On hold'].map(function(k){
+      return {
+        name: k, type: 'bar', stack: 'total', barWidth: 56,
+        data: [counts[k]],
+        itemStyle: { color: colors[k] },
+        label: {
+          show: counts[k] > 0,
+          position: 'inside',
+          formatter: function(p){
+            const pct = Math.round((p.value / total) * 100);
+            return p.value >= 1 ? (k + ': ' + p.value + ' (' + pct + '%)') : '';
+          },
+          color: '#fff', fontWeight: 700, fontSize: 11
+        },
+        emphasis: { focus: 'series' }
+      };
     });
-    _renderBreakdown('v26-chart-outcome', rows, rows.map(function(r){ return r._color; }), 'outcome');
+    const inst = _initECharts('v26-chart-outcome');
+    if(!inst) return;
+    inst.setOption({
+      tooltip: { trigger: 'item', formatter: function(p){ const k = p.seriesName; return k + ': ' + counts[k] + ' deals · ' + _shortINR(vals[k]) + ' · ' + Math.round((counts[k]/total)*100) + '%'; } },
+      legend: { bottom: 0, itemWidth: 12, itemHeight: 12, textStyle: { fontSize: 11, color: '#64748B' } },
+      grid: { left: 16, right: 16, top: 60, bottom: 50, containLabel: true },
+      xAxis: { type: 'value', show: false, max: total },
+      yAxis: { type: 'category', data: [''], axisLine: { show: false }, axisTick: { show: false }, axisLabel: { show: false } },
+      series: series
+    });
+    _v26Charts.outcome = inst;
+    inst.on('click', function(p){
+      const fv = filterValues[p.seriesName];
+      if(!fv) return;
+      const f = _readFilterState(); f.outcome = fv; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
+    });
   }
+
+  /* ────────────────────── Top Partners — HORIZONTAL BAR (kept) ────────────────────── */
   function _topNByCount(deals, key, n){
     const map = {};
     deals.forEach(function(e){
@@ -25343,35 +25509,47 @@ if(document.readyState==='loading'){
     });
     return Object.keys(map).sort(function(a, b){ return map[b] - map[a]; }).slice(0, n).map(function(k){ return { name: k, count: map[k] }; });
   }
-  function _renderChartPartners(deals){
-    _destroyChart('partners');
-    const ctx = document.getElementById('v26-chart-partners');
-    if(!ctx) return;
-    const top = _topNByCount(deals, 'partner', 10);
-    if(!top.length){ ctx.parentNode.innerHTML = '<div style="padding:32px;text-align:center;color:var(--ink-muted);">No partner data yet</div>'; return; }
-    _v26Charts.partners = new Chart(ctx, {
-      type: 'bar',
-      data: { labels: top.map(function(t){ return t.name; }), datasets: [{ data: top.map(function(t){ return t.count; }), backgroundColor: '#3B82F6', borderRadius: 6 }] },
-      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+  function _renderHorizBars(domId, top, color, key){
+    _destroyChart(key);
+    const dom = document.getElementById(domId);
+    if(!dom) return;
+    dom.innerHTML = '';
+    if(!top.length){ dom.innerHTML = '<div style="padding:32px;text-align:center;color:var(--ink-muted);">No data yet</div>'; return; }
+    const inst = _initECharts(domId);
+    if(!inst) return;
+    inst.setOption({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+      grid: { left: 8, right: 24, top: 12, bottom: 12, containLabel: true },
+      xAxis: { type: 'value', axisLabel: { color: '#64748B', fontSize: 11 }, splitLine: { lineStyle: { color: '#F1F5F9' } } },
+      yAxis: { type: 'category', data: top.map(function(t){ return t.name; }).reverse(), axisLabel: { color: '#0F172A', fontSize: 11 } },
+      series: [{
+        type: 'bar', data: top.map(function(t){ return t.count; }).reverse(),
+        itemStyle: { color: color, borderRadius: [0, 6, 6, 0] },
+        label: { show: true, position: 'right', color: '#0F172A', fontSize: 11, fontWeight: 700 }
+      }]
     });
+    _v26Charts[key] = inst;
+  }
+  function _renderChartPartners(deals){
+    const dom = document.getElementById('v26-chart-partners');
+    if(!dom) return;
+    dom.style.height = '260px';
+    _renderHorizBars('v26-chart-partners', _topNByCount(deals, 'partner', 10), '#3B82F6', 'partners');
   }
   function _renderChartConsultants(deals){
-    _destroyChart('consultants');
-    const ctx = document.getElementById('v26-chart-consultants');
-    if(!ctx) return;
-    const top = _topNByCount(deals, 'consultant', 10);
-    if(!top.length){ ctx.parentNode.innerHTML = '<div style="padding:32px;text-align:center;color:var(--ink-muted);">No consultant data yet</div>'; return; }
-    _v26Charts.consultants = new Chart(ctx, {
-      type: 'bar',
-      data: { labels: top.map(function(t){ return t.name; }), datasets: [{ data: top.map(function(t){ return t.count; }), backgroundColor: '#8B5CF6', borderRadius: 6 }] },
-      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
-    });
+    const dom = document.getElementById('v26-chart-consultants');
+    if(!dom) return;
+    dom.style.height = '260px';
+    _renderHorizBars('v26-chart-consultants', _topNByCount(deals, 'consultant', 10), '#8B5CF6', 'consultants');
   }
+
+  /* ────────────────────── Trend — AREA CHART ────────────────────── */
   function _renderChartTrend(deals){
     _destroyChart('trend');
-    const ctx = document.getElementById('v26-chart-trend');
-    if(!ctx) return;
-    // Last 12 weeks — count of new deals (by ts) and won deals (outcome=won, by ts)
+    const dom = document.getElementById('v26-chart-trend');
+    if(!dom) return;
+    dom.style.height = '260px';
+    dom.innerHTML = '';
     const weeks = [];
     const now = new Date();
     for(let i = 11; i >= 0; i--){
@@ -25386,26 +25564,35 @@ if(document.readyState==='loading'){
         const t = _parseTs(e); return t >= w.start && t <= w.end;
       }).length;
     });
-    _v26Charts.trend = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: weeks.map(function(w){ return w.label; }),
-        datasets: [
-          { label: 'New', data: newCounts, borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.3, fill: true },
-          { label: 'Won', data: wonCounts, borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)', tension: 0.3, fill: true }
-        ]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    const inst = _initECharts('v26-chart-trend');
+    if(!inst) return;
+    inst.setOption({
+      tooltip: { trigger: 'axis' },
+      legend: { bottom: 0, itemWidth: 12, itemHeight: 12, textStyle: { fontSize: 11, color: '#64748B' } },
+      grid: { left: 8, right: 16, top: 16, bottom: 36, containLabel: true },
+      xAxis: { type: 'category', data: weeks.map(function(w){ return w.label; }), axisLabel: { color: '#64748B', fontSize: 10 } },
+      yAxis: { type: 'value', axisLabel: { color: '#64748B', fontSize: 11 }, splitLine: { lineStyle: { color: '#F1F5F9' } } },
+      series: [
+        { name: 'New', type: 'line', smooth: 0.3, data: newCounts, symbol: 'circle', symbolSize: 6,
+          areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(59,130,246,0.4)' }, { offset: 1, color: 'rgba(59,130,246,0.02)' }] } },
+          itemStyle: { color: '#3B82F6' }, lineStyle: { color: '#3B82F6', width: 2 } },
+        { name: 'Won', type: 'line', smooth: 0.3, data: wonCounts, symbol: 'circle', symbolSize: 6,
+          areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(16,185,129,0.4)' }, { offset: 1, color: 'rgba(16,185,129,0.02)' }] } },
+          itemStyle: { color: '#10B981' }, lineStyle: { color: '#10B981', width: 2 } }
+      ]
     });
+    _v26Charts.trend = inst;
   }
+
+  /* ────────────────────── Time-to-close — VERTICAL BAR HISTOGRAM (kept) ────────────────────── */
   function _renderChartTTC(deals){
     _destroyChart('ttc');
-    const ctx = document.getElementById('v26-chart-ttc');
-    if(!ctx) return;
+    const dom = document.getElementById('v26-chart-ttc');
+    if(!dom) return;
+    dom.style.height = '260px';
+    dom.innerHTML = '';
     const won = deals.filter(function(e){ return String(e.outcome || '').toLowerCase() === 'won'; });
-    if(!won.length){ ctx.parentNode.innerHTML = '<div style="padding:32px;text-align:center;color:var(--ink-muted);">No won deals yet — time-to-close will populate after wins.</div>'; return; }
-    // Crude approximation: ts is the latest log time; use it. Without leadCreatedAt we can only show "days since first log of refId" — for now bucket by time-since-creation.
-    // Buckets: <30, 30-60, 60-90, 90-180, 180+
+    if(!won.length){ dom.innerHTML = '<div style="padding:60px;text-align:center;color:var(--ink-muted);">No won deals yet — time-to-close will populate after wins.</div>'; return; }
     const buckets = { '<30d': 0, '30-60d': 0, '60-90d': 0, '90-180d': 0, '180+d': 0 };
     won.forEach(function(e){
       const t = _parseTs(e);
@@ -25417,12 +25604,35 @@ if(document.readyState==='loading'){
       else if(days < 180) buckets['90-180d']++;
       else buckets['180+d']++;
     });
-    _v26Charts.ttc = new Chart(ctx, {
-      type: 'bar',
-      data: { labels: Object.keys(buckets), datasets: [{ data: Object.values(buckets), backgroundColor: '#F59E0B', borderRadius: 6 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    const inst = _initECharts('v26-chart-ttc');
+    if(!inst) return;
+    inst.setOption({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+      grid: { left: 8, right: 16, top: 16, bottom: 24, containLabel: true },
+      xAxis: { type: 'category', data: Object.keys(buckets), axisLabel: { color: '#64748B', fontSize: 11 } },
+      yAxis: { type: 'value', axisLabel: { color: '#64748B', fontSize: 11 }, splitLine: { lineStyle: { color: '#F1F5F9' } } },
+      series: [{
+        type: 'bar', data: Object.values(buckets), barWidth: '50%',
+        itemStyle: { color: '#F59E0B', borderRadius: [6, 6, 0, 0] },
+        label: { show: true, position: 'top', fontSize: 11, color: '#0F172A' }
+      }]
     });
+    _v26Charts.ttc = inst;
   }
+
+  // ---- Resize all charts on window resize ----
+  let _v26ResizeTimer = null;
+  window.addEventListener('resize', function(){
+    if(_v26ResizeTimer) clearTimeout(_v26ResizeTimer);
+    _v26ResizeTimer = setTimeout(function(){
+      Object.keys(_v26Charts).forEach(function(k){
+        if(_v26Charts[k] && typeof _v26Charts[k].resize === 'function'){
+          try { _v26Charts[k].resize(); } catch(_){}
+        }
+      });
+    }, 120);
+  });
+
 
   // ---- Sales leaderboard ----
   function _renderTeamLeaderboard(deals){
