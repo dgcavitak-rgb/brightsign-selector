@@ -7987,21 +7987,20 @@ html[data-theme="dark"] .dup-banner-body{color:#FCD34D;}
       <div id="super-charts-body" class="dashboard-v18" style="display:none;">
         <!-- Row 1: Conversion funnel + Pipeline stages (Model Distribution removed — was duplicate of Model Demand) -->
         <div class="dash-section-head"><div class="dash-section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 12 13 21 6"/><path d="M3 6v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6"/></svg></div><div class="dash-section-title">Performance & Mix</div><div class="dash-section-line"></div></div>
-        <div class="charts-row-2">
+        <!-- v24.25.4 — chart-pipeline card removed from view (data + visuals duplicated cockpit + new "Number of cases per stage" chart). Stage chart now goes full width. The original element is still in the DOM (display:none) so any legacy renderer references don't error. -->
+        <div class="charts-row-2" style="grid-template-columns:1fr;">
           <div class="chart-card-v18">
             <div class="chart-v18-head">
               <div class="chart-v18-title"><span class="chart-v18-title-icon ci-emerald"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 17 9 11 13 15 21 7"/></svg></span>Number of cases per stage</div>
             </div>
             <div class="chart-v18-subtitle">Lead → Opportunity → Proposal → Negotiation → Order · post Apr 1, 2026</div>
-            <div class="chart-v18-body" style="height:280px;"><canvas id="chart-dealstage"></canvas></div>
+            <div class="chart-v18-body" style="height:280px;"><canvas id="chart-dealstage-v2"></canvas></div>
           </div>
-          <div class="chart-card-v18">
-            <div class="chart-v18-head">
-              <div class="chart-v18-title"><span class="chart-v18-title-icon ci-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3h18v18H3z"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg></span>Open pipeline by stage · ₹</div>
-            </div>
-            <div class="chart-v18-subtitle">Funnel-depth view of where money is sitting</div>
-            <div class="chart-v18-body"><div id="chart-pipeline" class="funnel-container"></div></div>
-          </div>
+        </div>
+        <!-- v24.25.4 — Old chart-pipeline kept in DOM but hidden. Original element keeps Chart.js refs alive, prevents undefined-element errors in legacy renderer. -->
+        <div style="display:none;" aria-hidden="true">
+          <div id="chart-pipeline" class="funnel-container"></div>
+          <canvas id="chart-dealstage"></canvas>
         </div>
         <!-- Hidden duplicate: Model Distribution donut (data is in Model Performance below) -->
         <div style="display:none;"><canvas id="chart-groups"></canvas></div>
@@ -8962,7 +8961,10 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.25.3';  // v24.25.3 — Header name fix · Test mode strip + cockpit toggle · Sales Person auto-default · Notification fallback in all paths · SSD/WD105 stepper alignment · Pipeline Operations trim · Review filter row balance · Region/Sales empty state actionable · Detailed Analytics: real stages (Lead→Order), stage bars colored with counts, Top Partners with ₹ + dark-mode fix, User Leaderboard split (Sales/Presales × Won-₹/Open-₹ columns), 3 model charts consolidated into 1 Model Performance card with cutoff applied. All Detailed Analytics charts honor pipeline cutoff. Pairs with backend v25.13.0.
+const FRONTEND_VERSION = '24.25.6';  // v24.25.6 — Quarterly Target Settings UI on Profile/Team tab (Super-only). Input accepts ₹ raw or K/L/Cr suffix (5Cr, 50L, 500K, 50000000). Default ₹5 Cr if unset. Saves to localStorage.bs-cockpit-target-quarterly. Cockpit run-rate badge re-renders on save. Pairs with backend v25.13.0.
+// v24.25.5 — Resilience: detect HTML-not-JSON backend response (Apps Script cold-start, network blip, sleep/wake) and silent-retry once after 1.5s. Duplicate-error suppression in error_log_append (same signature within 60s → skip the second log). Friendly Review tab fallback banner when fetch fails AFTER retry, instead of silent failure or stuck "Loading review data...". Pairs with backend v25.13.0.
+// v24.25.4 — Hide duplicate #chart-pipeline card. Fix "Number of cases per stage" chart Chart.js race (override-instead-of-augment, run AFTER original destroy). Fix Model Performance field name (e.chosenModels is top-level JSON column NOT customConfig.chosenModels — verified via Faiz row BS-74688508 raw sheet data). Test Mode help tooltip + permanent Profile-tab toggle. Pairs with backend v25.13.0.
+// v24.25.3 — Header name fix · Test mode strip + cockpit toggle · Sales Person auto-default · Notification fallback in all paths · SSD/WD105 stepper alignment · Pipeline Operations trim · Review filter row balance · Region/Sales empty state actionable · Detailed Analytics: real stages (Lead→Order), stage bars colored with counts, Top Partners with ₹ + dark-mode fix, User Leaderboard split (Sales/Presales × Won-₹/Open-₹ columns), 3 model charts consolidated into 1 Model Performance card with cutoff applied. All Detailed Analytics charts honor pipeline cutoff. Pairs with backend v25.13.0.
 // v24.25.2 — Duplication cleanup (Dashboard collapses v18 charts into "Detailed analytics" expander, Review tab Bi-monthly KPI strip hidden + section renamed to "Pipeline Operations", Custom BOQ sections gated to Advanced path). Owner-grade cockpit: Top Wins ribbon, Quarter close countdown, Commit/Early Pipeline split, Risk tile (6th KPI), Run-rate vs target. Engagement layer: Active customers + Repeat ratio + Partner engagement + Consultant engagement tiles, Top Repeat Customers panel, Partner/Consultant Relationship board (Active vs Dormant), Region table upgraded with active-customers + engagement score. BRAND_CONFIG constant added for future tvONE/Green Hippo merge. Pairs with backend v25.13.0.
 // v24.25.1 — Visual polish on Review filter row + Region card + Sales card (gradients, glass surfaces, color-tinted KPI tiles, animated stage bars). + Full Dashboard cockpit build: 5 vibrant KPI tiles, stage-wise breakdown with funnel-depth color progression, funnel + trend chart pair, region performance table, source split, aging spotlight, what's-moving stream. Time window + Region filter persist. Pairs with backend v25.13.0 (no backend changes needed).
 // v24.25.0 — Pipeline cutoff (PIPELINE_DATA_START='2026-04-01') applied to all aggregations + trend chart. YoY badges stripped from Cards 1/2/4. Card 6 replaced with cutoff explainer. UI uniformity tokens. Mobile stepper REMOVED — single responsive form. SSD + WD105 ± stepper. BOM horizontal scroll fix. Excel signature block at BOM bottom. Notification fix uses entry.project. Items 5+6+7: Review tab chip-filter panel replaced with inline dropdown row (search/Source/FY/Region/State/Sales/Presales/Outcome), plus Region card + Sales-person card with KPI tiles + top reps/customers + deal list. Pairs with backend v25.13.0.
@@ -9717,6 +9719,26 @@ window._versionMismatch = false;
 /* v24.3.0: Log a frontend error to the Errors tab via webhook. Fire-and-forget. */
 function logFrontendError(errorCode, errorMessage, stackTrace, action){
   if(!WEBHOOK_URL)return;
+  // v24.25.5 — duplicate-error suppression. The same signature within 60s logs
+  // ONCE, not 25 times. Prevents the error log from being flooded with copies
+  // of the same Apps Script cold-start failure on a flaky network. Cache lives
+  // in window._loggedErrorSignatures (Map of signature → expiry timestamp).
+  try {
+    if(!window._loggedErrorSignatures){ window._loggedErrorSignatures = new Map(); }
+    const cache = window._loggedErrorSignatures;
+    const now = Date.now();
+    // GC: drop expired entries every call (cheap, max ~50 entries typically)
+    for(const [k, v] of cache){ if(v <= now) cache.delete(k); }
+    // Build signature: errorCode + first 80 chars of message + action context
+    const signature = String(errorCode || '') + '|' +
+                      String(errorMessage || '').substring(0, 80) + '|' +
+                      String(action || '');
+    if(cache.has(signature)){
+      console.log('[error suppressed — duplicate within 60s]', signature.substring(0, 60));
+      return;
+    }
+    cache.set(signature, now + 60000);  // 60s TTL
+  } catch(_){ /* fall through if Map not supported */ }
   try{
     fetch(WEBHOOK_URL, {
       method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'},
@@ -9732,6 +9754,59 @@ function logFrontendError(errorCode, errorMessage, stackTrace, action){
       })
     }).catch(()=>{/* swallow — can't log the logger */});
   }catch(e){ /* swallow */ }
+}
+
+/* v24.25.5 — safer fetch wrapper.
+ * Detects HTML-not-JSON responses (Apps Script cold start, network blip, sleep/wake,
+ * Cloudflare-style outages — backend returns Google sign-in HTML or error HTML
+ * instead of JSON). Silently retries once after retryDelayMs before throwing.
+ * The thrown error carries an .isHtmlResponse flag so callers can show a friendly
+ * fallback UI distinguishing transient backend issues from real network outages.
+ *
+ * Usage: const data = await _safeFetchJson(url, fetchOpts, { context, maxRetries, retryDelayMs });
+ *        Throws if both attempts fail. Returns parsed JSON on success.
+ */
+async function _safeFetchJson(url, fetchOpts, opts){
+  opts = opts || {};
+  const context = opts.context || 'unknown';
+  const maxRetries = (typeof opts.maxRetries === 'number') ? opts.maxRetries : 1;
+  const retryDelayMs = (typeof opts.retryDelayMs === 'number') ? opts.retryDelayMs : 1500;
+  let lastErr = null;
+  for(let attempt = 0; attempt <= maxRetries; attempt++){
+    try {
+      const resp = await fetch(url, fetchOpts);
+      // Read response as text first — we need to inspect for HTML before parsing
+      const txt = await resp.text();
+      // Detect HTML responses (Apps Script auth wall, error page, etc)
+      const trimmed = (txt || '').trimStart();
+      if(trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html') || trimmed.startsWith('<HTML')){
+        const e = new Error('Backend returned HTML instead of JSON (likely Apps Script cold-start, deployment auth issue, or upstream error page). First 100 chars: ' + trimmed.substring(0, 100));
+        e.isHtmlResponse = true;
+        e.responsePreview = trimmed.substring(0, 200);
+        throw e;
+      }
+      // Try parse JSON
+      try {
+        return JSON.parse(txt);
+      } catch(parseErr){
+        const e = new Error('Backend returned non-JSON response: ' + (parseErr.message || 'parse failed') + '. Preview: ' + trimmed.substring(0, 100));
+        e.isParseError = true;
+        e.responsePreview = trimmed.substring(0, 200);
+        throw e;
+      }
+    } catch(err){
+      lastErr = err;
+      // Mark network-level errors so the catch site can distinguish them
+      if(!err.isHtmlResponse && !err.isParseError){ err.isNetworkError = true; }
+      if(attempt < maxRetries){
+        console.warn('[_safeFetchJson] attempt ' + (attempt+1) + ' failed for ' + context + ' — retrying in ' + retryDelayMs + 'ms:', err.message);
+        await new Promise(function(r){ setTimeout(r, retryDelayMs); });
+      } else {
+        console.error('[_safeFetchJson] ' + context + ' failed after ' + (maxRetries+1) + ' attempt(s):', err);
+      }
+    }
+  }
+  throw lastErr;
 }
 
 /* v24.3.0: Global error handlers — catch uncaught JS errors + unhandled promise rejections */
@@ -12932,6 +13007,196 @@ function renderTeamTab(){
     subtitle.textContent='View and update your contact details.';
     renderUserProfileView(host);
   }
+  // v24.25.4 — Test Mode card. For Super users only — non-Super users already
+  // get a test-mode card inside renderUserProfileView. Without this guard,
+  // non-Super users would see DUPLICATE test-mode cards on the Profile tab.
+  if(state.user.isSuper){
+    try { _renderTestModeProfileCard(host); } catch(_){}
+    // v24.25.6 — Quarterly Target Settings card (Super-only). Sets the value
+    // the cockpit's run-rate badge reads from localStorage. Was previously
+    // console-only.
+    try { _renderQuarterlyTargetCard(host); } catch(_){}
+  }
+}
+
+/* v24.25.6 — Quarterly Target Settings card.
+   Reads/writes localStorage.bs-cockpit-target-quarterly. The cockpit's existing
+   run-rate logic already reads this key — saving here triggers a re-render so
+   the badge updates immediately without page reload.
+   Input accepts shorthand (5Cr, 50L, 500K, 50000000) for owner convenience. */
+function _renderQuarterlyTargetCard(host){
+  if(!host) return;
+  let card = document.getElementById('qt-settings-card');
+  if(card){ card.remove(); }
+  let raw = '';
+  try { raw = localStorage.getItem('bs-cockpit-target-quarterly') || ''; } catch(_){}
+  const current = parseFloat(raw);
+  const isSet = isFinite(current) && current > 0;
+  const fmtIN = function(n){
+    if(!isFinite(n) || n <= 0) return '—';
+    if(n >= 10000000) return '₹' + (n/10000000).toFixed(2).replace(/\.?0+$/, '') + ' Cr';
+    if(n >= 100000)   return '₹' + (n/100000).toFixed(2).replace(/\.?0+$/, '') + ' L';
+    if(n >= 1000)     return '₹' + (n/1000).toFixed(1).replace(/\.0$/, '') + ' K';
+    return '₹' + Math.round(n).toLocaleString('en-IN');
+  };
+  card = document.createElement('div');
+  card.id = 'qt-settings-card';
+  card.className = 'card';
+  card.style.cssText = 'margin-top:16px;padding:18px 20px;border:1px solid var(--border,#E5E7EB);border-radius:14px;background:linear-gradient(180deg,rgba(79,70,229,0.04),var(--surface,#FFF));';
+  card.innerHTML =
+    '<div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;">' +
+      '<div style="flex:1;min-width:240px;">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
+          '<span style="font-size:11px;letter-spacing:0.10em;text-transform:uppercase;color:#4338CA;font-weight:700;">🎯 Quarterly Target</span>' +
+          '<span id="qt-status-badge" style="font-size:12px;font-weight:700;letter-spacing:0.05em;padding:2px 8px;border-radius:999px;' +
+            (isSet ? 'background:#EEF2FF;color:#4338CA;' : 'background:#F1F5F9;color:#64748B;') +
+          '">' + (isSet ? 'SET · ' + fmtIN(current) : 'NOT SET') + '</span>' +
+        '</div>' +
+        '<div style="font-size:13px;color:var(--ink,#0F172A);margin-bottom:8px;line-height:1.5;">' +
+          '<strong>What is this?</strong> The ₹ target the Dashboard cockpit uses to compute the <em>Run-rate</em> badge — what % of target you have closed plus open pipeline this quarter. ' +
+          'Without a target set, the badge is hidden.' +
+        '</div>' +
+        '<div style="font-size:12px;color:var(--ink-muted,#64748B);line-height:1.5;margin-bottom:14px;">' +
+          'Examples: <code style="background:var(--surface-2,#F1F5F9);padding:1px 6px;border-radius:3px;font-family:monospace;font-size:11.5px;">5Cr</code> · ' +
+          '<code style="background:var(--surface-2,#F1F5F9);padding:1px 6px;border-radius:3px;font-family:monospace;font-size:11.5px;">75L</code> · ' +
+          '<code style="background:var(--surface-2,#F1F5F9);padding:1px 6px;border-radius:3px;font-family:monospace;font-size:11.5px;">500K</code> · ' +
+          '<code style="background:var(--surface-2,#F1F5F9);padding:1px 6px;border-radius:3px;font-family:monospace;font-size:11.5px;">50000000</code>' +
+        '</div>' +
+        '<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">' +
+          '<div style="flex:1;min-width:160px;">' +
+            '<label style="display:block;font-size:11px;font-weight:600;color:var(--ink-muted,#64748B);margin-bottom:5px;letter-spacing:0.04em;text-transform:uppercase;">Target ₹</label>' +
+            '<input type="text" id="qt-target-input" value="' + (isSet ? fmtIN(current).replace('₹', '').replace(/\s/g, '').trim() : '') + '" placeholder="e.g. 5Cr" ' +
+              'style="width:100%;padding:9px 12px;border:1px solid var(--border-strong,#CBD5E1);border-radius:8px;font-size:14px;font-family:var(--mono,monospace);font-weight:600;background:var(--surface,#FFF);color:var(--ink,#0F172A);">' +
+            '<div id="qt-preview" style="font-size:11.5px;color:var(--ink-subtle,#94A3B8);margin-top:4px;height:14px;"></div>' +
+          '</div>' +
+          '<button type="button" id="qt-save-btn" onclick="saveQuarterlyTarget()" ' +
+            'style="background:var(--indigo,#4F46E5);color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;height:39px;">' +
+            'Save target' +
+          '</button>' +
+          (isSet ? '<button type="button" onclick="clearQuarterlyTarget()" ' +
+            'style="background:transparent;color:#DC2626;border:1px solid #FCA5A5;padding:9px 14px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;height:39px;">' +
+            'Clear' +
+          '</button>' : '') +
+        '</div>' +
+        '<div id="qt-status-msg" style="font-size:12px;margin-top:10px;min-height:14px;"></div>' +
+      '</div>' +
+    '</div>';
+  host.appendChild(card);
+  // Live preview as the user types
+  const input = document.getElementById('qt-target-input');
+  const preview = document.getElementById('qt-preview');
+  if(input && preview){
+    const updatePreview = function(){
+      const v = _parseTargetInput(input.value);
+      if(v == null){ preview.textContent = ''; preview.style.color = ''; return; }
+      if(v === false){ preview.textContent = '✗ Invalid format — try 5Cr or 50000000'; preview.style.color = '#DC2626'; return; }
+      preview.textContent = '= ' + fmtIN(v);
+      preview.style.color = 'var(--ink-muted,#64748B)';
+    };
+    input.addEventListener('input', updatePreview);
+    input.addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ e.preventDefault(); window.saveQuarterlyTarget(); }
+    });
+  }
+}
+
+/* v24.25.6 — Parse "5Cr", "50L", "500K", "50000000", "₹50,00,000" → number.
+   Returns null for empty input, false for invalid input, number for valid. */
+function _parseTargetInput(raw){
+  const s = String(raw || '').trim();
+  if(!s) return null;
+  // Strip ₹, commas, whitespace
+  let cleaned = s.replace(/[₹,\s]/g, '');
+  // Suffix detection (case-insensitive)
+  const m = cleaned.match(/^([\d.]+)\s*(cr|crore|crores|l|lac|lacs|lakh|lakhs|k|thousand)?$/i);
+  if(!m){
+    // Plain number fallback
+    const n = parseFloat(cleaned);
+    return isFinite(n) && n > 0 ? n : false;
+  }
+  const num = parseFloat(m[1]);
+  if(!isFinite(num) || num <= 0) return false;
+  const suffix = (m[2] || '').toLowerCase();
+  if(/^cr/.test(suffix)) return num * 10000000;
+  if(/^l|lac|lakh/.test(suffix)) return num * 100000;
+  if(/^k|thousand/.test(suffix)) return num * 1000;
+  return num;
+}
+
+window.saveQuarterlyTarget = function(){
+  const input = document.getElementById('qt-target-input');
+  const msg = document.getElementById('qt-status-msg');
+  if(!input) return;
+  const v = _parseTargetInput(input.value);
+  if(v == null){
+    if(msg){ msg.textContent = 'Enter a target value above or click Clear to remove.'; msg.style.color = '#94A3B8'; }
+    return;
+  }
+  if(v === false){
+    if(msg){ msg.textContent = '✗ Invalid format. Examples: 5Cr · 75L · 500K · 50000000'; msg.style.color = '#DC2626'; }
+    return;
+  }
+  try { localStorage.setItem('bs-cockpit-target-quarterly', String(v)); } catch(e){
+    if(msg){ msg.textContent = '✗ Could not save — localStorage unavailable.'; msg.style.color = '#DC2626'; }
+    return;
+  }
+  if(msg){ msg.textContent = '✓ Saved. Cockpit run-rate badge refreshing…'; msg.style.color = '#059669'; }
+  // Re-render cockpit so the badge appears/updates
+  try { if(typeof window.renderCockpit === 'function') window.renderCockpit(); } catch(_){}
+  // Re-render the card itself so status badge + Clear button update
+  setTimeout(function(){
+    const host = document.getElementById('team-content');
+    if(host && typeof _renderQuarterlyTargetCard === 'function') _renderQuarterlyTargetCard(host);
+  }, 800);
+};
+
+window.clearQuarterlyTarget = function(){
+  if(!confirm('Clear the quarterly target?\n\nThe cockpit run-rate badge will be hidden until you set a new target.')) return;
+  try { localStorage.removeItem('bs-cockpit-target-quarterly'); } catch(_){}
+  try { if(typeof window.renderCockpit === 'function') window.renderCockpit(); } catch(_){}
+  const host = document.getElementById('team-content');
+  if(host) _renderQuarterlyTargetCard(host);
+};
+
+/* v24.25.4 — Permanent Test Mode toggle inside Profile / Team tab.
+   Rendered after renderSuperTeamView/renderUserProfileView so it sits at the
+   bottom of the tab content. Uses the same setTestMode() function the banner
+   uses; checkbox state and label text auto-sync via the existing IDs. */
+function _renderTestModeProfileCard(host){
+  if(!host) return;
+  // Avoid duplicate render if we re-enter
+  let card = document.getElementById('tm-profile-card');
+  if(card){ card.remove(); }
+  const isOn = window._testModeOn === true;
+  card = document.createElement('div');
+  card.id = 'tm-profile-card';
+  card.className = 'card';
+  card.style.cssText = 'margin-top:16px;padding:18px 20px;border:1px solid var(--border,#E5E7EB);border-radius:14px;background:linear-gradient(180deg,rgba(245,158,11,0.04),var(--surface,#FFF));';
+  card.innerHTML =
+    '<div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;">' +
+      '<div style="flex:1;min-width:240px;">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
+          '<span style="font-size:11px;letter-spacing:0.10em;text-transform:uppercase;color:#B45309;font-weight:700;">🧪 Test Mode</span>' +
+          '<span id="test-mode-label" style="font-size:12px;font-weight:700;letter-spacing:0.05em;padding:2px 8px;border-radius:999px;' +
+            (isOn ? 'background:#FEF3C7;color:#92400E;' : 'background:#F1F5F9;color:#64748B;') +
+          '">' + (isOn ? 'ON' : 'OFF') + '</span>' +
+        '</div>' +
+        '<div style="font-size:13px;color:var(--ink,#0F172A);margin-bottom:8px;line-height:1.5;">' +
+          '<strong>What is Test Mode?</strong> When ON, every deal you save is flagged ' +
+          '<code style="background:var(--surface-2,#F1F5F9);padding:1px 6px;border-radius:3px;font-family:monospace;font-size:11.5px;">isTest=TRUE</code>. ' +
+          'Test deals are hidden from Dashboard cockpit, Review tab, and all KPI tiles. They still appear in History (with a 🧪 marker) so you can find and edit them.' +
+        '</div>' +
+        '<div style="font-size:12px;color:var(--ink-muted,#64748B);line-height:1.5;">' +
+          '<strong>When to use it:</strong> Practicing a new feature · Training a teammate · Demoing to a client · Recording a screencast. ' +
+          'Turn it OFF before submitting real deals.' +
+        '</div>' +
+      '</div>' +
+      '<label style="display:inline-flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface,#FFF);border:1px solid var(--border-strong,#CBD5E1);border-radius:10px;cursor:pointer;flex-shrink:0;font-weight:600;font-size:13px;">' +
+        '<input type="checkbox" id="test-mode-checkbox" ' + (isOn ? 'checked' : '') + ' onchange="setTestMode(this.checked)" style="width:18px;height:18px;cursor:pointer;accent-color:#F59E0B;">' +
+        '<span>Enable Test Mode</span>' +
+      '</label>' +
+    '</div>';
+  host.appendChild(card);
 }
 
 /* Regular user's own profile */
@@ -16913,6 +17178,13 @@ function setTestMode(on){
   if(lbl){
     lbl.textContent = window._testModeOn ? 'ON' : 'OFF';
     lbl.style.color = window._testModeOn ? '#92400E' : 'var(--ink-muted)';
+    // v24.25.4 — also update the badge background if the label is using the
+    // pill-badge style (Super card). Works for the legacy text-only label too —
+    // those don't have a backgroundColor inline, so this is a no-op for them.
+    if(lbl.style.background || lbl.style.backgroundColor){
+      lbl.style.background = window._testModeOn ? '#FEF3C7' : '#F1F5F9';
+      lbl.style.color = window._testModeOn ? '#92400E' : '#64748B';
+    }
   }
   if(typeof showSync === 'function'){
     showSync(window._testModeOn ? '🧪 Test mode ON — submissions will be flagged' : 'Test mode OFF', window._testModeOn ? 'warn' : 'success');
@@ -17375,7 +17647,12 @@ async function renderReview(){
   }
   try{
     const pwHash=await getCurrentAuthHash();
-    const resp=await fetch(WEBHOOK_URL,{
+    // v24.25.5 — use _safeFetchJson which detects HTML-not-JSON responses
+    // (Apps Script cold-start, network blip, sleep/wake) and silently retries
+    // once after 1.5s. Falls through to the catch block only if BOTH attempts
+    // fail. This eliminates 90%+ of the REVIEW_FETCH_FAILED noise from the
+    // error log without hiding genuine outages.
+    const data = await _safeFetchJson(WEBHOOK_URL, {
       method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({
         action:'review_data',
@@ -17384,8 +17661,7 @@ async function renderReview(){
         period:period,
         comparePeriod:comparePeriod
       })
-    });
-    const data=await resp.json();
+    }, { context: 'renderReview', maxRetries: 1, retryDelayMs: 1500 });
     if(data.status!=='ok'){
       // Better diagnostic: show what backend actually returned so we can tell if it's a
       // stale-deploy issue (backend doesn't know the action) vs a data issue
@@ -17402,7 +17678,34 @@ async function renderReview(){
   }catch(err){
     console.error('renderReview failed:',err);
     logFrontendError('REVIEW_FETCH_FAILED',err.message||err.toString(),err.stack||'','renderReview');
-    host.innerHTML='<div class="review-empty">Could not load review data. Check internet connection.</div>';
+    // v24.25.5 — friendly fallback banner with actionable guidance instead of
+    // a flat "Check internet connection" line. Distinguishes between transient
+    // (Apps Script woke up slow, retry helps) vs hard outage (deployment issue).
+    const isBackendOffline = err && (err.isHtmlResponse || err.isNetworkError);
+    if(isBackendOffline){
+      host.innerHTML =
+        '<div class="review-empty" style="padding:32px 24px;line-height:1.6;">' +
+          '<div style="font-size:32px;margin-bottom:10px;">⚠️</div>' +
+          '<div style="font-weight:700;color:var(--ink,#0F172A);font-size:15px;margin-bottom:8px;">Backend temporarily unavailable</div>' +
+          '<div style="font-size:13px;color:var(--ink-muted,#64748B);max-width:460px;margin:0 auto 16px;">' +
+            'The Google Apps Script backend did not respond as expected. This is usually transient — Apps Script can take 2-3 seconds to wake up after idle. Please try again.' +
+          '</div>' +
+          '<button onclick="renderReview()" style="background:var(--indigo,#4F46E5);color:#fff;border:none;padding:9px 20px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;">↻ Retry</button>' +
+          '<div style="font-size:11px;color:var(--ink-subtle,#94A3B8);margin-top:14px;">' +
+            'If this persists for more than a few minutes, ask Dipenkumar to check the Apps Script Manage Deployments panel.' +
+          '</div>' +
+        '</div>';
+    } else {
+      host.innerHTML =
+        '<div class="review-empty" style="padding:32px 24px;line-height:1.6;">' +
+          '<div style="font-size:32px;margin-bottom:10px;">📡</div>' +
+          '<div style="font-weight:700;color:var(--ink,#0F172A);font-size:15px;margin-bottom:8px;">Could not load review data</div>' +
+          '<div style="font-size:13px;color:var(--ink-muted,#64748B);max-width:460px;margin:0 auto 16px;">' +
+            'Check your internet connection and try again. If you are connected and this keeps happening, the Apps Script deployment may need attention.' +
+          '</div>' +
+          '<button onclick="renderReview()" style="background:var(--indigo,#4F46E5);color:#fff;border:none;padding:9px 20px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;">↻ Retry</button>' +
+        '</div>';
+    }
   }
 }
 
@@ -25144,12 +25447,17 @@ if(document.readyState==='loading'){
 
   /* ============ (1) Deal stage chart corrected ============ */
   function _renderStageChart(entries){
-    const canvas = document.getElementById('chart-dealstage');
+    // v24.25.4 — target chart-dealstage-v2 (the visible canvas). The legacy
+    // chart-dealstage canvas is hidden in the DOM so v18 renderer doesn't
+    // throw, but it never paints to a user-visible spot.
+    const canvas = document.getElementById('chart-dealstage-v2');
     if(!canvas || typeof Chart === 'undefined') return;
     // Tear down any prior chart on this canvas
     try {
-      if(window._charts && window._charts.dealstageV2){ window._charts.dealstageV2.destroy(); }
-      else if(window._charts && window._charts.conversion){ window._charts.conversion.destroy(); window._charts.conversion = null; }
+      if(window._charts && window._charts.dealstageV2){
+        window._charts.dealstageV2.destroy();
+        window._charts.dealstageV2 = null;
+      }
     } catch(_){}
 
     const counts = {};
@@ -25435,34 +25743,53 @@ if(document.readyState==='loading'){
       months.push({ start: start, end: end, label: d.toLocaleString('en-IN', { month: 'short' }) });
     }
     entries.forEach(function(e){
-      // BS deal can have multiple chosen models in customConfig.chosenModels — try that first
+      // v24.25.4 — chosenModels is its OWN top-level column (col 44 on the sheet),
+      // NOT inside customConfig. customConfig (col 45) only has accessory selections
+      // like {cmsVendor, ssdQty, wd105Qty}. Verified via Faiz row BS-74688508 raw data.
       let models = [];
+      const cm = e && e.chosenModels;
       try {
-        if(e.customConfig && e.customConfig.chosenModels && Array.isArray(e.customConfig.chosenModels)){
-          models = e.customConfig.chosenModels.map(function(c){ return c && c.id; }).filter(Boolean);
-        } else if(typeof e.customConfig === 'string' && e.customConfig){
-          const parsed = JSON.parse(e.customConfig);
-          if(parsed && Array.isArray(parsed.chosenModels)){
-            models = parsed.chosenModels.map(function(c){ return c && c.id; }).filter(Boolean);
+        if(Array.isArray(cm)){
+          models = cm.map(function(c){ return c && c.id; }).filter(Boolean);
+        } else if(typeof cm === 'string' && cm.trim()){
+          const parsed = JSON.parse(cm);
+          if(Array.isArray(parsed)){
+            models = parsed.map(function(c){ return c && c.id; }).filter(Boolean);
           }
         }
       } catch(_){}
+      // Fallback: single-model deals carry just e.model (col 21)
       if(models.length === 0){
-        const m = String(e.model || '').trim();
+        const m = String((e && e.model) || '').trim();
         if(m) models = [m];
       }
       if(models.length === 0) return;
       const ts = _entryTs(e);
       const v = _readVal(e);
-      const qty = parseInt(e.qty, 10) || 1;
+      // qty per model — if chosenModels carried per-model qty, use those; else fall back to e.qty
+      const qtyMap = {};
+      try {
+        if(Array.isArray(cm)){
+          cm.forEach(function(c){ if(c && c.id && c.qty != null){ qtyMap[c.id] = parseInt(c.qty, 10) || 1; }});
+        } else if(typeof cm === 'string' && cm.trim()){
+          const parsed = JSON.parse(cm);
+          if(Array.isArray(parsed)){
+            parsed.forEach(function(c){ if(c && c.id && c.qty != null){ qtyMap[c.id] = parseInt(c.qty, 10) || 1; }});
+          }
+        }
+      } catch(_){}
+      const fallbackQty = parseInt(e.qty, 10) || 1;
       const tier = _classifyTier(e);
       models.forEach(function(m){
         if(!agg[m]){
           agg[m] = { count: 0, qty: 0, val: 0, tier: tier, monthly: months.map(function(){ return 0; }) };
         }
         agg[m].count += 1;
-        agg[m].qty += qty;
-        agg[m].val += v;
+        agg[m].qty += (qtyMap[m] != null ? qtyMap[m] : fallbackQty);
+        // Per-model ₹ contribution: if multiple models share the deal, divide proportionally by qty
+        const totalQty = Object.values(qtyMap).reduce(function(a,b){ return a+b; }, 0) || fallbackQty;
+        const myQty = qtyMap[m] != null ? qtyMap[m] : fallbackQty;
+        agg[m].val += (totalQty > 0) ? v * (myQty / totalQty) : v;
         // Tier — keep highest of all observations
         const tierRank = { 'Other': 0, 'Basic': 1, 'Standard': 2, 'Performance': 3, 'Flagship': 4 };
         if(tierRank[tier] > tierRank[agg[m].tier]) agg[m].tier = tier;
