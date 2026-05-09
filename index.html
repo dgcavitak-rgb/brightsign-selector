@@ -6360,37 +6360,66 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
 .v26-chart-sub { font-size: 11px; font-weight: 500; color: var(--ink-muted, #64748B); }
 .v26-chart-body { height: 240px; position: relative; }
 
-/* v24.26.10 — Outcome Scorecard (replaces stacked bar) */
+/* v24.26.13 — Outcome Scorecard (TECH STYLE polish from v26.10). Changes per user feedback:
+   - Equal-weight grid (1fr 2fr instead of fixed 200px hero) → hero no longer dominates
+   - Sharp 4px corners (was 12px/8px) → terminal/wireframe aesthetic
+   - JetBrains Mono numerals for all numbers (tabular, slightly tracked)
+   - Lower-saturation green (#059669 instead of #10B981) → less neon
+   - Trophy emoji REMOVED → cleaner, label-driven status
+   - Hero gradient flattened to single surface tone → less skeumorphic
+   - Zero tiles: dashed border + lower opacity + smaller "0" → quiet but present
+   - Bracketed monospace labels (`[ OPEN ]`) → tech feel without cliché
+   - Border-left accent thinner (3px instead of 4px) → less heavy */
 .v26-outcome-grid {
-  display: grid; grid-template-columns: 200px 1fr; gap: 16px;
+  display: grid; grid-template-columns: 1fr 2fr; gap: 12px;
   height: 100%; align-items: stretch;
 }
 @media (max-width: 600px){ .v26-outcome-grid { grid-template-columns: 1fr; } }
 .v26-winrate-hero {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: linear-gradient(180deg, var(--bg, #F8FAFC) 0%, var(--surface-2, #F1F5F9) 100%);
-  border-radius: 12px; padding: 14px 10px;
+  background: var(--surface-2, #F1F5F9);
+  border-radius: 4px; padding: 14px 12px;
   border: 1px solid var(--border-soft, #E5E7EB);
   text-align: center;
+  position: relative;
+}
+.v26-winrate-hero::before {
+  /* tiny tick-marks in upper corners → terminal/HUD vibe */
+  content: ''; position: absolute; top: 8px; left: 8px;
+  width: 6px; height: 6px;
+  border-top: 1px solid var(--ink-subtle, #94A3B8);
+  border-left: 1px solid var(--ink-subtle, #94A3B8);
+  opacity: 0.5;
+}
+.v26-winrate-hero::after {
+  content: ''; position: absolute; bottom: 8px; right: 8px;
+  width: 6px; height: 6px;
+  border-bottom: 1px solid var(--ink-subtle, #94A3B8);
+  border-right: 1px solid var(--ink-subtle, #94A3B8);
+  opacity: 0.5;
 }
 .v26-winrate-label {
-  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--ink-muted, #64748B);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .v26-winrate-pct {
-  font-size: 42px; font-weight: 800; line-height: 1;
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  font-size: 38px; font-weight: 700; line-height: 1;
   font-variant-numeric: tabular-nums;
-  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
 }
-.v26-winrate-trophy { font-size: 22px; margin-bottom: 4px; opacity: 0.9; }
 .v26-winrate-detail {
-  font-size: 11px; color: var(--ink-muted, #64748B); font-weight: 500;
-  line-height: 1.35;
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  font-size: 10px; color: var(--ink-subtle, #94A3B8); font-weight: 500;
+  line-height: 1.4; letter-spacing: 0.02em;
 }
 .v26-winrate-empty {
-  font-size: 28px; font-weight: 700; color: var(--ink-muted, #94A3B8);
-  margin-bottom: 4px;
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  font-size: 28px; font-weight: 700; color: var(--ink-subtle, #94A3B8);
+  margin-bottom: 6px; letter-spacing: -0.04em;
 }
 .v26-outcome-tiles {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -6399,30 +6428,89 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
 }
 .v26-outcome-tile {
   background: var(--surface, #fff); border: 1px solid var(--border-soft, #E5E7EB);
-  border-left: 4px solid var(--ink-subtle, #94A3B8);
-  border-radius: 8px; padding: 8px 10px;
+  border-left: 3px solid var(--ink-subtle, #94A3B8);
+  border-radius: 4px; padding: 10px 12px;
   display: flex; flex-direction: column; justify-content: center;
-  cursor: pointer; transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+  cursor: pointer; transition: border-color 0.12s ease, background 0.12s ease;
   min-height: 0;
 }
 .v26-outcome-tile:hover {
+  background: var(--surface-2, #F1F5F9);
+}
+.v26-outcome-tile.is-zero {
+  background: transparent;
+  border: 1px dashed var(--border-soft, #E5E7EB);
+  border-left: 3px dashed var(--ink-subtle, #94A3B8);
+  opacity: 0.55; cursor: default;
+}
+.v26-outcome-tile.is-zero:hover { background: transparent; }
+.v26-tile-label {
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-muted, #64748B);
+  margin-bottom: 4px;
+}
+.v26-tile-count {
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  font-size: 22px; font-weight: 700; color: var(--ink, #0F172A);
+  line-height: 1; font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.v26-outcome-tile.is-zero .v26-tile-count {
+  font-size: 16px; font-weight: 500;
+}
+.v26-tile-meta {
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  font-size: 10px; font-weight: 500; color: var(--ink-subtle, #94A3B8);
+  margin-top: 4px; letter-spacing: 0.02em;
+}
+
+/* v24.26.12 — Region Zone Tiles (replaces India map; zero CDN dependency).
+   5 tiles in one row on desktop, wraps to 3+2 on tablet, 2x3 or 3x2 on mobile.
+   Each tile: colored left-edge accent (zone color), big count, ₹ pipeline value,
+   top-state sub-line. Click any tile → filter Team Analytics by that zone. */
+.v26-region-zone-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  height: 100%;
+  align-items: stretch;
+}
+@media (max-width: 900px){ .v26-region-zone-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.v26-region-zone-tile {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border-soft, #E5E7EB);
+  border-left: 4px solid #94A3B8;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex; flex-direction: column; justify-content: center;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  min-height: 0;
+}
+.v26-region-zone-tile:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
-.v26-outcome-tile.is-zero { opacity: 0.5; cursor: default; }
-.v26-outcome-tile.is-zero:hover { transform: none; box-shadow: none; }
-.v26-tile-label {
-  font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+.v26-region-zone-tile.is-zero { opacity: 0.45; cursor: default; }
+.v26-region-zone-tile.is-zero:hover { transform: none; box-shadow: none; }
+.v26-region-zone-name {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
   text-transform: uppercase; color: var(--ink-muted, #64748B);
-  margin-bottom: 2px;
+  margin-bottom: 3px;
 }
-.v26-tile-count {
-  font-size: 22px; font-weight: 800; color: var(--ink, #0F172A);
+.v26-region-zone-count {
+  font-size: 26px; font-weight: 800; color: var(--ink, #0F172A);
   line-height: 1; font-variant-numeric: tabular-nums;
 }
-.v26-tile-meta {
+.v26-region-zone-meta {
   font-size: 11px; font-weight: 600; color: var(--ink-muted, #64748B);
-  margin-top: 3px;
+  margin-top: 4px;
+}
+.v26-region-zone-top {
+  font-size: 10px; color: var(--ink-subtle, #94A3B8);
+  margin-top: 3px; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
 /* Bottom row (Leaderboard + Stuck) */
@@ -6693,19 +6781,6 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
 }
 
 [data-theme="dark"] .v26-history-modal-foot { background: rgba(255,255,255,0.03); }
-
-/* v24.26.8: India region map zone legend */
-.v26-region-zone-legend {
-  display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
-  padding: 6px 8px 0;
-  margin-top: -8px;
-}
-.v26-region-zone-pill {
-  padding: 3px 10px; border-radius: 999px;
-  font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
-  cursor: pointer; transition: transform 0.12s ease;
-}
-.v26-region-zone-pill:hover { transform: translateY(-1px); }
 
 </style>
 <!-- v24.4.2: Apply saved theme BEFORE body renders (prevents flash-of-light) — 3-state light/auto/dark -->
@@ -7660,7 +7735,7 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
       <div class="v26-charts-grid">
         <div class="v26-chart-card"><div class="v26-chart-head">Source split <span class="v26-chart-sub">BS-generated vs Cavitak-generated · click slice to filter</span></div><div class="v26-chart-body" id="v26-chart-source"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Stage funnel <span class="v26-chart-sub">₹ + count by stage · click to filter</span></div><div class="v26-chart-body" id="v26-chart-stage"></div></div>
-        <div class="v26-chart-card"><div class="v26-chart-head">Region · India map <span class="v26-chart-sub">click state or zone pill to filter</span></div><div class="v26-chart-body" id="v26-chart-region"></div></div>
+        <div class="v26-chart-card"><div class="v26-chart-head">Region · zone breakdown <span class="v26-chart-sub">deals + pipeline by zone · click any zone to filter</span></div><div class="v26-chart-body" id="v26-chart-region"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Outcome scorecard <span class="v26-chart-sub">win rate · pipeline by outcome</span></div><div class="v26-chart-body" id="v26-chart-outcome"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Top partners <span class="v26-chart-sub">Top 10 by # cases</span></div><div class="v26-chart-body" id="v26-chart-partners"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Top consultants <span class="v26-chart-sub">Top 10 by # cases</span></div><div class="v26-chart-body" id="v26-chart-consultants"></div></div>
@@ -8102,7 +8177,9 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.11';  // v24.26.11 — DARK MODE FIX. Four parts: (1) Replaced 6 standalone hardcoded hex values in v26 CSS block with var(--*) references using same hex as fallback (CSS auto-flips via :root theme swap when [data-theme="dark"]). Most v26 CSS already used the var() pattern — these were the gaps. (2) Added _themeColors() JS helper inside v26 module (reads document.documentElement.dataset.theme) returning theme-aware ECharts colors: ink, inkMuted, inkSubtle, splitLine, border, surface. Vibrant brand/palette colors (KPI gradients, bar palette, status badges) intentionally stay constant — they read correctly on both backgrounds. (3) 51 hardcoded chart color refs in 9 ECharts renderers (axisLabel.color, splitLine.lineStyle.color, label.color, legend.textStyle.color, emphasis.borderColor) replaced with _theme.* references; const _theme = _themeColors() injected at top of each renderer body. Theme-toggle hook at applyTheme() (existed since v24.4.18 for Chart.js) already re-renders dashboard on theme change — v26 ECharts inherit this for free since they're created/disposed inside _renderTeamCharts on each render. NO scorecard changes needed (pure HTML, theme-aware via CSS vars). (4) AUDIT GAP FIX: Added 6 [data-theme="dark"] overrides for Tender Spec view classes that had hardcoded #fff backgrounds: .spec-section-count, .spec-section-body, .clause-section, .clause-count, .clause-check, .clause-remark. All 9 other audit-flagged classes (cm-picker, notif-panel, adv-player-table-wrap, qty-stepper, pill, choice-card, number-input, os-pill) already had dark overrides — no work needed. Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.26.13';  // v24.26.13 — REGION + OUTCOME POLISH per user feedback. Two changes: (1) REGION ZONE TILES — dropped International tile (5→4 tiles: West/North/South/East only). Filter logic still recognizes 'International' from URL/state — only the visual tile is suppressed. Grid recalibrated 5col→4col, breakpoint adjusted to 900px (was 1100px). (2) OUTCOME SCORECARD — TECH STYLE polish. JetBrains Mono numerals (tabular figures, slight tracking) via CSS font stack. Sharp 4px corners (was 12px/8px) — terminal/wireframe aesthetic over pillow. Lower-saturation green (#059669 forest instead of #10B981 emerald) — less neon. Equal-weight grid (1fr 2fr instead of fixed 200px hero) — hero no longer dominates. Hero gradient flattened to single surface tone — less skeumorphic. Trophy emoji REMOVED — cleaner, label-driven status. Bracketed monospace labels [ OPEN ] / [ WON ] — tech feel without cliché. HUD-style corner tick-marks on hero (top-left + bottom-right). Zero tiles: dashed border + lower opacity + smaller "0" — quiet but present (was "0" at full size competing with real numbers). Border-left accent thinner (3px instead of 4px). All text colors via var() so theme-flip still works. Pairs with backend v25.13.0 — no backend changes.
+// v24.26.12 — REGION ZONE TILES (replaces India map). India choropleth was repeatedly broken in production: GeoJSON CDN sources unreliable, echarts-gl 3D path WebGL-fragile, the existing 2D fallback occasionally rendered an empty card. Replaced with HTML zone tiles: 5 tiles in one row showing count + ₹ pipeline value + top state per zone. Pure HTML, zero CDN dependency, theme-aware via CSS vars.
+// v24.26.11 — DARK MODE FIX. Four parts: (1) Replaced 6 standalone hardcoded hex values in v26 CSS block with var(--*) references using same hex as fallback (CSS auto-flips via :root theme swap when [data-theme="dark"]). Most v26 CSS already used the var() pattern — these were the gaps. (2) Added _themeColors() JS helper inside v26 module (reads document.documentElement.dataset.theme) returning theme-aware ECharts colors: ink, inkMuted, inkSubtle, splitLine, border, surface. Vibrant brand/palette colors (KPI gradients, bar palette, status badges) intentionally stay constant — they read correctly on both backgrounds. (3) 51 hardcoded chart color refs in 9 ECharts renderers (axisLabel.color, splitLine.lineStyle.color, label.color, legend.textStyle.color, emphasis.borderColor) replaced with _theme.* references; const _theme = _themeColors() injected at top of each renderer body. Theme-toggle hook at applyTheme() (existed since v24.4.18 for Chart.js) already re-renders dashboard on theme change — v26 ECharts inherit this for free since they're created/disposed inside _renderTeamCharts on each render. NO scorecard changes needed (pure HTML, theme-aware via CSS vars). (4) AUDIT GAP FIX: Added 6 [data-theme="dark"] overrides for Tender Spec view classes that had hardcoded #fff backgrounds.
 // v24.26.10 — CHART POLISH. Two changes per user feedback: (1) MOST QUOTED PLAYERS — dropped "u" suffix from bar labels; now reads "62 · 52%" instead of "62u · 52%" (tooltip still says "62 units · 52% of total" — long form keeps the meaning). (2) OUTCOME SPLIT — replaced stacked horizontal bar with HTML Outcome Scorecard. New layout: Win Rate hero (Won÷Closed) on left with color-coded big number (green ≥60%, amber 40-59%, red <40%, trophy ≥80%) + 2x2 grid of outcome tiles on right (Open / Won / Lost / On hold) showing count, % of total, and ₹ value. Zero-count tiles render greyed-out and non-interactive. Click any non-zero tile → filters Team Analytics by that outcome (preserves v26.5 drill-through). Card title "Outcome split" → "Outcome scorecard". Pure HTML — no ECharts instance for this card. Pairs with backend v25.13.0 — no backend changes.
 // v24.26.9 — MOST QUOTED PLAYERS hotfix: now sums QTY (physical units) not deal-count, for accurate inventory forecasting. Reads e.qty for guided indoor+outdoor, advancedSelectionsJson per-model qty for Custom BOQ. Each model gets distinct color from 10-color palette (was all amber). Subtitle updated to "total units quoted · for inventory forecasting". Pairs with backend v25.13.0 — no backend changes.
 // v24.26.8 — MONTH-BASED REVIEW + DEAL HISTORY + 3D MAP + PARTNER/CONSULTANT REDESIGN.
@@ -25498,9 +25575,9 @@ if(document.readyState==='loading'){
 
   // ---- 8 CHARTS — v24.26.5 ECharts migration ----
   // Each chart is owned by ECharts. Chart instances stored on _v26Charts; destroy() on re-render.
-  // India choropleth lazy-loads GeoJSON from JSDelivr CDN; falls back to vertical bar if CDN fails.
-  let _v26IndiaMapLoaded = false;       // tracks whether echarts.registerMap('India', ...) succeeded
-  let _v26IndiaMapLoading = null;        // shared promise so concurrent calls dedupe
+  // v24.26.12: India choropleth was retired in favor of zone tiles (zero CDN dependency).
+  // Removed: _v26IndiaMapLoaded, _v26IndiaMapLoading, _INDIA_GEOJSON_SOURCES, _loadIndiaMap.
+  // _STATE_ZONE_MAP and _ZONE_COLORS are still used (zone classification logic).
 
   function _destroyChart(key){
     if(_v26Charts[key]){ try { _v26Charts[key].dispose(); } catch(_){} _v26Charts[key] = null; }
@@ -25690,45 +25767,7 @@ if(document.readyState==='loading'){
 
   /* ────────────────────── Region — INDIA CHOROPLETH (lazy-load) with vertical-bar fallback ────────────────────── */
   // v24.26.6: Try multiple known-good GeoJSON sources. First success wins.
-  const _INDIA_GEOJSON_SOURCES = [
-    'https://cdn.jsdelivr.net/gh/markmarkoh/datamaps@master/src/js/data/ind.topo.json',  // TopoJSON
-    'https://cdn.jsdelivr.net/gh/datameet/maps@master/States/Admin2.geojson',
-    'https://cdn.jsdelivr.net/gh/geohacker/india@master/state/india_telengana.geojson',
-    'https://unpkg.com/india-atlas@1/states-india.json'
-  ];
-  function _loadIndiaMap(){
-    if(_v26IndiaMapLoaded) return Promise.resolve(true);
-    if(_v26IndiaMapLoading) return _v26IndiaMapLoading;
-    _v26IndiaMapLoading = (async function(){
-      for(let i = 0; i < _INDIA_GEOJSON_SOURCES.length; i++){
-        const url = _INDIA_GEOJSON_SOURCES[i];
-        try {
-          const res = await fetch(url);
-          if(!res.ok) continue;
-          const data = await res.json();
-          // Try to handle TopoJSON OR GeoJSON. ECharts wants GeoJSON.
-          let geoJson = data;
-          if(data.type === 'Topology' && data.objects){
-            // TopoJSON detected — need topojson library to convert. Skip TopoJSON sources.
-            continue;
-          }
-          if(!data.features){
-            continue;  // not GeoJSON FeatureCollection
-          }
-          echarts.registerMap('India', geoJson);
-          _v26IndiaMapLoaded = true;
-          console.log('[v26.6] India map loaded from:', url);
-          return true;
-        } catch(err){
-          console.warn('[v26.6] India map source failed:', url, err.message);
-        }
-      }
-      console.warn('[v26.6] All India map sources failed — falling back to bar chart');
-      return false;
-    })();
-    return _v26IndiaMapLoading;
-  }
-  // Maps Indian state names → our 5 zones. Used to color the map.
+  // Maps Indian state names → our 5 zones. Used by tiles for "Top: <state>" computation.
   const _STATE_ZONE_MAP = {
     'Maharashtra': 'West', 'Gujarat': 'West', 'Goa': 'West', 'Madhya Pradesh': 'West', 'Chhattisgarh': 'West', 'Rajasthan': 'West', 'Dadra and Nagar Haveli and Daman and Diu': 'West', 'Daman and Diu': 'West', 'Dadra and Nagar Haveli': 'West',
     'Delhi': 'North', 'NCT of Delhi': 'North', 'Haryana': 'North', 'Punjab': 'North', 'Uttar Pradesh': 'North', 'Uttarakhand': 'North', 'Himachal Pradesh': 'North', 'Chandigarh': 'North', 'Jammu and Kashmir': 'North', 'Jammu & Kashmir': 'North', 'Ladakh': 'North', 'Bihar': 'North', 'Jharkhand': 'North',
@@ -25738,140 +25777,70 @@ if(document.readyState==='loading'){
   const _ZONE_COLORS = { West: '#10B981', North: '#F59E0B', South: '#3B82F6', East: '#EF4444', International: '#8B5CF6' };
 
   function _renderChartRegion(deals){
-    _destroyChart('region');
-    const _theme = _themeColors();
+    // v24.26.12: Replaced India choropleth (CDN-dependent, repeatedly failed) with zone tiles.
+    //   5 tiles in a row: West / North / South / East / International. Each shows count + ₹ + top state.
+    //   Pure HTML — zero CDN dependency, always renders, theme-aware via CSS vars.
+    //   Zone colors come from _ZONE_COLORS (left-edge accent). Click any tile → filter Team Analytics.
+    _destroyChart('region');  // safety: dispose any stale ECharts instance from before zone-tile switch
     const dom = document.getElementById('v26-chart-region');
     if(!dom) return;
+    dom.classList.remove('v26-breakdown-body');
+    dom.style.height = 'auto';
+    dom.style.minHeight = '160px';
     dom.innerHTML = '';
-    dom.style.height = '320px';
-    // Show "loading map..." while CDN fetch happens
-    dom.innerHTML = '<div style="padding:80px;text-align:center;color:var(--ink-muted);font-size:13px;">Loading India map…</div>';
-    // Aggregate per state
-    const byState = {};
+    // Aggregate per zone + per state (so we can find top state in each zone)
     const byZone = { West: { c:0, v:0 }, North: { c:0, v:0 }, South: { c:0, v:0 }, East: { c:0, v:0 }, International: { c:0, v:0 } };
+    const byState = {};  // state -> { c, v, zone }
     deals.forEach(function(e){
       const st = String(e.state || '').trim();
-      const zone = _stateRegion(e.state);
+      const zone = _stateRegion(e.state) || 'International';
       const v = _readDealValue(e);
-      if(st){ byState[st] = (byState[st] || 0) + 1; }
-      if(zone && byZone[zone]){ byZone[zone].c++; byZone[zone].v += v; }
-    });
-    _loadIndiaMap().then(function(ok){
-      if(!ok){ _renderRegionFallbackBar(deals, byZone); return; }
-      dom.innerHTML = '';
-      // v24.26.8: Detect echarts-gl availability for 3D rendering. Falls back to 2D map if not loaded.
-      const has3D = typeof echarts !== 'undefined' && echarts.GLController != null;
-      const hasGL = (typeof echarts !== 'undefined' && typeof window.echartsgl !== 'undefined') ||
-                    (typeof echarts !== 'undefined' && Object.keys(echarts).indexOf('GLController') >= 0) ||
-                    (typeof echarts !== 'undefined' && echarts.use && echarts.getMap);  // generic check
-      // Best detection: try registering and see if map3D exists
-      const try3D = typeof echarts !== 'undefined' && echarts.getMap('India');
-      const statesData = Object.keys(byState).map(function(s){
-        const zone = _STATE_ZONE_MAP[s];
-        return { name: s, value: byState[s], zone: zone };
-      });
-      const maxVal = Math.max.apply(null, Object.values(byState).concat([1]));
-      const inst = _initECharts('v26-chart-region');
-      if(!inst){ _renderRegionFallbackBar(deals, byZone); return; }
-      // Try 3D map first; if echarts-gl loaded the series will render. Otherwise ECharts will warn and we fall back.
-      let used3D = false;
-      try {
-        // Probe: setOption with map3D — if echarts-gl is registered, the renderer accepts it
-        if(typeof echartsgl !== 'undefined' || (echarts.registerCoordinateSystem && echarts.getCoordinateSystemCreators && echarts.getCoordinateSystemCreators().geo3D)){
-          inst.setOption({
-            tooltip: { trigger: 'item', formatter: function(p){
-              if(p.data && p.data.zone){ return p.name + ' (' + p.data.zone + '): ' + (p.value || 0) + ' deals'; }
-              if(p.value){ return p.name + ': ' + p.value + ' deals'; }
-              return p.name + ': no deals';
-            }},
-            visualMap: { show: false, min: 0, max: maxVal, inRange: { color: ['#E0E7FF', '#6366F1', '#3730A3'] } },
-            series: [{
-              type: 'map3D', map: 'India',
-              boxDepth: 65, boxHeight: 8, boxWidth: 100,
-              regionHeight: 3,  // base height of all states
-              shading: 'realistic',
-              realisticMaterial: { roughness: 0.6, metalness: 0 },
-              light: { main: { intensity: 1.4, shadow: true, alpha: 50, beta: 30 }, ambient: { intensity: 0.4 } },
-              postEffect: { enable: true, SSAO: { enable: true, radius: 1, intensity: 1.2 } },
-              viewControl: { distance: 110, alpha: 50, beta: 0, autoRotate: false, panSensitivity: 0, zoomSensitivity: 1, rotateSensitivity: 1 },
-              itemStyle: { borderWidth: 1, borderColor: '#fff', areaColor: '#E0E7FF' },
-              label: { show: false, textStyle: { color: _theme.ink, fontSize: 10, fontWeight: 700 } },
-              emphasis: { label: { show: true }, itemStyle: { areaColor: '#FBBF24' } },
-              data: statesData
-            }]
-          });
-          used3D = true;
-        }
-      } catch(err){ console.warn('[v26.8] 3D India map failed, falling back to 2D:', err.message); used3D = false; }
-      if(!used3D){
-        // Fallback to 2D map (still works, just flat)
-        inst.setOption({
-          tooltip: { trigger: 'item', formatter: function(p){
-            if(p.data && p.data.zone){ return p.name + ' (' + p.data.zone + '): ' + p.value + ' deals'; }
-            if(p.value){ return p.name + ': ' + p.value + ' deals'; }
-            return p.name + ': no deals';
-          }},
-          visualMap: { show: false, min: 0, max: maxVal, inRange: { color: ['#E0E7FF', '#6366F1', '#3730A3'] } },
-          series: [{
-            type: 'map', map: 'India', roam: false, aspectScale: 0.85,
-            itemStyle: { borderColor: '#94A3B8', borderWidth: 0.5, areaColor: '#F8FAFC' },
-            emphasis: { itemStyle: { borderColor: _theme.ink, borderWidth: 1.5, areaColor: '#FBBF24' }, label: { show: true, color: _theme.ink, fontWeight: 700, fontSize: 11 } },
-            label: { show: false },
-            data: statesData
-          }]
-        });
+      if(byZone[zone]){ byZone[zone].c++; byZone[zone].v += v; }
+      if(st){
+        if(!byState[st]) byState[st] = { c: 0, v: 0, zone: zone };
+        byState[st].c++;
+        byState[st].v += v;
       }
-      _v26Charts.region = inst;
-      // Click a state → zone-level filter (works for both 2D and 3D)
-      inst.on('click', function(params){
-        const zone = _STATE_ZONE_MAP[params.name];
+    });
+    // Compute top state per zone (by deal count, ties broken by ₹)
+    const topStateByZone = {};
+    Object.keys(byState).forEach(function(st){
+      const z = byState[st].zone;
+      const cur = topStateByZone[z];
+      if(!cur || byState[st].c > cur.c || (byState[st].c === cur.c && byState[st].v > cur.v)){
+        topStateByZone[z] = { name: st, c: byState[st].c, v: byState[st].v };
+      }
+    });
+    function _esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    // v24.26.13: Dropped International per user request — 4 zones only (W/N/S/E).
+    // International deals still get aggregated by _stateRegion but the tile is suppressed.
+    // Filter logic still recognizes 'International' from URL/state — only the visual tile is gone.
+    const ZONES_ORDER = ['West', 'North', 'South', 'East'];
+    const tiles = ZONES_ORDER.map(function(z){
+      const c = byZone[z].c;
+      const v = byZone[z].v;
+      const isZero = c === 0;
+      const top = topStateByZone[z];
+      const topLine = top ? '<div class="v26-region-zone-top" title="Top state in ' + _esc(z) + ' zone">Top: ' + _esc(top.name) + ' (' + top.c + ')</div>' : '';
+      return '<div class="v26-region-zone-tile' + (isZero ? ' is-zero' : '') + '" ' +
+             'data-zone="' + _esc(z) + '" ' +
+             'style="border-left-color:' + _ZONE_COLORS[z] + ';">' +
+             '<div class="v26-region-zone-name">' + _esc(z) + '</div>' +
+             '<div class="v26-region-zone-count" style="color:' + (isZero ? 'var(--ink-subtle, #94A3B8)' : 'var(--ink, #0F172A)') + '">' + c + '</div>' +
+             '<div class="v26-region-zone-meta">' + (c === 1 ? 'deal' : 'deals') + ' · ' + _shortINR(v) + '</div>' +
+             topLine +
+           '</div>';
+    });
+    dom.innerHTML = '<div class="v26-region-zone-grid">' + tiles.join('') + '</div>';
+    // Wire click → filter (skip zero tiles)
+    dom.querySelectorAll('.v26-region-zone-tile').forEach(function(t){
+      if(t.classList.contains('is-zero')) return;
+      t.addEventListener('click', function(){
+        const zone = t.getAttribute('data-zone');
         if(!zone) return;
         const f = _readFilterState(); f.region = zone; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
       });
-      // Add zone legend overlay below the map
-      const legendDiv = document.createElement('div');
-      legendDiv.className = 'v26-region-zone-legend';
-      legendDiv.innerHTML = Object.keys(byZone).map(function(z){
-        if(byZone[z].c === 0) return '';
-        return '<span class="v26-region-zone-pill" data-zone="' + _esc(z) + '" style="background:' + _ZONE_COLORS[z] + '20;color:' + _ZONE_COLORS[z] + ';border:1px solid ' + _ZONE_COLORS[z] + '60;">' + z + ': ' + byZone[z].c + ' · ' + _shortINR(byZone[z].v) + '</span>';
-      }).join('');
-      dom.appendChild(legendDiv);
-      legendDiv.querySelectorAll('.v26-region-zone-pill').forEach(function(p){
-        p.addEventListener('click', function(){
-          const zone = p.getAttribute('data-zone');
-          if(!zone) return;
-          const f = _readFilterState(); f.region = zone; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
-        });
-      });
     });
-  }
-  function _renderRegionFallbackBar(deals, byZoneAgg){
-    const dom = document.getElementById('v26-chart-region');
-    if(!dom) return;
-    dom.innerHTML = '';
-    dom.style.height = '260px';
-    const byZone = byZoneAgg || (function(){
-      const z = { West: { c:0, v:0 }, North: { c:0, v:0 }, South: { c:0, v:0 }, East: { c:0, v:0 }, International: { c:0, v:0 } };
-      deals.forEach(function(e){ const r = _stateRegion(e.state); if(r && z[r]){ z[r].c++; z[r].v += _readDealValue(e); }});
-      return z;
-    })();
-    const zones = Object.keys(byZone).filter(function(z){ return byZone[z].c > 0; });
-    if(!zones.length){ dom.innerHTML = '<div style="padding:60px;text-align:center;color:var(--ink-muted);">No regional data yet</div>'; return; }
-    const inst = _initECharts('v26-chart-region');
-    if(!inst) return;
-    inst.setOption({
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: function(p){ const z = p[0].name; return z + ': ' + byZone[z].c + ' deals · ' + _shortINR(byZone[z].v); } },
-      grid: { left: 8, right: 16, top: 16, bottom: 28, containLabel: true },
-      xAxis: { type: 'category', data: zones, axisLabel: { color: _theme.inkMuted, fontSize: 11 } },
-      yAxis: { type: 'value', axisLabel: { color: _theme.inkMuted, fontSize: 11 }, splitLine: { lineStyle: { color: _theme.splitLine } } },
-      series: [{
-        type: 'bar', data: zones.map(function(z){ return { value: byZone[z].c, itemStyle: { color: _ZONE_COLORS[z] } }; }),
-        barWidth: '50%', itemStyle: { borderRadius: [6, 6, 0, 0] },
-        label: { show: true, position: 'top', fontSize: 11, color: _theme.ink }
-      }]
-    });
-    _v26Charts.region = inst;
-    _wireClickFilter(inst, 'region', function(p){ return p.name; });
   }
 
   /* ────────────────────── Outcome — STACKED SINGLE BAR ────────────────────── */
@@ -25900,25 +25869,26 @@ if(document.readyState==='loading'){
     if(!total){ dom.innerHTML = '<div style="padding:60px;text-align:center;color:var(--ink-muted);">No deals to chart</div>'; return; }
     const closed = counts.Won + counts.Lost;
     const winRate = closed > 0 ? Math.round((counts.Won / closed) * 100) : null;
-    let winColor = '#94A3B8', trophy = '';
+    // v24.26.13: Lower-saturation greens (was #10B981 — too neon). Trophy emoji REMOVED — tech style.
+    let winColor = '#94A3B8';
     if(winRate !== null){
-      if(winRate >= 80){ winColor = '#10B981'; trophy = '🏆'; }
-      else if(winRate >= 60){ winColor = '#10B981'; }
-      else if(winRate >= 40){ winColor = '#F59E0B'; }
-      else { winColor = '#EF4444'; }
+      if(winRate >= 60){ winColor = '#059669'; }      // forest green (less neon than emerald)
+      else if(winRate >= 40){ winColor = '#D97706'; } // amber-700 (less neon than amber-500)
+      else { winColor = '#DC2626'; }                   // red-600 (less neon than red-500)
     }
-    const colors = { Open: '#3B82F6', Won: '#10B981', Lost: '#EF4444', 'On hold': '#F59E0B' };
+    // Tile palette — desaturated for tech style (still distinguishable but not neon)
+    const colors = { Open: '#2563EB', Won: '#059669', Lost: '#DC2626', 'On hold': '#D97706' };
     const filterValues = { Open: 'open', Won: 'won', Lost: 'lost', 'On hold': 'on-hold' };
     function _esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    // v24.26.13: Hero markup — no trophy, monospace label, mono numerals via CSS
     const heroHtml = winRate !== null
       ? '<div class="v26-winrate-hero">' +
-          (trophy ? '<div class="v26-winrate-trophy">' + trophy + '</div>' : '') +
-          '<div class="v26-winrate-label">Win Rate</div>' +
+          '<div class="v26-winrate-label">[ Win Rate ]</div>' +
           '<div class="v26-winrate-pct" style="color:' + winColor + '">' + winRate + '%</div>' +
-          '<div class="v26-winrate-detail">' + counts.Won + ' won of ' + closed + ' closed deal' + (closed === 1 ? '' : 's') + '</div>' +
+          '<div class="v26-winrate-detail">' + counts.Won + ' / ' + closed + ' closed deal' + (closed === 1 ? '' : 's') + '</div>' +
         '</div>'
       : '<div class="v26-winrate-hero">' +
-          '<div class="v26-winrate-label">Win Rate</div>' +
+          '<div class="v26-winrate-label">[ Win Rate ]</div>' +
           '<div class="v26-winrate-empty">—</div>' +
           '<div class="v26-winrate-detail">No closed deals yet</div>' +
         '</div>';
@@ -25926,10 +25896,11 @@ if(document.readyState==='loading'){
       const c = counts[name], v = vals[name];
       const pct = Math.round((c / total) * 100);
       const isZero = c === 0;
+      // v24.26.13: Bracketed monospace labels for tech feel
       return '<div class="v26-outcome-tile' + (isZero ? ' is-zero' : '') + '" ' +
              'data-outcome="' + filterValues[name] + '" ' +
              'style="border-left-color:' + colors[name] + '">' +
-             '<div class="v26-tile-label">' + _esc(name) + '</div>' +
+             '<div class="v26-tile-label">[ ' + _esc(name) + ' ]</div>' +
              '<div class="v26-tile-count" style="color:' + (isZero ? '#94A3B8' : '#0F172A') + '">' + c + '</div>' +
              '<div class="v26-tile-meta">' + pct + '% · ' + _shortINR(v) + '</div>' +
            '</div>';
