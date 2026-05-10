@@ -6692,11 +6692,13 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* v24.26.22: Region — stacked bar showing ₹ pipeline distribution by zone (under the 4 tiles) */
+/* v24.26.22 + v24.26.24: Region — stacked bars (case count + ₹ pipeline) below the 4 tiles. */
 .v26-region-stack-wrap { margin-top: 14px; padding: 0 4px; }
+.v26-region-stack-block { margin-bottom: 10px; }
+.v26-region-stack-block:last-child { margin-bottom: 0; }
 .v26-region-stack-caption {
-  font-size: 9.5px; font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
-  font-weight: 500; letter-spacing: 0.08em; color: var(--ink-subtle, #94A3B8);
+  font-size: 10px; font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  font-weight: 600; letter-spacing: 0.08em; color: var(--ink-muted, #64748B);
   margin-bottom: 5px; text-transform: uppercase;
 }
 .v26-region-stack-bar {
@@ -6716,12 +6718,14 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
   text-shadow: 0 1px 2px rgba(0,0,0,0.20);  /* readable against varied zone colors */
 }
 .v26-region-stack-legend {
-  display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px;
-  font-size: 10px; font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
-  color: var(--ink-subtle, #94A3B8); font-weight: 500;
+  display: flex; flex-wrap: wrap; gap: 14px; margin-top: 6px;
+  font-size: 11.5px;
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  color: var(--ink-muted, #64748B);
+  font-weight: 500;
 }
-.v26-region-stack-legend-item { display: inline-flex; align-items: center; gap: 5px; }
-.v26-region-stack-legend-chip { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.v26-region-stack-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.v26-region-stack-legend-chip { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
 
 /* Bottom row (Leaderboard + Stuck) */
 .v26-bottom-row {
@@ -8489,7 +8493,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.23';  // v24.26.23 — STAGE ANALYTICS CARD REDESIGN per user feedback ("this is also confusing to read or understand"). Previous v26.21 design had busy from→to rows with two color chips, an arrow, two stage names, two counts, a big % value, AND a note like "DEALS ENTERED MID-FUNNEL" — 7+ visual elements per row, hard to scan. Worse, the "150% / no drop-off" framing was mathematically honest but visually read as a positive number when the underlying meaning was "your data is messy." NEW design strips it down: one row per stage, descending visually. Each row = stage name (left) + horizontal bar (proportional fill) + count + % of Lead (right). Bar width = (stage count / Lead count) × 100, capped at 100% visually. Stages exceeding Lead (snapshot oddities like 150% Negotiation/Proposal) get a small ↑ marker next to the % — data-honest but visually quiet. Single reference point ("% of Lead") replaces from→to chains. Click row to filter by stage. CSS uses 4-col grid (90px name | flex bar | 36px count | 50px pct) for clean alignment. 600ms width transition on first paint. Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.26.24';  // v24.26.24 — REGION CARD POLISH per user feedback. Two changes: (1) ADDED second stacked bar (case count distribution) ABOVE the existing ₹ pipeline bar. Now Region card shows: 4 zone tiles + count distribution bar + ₹ value distribution bar. Together they tell a real story — high count + low ₹ = volume-heavy small deals; low count + high ₹ = concentrated big deals. Helper function _buildRegionBar() shared between both bars (no code duplication). (2) BUMPED legend font from 10px → 11.5px (per user "text are small in legend"), chip 8→10px, gap 12→14px, caption color from --ink-subtle → --ink-muted (slightly darker for readability). New wrapper .v26-region-stack-block adds spacing between the two bars (10px). Click on any segment of either bar still filters by zone (drill-through preserved). Pairs with backend v25.13.0 — no backend changes.
+// v24.26.23 — STAGE ANALYTICS REDESIGN. Horizontal bars per stage, % of Lead. Replaces v26.21's busy from→to row format.
 // v24.26.22 — TWO VISUAL UPGRADES. Region card: stacked horizontal bar showing ₹ pipeline distribution. Outcome scorecard: radial progress ring replacing flat % text.
 // v24.26.21 — STAGE ANALYTICS SPLIT into dedicated card. Funnel legend reverted to count + ₹ only. New Stage analytics card shows from→to conversion %.
 // v24.26.19 — NOTES FIELD per opportunity. Internal-only textarea at bottom of Project Context. NOT in Excel/PDF exports. 2000-char limit, live counter, audit-logged.
@@ -26697,27 +26702,28 @@ if(document.readyState==='loading'){
     });
     dom.innerHTML = '<div class="v26-region-zone-grid">' + tiles.join('') + '</div>';
 
-    // v24.26.22: Stacked bar showing ₹ pipeline distribution across zones.
-    // Different angle than tiles (which show count) — this shows proportional ₹ weight.
-    // Skipped if total ₹ is 0 (no deals to distribute) to avoid divide-by-zero.
-    const totalV = ZONES_ORDER.reduce(function(t, z){ return t + byZone[z].v; }, 0);
-    if(totalV > 0){
-      // Build segments — each zone gets a slice proportional to its ₹ share. Zero zones omitted.
+    // v24.26.22 + v24.26.24: Two stacked bars showing different angles per region zone.
+    //   Top bar (NEW v26.24): case count distribution — % of total deals per zone.
+    //   Bottom bar (v26.22): ₹ pipeline value distribution — % of total ₹ per zone.
+    // Together they tell a real story: a zone with high count but low ₹ = volume-heavy
+    // small deals. A zone with low count but high ₹ = concentrated big deals.
+    // Helper to build one stacked bar from totals + a value extractor — keeps both bars in sync.
+    function _buildRegionBar(caption, valFn, fmtVal){
+      const total = ZONES_ORDER.reduce(function(t, z){ return t + valFn(byZone[z]); }, 0);
+      if(total <= 0) return '';
       const segments = ZONES_ORDER
-        .map(function(z){ return { zone: z, v: byZone[z].v, pct: (byZone[z].v / totalV) * 100 }; })
-        .filter(function(s){ return s.v > 0; });
-      // Inline label only if segment is wide enough (≥18% gives ~30px on 600px bar, fits 2-3 chars)
+        .map(function(z){ return { zone: z, raw: valFn(byZone[z]), pct: (valFn(byZone[z]) / total) * 100 }; })
+        .filter(function(s){ return s.raw > 0; });
       const segHtml = segments.map(function(s){
         const pctRounded = Math.round(s.pct);
-        const showLabel = s.pct >= 18;  // threshold: smaller slices stay visually clean
+        const showLabel = s.pct >= 18;
         return '<div class="v26-region-stack-seg" ' +
                'data-zone="' + _esc(s.zone) + '" ' +
-               'title="' + _esc(s.zone) + ': ' + _shortINR(s.v) + ' (' + pctRounded + '%)" ' +
+               'title="' + _esc(s.zone) + ': ' + fmtVal(s.raw) + ' (' + pctRounded + '%)" ' +
                'style="background:' + _ZONE_COLORS[s.zone] + ';width:' + s.pct + '%;">' +
                (showLabel ? '<span class="v26-region-stack-lbl">' + pctRounded + '%</span>' : '') +
                '</div>';
       }).join('');
-      // Below-bar mini-legend (always show all 4 zones, dimmed if 0)
       const legendHtml = ZONES_ORDER.map(function(z){
         const seg = segments.find(function(s){ return s.zone === z; });
         const pct = seg ? Math.round(seg.pct) : 0;
@@ -26727,14 +26733,18 @@ if(document.readyState==='loading'){
                  _esc(z.charAt(0)) + ' ' + pct + '%' +
                '</span>';
       }).join('');
-      const stackHtml =
-        '<div class="v26-region-stack-wrap">' +
-          '<div class="v26-region-stack-caption">PIPELINE ₹ DISTRIBUTION</div>' +
-          '<div class="v26-region-stack-bar">' + segHtml + '</div>' +
-          '<div class="v26-region-stack-legend">' + legendHtml + '</div>' +
-        '</div>';
-      dom.insertAdjacentHTML('beforeend', stackHtml);
-      // Wire click on any segment to filter that zone (same as clicking the tile)
+      return '<div class="v26-region-stack-block">' +
+               '<div class="v26-region-stack-caption">' + caption + '</div>' +
+               '<div class="v26-region-stack-bar">' + segHtml + '</div>' +
+               '<div class="v26-region-stack-legend">' + legendHtml + '</div>' +
+             '</div>';
+    }
+    // Build both bars: count first (per user spec "above deal value bar"), ₹ second.
+    const countBarHtml = _buildRegionBar('CASE COUNT DISTRIBUTION', function(b){ return b.c; }, function(n){ return n + (n === 1 ? ' case' : ' cases'); });
+    const valueBarHtml = _buildRegionBar('PIPELINE ₹ DISTRIBUTION', function(b){ return b.v; }, function(v){ return _shortINR(v); });
+    if(countBarHtml || valueBarHtml){
+      dom.insertAdjacentHTML('beforeend', '<div class="v26-region-stack-wrap">' + countBarHtml + valueBarHtml + '</div>');
+      // Wire click on any segment to filter that zone (works for both bars at once)
       dom.querySelectorAll('.v26-region-stack-seg').forEach(function(seg){
         seg.addEventListener('click', function(){
           const zone = seg.getAttribute('data-zone');
