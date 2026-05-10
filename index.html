@@ -6580,6 +6580,26 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
   font-size: 28px; font-weight: 700; color: var(--ink-subtle, #94A3B8);
   margin-bottom: 6px; letter-spacing: -0.04em;
 }
+/* v24.26.22: Radial progress ring (replaces flat % text in win-rate hero). */
+.v26-winrate-ring {
+  display: block;
+  margin: 4px 0 6px;
+}
+.v26-winrate-ring-fg {
+  /* Smooth fill animation on initial paint + when chart re-renders */
+  transition: stroke-dashoffset 800ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.v26-winrate-ring-pct {
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  font-size: 24px; font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.v26-winrate-ring-empty {
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  font-size: 28px; font-weight: 700;
+  fill: var(--ink-subtle, #94A3B8);
+}
 .v26-outcome-tiles {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: repeat(2, minmax(0, 1fr));
@@ -6671,6 +6691,37 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
   margin-top: 3px; font-weight: 500;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+
+/* v24.26.22: Region — stacked bar showing ₹ pipeline distribution by zone (under the 4 tiles) */
+.v26-region-stack-wrap { margin-top: 14px; padding: 0 4px; }
+.v26-region-stack-caption {
+  font-size: 9.5px; font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  font-weight: 500; letter-spacing: 0.08em; color: var(--ink-subtle, #94A3B8);
+  margin-bottom: 5px; text-transform: uppercase;
+}
+.v26-region-stack-bar {
+  display: flex; height: 26px;
+  border-radius: 4px; overflow: hidden;
+  border: 1px solid var(--border-soft, #E5E7EB);
+}
+.v26-region-stack-seg {
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: filter 120ms;
+  min-width: 0;  /* allow flex-shrink */
+}
+.v26-region-stack-seg:hover { filter: brightness(0.92); }
+.v26-region-stack-lbl {
+  color: #fff; font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  font-size: 10px; font-weight: 600; letter-spacing: -0.01em;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.20);  /* readable against varied zone colors */
+}
+.v26-region-stack-legend {
+  display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px;
+  font-size: 10px; font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  color: var(--ink-subtle, #94A3B8); font-weight: 500;
+}
+.v26-region-stack-legend-item { display: inline-flex; align-items: center; gap: 5px; }
+.v26-region-stack-legend-chip { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
 
 /* Bottom row (Leaderboard + Stuck) */
 .v26-bottom-row {
@@ -8400,8 +8451,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.21';  // v24.26.21 — STAGE ANALYTICS SPLIT into dedicated card (per user feedback "stage wise case count is good but stage velocity & all should not be mixed in count card"). Two changes: (1) Stage funnel legend REVERTED to count + ₹ only — the conversion % shown there in v24.26.20 is removed. (2) NEW chart card "Stage analytics" in team-charts grid (placed right after Stage funnel) — shows stage-to-stage conversion % as a vertical list of "from → to" rows with color-coded health chips: green ≥60%, amber 30-59%, red <30%, teal/cyan ≥100% with "deals entered mid-funnel" note (handles the 150% case honestly), gray for "no prior data". Pure HTML, theme-aware via CSS vars, no ECharts. Footer hint mentions "velocity coming once history accumulates" — placeholder for the v24.26.21+ velocity section that ships once backend route stage_transitions_full exists AND production has 50+ real transitions. Renderer wired into _renderTeamCharts at index 3 (after _renderChartStage). Total chart cards on Team Analytics: 10 (was 9). Pairs with backend v25.13.0 — no backend changes.
-// v24.26.20 — STAGE ANALYSIS ADDITIONS (now superseded by v24.26.21): conversion % was added to funnel legend but user wanted separate cards. Aging tints on Stuck & slipped table (kept).
+const FRONTEND_VERSION = '24.26.22';  // v24.26.22 — TWO VISUAL UPGRADES per user request. (1) REGION CARD: stacked horizontal bar added below the 4 zone tiles, showing ₹ pipeline distribution (W/N/S/E proportional widths). Tiles tell you "how many" — bar tells you "how big". Different angles, no duplication. Each segment is clickable (filters by zone, same as tile click). Inline % label only on segments ≥18% wide (smaller segments stay clean). Below-bar mini-legend always shows all 4 zones with first-letter abbreviation + %, dimmed if zero. Bar skipped if total ₹ is 0. (2) OUTCOME SCORECARD: Win Rate hero replaced with radial progress ring (SVG, 120×120 viewBox, r=48, 6px stroke, rounded caps). Ring color matches existing winColor logic: ≥60% green (#059669), 40-59% amber (#D97706), <40% red (#DC2626), gray for no-data. Track ring stays soft gray. Foreground arc draws from -90° (top) clockwise. CSS transition on stroke-dashoffset gives smooth 800ms fill animation on render. Center text shows %  in matching color. HUD-style tick marks + bracketed labels preserved (tech aesthetic from v24.26.13). Pairs with backend v25.13.0 — no backend changes.
+// v24.26.21 — STAGE ANALYTICS SPLIT into dedicated card. Funnel legend reverted to count + ₹ only. New Stage analytics card shows from→to conversion %.
 // v24.26.19 — NOTES FIELD per opportunity. Internal-only textarea at bottom of Project Context. NOT in Excel/PDF exports. 2000-char limit, live counter, audit-logged.
 // v24.26.18 — WON/LOST BUTTON LABEL ADAPTER. Submit button relabels: "Recommend →" → "View Quote →" / "Generate BOQ →" → "Show BOQ →" when outcome is Won/Lost.
 // v24.26.17 — KEYBOARD SHORTCUTS (Ctrl/Cmd+S, Ctrl/Cmd+Enter, Esc, /, ?) + ACTION BUTTON STYLING (Option B: outlined indigo, only Confirm filled, real brand SVG icons, equal-width grid).
@@ -26624,6 +26675,54 @@ if(document.readyState==='loading'){
            '</div>';
     });
     dom.innerHTML = '<div class="v26-region-zone-grid">' + tiles.join('') + '</div>';
+
+    // v24.26.22: Stacked bar showing ₹ pipeline distribution across zones.
+    // Different angle than tiles (which show count) — this shows proportional ₹ weight.
+    // Skipped if total ₹ is 0 (no deals to distribute) to avoid divide-by-zero.
+    const totalV = ZONES_ORDER.reduce(function(t, z){ return t + byZone[z].v; }, 0);
+    if(totalV > 0){
+      // Build segments — each zone gets a slice proportional to its ₹ share. Zero zones omitted.
+      const segments = ZONES_ORDER
+        .map(function(z){ return { zone: z, v: byZone[z].v, pct: (byZone[z].v / totalV) * 100 }; })
+        .filter(function(s){ return s.v > 0; });
+      // Inline label only if segment is wide enough (≥18% gives ~30px on 600px bar, fits 2-3 chars)
+      const segHtml = segments.map(function(s){
+        const pctRounded = Math.round(s.pct);
+        const showLabel = s.pct >= 18;  // threshold: smaller slices stay visually clean
+        return '<div class="v26-region-stack-seg" ' +
+               'data-zone="' + _esc(s.zone) + '" ' +
+               'title="' + _esc(s.zone) + ': ' + _shortINR(s.v) + ' (' + pctRounded + '%)" ' +
+               'style="background:' + _ZONE_COLORS[s.zone] + ';width:' + s.pct + '%;">' +
+               (showLabel ? '<span class="v26-region-stack-lbl">' + pctRounded + '%</span>' : '') +
+               '</div>';
+      }).join('');
+      // Below-bar mini-legend (always show all 4 zones, dimmed if 0)
+      const legendHtml = ZONES_ORDER.map(function(z){
+        const seg = segments.find(function(s){ return s.zone === z; });
+        const pct = seg ? Math.round(seg.pct) : 0;
+        const dim = seg ? '' : 'opacity:0.35;';
+        return '<span class="v26-region-stack-legend-item" style="' + dim + '">' +
+                 '<span class="v26-region-stack-legend-chip" style="background:' + _ZONE_COLORS[z] + ';"></span>' +
+                 _esc(z.charAt(0)) + ' ' + pct + '%' +
+               '</span>';
+      }).join('');
+      const stackHtml =
+        '<div class="v26-region-stack-wrap">' +
+          '<div class="v26-region-stack-caption">PIPELINE ₹ DISTRIBUTION</div>' +
+          '<div class="v26-region-stack-bar">' + segHtml + '</div>' +
+          '<div class="v26-region-stack-legend">' + legendHtml + '</div>' +
+        '</div>';
+      dom.insertAdjacentHTML('beforeend', stackHtml);
+      // Wire click on any segment to filter that zone (same as clicking the tile)
+      dom.querySelectorAll('.v26-region-stack-seg').forEach(function(seg){
+        seg.addEventListener('click', function(){
+          const zone = seg.getAttribute('data-zone');
+          if(!zone) return;
+          const f = _readFilterState(); f.region = zone; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
+        });
+      });
+    }
+
     // Wire click → filter (skip zero tiles)
     dom.querySelectorAll('.v26-region-zone-tile').forEach(function(t){
       if(t.classList.contains('is-zero')) return;
@@ -26672,16 +26771,32 @@ if(document.readyState==='loading'){
     const colors = { Open: '#2563EB', Won: '#059669', Lost: '#DC2626', 'On hold': '#D97706' };
     const filterValues = { Open: 'open', Won: 'won', Lost: 'lost', 'On hold': 'on-hold' };
     function _esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-    // v24.26.13: Hero markup — no trophy, monospace label, mono numerals via CSS
+    // v24.26.22: Radial progress ring replaces flat % text. Tech-style aesthetic preserved
+    // (mono labels, sharp corners, HUD ticks). Ring SVG:
+    //   r=48 → circumference = 2π × 48 ≈ 301.6
+    //   stroke-dasharray = circumference
+    //   stroke-dashoffset = circumference × (1 - winRate/100)  [empty arc length]
+    //   transform rotate(-90 60 60) = start at top instead of right
+    const C = 301.6;  // circumference for r=48
+    const ringDashOffset = winRate !== null ? (C * (1 - winRate / 100)).toFixed(1) : C;
     const heroHtml = winRate !== null
       ? '<div class="v26-winrate-hero">' +
           '<div class="v26-winrate-label">[ Win Rate ]</div>' +
-          '<div class="v26-winrate-pct" style="color:' + winColor + '">' + winRate + '%</div>' +
+          '<svg class="v26-winrate-ring" viewBox="0 0 120 120" width="118" height="118" aria-hidden="true">' +
+            '<circle cx="60" cy="60" r="48" fill="none" stroke="var(--border-soft, #E5E7EB)" stroke-width="6" opacity="0.55"/>' +
+            '<circle cx="60" cy="60" r="48" fill="none" stroke="' + winColor + '" stroke-width="6" stroke-linecap="round" ' +
+              'stroke-dasharray="' + C + '" stroke-dashoffset="' + ringDashOffset + '" ' +
+              'transform="rotate(-90 60 60)" class="v26-winrate-ring-fg"/>' +
+            '<text x="60" y="62" text-anchor="middle" dominant-baseline="middle" class="v26-winrate-ring-pct" fill="' + winColor + '">' + winRate + '%</text>' +
+          '</svg>' +
           '<div class="v26-winrate-detail">' + counts.Won + ' / ' + closed + ' closed deal' + (closed === 1 ? '' : 's') + '</div>' +
         '</div>'
       : '<div class="v26-winrate-hero">' +
           '<div class="v26-winrate-label">[ Win Rate ]</div>' +
-          '<div class="v26-winrate-empty">—</div>' +
+          '<svg class="v26-winrate-ring" viewBox="0 0 120 120" width="118" height="118" aria-hidden="true">' +
+            '<circle cx="60" cy="60" r="48" fill="none" stroke="var(--border-soft, #E5E7EB)" stroke-width="6" opacity="0.55"/>' +
+            '<text x="60" y="62" text-anchor="middle" dominant-baseline="middle" class="v26-winrate-ring-empty">—</text>' +
+          '</svg>' +
           '<div class="v26-winrate-detail">No closed deals yet</div>' +
         '</div>';
     function tile(name){
