@@ -8493,7 +8493,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.24';  // v24.26.24 — REGION CARD POLISH per user feedback. Two changes: (1) ADDED second stacked bar (case count distribution) ABOVE the existing ₹ pipeline bar. Now Region card shows: 4 zone tiles + count distribution bar + ₹ value distribution bar. Together they tell a real story — high count + low ₹ = volume-heavy small deals; low count + high ₹ = concentrated big deals. Helper function _buildRegionBar() shared between both bars (no code duplication). (2) BUMPED legend font from 10px → 11.5px (per user "text are small in legend"), chip 8→10px, gap 12→14px, caption color from --ink-subtle → --ink-muted (slightly darker for readability). New wrapper .v26-region-stack-block adds spacing between the two bars (10px). Click on any segment of either bar still filters by zone (drill-through preserved). Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.26.25';  // v24.26.25 — Backend version-check + mismatch banner (Session 1). Polls new `version_check` action on login + rehydrate. If backend < EXPECTED_BACKEND_MIN OR frontend < expectedFrontendMin returned by server → renders dismissible yellow .data-quality-banner inside #page-app + logs one row to Errors tab via existing error_log_append (errorCode='VERSION_MISMATCH'). Banner messages: "backend too old → ask Super to redeploy" vs "frontend too old → hard-refresh". Dismiss persisted in sessionStorage (key bs-version-banner-dismissed). version_check failure: console warn only, no banner, no log (silent on flaky network). Pairs with backend v25.13.1.
+const EXPECTED_BACKEND_MIN = '25.13.1';  // v24.26.25 — Minimum backend semver this frontend expects. Backends below this trigger the yellow mismatch banner.
 // v24.26.23 — STAGE ANALYTICS REDESIGN. Horizontal bars per stage, % of Lead. Replaces v26.21's busy from→to row format.
 // v24.26.22 — TWO VISUAL UPGRADES. Region card: stacked horizontal bar showing ₹ pipeline distribution. Outcome scorecard: radial progress ring replacing flat % text.
 // v24.26.21 — STAGE ANALYTICS SPLIT into dedicated card. Funnel legend reverted to count + ₹ only. New Stage analytics card shows from→to conversion %.
@@ -9319,6 +9320,130 @@ function logFrontendError(errorCode, errorMessage, stackTrace, action){
     }).catch(()=>{/* swallow — can't log the logger */});
   }catch(e){ /* swallow */ }
 }
+
+/* ============================================================================
+ * v24.26.25 — Backend version-check + mismatch banner
+ * ============================================================================
+ * Session 1 of the production-hardening roadmap. Goal: surface backend/frontend
+ * version mismatches as a yellow banner so deploys don't silently drift.
+ *
+ * Flow:
+ *   1. After login success (and on rehydrate), pingBackendVersion() POSTs
+ *      action='version_check' to the webhook.
+ *   2. Backend returns { backendVersion, expectedFrontendMin }.
+ *   3. Compare both directions using semver minimum:
+ *        - backendVersion  <  EXPECTED_BACKEND_MIN  → banner: "backend too old"
+ *        - FRONTEND_VERSION <  expectedFrontendMin → banner: "frontend too old"
+ *   4. Banner is dismissible (sessionStorage) and logs one Errors-tab row.
+ *   5. version_check itself failing → silent (console warn only). Don't pollute
+ *      Errors tab on flaky networks; the banner is enough signal.
+ * ============================================================================ */
+
+/* Normalize "24.26" → [24, 26, 0]; "24.26.24" → [24, 26, 24]. Strict numeric — non-numeric segments treated as 0. */
+function _normalizeSemver_v2625(v){
+  const parts = String(v || '0').split('.').map(function(s){
+    const n = parseInt(s, 10);
+    return isNaN(n) ? 0 : n;
+  });
+  while(parts.length < 3) parts.push(0);
+  return parts.slice(0, 3);
+}
+
+/* Returns true iff actual >= required. Both semver strings. */
+function _semverGte_v2625(actual, required){
+  const a = _normalizeSemver_v2625(actual);
+  const r = _normalizeSemver_v2625(required);
+  for(let i = 0; i < 3; i++){
+    if(a[i] > r[i]) return true;
+    if(a[i] < r[i]) return false;
+  }
+  return true; // equal
+}
+
+/* Render the yellow mismatch banner inside #page-app. Idempotent — replaces any existing
+ * v24.26.25 banner. Honors session dismiss. Returns nothing. */
+function _renderVersionBanner_v2625(kind, currentVer, expectedVer){
+  try{
+    if(sessionStorage.getItem('bs-version-banner-dismissed') === '1') return;
+  }catch(_){}
+  let msg;
+  if(kind === 'backend_too_old'){
+    msg = '⚠️ Backend version mismatch — running v' + currentVer + ', app expects v' + expectedVer +
+          '+. Ask Super to redeploy backend (Apps Script → Deploy → Manage deployments → New version).';
+  } else {
+    msg = '⚠️ Your browser is running an outdated app — hard-refresh (Ctrl+Shift+R / Cmd+Shift+R) to update from v' +
+          currentVer + ' to latest.';
+  }
+  const root = document.getElementById('page-app');
+  if(!root) return;
+  // Remove any pre-existing banner from a previous render
+  const prev = document.getElementById('version-mismatch-banner-bs');
+  if(prev) prev.remove();
+  const banner = document.createElement('div');
+  banner.id = 'version-mismatch-banner-bs';
+  banner.className = 'data-quality-banner';
+  banner.style.margin = '12px 16px 0 16px';
+  banner.style.justifyContent = 'space-between';
+  banner.innerHTML = '<span style="flex:1">' + msg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') +
+    '</span><button type="button" id="version-banner-dismiss-bs" aria-label="Dismiss" ' +
+    'style="background:transparent;border:none;color:inherit;cursor:pointer;font-size:16px;line-height:1;padding:4px 8px;">✕</button>';
+  // Insert as the first child of #page-app so it sits above all tab content
+  if(root.firstChild) root.insertBefore(banner, root.firstChild);
+  else root.appendChild(banner);
+  const dismissBtn = document.getElementById('version-banner-dismiss-bs');
+  if(dismissBtn){
+    dismissBtn.addEventListener('click', function(){
+      try{ sessionStorage.setItem('bs-version-banner-dismissed', '1'); }catch(_){}
+      banner.remove();
+    });
+  }
+}
+
+/* POST action=version_check, compare both versions, render banner if needed.
+ * Idempotent — safe to call from both login + rehydrate. Never throws. */
+async function pingBackendVersion_v2625(){
+  if(!WEBHOOK_URL) return;
+  let data;
+  try{
+    const resp = await fetch(WEBHOOK_URL, {
+      method:'POST', mode:'cors', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({ action: 'version_check' })
+    });
+    data = await resp.json();
+  }catch(netErr){
+    console.warn('[v24.26.25] version_check failed — silent (no banner, no log):', netErr && netErr.message ? netErr.message : netErr);
+    return;
+  }
+  if(!data || data.status !== 'ok'){
+    console.warn('[v24.26.25] version_check unexpected response:', data);
+    return;
+  }
+  const backendVer  = String(data.backendVersion || '');
+  const expectFrMin = String(data.expectedFrontendMin || '');
+  const backendOk  = backendVer && _semverGte_v2625(backendVer, EXPECTED_BACKEND_MIN);
+  const frontendOk = expectFrMin && _semverGte_v2625(FRONTEND_VERSION, expectFrMin);
+  if(backendOk && frontendOk){
+    console.log('[v24.26.25] version_check OK — frontend v' + FRONTEND_VERSION + ' / backend v' + backendVer);
+    return;
+  }
+  // Mismatch — log one row + render banner
+  let kind, currentVer, expectedVer, logMsg;
+  if(!backendOk){
+    kind = 'backend_too_old'; currentVer = backendVer; expectedVer = EXPECTED_BACKEND_MIN;
+    logMsg = 'Backend v' + backendVer + ' below expected min v' + EXPECTED_BACKEND_MIN +
+             ' (frontend v' + FRONTEND_VERSION + ')';
+  } else {
+    kind = 'frontend_too_old'; currentVer = FRONTEND_VERSION; expectedVer = expectFrMin;
+    logMsg = 'Frontend v' + FRONTEND_VERSION + ' below server-required min v' + expectFrMin +
+             ' (backend v' + backendVer + ')';
+  }
+  try{
+    logFrontendError('VERSION_MISMATCH', logMsg, '', 'mismatch_detected');
+  }catch(_){}
+  _renderVersionBanner_v2625(kind, currentVer, expectedVer);
+}
+window.pingBackendVersion_v2625 = pingBackendVersion_v2625;
+/* ============================================================================ */
 
 /* v24.25.5 — safer fetch wrapper.
  * Detects HTML-not-JSON responses (Apps Script cold start, network blip, sleep/wake,
@@ -12349,6 +12474,10 @@ async function _attemptRehydrate(){
       _fetchAllUsersForDropdowns(state.user.loginName, stored.passwordHash);  // intentional no-await
     }catch(_){ /* never block */ }
 
+    // v24.26.25 — Backend version-check on rehydrate. Fire-and-forget; banner renders in #page-app
+    // if backend is below EXPECTED_BACKEND_MIN OR this frontend is below server-required min.
+    try{ pingBackendVersion_v2625(); }catch(_){ /* never block rehydrate */ }
+
     updateLoginSplash(75, 'Almost there…');
     if(typeof renderLog === 'function') renderLog();
     if(typeof startSessionTimer === 'function') startSessionTimer();
@@ -12588,6 +12717,10 @@ async function handleLogin(){
     // v24.2: Branded splash screen — show immediately, progress through steps
     showLoginSplash();
     updateLoginSplash(20,'Signing in ✓');
+
+    // v24.26.25 — Backend version-check on fresh login. Fire-and-forget; renders banner
+    // inside #page-app if backend or frontend version is below expected minimum.
+    try{ pingBackendVersion_v2625(); }catch(_){ /* never block login */ }
 
     if(authResult.mustChange){
       setTimeout(()=>{hideLoginSplash();showChangePasswordModal(true);},600);
