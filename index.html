@@ -7400,6 +7400,16 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
           <div class="form-group" style="margin:0;"><label>Partner Contact — Name<span class="req">*</span></label><input type="text" id="f-partnerContactName" placeholder="e.g. contact's full name"></div>
           <div class="form-group" style="margin:0;"><label>Partner Contact — Mobile<span class="req">*</span></label><input type="tel" id="f-partnerContactPhone" placeholder="10-digit mobile" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10);"></div>
           <div class="form-group" style="margin:0;"><label>Partner Contact — Email<span class="req">*</span></label><input type="email" id="f-partnerContactEmail" placeholder="name@company.com" autocomplete="off"></div>
+          <!-- v24.26.19: General Notes field — INTERNAL ONLY (not in Excel/PDF exports).
+               Free-form notes per opportunity. Spans full grid width. 2000 char limit. -->
+          <div class="form-group" style="margin:0;grid-column:1/-1;">
+            <label for="f-notes">Notes <span style="font-weight:500;color:var(--ink-subtle);font-size:11px;letter-spacing:0.02em;">· internal only · not shared with partner</span></label>
+            <textarea id="f-notes" rows="3" maxlength="2000" placeholder="Internal notes about this opportunity — context, history, next steps, blockers. Visible to your team only. Not included in Excel/PDF exports." style="width:100%;resize:vertical;min-height:72px;font-family:var(--sans);font-size:13.5px;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;background:var(--surface);color:var(--ink);"></textarea>
+            <div style="font-size:10.5px;color:var(--ink-subtle);margin-top:4px;display:flex;justify-content:space-between;">
+              <span>Visible only to Cavitak team. Audit-logged.</span>
+              <span id="f-notes-counter" style="font-family:JetBrains Mono,monospace;">0 / 2000</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -8375,7 +8385,9 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.17';  // v24.26.17 — TWO FEATURES BUNDLED. (1) KEYBOARD SHORTCUTS (laptop/desktop) — self-contained IIFE module. Five shortcuts: Ctrl/Cmd+S → Save (form: _saveDraft, result: confirm), Ctrl/Cmd+Enter → Submit (form: action-recommend or action-generate-boq, whichever visible), Esc → Close top open modal, / → Focus context-relevant search, ? → Show shortcuts help overlay. Plus small ? help button next to version footer (bottom-right) for discoverability. Mac users see ⌘ instead of Ctrl. (2) ACTION BUTTON STYLING (Option B per user pick) — replaces inconsistent btn-action/btn-print/btn-email mix on result page with action-bar-v2 + ab2-btn classes. Outlined indigo accent, only Confirm filled (primary action). Equal-width 6-col grid with real brand SVG icons inline (Excel/PDF document icons with text labels, official WhatsApp glyph, envelope email). No emoji — renders identically across Win/Mac/mobile. Mobile: drops to 3-col grid below 640px. Existing btn-action/btn-print/btn-email classes UNTOUCHED — used in many other places (Add User, Reset, modal actions). Updated 4 JS selectors that previously targeted #section-result .btn-action — now use #section-result .action-bar-v2 .ab2-btn.is-primary. Critical: Confirm button now contains SVG + .ab2-label span; the v24.26.7 reset logic + confirmSelection's text manipulation updated to set .ab2-label.textContent only (never btn.textContent which would wipe the SVG). Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.26.19';  // v24.26.19 — NOTES FIELD per opportunity. New textarea at the bottom of Project Context section, full grid-width span. INTERNAL ONLY: NOT included in Excel or PDF exports (per user spec). Visible to all signed-in users + audit-logged on changes. 2000 character limit with live counter (turns red at >1900). Backend: notes field added to buildEntryPayload — Apps Script lazy-migration appends col AS to Sheet1 on first read after deploy of backend v25.13.1+ (frontend works fine with old backend, sheet just won't have the column until backend updated). State integration: state.form.notes in 3 places (initial declaration ×2 + resetForm). Captured in runSelector + _advCaptureProjectContextToState. Restored in prefillFormUI on edit-load. Cleared on resetForm. Audit log: notes added to fieldsToTrack list — diff captured on edit save. _editSnapshot also includes notes for diff comparison. NOTE: Backend Sheet schema needs col AS = "notes" added in next backend release v25.13.1; until then notes value travels in payload but is silently dropped by old backend (existing behavior for unknown fields). Pairs with backend v25.13.0 (current) or v25.13.1+ (upcoming). NOTE 2: Excel + PDF export functions intentionally do NOT include notes field — per user "internal use only".
+// v24.26.18 — WON/LOST BUTTON LABEL ADAPTER. Submit button relabels: "Recommend →" → "View Quote →" / "Generate BOQ →" → "Show BOQ →" when outcome is Won/Lost.
+// v24.26.17 — KEYBOARD SHORTCUTS (Ctrl/Cmd+S, Ctrl/Cmd+Enter, Esc, /, ?) + ACTION BUTTON STYLING (Option B: outlined indigo, only Confirm filled, real brand SVG icons, equal-width grid).
 // v24.26.16 — PASSWORD SHOW/HIDE TOGGLE on login. 👁 button at right edge of password input. Caret position preserved on toggle. Reusable togglePasswordVisibility(inputId, btn) helper.
 // v24.26.15 — CRITICAL HOTFIX for Custom BOQ "Generate BOQ does nothing" bug. Lock leak in runAdvancedBOQ — _runSelectorBusy stayed TRUE for 10 seconds on validation early-return, blocking subsequent clicks. Fixed by resetting flag at all 3 early-return paths + scrollIntoView added to _advValidateProjectContext.
 // v24.26.14 — THREE BUG FIXES (1 of 3 in user-requested release sequence). (1) CALCULATE BUTTON "needs 2-3 clicks" UX bug — added live field-error clearing on input/change. (2) EXCEL EXPORT — Sales Person + Presales Person fields ADDED to PROJECT CONTEXT block. (3) EMAIL PDF — improved error visibility.
@@ -11454,7 +11466,7 @@ const TENDER_CLAUSES = {
 
 const state = {
   user:null,
-  form:{project:'',enduser:'',venueType:'',partner:'',consultant:'',city:'',state:'',partnerContactName:'',partnerContactPhone:'',partnerContactEmail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',xcOs:'std',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',outcome:'open',planOfAction:'',salesPerson:'',presalesPerson:''},
+  form:{project:'',enduser:'',venueType:'',partner:'',consultant:'',city:'',state:'',partnerContactName:'',partnerContactPhone:'',partnerContactEmail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',xcOs:'std',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',outcome:'open',planOfAction:'',salesPerson:'',presalesPerson:'',notes:''},  // v24.26.19: notes added (general internal notes per opportunity)
   result:null,
   osChoice:'brightsignos'
 };
@@ -15336,6 +15348,11 @@ function resetForm(){
   const cmDisp=document.getElementById('closemonth-display');
   if(cmDisp){cmDisp.textContent='No month selected yet.';cmDisp.classList.remove('set');}
   ['f-city','f-stage','f-ssd-cap'].forEach(id=>document.getElementById(id).value='');
+  // v24.26.19: Clear notes textarea + reset char counter
+  const notesEl=document.getElementById('f-notes');
+  if(notesEl) notesEl.value='';
+  const notesCtr=document.getElementById('f-notes-counter');
+  if(notesCtr){ notesCtr.textContent='0 / 2000'; notesCtr.style.color=''; }
   // v24.14.8: Reset f-state value AND its locked styling (city→state lock can leave it disabled)
   const stEl=document.getElementById('f-state');
   if(stEl){stEl.value='';stEl.disabled=false;stEl.classList.remove('autoset-locked');stEl.title='';}
@@ -15363,7 +15380,7 @@ function resetForm(){
   if(oneYrPill)oneYrPill.classList.add('selected');
   document.getElementById('section-cms').style.display='none';
   clearFieldErrors();
-  state.form={project:'',enduser:'',venueType:'',partner:'',consultant:'',city:'',state:'',partnerContactName:'',partnerContactPhone:'',partnerContactEmail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',xcOs:'std',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',outcome:'open',planOfAction:'',salesPerson:'',presalesPerson:''};
+  state.form={project:'',enduser:'',venueType:'',partner:'',consultant:'',city:'',state:'',partnerContactName:'',partnerContactPhone:'',partnerContactEmail:'',stage:'',closemonth:'',qty:1,qtyIndoor:0,qtyOutdoor:0,environment:null,update:null,budget:2,content:null,resolution:null,outputs:null,hdmiIn:null,touch:null,wifi:null,gpio:null,ssd:null,ssdCap:'',xcOs:'std',cmsVendor:'BrightSign CMS',cmsTerm:'1',cmsInclude:null,leadSource:'',outcome:'open',planOfAction:'',salesPerson:'',presalesPerson:'',notes:''};  // v24.26.19: notes added
   setBudget(2);
   document.querySelectorAll('.progress-step').forEach(s=>s.classList.remove('done'));
   // v20.1: Clear any lingering lock from prior sessions
@@ -15465,6 +15482,8 @@ function runSelector(){
   state.form.outcomeReason=_v('f-outcome-reason',false)||'';
   state.form.outcomeReasonNote=_v('f-outcome-reason-note',false)||'';
   state.form.stageNote=_v('f-stage-note',false)||'';
+  // v24.26.19: General internal notes (free-text per opportunity, not in exports)
+  state.form.notes=_v('f-notes',true)||'';
   // v24.20.0 (#3): Sales/Presales handoff capture
   state.form.salesPerson    = String(_v('f-sales-person',false)||'').trim().toLowerCase();
   state.form.presalesPerson = String(_v('f-presales-person',false)||'').trim().toLowerCase();
@@ -16756,6 +16775,8 @@ function toggleOutcomeReason(){
   if(v === 'open' || !v){
     wrap.style.display = 'none';
     cat.value = '';
+    // v24.26.18: also refresh submit-button label since outcome just changed
+    if(typeof _updateSubmitButtonLabel === 'function') _updateSubmitButtonLabel();
     return;
   }
   wrap.style.display = '';
@@ -16768,6 +16789,27 @@ function toggleOutcomeReason(){
   cat.innerHTML = '<option value="">Select reason…</option>' + opts.map(o => `<option value="${o.v}">${o.t}</option>`).join('');
   // Restore previous selection if still valid
   if(prev && opts.some(o => o.v === prev)) cat.value = prev;
+  // v24.26.18: refresh submit-button label since outcome just changed
+  if(typeof _updateSubmitButtonLabel === 'function') _updateSubmitButtonLabel();
+}
+
+/* v24.26.18 — Submit button label adapter. When outcome is Won/Lost, the deal is closed
+   and the user is just looking at the existing recommendation, not creating one fresh.
+   Relabel the submit button to "View Quote" (Guided) or "Show BOQ" (Advanced) so the
+   action reads as "view" rather than "compute new". The click handler is UNCHANGED —
+   runSelector / runAdvancedBOQ still execute normally. This is purely a copy/UX change.
+   Called from: toggleOutcomeReason (outcome changed), setSelectionMode (mode toggled),
+   form load, draft restore, and edit-load entry. */
+function _updateSubmitButtonLabel(){
+  try {
+    const sel = document.getElementById('f-outcome');
+    const recBtn = document.getElementById('action-recommend');
+    const boqBtn = document.getElementById('action-generate-boq');
+    const outcome = sel ? String(sel.value || '').toLowerCase() : '';
+    const isClosed = (outcome === 'won' || outcome === 'lost');
+    if(recBtn) recBtn.textContent = isClosed ? 'View Quote →' : 'Recommend →';
+    if(boqBtn) boqBtn.textContent = isClosed ? 'Show BOQ →' : 'Generate BOQ →';
+  } catch(_){ /* defensive — never throw from a label updater */ }
 }
 
 /* ===== v24.17.0 — Save Draft / Resume ===== */
@@ -17031,6 +17073,22 @@ function _initDraftAutosave(){
     root.addEventListener('input', _clearOnTouch, true);
     root.addEventListener('change', _clearOnTouch, true);
   }
+
+  // v24.26.19: Notes char counter live-update. Listen specifically on #f-notes input events.
+  if(!root._notesCounterWired){
+    root._notesCounterWired = true;
+    const notesEl = document.getElementById('f-notes');
+    const ctr = document.getElementById('f-notes-counter');
+    if(notesEl && ctr){
+      const _updateCounter = function(){
+        const len = (notesEl.value || '').length;
+        ctr.textContent = len + ' / 2000';
+        ctr.style.color = len > 1900 ? '#DC2626' : '';  // warn at <100 chars left
+      };
+      notesEl.addEventListener('input', _updateCounter);
+      _updateCounter();  // initial paint
+    }
+  }
 }
 
 // v24.19.9 (#6): Browser beforeunload guard. Native dialog only fires if user has
@@ -17241,7 +17299,9 @@ function buildEntryPayload(status){
     isTest: '',
     // v24.20.0 (#3): Sales/Presales handoff
     salesPerson:    f.salesPerson    || '',
-    presalesPerson: f.presalesPerson || ''
+    presalesPerson: f.presalesPerson || '',
+    // v24.26.19: General internal notes (free-text per opportunity, NOT in Excel/PDF exports)
+    notes: f.notes || ''
   };
 }
 
@@ -17922,7 +17982,8 @@ async function sendAuditLogDiff(current,snapshot){
     'qty','qtyIndoor','qtyOutdoor','model','outdoorModel',
     'content','resolution','environment','update','budget',
     'hdmiIn','touch','wifi','gpio','ssd','os',
-    'cmsVendor','cmsTerm','cmsBillingType'
+    'cmsVendor','cmsTerm','cmsBillingType',
+    'notes'  // v24.26.19: general internal notes (free-text per opportunity)
   ];
   const changes=[];
   fieldsToTrack.forEach(f=>{
@@ -19622,6 +19683,7 @@ function editPastEntry(entryIdx){
     outcome:entry.outcome||'open',               // v24.12.3: was missing
     outcomeReason:entry.outcomeReason||'',       // v24.17.0
     outcomeReasonNote:entry.outcomeReasonNote||'', // v24.17.0
+    notes:entry.notes||'',                       // v24.26.19: general internal notes
     // stageNote is per-transition not per-deal — never restore from entry, always blank on edit-load
     qty:parseInt(entry.qty)||1,
     qtyIndoor:parseInt(entry.qtyIndoor)||0,
@@ -19668,6 +19730,7 @@ function editPastEntry(entryIdx){
     partner:entry.partner||'',consultant:entry.consultant||'',city:entry.city||'',
     contactname:entry.contactname||'',contactphone:entry.contactphone||'',contactemail:entry.contactemail||'',
     stage:entry.stage||'',closemonth:entry.closemonth||'',
+    notes:entry.notes||'',  // v24.26.19: track notes changes in audit log
     qty:(entry.qty||'').toString(),
     qtyIndoor:(entry.qtyIndoor||'').toString(),
     qtyOutdoor:(entry.qtyOutdoor||'').toString(),
@@ -19958,6 +20021,13 @@ function prefillFormUI(){
   // stageNote intentionally NOT restored — per-transition not per-deal, always fresh on edit-load
   const sNoteEl=document.getElementById('f-stage-note');
   if(sNoteEl)sNoteEl.value='';
+  // v24.26.19: Restore general notes textarea + update char counter
+  const notesEl=document.getElementById('f-notes');
+  if(notesEl){
+    notesEl.value = f.notes || '';
+    const ctr = document.getElementById('f-notes-counter');
+    if(ctr) ctr.textContent = (notesEl.value.length) + ' / 2000';
+  }
   // v24.4.0: dealvalue text input — show raw number, user can edit as-is
   // Pill groups + choice cards
   // v24.12.4 fix: form DOM uses data-input="hdmi-in" but state key is hdmiIn. Map mismatches explicitly.
@@ -22176,6 +22246,8 @@ function setSelectionMode(mode){
   const boqBtn = document.getElementById('action-generate-boq');
   if(recBtn) recBtn.style.display = (mode==='guided') ? '' : 'none';
   if(boqBtn) boqBtn.style.display = (mode==='advanced') ? '' : 'none';
+  // v24.26.18: refresh submit-button label whenever a button becomes visible
+  if(typeof _updateSubmitButtonLabel === 'function') _updateSubmitButtonLabel();
   // v24.12.7: Update the rotating sub-text in the hero band based on selected mode.
   // Default (no mode picked) shows the prompt question; selected modes show the full description.
   const hint = document.getElementById('mode-toggle-hint');
@@ -22440,6 +22512,8 @@ function _advCaptureProjectContextToState(){
   f.contactname    = (document.getElementById('f-partnerContactName')||{}).value || '';
   f.contactphone   = (document.getElementById('f-partnerContactPhone')||{}).value || '';
   f.contactemail   = (document.getElementById('f-partnerContactEmail')||{}).value || '';
+  // v24.26.19: General internal notes (free-text per opportunity, not in exports)
+  f.notes          = ((document.getElementById('f-notes')||{}).value || '').trim();
 }
 
 function _advDeriveEnvironment(selections){
