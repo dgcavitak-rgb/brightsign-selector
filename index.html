@@ -6893,8 +6893,19 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
 .v26-stage-legend-text { min-width: 0; flex: 1; }
 .v26-stage-legend-name { font-size: 11px; font-weight: 700; color: var(--ink, #0F172A); line-height: 1.3; }
 .v26-stage-legend-count { font-size: 10px; color: var(--ink-muted, #64748B); margin-top: 1px; line-height: 1.3; }
-/* v24.26.20: Conversion % line — small, mono, colored by health (green/amber/red set inline) */
-.v26-stage-legend-conv { font-size: 9.5px; font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace; font-weight: 600; margin-top: 2px; line-height: 1.3; letter-spacing: 0.01em; }
+/* v24.26.21: Stage analytics card — dedicated conversion % view (split out from funnel legend per user feedback). */
+.v26-stage-analytics-list { display: flex; flex-direction: column; gap: 8px; padding: 0 10px; }
+.v26-sa-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; background: var(--surface-2, #F1F5F9); border: 1px solid var(--border-soft, #E5E7EB); border-radius: 8px; }
+.v26-sa-row:hover { background: var(--surface, #fff); border-color: var(--ink-muted, #94A3B8); }
+.v26-sa-stages { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; flex-wrap: wrap; }
+.v26-sa-stage-chip { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+.v26-sa-stage-name { font-size: 12px; font-weight: 600; color: var(--ink, #0F172A); }
+.v26-sa-stage-count { font-size: 11px; color: var(--ink-muted, #64748B); font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace; font-weight: 500; }
+.v26-sa-arrow { color: var(--ink-subtle, #94A3B8); font-size: 13px; margin: 0 2px; flex-shrink: 0; }
+.v26-sa-result { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; min-width: 90px; }
+.v26-sa-pct { font-size: 16px; font-weight: 700; font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace; line-height: 1; letter-spacing: -0.01em; }
+.v26-sa-note { font-size: 9.5px; color: var(--ink-subtle, #94A3B8); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
+.v26-sa-footer { font-size: 10px; color: var(--ink-subtle, #94A3B8); text-align: center; padding: 10px 16px 0; font-style: italic; line-height: 1.4; }
 
 [data-theme="dark"] .v26-stage-legend-item { background: rgba(255,255,255,0.04); }
 [data-theme="dark"] .v26-stage-legend-item:hover { background: rgba(255,255,255,0.08); }
@@ -7945,6 +7956,8 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
       <div class="v26-charts-grid">
         <div class="v26-chart-card"><div class="v26-chart-head">Source split <span class="v26-chart-sub">BS-generated vs Cavitak-generated · click slice to filter</span></div><div class="v26-chart-body" id="v26-chart-source"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Stage funnel <span class="v26-chart-sub">₹ + count by stage · click to filter</span></div><div class="v26-chart-body" id="v26-chart-stage"></div></div>
+        <!-- v24.26.21: Dedicated stage analytics card — split out from Stage funnel per user request. -->
+        <div class="v26-chart-card"><div class="v26-chart-head">Stage analytics <span class="v26-chart-sub">conversion % between stages · drop-off detection</span></div><div class="v26-chart-body" id="v26-chart-stage-analytics"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Region · zone breakdown <span class="v26-chart-sub">deals + pipeline by zone · click any zone to filter</span></div><div class="v26-chart-body" id="v26-chart-region"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Outcome scorecard <span class="v26-chart-sub">win rate · pipeline by outcome</span></div><div class="v26-chart-body" id="v26-chart-outcome"></div></div>
         <div class="v26-chart-card"><div class="v26-chart-head">Top partners <span class="v26-chart-sub">Top 10 by # cases</span></div><div class="v26-chart-body" id="v26-chart-partners"></div></div>
@@ -8387,7 +8400,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.20';  // v24.26.20 — STAGE ANALYSIS ADDITIONS. (1) STAGE FUNNEL CONVERSION % (lens #3 from user's 5-lens analysis): sidebar legend now shows stage-to-stage conversion percentage based on current snapshot of Sheet1 deal counts. Each stage past Lead displays "X% of {previous stage}" in green (≥60%), amber (30-59%), or red (<30%) — drop-offs spot-checkable at a glance. NOTE: True funnel conversion would require trustworthy StageTransitions history (full path per deal); current implementation uses snapshot ratios because StageTransitions has only 12 real transitions in production (per 2026-05-10 diagnostic). Snapshot ratios approximate real conversion at scale; on small data they're noisy but that's expected and accepted (user's call). (2) STUCK & SLIPPED AGING TINTS (lens #5 enhancement): Status column was always red — now color-tiered by severity. Slipped close-month: always red. Stage-frozen: red ≥30d, amber 14-29d, neutral <14d. Helps prioritize at a glance which stuck deals are urgent vs concerning. NOTE: Lens #1 (stage velocity) DEFERRED — backend has no `stage_transitions_full` action (only `stage_transitions_list` returning latest-per-deal). Velocity needs full per-deal history. Will revisit in v24.26.21+ once: (a) backend route exists AND (b) production has 50+ real stage transitions (currently 12). Pairs with backend v25.13.0 — no backend changes.
+const FRONTEND_VERSION = '24.26.21';  // v24.26.21 — STAGE ANALYTICS SPLIT into dedicated card (per user feedback "stage wise case count is good but stage velocity & all should not be mixed in count card"). Two changes: (1) Stage funnel legend REVERTED to count + ₹ only — the conversion % shown there in v24.26.20 is removed. (2) NEW chart card "Stage analytics" in team-charts grid (placed right after Stage funnel) — shows stage-to-stage conversion % as a vertical list of "from → to" rows with color-coded health chips: green ≥60%, amber 30-59%, red <30%, teal/cyan ≥100% with "deals entered mid-funnel" note (handles the 150% case honestly), gray for "no prior data". Pure HTML, theme-aware via CSS vars, no ECharts. Footer hint mentions "velocity coming once history accumulates" — placeholder for the v24.26.21+ velocity section that ships once backend route stage_transitions_full exists AND production has 50+ real transitions. Renderer wired into _renderTeamCharts at index 3 (after _renderChartStage). Total chart cards on Team Analytics: 10 (was 9). Pairs with backend v25.13.0 — no backend changes.
+// v24.26.20 — STAGE ANALYSIS ADDITIONS (now superseded by v24.26.21): conversion % was added to funnel legend but user wanted separate cards. Aging tints on Stuck & slipped table (kept).
 // v24.26.19 — NOTES FIELD per opportunity. Internal-only textarea at bottom of Project Context. NOT in Excel/PDF exports. 2000-char limit, live counter, audit-logged.
 // v24.26.18 — WON/LOST BUTTON LABEL ADAPTER. Submit button relabels: "Recommend →" → "View Quote →" / "Generate BOQ →" → "Show BOQ →" when outcome is Won/Lost.
 // v24.26.17 — KEYBOARD SHORTCUTS (Ctrl/Cmd+S, Ctrl/Cmd+Enter, Esc, /, ?) + ACTION BUTTON STYLING (Option B: outlined indigo, only Confirm filled, real brand SVG icons, equal-width grid).
@@ -26293,6 +26307,7 @@ if(document.readyState==='loading'){
     }
     _renderChartSource(deals);
     _renderChartStage(deals);
+    _renderChartStageAnalytics(deals);  // v24.26.21: dedicated conversion % card
     _renderChartRegion(deals);
     _renderChartOutcome(deals);
     _renderChartPartners(deals);
@@ -26418,35 +26433,18 @@ if(document.readyState==='loading'){
     _v26Charts.stage = inst;
     inst.on('click', function(p){ if(!p || !p.name) return; const f = _readFilterState(); f.stage = p.name; _saveFilterState(f); _restoreFilterUI(); _renderTeam(); });
 
-    // Build sidebar legend — all 5 stages, color chip + name + count + ₹ + conversion %
-    // v24.26.20: Added stage-to-stage conversion % (lens #3). Computed from current snapshot.
-    // First stage (Lead) shows just count. Each subsequent stage shows % of PREVIOUS stage's count.
-    // Caveat in changelog: this is a snapshot-based interpretation. True funnel conversion would
-    // require trustworthy StageTransitions history, which we don't have today. Snapshot ratios
-    // approximate well enough at scale; on small data they're noisy but that's expected.
-    legendHost.innerHTML = stageData.map(function(d, i){
+    // Build sidebar legend — all 5 stages, color chip + name + count + ₹.
+    // v24.26.21: REVERTED conversion % from this legend (was added in v24.26.20). Per user
+    // feedback "stage wise case count is good, but stage velocity & all should not be mixed
+    // in count card." Conversion % now lives in dedicated card #v26-chart-stage-analytics.
+    legendHost.innerHTML = stageData.map(function(d){
       const color = stageColors[d.name] || '#94A3B8';
       const isEmpty = d.value === 0;
-      // Conversion: this stage / previous stage. Skip for first stage. Skip if prev = 0 (avoid Infinity).
-      let convMarkup = '';
-      if(i > 0){
-        const prev = stageData[i - 1].value;
-        if(prev > 0 && d.value > 0){
-          const pct = Math.round((d.value / prev) * 100);
-          // Color tint: green if ≥60%, amber 30-59%, red <30%. Helps spot drop-offs.
-          const convColor = pct >= 60 ? '#059669' : (pct >= 30 ? '#D97706' : '#DC2626');
-          convMarkup = '<div class="v26-stage-legend-conv" style="color:' + convColor + ';">' + pct + '% of ' + _esc(stageData[i - 1].name) + '</div>';
-        } else if(prev === 0 && d.value > 0){
-          // Edge case: deals exist at this stage but prev stage is empty (deal entered mid-funnel)
-          convMarkup = '<div class="v26-stage-legend-conv" style="color:var(--ink-subtle);">— no prior data —</div>';
-        }
-      }
       return '<div class="v26-stage-legend-item' + (isEmpty ? ' v26-stage-legend-empty' : '') + '" data-stage="' + _esc(d.name) + '">' +
         '<span class="v26-stage-legend-chip" style="background:' + color + ';"></span>' +
         '<div class="v26-stage-legend-text">' +
           '<div class="v26-stage-legend-name">' + _esc(d.name) + '</div>' +
           '<div class="v26-stage-legend-count">' + d.value + ' · ' + _shortINR(d.dealVal) + '</div>' +
-          convMarkup +
         '</div>' +
       '</div>';
     }).join('');
@@ -26457,6 +26455,106 @@ if(document.readyState==='loading'){
         const f = _readFilterState(); f.stage = stage; _saveFilterState(f); _restoreFilterUI(); _renderTeam();
       });
     });
+  }
+
+  /* ────────────────────── Stage analytics — CONVERSION % CARD (v24.26.21) ──────────────────────
+   * Dedicated card showing stage-to-stage conversion based on current snapshot of deal counts.
+   * Visualization: vertical sequence of "from → to" rows, each with the conversion %.
+   * Color tint on the % chip: green ≥60%, amber 30-59%, red <30%, gray for "no prior data".
+   * 100%+ ratios (deals entered mid-funnel) show as "100%+" with an indicator — math is honest.
+   * Pure HTML, theme-aware via CSS vars, no ECharts dependency.
+   *
+   * NOTE: Velocity (avg days per transition) is NOT here yet — needs full StageTransitions
+   *       history backend route which doesn't exist. Will add a "Velocity" subsection to this
+   *       card when both: (1) backend route ships, (2) production has 50+ real transitions. */
+  function _renderChartStageAnalytics(deals){
+    const dom = document.getElementById('v26-chart-stage-analytics');
+    if(!dom) return;
+    dom.innerHTML = '';
+    dom.style.height = '300px';
+    dom.style.overflowY = 'auto';
+    dom.style.padding = '14px 4px';
+    const open = deals.filter(function(e){ return String(e.outcome || '').toLowerCase() === 'open'; });
+    const stageData = STAGES_OPEN.map(function(s){
+      const stageDeals = open.filter(function(e){ return e.stage === s; });
+      return { name: s, value: stageDeals.length };
+    });
+    const totalOpen = stageData.reduce(function(t, d){ return t + d.value; }, 0);
+    if(!totalOpen){
+      dom.innerHTML = '<div style="padding:60px;text-align:center;color:var(--ink-muted);">No open deals to analyze</div>';
+      return;
+    }
+    const stageColors = { Lead: '#6366F1', Opportunity: '#7C3AED', Proposal: '#A855F7', Negotiation: '#C026D3', Order: '#DB2777' };
+
+    // Build conversion rows — each pair (from → to) gets one row
+    const rows = [];
+    for(let i = 1; i < stageData.length; i++){
+      const from = stageData[i - 1];
+      const to = stageData[i];
+      let pct = null;
+      let pctLabel = '—';
+      let pctColor = 'var(--ink-subtle, #94A3B8)';
+      let note = '';
+      if(from.value > 0 && to.value > 0){
+        pct = Math.round((to.value / from.value) * 100);
+        if(pct >= 100){
+          pctLabel = pct + '%';
+          pctColor = '#0891B2';  // teal/cyan — distinguishable, signals "unusual"
+          note = pct > 100 ? 'deals entered mid-funnel' : 'no drop-off';
+        } else if(pct >= 60){
+          pctLabel = pct + '%';
+          pctColor = '#059669';
+          note = 'healthy';
+        } else if(pct >= 30){
+          pctLabel = pct + '%';
+          pctColor = '#D97706';
+          note = 'drop-off concern';
+        } else {
+          pctLabel = pct + '%';
+          pctColor = '#DC2626';
+          note = 'major drop-off';
+        }
+      } else if(from.value === 0 && to.value > 0){
+        pctLabel = '—';
+        note = 'no prior-stage data';
+      } else if(from.value > 0 && to.value === 0){
+        pctLabel = '0%';
+        pctColor = '#94A3B8';
+        note = 'nothing reached this stage';
+      } else {
+        pctLabel = '—';
+        note = 'no deals at either stage';
+      }
+      rows.push({ from: from, to: to, pctLabel: pctLabel, pctColor: pctColor, note: note });
+    }
+
+    // Render rows
+    const html = ['<div class="v26-stage-analytics-list">'];
+    rows.forEach(function(r){
+      const fromColor = stageColors[r.from.name] || '#94A3B8';
+      const toColor = stageColors[r.to.name] || '#94A3B8';
+      html.push(
+        '<div class="v26-sa-row">' +
+          '<div class="v26-sa-stages">' +
+            '<span class="v26-sa-stage-chip" style="background:' + fromColor + ';"></span>' +
+            '<span class="v26-sa-stage-name">' + _esc(r.from.name) + '</span>' +
+            '<span class="v26-sa-stage-count">' + r.from.value + '</span>' +
+            '<span class="v26-sa-arrow">→</span>' +
+            '<span class="v26-sa-stage-chip" style="background:' + toColor + ';"></span>' +
+            '<span class="v26-sa-stage-name">' + _esc(r.to.name) + '</span>' +
+            '<span class="v26-sa-stage-count">' + r.to.value + '</span>' +
+          '</div>' +
+          '<div class="v26-sa-result">' +
+            '<span class="v26-sa-pct" style="color:' + r.pctColor + ';">' + _esc(r.pctLabel) + '</span>' +
+            '<span class="v26-sa-note">' + _esc(r.note) + '</span>' +
+          '</div>' +
+        '</div>'
+      );
+    });
+    html.push('</div>');
+    // Footer hint about what's coming
+    html.push('<div class="v26-sa-footer">Conversion % from current snapshot · velocity coming once history accumulates</div>');
+    dom.innerHTML = html.join('');
   }
 
   /* ────────────────────── Region — INDIA CHOROPLETH (lazy-load) with vertical-bar fallback ────────────────────── */
