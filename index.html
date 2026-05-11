@@ -1568,6 +1568,15 @@ html[data-theme="dark"] .form-group select.autoset-locked,html[data-theme="dark"
   font-family:var(--mono);
   font-size:15px;line-height:1;font-weight:600;
   padding:10px 0;background:transparent;color:var(--ink);
+  /* v24.29.1: hide native browser spinner arrows — let our custom +/− buttons be the only stepper UI */
+  -moz-appearance:textfield;
+  appearance:textfield;
+}
+.number-input input::-webkit-outer-spin-button,
+.number-input input::-webkit-inner-spin-button{
+  -webkit-appearance:none;
+  appearance:none;
+  margin:0;
 }
 .number-input input:focus{outline:none;}
 .budget-wrap{padding:8px 4px 0;}
@@ -8149,10 +8158,10 @@ html { scroll-behavior: smooth; }
 
       <!-- ═══ SECTION 02 — Deployment (reordered) ═══════════════════════════════ -->
       <div class="form-section" data-section="02">
-        <div class="section-head"><div class="section-num">02</div><div><div class="section-title">Deployment</div><div class="section-sub">Where the players go and how many</div></div></div>
+        <div class="section-head"><div class="section-num">02</div><div><div class="section-title">Deployment</div><div class="section-sub">Tell us where these players will live and how many you need</div></div></div>
 
         <!-- Field 1: Deployment Type FIRST -->
-        <div class="field"><label class="field-label">Deployment type<span class="req">*</span></label>
+        <div class="field"><label class="field-label">Where will these players live?<span class="req">*</span></label>
           <div class="choice-grid" data-input="environment">
             <button class="choice-card" data-v="indoor"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="choice-card-name">Indoor</span><span class="choice-card-sub">Standard signage</span></button>
             <button class="choice-card" data-v="outdoor"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg><span class="choice-card-name">Outdoor</span><span class="choice-card-sub">Enclosure required</span></button>
@@ -8161,7 +8170,7 @@ html { scroll-behavior: smooth; }
         </div>
 
         <!-- Field 2: Number of Players (with Mixed splitter expansion) -->
-        <div class="field"><label class="field-label">Number of BrightSign players<span class="req">*</span></label>
+        <div class="field"><label class="field-label">How many players in total?<span class="req">*</span></label>
           <div class="number-input"><button onclick="adjustQty(-1)" type="button">−</button><input type="number" id="f-qty" value="1" min="1" max="10000"><button onclick="adjustQty(1)" type="button">+</button></div>
           <!-- v24.28.1: Mixed splitter — revealed when Mixed deployment selected. Auto-balance Indoor+Outdoor to Total. -->
           <div id="mixed-qty-wrap" class="mixed-splitter" style="display:none;">
@@ -8185,7 +8194,7 @@ html { scroll-behavior: smooth; }
 
         <!-- Field 3: Budget tier (was after Deployment Model in v24.28.1; Deployment Model moved to CMS section in v24.29.0) -->
         <div class="field">
-          <label class="field-label">Budget tier<span class="req">*</span></label>
+          <label class="field-label">What's the budget tier?<span class="req">*</span></label>
           <div class="budget-head"><div><div class="budget-zone" id="budget-zone-label">Standard</div><div class="budget-zone-models" id="budget-zone-models">HD · XD series</div></div></div>
           <div class="budget-wrap">
             <input type="range" class="budget-slider" id="f-budget" min="1" max="5" step="1" value="2">
@@ -8202,8 +8211,8 @@ html { scroll-behavior: smooth; }
 
       <!-- ═══ SECTION 03 — Playback Content ═════════════════════════════════════ -->
       <div class="form-section" data-section="03">
-        <div class="section-head"><div class="section-num">03</div><div><div class="section-title">Playback content</div><div class="section-sub">What the player will play</div></div></div>
-        <div class="field" style="margin-bottom:0;"><label class="field-label">Content type<span class="req">*</span></label>
+        <div class="section-head"><div class="section-num">03</div><div><div class="section-title">Playback</div><div class="section-sub">What kind of content will these players show?</div></div></div>
+        <div class="field" style="margin-bottom:0;"><label class="field-label">What kind of content?<span class="req">*</span></label>
           <div class="choice-grid" data-input="content">
             <button class="choice-card" data-v="video"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><span class="choice-card-name">Video only</span><span class="choice-card-sub">Silent signage</span></button>
             <button class="choice-card" data-v="av"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><span class="choice-card-name">Audio + Video</span><span class="choice-card-sub">Full AV signage</span></button>
@@ -8214,15 +8223,15 @@ html { scroll-behavior: smooth; }
 
       <!-- ═══ SECTION 04 — Output & interactivity (reordered: Displays → Resolution → Touch → HDMI → GPIO → SSD → Wi-Fi) ═══ -->
       <div class="form-section" id="section-video-specs" data-section="04">
-        <div class="section-head"><div class="section-num">04</div><div><div class="section-title">Output &amp; interactivity</div><div class="section-sub">Display setup and required features</div></div></div>
+        <div class="section-head"><div class="section-num">04</div><div><div class="section-title">Specs &amp; Features</div><div class="section-sub">Display setup and the hardware features your project needs</div></div></div>
         <div class="spec-grid two-col">
-          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label">Displays per player<span class="req">*</span></label><div class="pill-group" data-input="outputs"><button class="pill" data-v="1">1</button><button class="pill" data-v="2">2</button><button class="pill" data-v="4">4</button></div></div>
-          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label">Resolution<span class="req">*</span></label><div class="pill-group" data-input="resolution"><button class="pill" data-v="hd">Full HD</button><button class="pill" data-v="4k">4K</button><button class="pill" data-v="8k">8K</button></div></div>
-          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label">Touch / interactive<span class="req">*</span></label><div class="pill-group" data-input="touch"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
-          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label">HDMI input<span class="req">*</span></label><div class="pill-group" data-input="hdmi-in"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
-          <div class="field" style="margin-bottom:0;"><label class="field-label">GPIO port required<span class="req">*</span></label><div class="pill-group" data-input="gpio"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div><div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;line-height:1.4;">12-pin Phoenix for sensors, buttons, relays</div></div>
-          <div class="field" style="margin-bottom:0;"><label class="field-label">SSD required<span class="req">*</span></label><div class="pill-group" data-input="ssd"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div><div class="ssd-cap-wrap" id="ssd-cap-wrap"><select id="f-ssd-cap"><option value="">Storage capacity…</option><option value="128">128 GB</option><option value="256">256 GB</option><option value="512">512 GB</option><option value="1024">1 TB</option></select></div></div>
-          <div class="field" style="margin-bottom:0;"><label class="field-label">Wi-Fi<span class="req">*</span></label><div class="pill-group" data-input="wifi"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
+          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label">How many screens per player?<span class="req">*</span></label><div class="pill-group" data-input="outputs"><button class="pill" data-v="1">1</button><button class="pill" data-v="2">2</button><button class="pill" data-v="4">4</button></div></div>
+          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label">What resolution?<span class="req">*</span></label><div class="pill-group" data-input="resolution"><button class="pill" data-v="hd">Full HD</button><button class="pill" data-v="4k">4K</button><button class="pill" data-v="8k">8K</button></div></div>
+          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label">Touch interaction?<span class="req">*</span></label><div class="pill-group" data-input="touch"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
+          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label">HDMI input needed?<span class="req">*</span></label><div class="pill-group" data-input="hdmi-in"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
+          <div class="field" style="margin-bottom:0;"><label class="field-label">GPIO port needed?<span class="req">*</span></label><div class="pill-group" data-input="gpio"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div><div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;line-height:1.4;">12-pin Phoenix for sensors, buttons, relays</div></div>
+          <div class="field" style="margin-bottom:0;"><label class="field-label">SSD storage?<span class="req">*</span></label><div class="pill-group" data-input="ssd"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div><div class="ssd-cap-wrap" id="ssd-cap-wrap"><select id="f-ssd-cap"><option value="">Storage capacity…</option><option value="128">128 GB</option><option value="256">256 GB</option><option value="512">512 GB</option><option value="1024">1 TB</option></select></div></div>
+          <div class="field" style="margin-bottom:0;"><label class="field-label">Wi-Fi needed?<span class="req">*</span></label><div class="pill-group" data-input="wifi"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
           <div class="field" id="field-xc-os" style="margin-bottom:0;display:none;">
             <label class="field-label">XC operating system<span class="req">*</span></label>
             <div class="pill-group" data-input="xc-os">
@@ -8237,7 +8246,7 @@ html { scroll-behavior: smooth; }
 
       <!-- v24.29.0: Section 05 — CMS (Deployment Model relocated here from Section 02) -->
       <div class="form-section" id="section-cms" data-section="05" style="display:none;">
-        <div class="section-head"><div class="section-num">05</div><div><div class="section-title">Content Management</div><div class="section-sub">How content gets to these players</div></div></div>
+        <div class="section-head"><div class="section-num">05</div><div><div class="section-title">Content Management</div><div class="section-sub">How content reaches these players and which CMS to use</div></div></div>
 
         <!-- v24.29.0: Deployment Model — moved here from Section 02. It's a CMS concern (where the CMS lives), not a deployment-physics concern. -->
         <div class="field"><label class="field-label">Where will content come from?<span class="req">*</span></label>
@@ -9142,8 +9151,10 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.29.0';  // v24.29.0 — Form total makeover (Direction C: Modern App style). Floating-card sections with elevated shadows + indigo accent stripes. Choice cards reimagined with bigger icons, indigo fill on selected. Pill buttons → segmented-control look with sliding indicator. Number steppers → pill-shaped with circular bounce buttons. Section badges → circular pills, turn green with check-mark on completion. Wording rewritten as questions throughout ("Where will these players live?" not "Deployment type *"). Deployment Model RELOCATED from Section 02 to Section 05 (CMS) — it's a CMS-level concern, not deployment-physics. Field IDs and backend mapping UNCHANGED — recommendation engine, draft restore, Excel export all unaffected. Pairs with backend v25.15.0 (no BE changes).
-const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.29.0 — no change vs v24.28.1.
+const FRONTEND_VERSION = '24.30.0';  // v24.30.0 — M1 wording rewrites for Direction C makeover (step 1 of 7 MUST-HAVE items). Every form field label across Sections 02/03/04 rewritten as a question, conversational tone. Section sub-titles enriched with more personality. Section header text reorganized for better reading rhythm. Backend field IDs UNCHANGED (`environment`, `qty`, `content`, `outputs`, `resolution`, `touch`, `hdmi-in`, `gpio`, `ssd`, `wifi`, `update`, etc.) — pure presentation change. Recommendation engine, draft restore, Excel export, validation rules all unaffected. Pairs with backend v25.15.0 (no BE changes). Next: M2 (section completion check-marks).
+const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.30.0 — no change vs v24.29.1.
+// v24.29.1 — Hotfix: hide native browser spinner arrows on number inputs.
+// v24.29.0 — Direction C partial: Deployment Model relocated to CMS section + new wording.
 // v24.28.1 — Form turnover Path 2 (partial). DOM reorder per spec. Mixed deployment auto-balance splitter. Audio-only conditional hide.
 // v24.28.0 — Modern visual turnover (Option A): glass-morphism, hover lift, animated check-marks, focus glows, sub-tab underline animation.
 // v24.27.3 — Section label rename for clarity: "Content update" → "Deployment model" with card labels showing both old + new terminology in parentheses.
