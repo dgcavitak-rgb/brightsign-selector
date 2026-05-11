@@ -6454,38 +6454,68 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
 }
 .v26-btn-refresh { font-size: 16px; padding: 8px 12px; }
 
-/* KPI tiles */
-.v26-kpis { display: grid; gap: 12px; margin-bottom: 20px; }
-.v26-kpis-mine { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.v26-kpis-team { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.v26-kpi {
-  padding: 16px 18px; border-radius: 12px; color: var(--surface, #fff);
-  display: flex; flex-direction: column; gap: 4px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  position: relative; overflow: hidden;
+/* KPI tiles — v24.27.2 redesign: richer colors, glass finish, hover lift */
+.v26-kpis { display: grid; gap: 14px; margin-bottom: 20px; }
+.v26-kpis-mine { grid-template-columns: repeat(5, minmax(0, 1fr)); }  /* v24.27.2: 5 tiles incl new Case Count */
+.v26-kpis-team { grid-template-columns: repeat(5, minmax(0, 1fr)); }  /* v24.27.2: 9 tiles, wraps to row 2 at 4-th — actually 5 cols × 2 rows = 10 cells (last empty) */
+@media (max-width: 1400px) {
+  .v26-kpis-team { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+@media (max-width: 1100px) {
+  .v26-kpis-mine { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .v26-kpis-team { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.v26-kpi {
+  padding: 18px 20px; border-radius: 14px; color: var(--surface, #fff);
+  display: flex; flex-direction: column; gap: 4px;
+  /* v24.27.2: layered shadow for depth */
+  box-shadow:
+    0 4px 14px rgba(15, 23, 42, 0.10),
+    0 1px 3px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);  /* top inset highlight = glass */
+  position: relative; overflow: hidden;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  cursor: default;
+}
+.v26-kpi:hover {
+  /* v24.27.2: hover lift + intensified shadow */
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 24px rgba(15, 23, 42, 0.16),
+    0 3px 6px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+/* v24.27.2: glass shine — diagonal highlight band, brighter at top-left */
 .v26-kpi::before {
   content: ''; position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.06) 38%, transparent 70%),
+    radial-gradient(ellipse at top right, rgba(255,255,255,0.10), transparent 50%);
+  pointer-events: none;
+}
+/* v24.27.2: subtle bottom darkening for premium feel */
+.v26-kpi::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 50%;
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,0.08));
   pointer-events: none;
 }
 .v26-kpi > * { position: relative; z-index: 1; }
-.v26-kpi-label { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; opacity: 0.92; }
-.v26-kpi-value { font-size: 28px; font-weight: 800; line-height: 1.1; }
-.v26-kpi-sub { font-size: 11px; opacity: 0.85; margin-top: 2px; }
-/* v24.27.1 (MM4, BS Beauty-1): KPI tile palette aligned to BS indigo/gold brand.
-   Was 8 Bootstrap-default gradients (identical to tvONE pre-Beauty-1 which we
-   already toned down to the tvONE forest/gold/slate palette in v25.62). Now BS
-   uses its own indigo + gold + slate variants. Visual hierarchy preserved:
-   green=positive (Won), amber=time-pressure (Days to Close), indigo=primary. */
-.v26-kpi-blue   { background: linear-gradient(135deg, #4338CA, #3730A3); }  /* deep indigo — primary KPI */
-.v26-kpi-green  { background: linear-gradient(135deg, #047857, #065F46); }  /* deep green — positive */
-.v26-kpi-purple { background: linear-gradient(135deg, #5B21B6, #4C1D95); }  /* royal purple — neutral metric */
-.v26-kpi-indigo { background: linear-gradient(135deg, #4F46E5, #3730A3); }  /* indigo — BS brand primary */
-.v26-kpi-orange { background: linear-gradient(135deg, #B08D28, #8B6914); }  /* gold-deep */
-.v26-kpi-amber  { background: linear-gradient(135deg, #B45309, #92400E); }  /* warm amber — caution */
-.v26-kpi-teal   { background: linear-gradient(135deg, #475569, #334155); }  /* slate-gray — secondary */
-.v26-kpi-cyan   { background: linear-gradient(135deg, #6B7280, #4B5563); }  /* neutral steel — tertiary */
+.v26-kpi-label { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 700; opacity: 0.92; text-shadow: 0 1px 1px rgba(0,0,0,0.12); }
+.v26-kpi-value { font-size: 30px; font-weight: 800; line-height: 1.1; letter-spacing: -0.01em; text-shadow: 0 1px 2px rgba(0,0,0,0.16); }
+.v26-kpi-sub { font-size: 11px; opacity: 0.88; margin-top: 2px; }
+
+/* v24.27.2 — richer color palette. Moved away from MM4's muted slate/cement,
+   restored vibrant brand-aligned gradients. Still BS-themed (indigo-first), not
+   tvONE's gold-first. Visual hierarchy: green=positive, rose=attention, amber=time. */
+.v26-kpi-blue   { background: linear-gradient(135deg, #3B5BDB, #2845B5); }  /* vibrant indigo — primary KPI */
+.v26-kpi-green  { background: linear-gradient(135deg, #10B981, #059669); }  /* emerald — positive */
+.v26-kpi-purple { background: linear-gradient(135deg, #7C3AED, #5B21B6); }  /* royal violet */
+.v26-kpi-indigo { background: linear-gradient(135deg, #4F46E5, #3730A3); }  /* indigo brand */
+.v26-kpi-rose   { background: linear-gradient(135deg, #E11D48, #BE123C); }  /* rose — Case Count, attention-grabbing */
+.v26-kpi-orange { background: linear-gradient(135deg, #F59E0B, #D97706); }  /* gold-amber */
+.v26-kpi-amber  { background: linear-gradient(135deg, #F97316, #EA580C); }  /* warm amber */
+.v26-kpi-teal   { background: linear-gradient(135deg, #0D9488, #0F766E); }  /* teal — partners */
+.v26-kpi-cyan   { background: linear-gradient(135deg, #0891B2, #0E7490); }  /* cyan — consultants */
 
 /* To-do sections (My Pipeline) */
 .v26-todo-wrap {
@@ -7917,6 +7947,12 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
           <div class="v26-kpi-value" id="v26-mine-kpi-won">—</div>
           <div class="v26-kpi-sub" id="v26-mine-kpi-won-sub">— wins</div>
         </div>
+        <!-- v24.27.2: NEW Case Count tile -->
+        <div class="v26-kpi v26-kpi-rose">
+          <div class="v26-kpi-label">My Case Count</div>
+          <div class="v26-kpi-value" id="v26-mine-kpi-cases">—</div>
+          <div class="v26-kpi-sub" id="v26-mine-kpi-cases-sub">— on-hold</div>
+        </div>
         <div class="v26-kpi v26-kpi-purple">
           <div class="v26-kpi-label">My Win Rate</div>
           <div class="v26-kpi-value" id="v26-mine-kpi-rate">—</div>
@@ -8072,6 +8108,8 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
         <div class="v26-kpi v26-kpi-blue"><div class="v26-kpi-label">Open Pipeline</div><div class="v26-kpi-value" id="v26-team-kpi-open">—</div><div class="v26-kpi-sub" id="v26-team-kpi-open-sub">— deals</div></div>
         <div class="v26-kpi v26-kpi-indigo"><div class="v26-kpi-label">Weighted Pipeline</div><div class="v26-kpi-value" id="v26-team-kpi-weighted">—</div><div class="v26-kpi-sub">stage-prob weighted</div></div>
         <div class="v26-kpi v26-kpi-purple"><div class="v26-kpi-label">Win Rate</div><div class="v26-kpi-value" id="v26-team-kpi-rate">—</div><div class="v26-kpi-sub" id="v26-team-kpi-rate-sub">— resolved</div></div>
+        <!-- v24.27.2: NEW Case Count tile — count of open + count of on-hold -->
+        <div class="v26-kpi v26-kpi-rose"><div class="v26-kpi-label">Case Count</div><div class="v26-kpi-value" id="v26-team-kpi-cases">—</div><div class="v26-kpi-sub" id="v26-team-kpi-cases-sub">— on-hold</div></div>
         <div class="v26-kpi v26-kpi-teal"><div class="v26-kpi-label">Active Partners</div><div class="v26-kpi-value" id="v26-team-kpi-partners">—</div><div class="v26-kpi-sub">in open pipeline</div></div>
         <div class="v26-kpi v26-kpi-cyan"><div class="v26-kpi-label">Active Consultants</div><div class="v26-kpi-value" id="v26-team-kpi-consultants">—</div><div class="v26-kpi-sub">in open pipeline</div></div>
         <div class="v26-kpi v26-kpi-amber"><div class="v26-kpi-label">End-customers</div><div class="v26-kpi-value" id="v26-team-kpi-customers">—</div><div class="v26-kpi-sub">unique in pipeline</div></div>
@@ -8538,8 +8576,9 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.27.1';  // v24.27.1 — MM1 + MM2 + MM3 + MM4 bundle. (MM1) Sales/Presales dropdown label disambiguation matching tvONE v25.66 — format `fullName · Role` with ⚠ flag when fullName is blank. (MM2) Pipeline trend chart on My Pipeline subtab — ECharts line chart, 26 weeks Open + Weighted value series, pulls from new pipeline_snapshots_list endpoint (backend v25.15.0). Mirrors tvONE C2. (MM3) retryPendingSync at ~line 18541 switched from mode:'no-cors' to mode:'cors' — submission retries now detect server-side failure instead of unconditionally marking success. The 4s verifyPendingSync safety net stays as defense-in-depth. (MM4) BS Beauty-1 polish — v26 dashboard KPI tiles aligned to BS indigo/gold/cream palette (was 8 Bootstrap-rainbow gradients identical to tvONE pre-Beauty-1). Pairs with backend v25.15.0; both must deploy together.
-const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.27.1 — bumped to require pipeline_snapshots_list route.
+const FRONTEND_VERSION = '24.27.2';  // v24.27.2 — KPI tile rework on Team Analytics + My Pipeline. (1) NEW "Case Count" tile added as a 9th card: main value = open-deal count, sub-line = "+ N on-hold" (count of outcome='on-hold' or 'onhold'). Grid auto-flows to 3×3 on desktop, 2-col on tablet, 1-col on mobile (existing responsive rules already handle this). (2) Hover effect — tiles now lift 2px + shadow intensifies on hover (200ms ease). (3) Glass finish — added a subtle inset highlight + lighter background blend at top of each tile for a frosted-glass feel. (4) Colors revisited — moved away from MM4's muted slate/indigo back to richer vibrant gradients while keeping BS indigo brand identity (deeper saturation, not Bootstrap-rainbow). Pairs with backend v25.15.0 (no BE changes).
+const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.27.2 — no change vs v24.27.1.
+// v24.27.1 — MM1 + MM2 + MM3 + MM4 bundle. (MM1) Sales/Presales dropdown label disambiguation. (MM2) Pipeline trend chart on My Pipeline subtab. (MM3) retryPendingSync to cors. (MM4) KPI palette aligned to BS indigo/gold/cream.
 // v24.27.0 — C4 from parity audit: Quarterly + Yearly report Send-Now buttons. Super-only "📊 Reports" card in Team tab. Pairs with backend v25.14.0.
 // v24.26.27 — Beauty-3 polish (pure CSS, zero JS/DOM): (1) Topbar (.app-user) — raw <button>s explicitly height:36px to align with .notif-bell and .app-user-avatar. (2) Password show/hide toggle (.pwd-toggle-btn) — anchoring switched from `top:50% + translateY(-50%)` to `top:0 + bottom:0 + margin:auto 0`.
 // v24.26.26 — M3 from parity audit: Self-service profile editor. tvONE users have always been able to edit their own title/email/phone (v26.7); BS users had to ask Super. Now: 👤 My Profile button between user avatar and Sign out in the topbar opens a modal where any user can edit their own professionalTitle / email / phone.
@@ -26550,6 +26589,11 @@ if(document.readyState==='loading'){
     // KPI calculations
     const open = mine.filter(function(e){ return String(e.outcome || '').toLowerCase() === 'open'; });
     const openVal = open.reduce(function(s, e){ return s + _readDealValue(e); }, 0);
+    // v24.27.2: on-hold cases — match both 'on-hold' and 'onhold' (BS history has both spellings)
+    const myOnHold = mine.filter(function(e){
+      const o = String(e.outcome || '').toLowerCase().replace(/[-_\s]/g, '');
+      return o === 'onhold';
+    });
     // This quarter wins
     const qStart = (function(){
       const now = new Date();
@@ -26585,6 +26629,9 @@ if(document.readyState==='loading'){
     _setText('v26-mine-kpi-open-sub', open.length + ' deal' + (open.length === 1 ? '' : 's'));
     _setText('v26-mine-kpi-won', _shortINR(wonVal));
     _setText('v26-mine-kpi-won-sub', wonThisQ.length + ' win' + (wonThisQ.length === 1 ? '' : 's'));
+    // v24.27.2: Case Count tile — main = open count, sub = on-hold count
+    _setText('v26-mine-kpi-cases', open.length);
+    _setText('v26-mine-kpi-cases-sub', myOnHold.length + ' on-hold');
     _setText('v26-mine-kpi-rate', winRate == null ? '—' : (winRate + '%'));
     _setText('v26-mine-kpi-rate-sub', resolved.length + ' resolved');
     _setText('v26-mine-kpi-week', closingThisMonth.length);
@@ -26689,6 +26736,11 @@ if(document.readyState==='loading'){
     const open = deals.filter(function(e){ return String(e.outcome || '').toLowerCase() === 'open'; });
     const won = deals.filter(function(e){ return String(e.outcome || '').toLowerCase() === 'won'; });
     const lost = deals.filter(function(e){ return String(e.outcome || '').toLowerCase() === 'lost'; });
+    // v24.27.2: on-hold cases — match both 'on-hold' and 'onhold' (BS history has both spellings)
+    const onHold = deals.filter(function(e){
+      const o = String(e.outcome || '').toLowerCase().replace(/[-_\s]/g, '');
+      return o === 'onhold';
+    });
 
     const openVal = open.reduce(function(s, e){ return s + _readDealValue(e); }, 0);
     const wonVal = won.reduce(function(s, e){ return s + _readDealValue(e); }, 0);
@@ -26717,6 +26769,9 @@ if(document.readyState==='loading'){
     _setText('v26-team-kpi-weighted', _shortINR(weightedVal));
     _setText('v26-team-kpi-rate', winRate == null ? '—' : (winRate + '%'));
     _setText('v26-team-kpi-rate-sub', (won.length + lost.length) + ' resolved');
+    // v24.27.2: Case Count tile — main = open count, sub = on-hold count
+    _setText('v26-team-kpi-cases', open.length);
+    _setText('v26-team-kpi-cases-sub', onHold.length + ' on-hold');
     _setText('v26-team-kpi-partners', Object.keys(partners).length);
     _setText('v26-team-kpi-consultants', Object.keys(consultants).length);
     _setText('v26-team-kpi-customers', Object.keys(customers).length);
