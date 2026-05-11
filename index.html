@@ -8813,8 +8813,9 @@ body, .form-section, .section-title, .field-label, .choice-card-name {
   flex: 1;
 }
 .vendor-trigger-content img {
-  height: 24px;
-  width: 110px;        /* fixed slot — all logos align to same width */
+  height: 28px;
+  width: auto;
+  max-width: 160px;       /* safety cap for very wide logos */
   object-fit: contain;
   object-position: left center;
   display: inline-block;
@@ -8904,12 +8905,17 @@ body, .form-section, .section-title, .field-label, .choice-card-name {
 [data-theme="dark"] .vendor-option.is-selected::after { color: #A5B4FC; }
 
 .vendor-option-logo {
-  height: 28px;
-  width: 110px;        /* fixed slot — all logos align to same width */
+  height: 32px;
+  width: auto;
+  max-width: 130px;       /* safety cap for very wide logos */
   object-fit: contain;
-  object-position: center;
+  object-position: left center;
   display: inline-block;
   flex-shrink: 0;
+}
+/* When the logo is missing (Standalone, None), the inline spacer span keeps the column aligned */
+.vendor-option > .vendor-option-logo:first-child {
+  min-width: 120px;       /* alignment slot — names line up regardless of logo width */
 }
 .vendor-option-text {
   display: flex;
@@ -9609,7 +9615,7 @@ body, .form-section, .section-title, .field-label, .choice-card-name {
         <div class="field" style="margin-bottom:0;"><label class="field-label">What kind of content?<span class="req">*</span></label>
           <div class="choice-grid" data-input="content">
             <button class="choice-card" data-v="video"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><span class="choice-card-name">Video only</span><span class="choice-card-sub">Silent signage</span></button>
-            <button class="choice-card" data-v="av"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><span class="choice-card-name">Audio + Video</span><span class="choice-card-sub">Full AV signage</span></button>
+            <button class="choice-card" data-v="av"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 5 8 9 4 9 4 15 8 15 13 19 13 5"/><path d="M17 8a5 5 0 0 1 0 8"/><path d="M20 5a9 9 0 0 1 0 14"/></svg><span class="choice-card-name">Audio + Video</span><span class="choice-card-sub">Full AV signage</span></button>
             <button class="choice-card" data-v="audio"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg><span class="choice-card-name">Audio only</span><span class="choice-card-sub">AU335 player</span></button>
           </div>
         </div>
@@ -10562,8 +10568,9 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.34.1';  // v24.34.1 — Two-part polish: (1) C1 vendor dropdown logo sizing hotfix: original v24.34.0 had inconsistent display sizes (BrightSign large with white box, Pickcel tiny, Korbyt huge) because PNG sources had different aspect ratios + padding. Re-encoded all 4 logos at 56px source height (2x retina), trimmed white borders, max 220px wide. Added clean SVG icon for the Standalone option so it's not visually empty. Logos now sit in a fixed-width 110px slot with object-fit:contain so they align to the same visual baseline regardless of aspect ratio. (2) Option C: Added small colored SVG icons next to every pill-question label in Section 04 (Specs & Features): 📺 Displays/Screens (indigo), 🖼️ Resolution (purple), ✋ Touch (rose), 🎬 HDMI (amber), ⚡ GPIO (yellow), 💾 SSD (cyan), 📶 Wi-Fi (emerald). Pure inline SVG (no base64 PNGs needed), ~3KB total. Pairs with backend v25.15.0.
-const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.34.1 — no change vs v24.34.0.
+const FRONTEND_VERSION = '24.34.2';  // v24.34.2 — Two-part hotfix. (1) Vendor logo sizing #2: v24.34.1 used a fixed slot (width:110px height:24px) with object-fit:contain, but that fought logos wider than ~4.6:1 aspect — Pickcel (5.64:1) and Poppulo (3.18:1) both ended up small. Fix: drop the fixed-width constraint; use height-only (28px for trigger, 32px for options) and let width be natural with a safety max-width cap. min-width slot moves to the LI wrapper alignment column so vendor names line up without squishing logos. (2) "Audio + Video" choice card was showing the SAME camera icon as "Video only" (copy-paste bug from original card markup). Replaced with a distinct speaker + extending waves icon — visually conveys "video AND audio" and is distinct from both Video only (camera) and Audio only (speaker). Pairs with backend v25.15.0.
+const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.34.2 — no change vs v24.34.1.
+// v24.34.1 — vendor logo sizing fix + pill-question icons.
 // v24.34.0 — C1: vendor dropdown with brand logos.
 // v24.33.0 — C11: accessibility audit.
 // v24.32.1 — C14: Quick-fill preset shortcuts.
@@ -30751,7 +30758,7 @@ const VENDOR_META = {
         inner += '<img class="vendor-option-logo" src="' + VENDOR_LOGOS[meta.logo] + '" alt="">';
       } else {
         // Use a placeholder spacer so text aligns consistently
-        inner += '<span class="vendor-option-logo" style="display:inline-block;width:110px;"></span>';
+        inner += '<span class="vendor-option-logo" style="display:inline-block;width:120px;height:32px;"></span>';
       }
       // Use the option's current text (may have been mutated by standalone availability code)
       const displayName = opt.textContent.trim() || meta.name;
