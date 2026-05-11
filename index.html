@@ -9599,8 +9599,9 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.30.4';  // v24.30.4 — HOTFIX for M4 click-interaction bug. The .form-section:hover { transform: translateY(-3px) !important } from M4 was causing buttons INSIDE sections (especially the number-input +/− steppers and Mixed splitter steppers) to feel unresponsive — when user mouse approached a button, the parent section would lift, shifting the button up by 3px under the cursor, causing the click to miss. Also removed `overflow: hidden` from .form-section since it created a new containing block that interfered with focus rings on inputs. Hover shadow intensification kept — only the parent transform is gone. Buttons now reliably clickable. Pairs with backend v25.15.0.
-const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.30.4 — no change vs v24.30.3.
+const FRONTEND_VERSION = '24.30.5';  // v24.30.5 — HOTFIX for Mixed deployment input lockout. Legacy v17 handler (around line 16460) was: (1) making the main f-qty input readOnly when Mixed is selected, (2) disabling ALL `.number-input button` elements page-wide (unscoped selector, hit Indoor + Outdoor + every other stepper), (3) zeroing Indoor/Outdoor to 0,0 — which conflicted with my v24.28.1 Mixed splitter logic where Total stays editable and Indoor/Outdoor auto-balance. v17 logic now stripped: Mixed simply reveals the splitter, Total stays editable, and my MutationObserver-driven auto-balance handler takes over from there. Old `state.form.qtyIndoor/qtyOutdoor` state still cleared on non-mixed for backend compatibility. Pairs with backend v25.15.0.
+const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.30.5 — no change vs v24.30.4.
+// v24.30.4 — HOTFIX for M4 click-interaction bug.
 // v24.30.3 — M4+M5+M6+M7 of Direction C bundled.
 // v24.30.2 — M3: Top-of-form sticky progress indicator.
 // v24.30.1 — M2 of Direction C: Section completion check-marks.
@@ -16451,31 +16452,18 @@ document.querySelectorAll('.choice-grid').forEach(group=>{
       state.form[keyMap[key]]=val;
       if(key==='content')document.getElementById('section-video-specs').style.display=val==='audio'?'none':'block';
       // v15: show/hide mixed qty split when environment is picked
+      // v24.30.5: legacy v17 disable-everything-when-mixed logic stripped.
+      // Now: just show/hide the splitter; Total stays editable.
+      // The v24.28.1 MutationObserver + adjustMixedQty/onMixedQtyInput handles auto-balance.
       if(key==='environment'){
         const mixedWrap=document.getElementById('mixed-qty-wrap');
-        const totalInp=document.getElementById('f-qty');
-        const totalBtns=document.querySelectorAll('.number-input button');
-        mixedWrap.style.display=val==='mixed'?'block':'none';
-        if(val==='mixed'){
-          // v17: Make total qty read-only and auto-calculated from indoor+outdoor
-          totalInp.readOnly=true;
-          totalInp.style.background='var(--surface-2)';
-          totalInp.style.color='var(--ink-muted)';
-          totalInp.style.cursor='not-allowed';
-          totalBtns.forEach(b=>{b.disabled=true;b.style.opacity='0.4';b.style.cursor='not-allowed';});
-          // Seed total = sum of current indoor + outdoor (default 0+0=0, but guard minimum 1)
-          const sum=(parseInt(document.getElementById('f-qty-indoor').value)||0)+(parseInt(document.getElementById('f-qty-outdoor').value)||0);
-          totalInp.value=sum>=1?sum:1;
-          state.form.qty=sum>=1?sum:1;
-        } else {
-          // Re-enable total qty for non-mixed modes
-          totalInp.readOnly=false;
-          totalInp.style.background='';
-          totalInp.style.color='';
-          totalInp.style.cursor='';
-          totalBtns.forEach(b=>{b.disabled=false;b.style.opacity='';b.style.cursor='';});
-          document.getElementById('f-qty-indoor').value='0';
-          document.getElementById('f-qty-outdoor').value='0';
+        if(mixedWrap) mixedWrap.style.display=val==='mixed'?'block':'none';
+        if(val!=='mixed'){
+          // Reset Indoor/Outdoor state for non-mixed modes (backend compatibility)
+          const iEl=document.getElementById('f-qty-indoor');
+          const oEl=document.getElementById('f-qty-outdoor');
+          if(iEl) iEl.value='0';
+          if(oEl) oEl.value='0';
           state.form.qtyIndoor=0;state.form.qtyOutdoor=0;
         }
       }
@@ -16514,17 +16502,17 @@ document.getElementById('f-qty').addEventListener('input',e=>{
   toggleCmsSection();  // v20: qty change may cross 25-player threshold
   if(typeof updateGuidedCmsAvailability==='function')updateGuidedCmsAvailability();  // v24.19.3
 });
-// v17: Mixed deployment auto-calc — total = indoor + outdoor
+// v24.30.5: Legacy v17 "total = indoor + outdoor" auto-calc replaced.
+// New behavior: Total stays editable as the source of truth, Indoor+Outdoor
+// auto-balance against it (handled by v24.28.1 inline `onMixedQtyInput` →
+// `adjustMixedQty` defined in window scope at bottom of file). Here we only
+// keep the state-sync for backend compatibility (writes qtyIndoor/qtyOutdoor).
 function recalcMixedTotal(){
   const indoor=parseInt(document.getElementById('f-qty-indoor').value)||0;
   const outdoor=parseInt(document.getElementById('f-qty-outdoor').value)||0;
-  const sum=indoor+outdoor;
-  const totalInp=document.getElementById('f-qty');
-  const finalTotal=sum>=1?sum:1;
-  totalInp.value=finalTotal;
-  state.form.qty=finalTotal;
   state.form.qtyIndoor=indoor;
   state.form.qtyOutdoor=outdoor;
+  // NOTE: do NOT overwrite state.form.qty or f-qty.value — Total is editable.
   toggleCmsSection();  // v20
   if(typeof updateGuidedCmsAvailability==='function')updateGuidedCmsAvailability();  // v24.19.3
 }
