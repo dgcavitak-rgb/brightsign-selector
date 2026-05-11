@@ -10415,8 +10415,9 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.34.3';  // v24.34.3 — Two changes. (1) REVERT C14 quick-fill presets per Dipenkumar's feedback ("not required"). Removed the entire "Quick start" preset bar above Section 02 (DOM block), the applyQuickFillPreset() handler, the QUICK_FILL_PRESETS const, and the CSS for .quick-fill-bar / .quick-fill-buttons / .quick-fill-btn / quickFillFlash keyframe. User can still fill the form manually as before. (2) REDRAWN pill-question icons — the v24.34.1 SVG glyphs were too sparse to read at 14px (Touch looked like a lock, SSD looked like a tiny box, etc.). Replaced with cleaner, more recognizable shapes: monitor with stand (screens), TV with corner brackets (resolution), pointing-hand (touch), HDMI plug body with pins (HDMI), lightning bolt with circuit-like base (GPIO), drive with stripe + LED (SSD), wifi waves with strong baseline (wi-fi), CPU chip with pin legs (XC OS). All icons drawn at viewBox 24×24, stroke-width 1.8, with consistent visual weight. Pairs with backend v25.15.0.
-const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.34.3 — no change vs v24.34.2.
+const FRONTEND_VERSION = '24.34.4';  // v24.34.4 — BUG FIX: Custom BOQ ("Advanced") mode was generating the WRONG CMS line item (always "CMS Cloud Subscription") regardless of user's On-Prem / Cloud selection. Root cause: `buildAdvancedBOMCard` at ~line 18799 builds a `synthForm` for `computeCMS()` that copies cmsVendor/cmsTerm/cmsInclude/qty from advancedAccessories, but does NOT pass `update`. So `computeCMS` reads `f.update` from the BASE Guided form state (which might be 'cloud' default or stale). FIX: explicitly translate `acc.cmsType` ('onprem' | 'on-prem' | 'local' → 'local'; 'cloud' | 'remote' or default → 'cloud') into synthForm.update, so computeCMS sees the right value and routes to the correct branch (On-prem = 2 lines [Subscription + Installation]; Cloud = 1 line [Cloud Subscription]). Pairs with backend v25.15.0.
+const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.34.4 — no change vs v24.34.3.
+// v24.34.3 — Remove C14 + redraw pill icons.
 // v24.34.2 — vendor logo sizing #2 + AV icon fix.
 // v24.34.1 — vendor logo sizing fix + pill-question icons.
 // v24.34.0 — C1: vendor dropdown with brand logos.
@@ -18794,13 +18795,23 @@ function buildAdvancedBOMCard(r, f){
 
   // 4. CMS lines — re-use computeCMS() with a synthetic form that has the right
   //    cmsVendor, cmsTerm, cmsInclude, and the total qty across all models.
+  // v24.34.4 BUG FIX: also derive `update` from acc.cmsType. Without this, computeCMS
+  // reads f.update from the BASE Guided form state (often 'cloud' as default) and
+  // routes to the wrong BOM branch (e.g. Cloud Subscription line when user picked On-Prem).
   const totalUnits = selections.reduce((acc2, s) => acc2 + (parseInt(s.qty,10)||0), 0);
   if(acc.cmsVendor){
+    const _explicitType = String(acc.cmsType || '').toLowerCase();
+    const _synthUpdate = (_explicitType === 'onprem' || _explicitType === 'on-prem' || _explicitType === 'local')
+      ? 'local'
+      : (_explicitType === 'cloud' || _explicitType === 'remote' || _explicitType === '')
+        ? 'cloud'
+        : 'cloud';
     const synthForm = Object.assign({}, f, {
       cmsVendor: acc.cmsVendor,
       cmsTerm:   String(acc.cmsTerm || '1'),
       cmsInclude:'yes',
-      qty:       totalUnits
+      qty:       totalUnits,
+      update:    _synthUpdate
     });
     const cms = computeCMS(synthForm);
     if(cms && Array.isArray(cms.rows)){
