@@ -8183,15 +8183,7 @@ html { scroll-behavior: smooth; }
           </div>
         </div>
 
-        <!-- Field 3: Deployment Model -->
-        <div class="field"><label class="field-label">Deployment model<span class="req">*</span></label>
-          <div class="choice-grid" data-input="update">
-            <button class="choice-card" data-v="local"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><span class="choice-card-name">On-premise (Local Network)</span><span class="choice-card-sub">On-premises LAN</span></button>
-            <button class="choice-card" data-v="cloud"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg><span class="choice-card-name">Cloud (Remote)</span><span class="choice-card-sub">BSN.cloud managed</span></button>
-          </div>
-        </div>
-
-        <!-- Field 4: Budget tier -->
+        <!-- Field 3: Budget tier (was after Deployment Model in v24.28.1; Deployment Model moved to CMS section in v24.29.0) -->
         <div class="field">
           <label class="field-label">Budget tier<span class="req">*</span></label>
           <div class="budget-head"><div><div class="budget-zone" id="budget-zone-label">Standard</div><div class="budget-zone-models" id="budget-zone-models">HD · XD series</div></div></div>
@@ -8243,11 +8235,19 @@ html { scroll-behavior: smooth; }
         </div>
       </div>
 
-      <!-- v21.2: Section 05 — CMS / Content Management System (with Yes/No toggle for ≤25 players) -->
-      <div class="form-section" id="section-cms" style="display:none;">
-        <div class="section-head"><div class="section-num">05</div><div><div class="section-title">Content Management System</div><div style="font-family:var(--sans);font-size:12px;color:var(--ink-muted);margin-top:4px;">CMS vendor and subscription term</div></div></div>
+      <!-- v24.29.0: Section 05 — CMS (Deployment Model relocated here from Section 02) -->
+      <div class="form-section" id="section-cms" data-section="05" style="display:none;">
+        <div class="section-head"><div class="section-num">05</div><div><div class="section-title">Content Management</div><div class="section-sub">How content gets to these players</div></div></div>
 
-        <!-- Optional toggle — only shown for Local + ≤25 players -->
+        <!-- v24.29.0: Deployment Model — moved here from Section 02. It's a CMS concern (where the CMS lives), not a deployment-physics concern. -->
+        <div class="field"><label class="field-label">Where will content come from?<span class="req">*</span></label>
+          <div class="choice-grid" data-input="update">
+            <button class="choice-card" data-v="local"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><span class="choice-card-name">On-premise</span><span class="choice-card-sub">CMS lives on customer's LAN</span></button>
+            <button class="choice-card" data-v="cloud"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg><span class="choice-card-name">Cloud</span><span class="choice-card-sub">CMS hosted by vendor</span></button>
+          </div>
+        </div>
+
+        <!-- Optional toggle — only shown for On-premise + ≤25 players -->
         <div class="field" id="cms-optional-wrap" style="margin-bottom:14px;display:none;">
           <label class="field-label">Include CMS for this project?<span class="req">*</span></label>
           <div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;line-height:1.5;">A CMS lets you remotely push content updates, schedule playlists, and monitor displays. <strong>If unsure, pick No</strong> — you can always add CMS later.</div>
@@ -9142,8 +9142,9 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.28.1';  // v24.28.1 — Form total turnover (Path 2). (A) DOM reorder per Dipenkumar's spec: Deployment Type → Number of Players → Playback Content → Displays → Resolution → Touch → HDMI → GPIO → SSD → Wi-Fi → CMS. Sections re-cut: Section 02 = Deployment (type + qty + budget), 03 = Content (playback only), 04 = Output specs (displays + resolution), 05 = Interactivity (touch + HDMI + GPIO), 06 = Storage & connectivity (SSD + Wi-Fi), 07 = CMS. (B) Mixed deployment auto-balance — selecting Mixed expands the card inline to reveal Indoor/Outdoor +/− steppers that auto-balance against the main qty stepper. Typing one auto-fills the other to maintain total; total stays editable. (C) Audio-only conditional hide — selecting "Audio only" fades+collapses Resolution/Displays/Touch/HDMI fields with 220ms transition (irrelevant for AU335). Validator updated to skip those fields when content=audio. (D) Creative section visuals — animated step badges (○→●), completion dots beside each section title, subtle indigo halo on the next-to-fill section. All field IDs and backend mapping UNCHANGED (recommendation engine, Excel export, draft restore all unaffected). Pairs with backend v25.15.0 (no BE changes).
-const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.28.1 — no change vs v24.28.0.
+const FRONTEND_VERSION = '24.29.0';  // v24.29.0 — Form total makeover (Direction C: Modern App style). Floating-card sections with elevated shadows + indigo accent stripes. Choice cards reimagined with bigger icons, indigo fill on selected. Pill buttons → segmented-control look with sliding indicator. Number steppers → pill-shaped with circular bounce buttons. Section badges → circular pills, turn green with check-mark on completion. Wording rewritten as questions throughout ("Where will these players live?" not "Deployment type *"). Deployment Model RELOCATED from Section 02 to Section 05 (CMS) — it's a CMS-level concern, not deployment-physics. Field IDs and backend mapping UNCHANGED — recommendation engine, draft restore, Excel export all unaffected. Pairs with backend v25.15.0 (no BE changes).
+const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.29.0 — no change vs v24.28.1.
+// v24.28.1 — Form turnover Path 2 (partial). DOM reorder per spec. Mixed deployment auto-balance splitter. Audio-only conditional hide.
 // v24.28.0 — Modern visual turnover (Option A): glass-morphism, hover lift, animated check-marks, focus glows, sub-tab underline animation.
 // v24.27.3 — Section label rename for clarity: "Content update" → "Deployment model" with card labels showing both old + new terminology in parentheses.
 // v24.27.2 — KPI tile rework on Team Analytics + My Pipeline. NEW "Case Count" tile (9th card). Hover lift + glass finish + richer colors.
