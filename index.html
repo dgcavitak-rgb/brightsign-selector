@@ -7096,6 +7096,457 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
 
 [data-theme="dark"] .v26-history-modal-foot { background: rgba(255,255,255,0.03); }
 
+
+/* ============================================================
+   v24.28.0 — MODERN VISUAL TURNOVER (Option A)
+   ============================================================
+   Pure CSS layer. Overrides earlier rules via natural cascade
+   (later rules win on equal specificity). Zero JS changes,
+   fully reversible by deleting this block.
+
+   Sections below:
+     1. Universal motion system (transition + easing tokens)
+     2. Glass-morphism layer
+     3. Choice cards (modern selection state)
+     4. Form fields (focus glow, custom steppers)
+     5. Pill buttons (Yes/No) modernization
+     6. Primary/secondary button system
+     7. KPI tile enhancements (additive to v24.27.2)
+     8. Page chrome (header, sub-tabs, notification bell)
+     9. Loading + skeleton shimmer
+    10. Dark-theme compensations
+   ============================================================ */
+
+/* ── 1. Motion tokens ────────────────────────────────────────── */
+:root {
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --motion-fast: 150ms;
+  --motion-base: 220ms;
+  --motion-slow: 360ms;
+  --glow-indigo: 0 0 0 4px rgba(79, 70, 229, 0.18);
+  --glow-indigo-strong: 0 0 0 4px rgba(79, 70, 229, 0.28), 0 8px 24px rgba(79, 70, 229, 0.20);
+  --shadow-modern-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-modern-md: 0 4px 12px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-modern-lg: 0 12px 28px rgba(15, 23, 42, 0.12), 0 4px 8px rgba(15, 23, 42, 0.06);
+  --shadow-modern-xl: 0 24px 48px rgba(15, 23, 42, 0.18), 0 8px 16px rgba(15, 23, 42, 0.08);
+}
+[data-theme="dark"] :root,
+[data-theme="dark"] {
+  --shadow-modern-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --shadow-modern-md: 0 4px 12px rgba(0, 0, 0, 0.32), 0 2px 4px rgba(0, 0, 0, 0.18);
+  --shadow-modern-lg: 0 12px 28px rgba(0, 0, 0, 0.40), 0 4px 8px rgba(0, 0, 0, 0.20);
+  --shadow-modern-xl: 0 24px 48px rgba(0, 0, 0, 0.50), 0 8px 16px rgba(0, 0, 0, 0.24);
+}
+
+/* ── 2. Glass-morphism layer (app surfaces) ─────────────────── */
+.app-header {
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  background: rgba(255, 255, 255, 0.78);
+  border-bottom: 1px solid rgba(229, 231, 235, 0.6);
+  box-shadow: var(--shadow-modern-sm);
+  transition: background var(--motion-base) var(--ease-out);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+[data-theme="dark"] .app-header {
+  background: rgba(15, 23, 42, 0.72);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Cards — glass tint + soft border */
+.card,
+.v26-chart-card,
+.v26-table-wrap {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(229, 231, 235, 0.7);
+  box-shadow: var(--shadow-modern-md);
+  transition: box-shadow var(--motion-base) var(--ease-out), border-color var(--motion-base) var(--ease-out), transform var(--motion-base) var(--ease-out);
+}
+.card:hover,
+.v26-chart-card:hover {
+  box-shadow: var(--shadow-modern-lg);
+  border-color: rgba(79, 70, 229, 0.16);
+}
+[data-theme="dark"] .card,
+[data-theme="dark"] .v26-chart-card,
+[data-theme="dark"] .v26-table-wrap {
+  background: rgba(30, 41, 59, 0.65);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ── 3. Choice cards — modern selection state ───────────────── */
+.choice-card {
+  transition: transform var(--motion-base) var(--ease-out),
+              box-shadow var(--motion-base) var(--ease-out),
+              border-color var(--motion-base) var(--ease-out),
+              background var(--motion-base) var(--ease-out) !important;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+.choice-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 0%, rgba(79, 70, 229, 0.08), transparent 60%);
+  opacity: 0;
+  transition: opacity var(--motion-base) var(--ease-out);
+  pointer-events: none;
+}
+.choice-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--shadow-modern-md) !important;
+  border-color: rgba(79, 70, 229, 0.4) !important;
+}
+.choice-card:hover::after { opacity: 1; }
+.choice-card:active {
+  transform: translateY(0) !important;
+  transition-duration: var(--motion-fast) !important;
+}
+.choice-card.selected {
+  border-color: var(--indigo, #4F46E5) !important;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.06), rgba(79, 70, 229, 0.02)) !important;
+  box-shadow: var(--glow-indigo), var(--shadow-modern-md) !important;
+}
+.choice-card.selected::after { opacity: 1; }
+/* Animated check-mark badge on selected card */
+.choice-card.selected::before {
+  content: '✓';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  background: var(--indigo, #4F46E5);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+  animation: cardCheckPop var(--motion-base) var(--ease-out);
+  z-index: 2;
+}
+@keyframes cardCheckPop {
+  0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+  60% { transform: scale(1.18) rotate(0deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* ── 4. Form fields — focus glow + custom steppers ──────────── */
+input[type="text"], input[type="email"], input[type="tel"], input[type="number"],
+input[type="date"], input[type="month"], textarea, select {
+  transition: border-color var(--motion-base) var(--ease-out),
+              box-shadow var(--motion-base) var(--ease-out),
+              background var(--motion-base) var(--ease-out);
+}
+input:focus, textarea:focus, select:focus {
+  outline: none !important;
+  border-color: var(--indigo, #4F46E5) !important;
+  box-shadow: var(--glow-indigo) !important;
+}
+
+/* Number-input stepper modernization */
+.number-input {
+  display: inline-flex;
+  align-items: stretch;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-modern-sm);
+  transition: box-shadow var(--motion-base) var(--ease-out), border-color var(--motion-base) var(--ease-out);
+}
+.number-input:hover { border-color: rgba(79, 70, 229, 0.4); box-shadow: var(--shadow-modern-md); }
+.number-input:focus-within { border-color: var(--indigo, #4F46E5); box-shadow: var(--glow-indigo); }
+.number-input button {
+  width: 38px;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink-muted, #64748B);
+  cursor: pointer;
+  transition: background var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
+}
+.number-input button:hover { background: rgba(79, 70, 229, 0.08); color: var(--indigo, #4F46E5); }
+.number-input button:active { transform: scale(0.92); background: rgba(79, 70, 229, 0.16); }
+.number-input input { border: none !important; box-shadow: none !important; text-align: center; font-weight: 700; }
+.number-input input:focus { box-shadow: none !important; }
+
+[data-theme="dark"] .number-input { background: rgba(30, 41, 59, 0.6); border-color: rgba(255, 255, 255, 0.10); }
+[data-theme="dark"] .number-input button:hover { background: rgba(99, 102, 241, 0.18); }
+
+/* ── 5. Pill buttons (Yes/No) modernization ─────────────────── */
+.pill {
+  transition: all var(--motion-base) var(--ease-out) !important;
+  position: relative;
+  overflow: hidden;
+}
+.pill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(79, 70, 229, 0.12), transparent 70%);
+  opacity: 0;
+  transition: opacity var(--motion-base) var(--ease-out);
+}
+.pill:hover { transform: translateY(-1px); box-shadow: var(--shadow-modern-sm); }
+.pill:hover::before { opacity: 1; }
+.pill:active { transform: translateY(0); transition-duration: var(--motion-fast) !important; }
+.pill.selected {
+  box-shadow: var(--glow-indigo-strong) !important;
+}
+.pill.selected::before { opacity: 1; }
+
+/* ── 6. Primary button system ───────────────────────────────── */
+.btn-primary, button.action-btn-primary, button.recommend-btn {
+  background: linear-gradient(135deg, #4F46E5, #4338CA) !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  transition: transform var(--motion-base) var(--ease-out),
+              box-shadow var(--motion-base) var(--ease-out),
+              background var(--motion-base) var(--ease-out) !important;
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary::after, button.action-btn-primary::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+  transition: left var(--motion-slow) var(--ease-out);
+}
+.btn-primary:hover, button.action-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+  background: linear-gradient(135deg, #5B52E8, #4F46E5) !important;
+}
+.btn-primary:hover::after, button.action-btn-primary:hover::after { left: 100%; }
+.btn-primary:active, button.action-btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.28), inset 0 2px 4px rgba(0, 0, 0, 0.10) !important;
+  transition-duration: var(--motion-fast) !important;
+}
+
+/* Secondary button modern treatment */
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(203, 213, 225, 0.7) !important;
+  transition: all var(--motion-base) var(--ease-out) !important;
+}
+.btn-secondary:hover {
+  background: rgba(79, 70, 229, 0.06) !important;
+  border-color: rgba(79, 70, 229, 0.4) !important;
+  color: var(--indigo, #4F46E5) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-modern-sm);
+}
+[data-theme="dark"] .btn-secondary { background: rgba(30, 41, 59, 0.7) !important; border-color: rgba(255, 255, 255, 0.10) !important; }
+[data-theme="dark"] .btn-secondary:hover { background: rgba(99, 102, 241, 0.18) !important; }
+
+/* ── 7. KPI tile enhancements (additive to v24.27.2) ────────── */
+.v26-kpi {
+  cursor: default;
+  will-change: transform;
+}
+.v26-kpi::before {
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.26) 0%, rgba(255,255,255,0.06) 38%, transparent 70%),
+    radial-gradient(ellipse at top right, rgba(255,255,255,0.12), transparent 50%) !important;
+}
+.v26-kpi:hover {
+  transform: translateY(-3px) scale(1.005);
+}
+
+/* ── 8. Page chrome — sub-tabs, notification bell ───────────── */
+/* Sub-tab animated underline */
+.v26-tab,
+.tab-btn {
+  position: relative;
+  transition: color var(--motion-base) var(--ease-out);
+}
+.v26-tab::after,
+.tab-btn::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #4F46E5, #7C3AED);
+  border-radius: 2px;
+  transform: translateX(-50%);
+  transition: width var(--motion-slow) var(--ease-out);
+}
+.v26-tab.active::after,
+.v26-tab[aria-selected="true"]::after,
+.tab-btn.active::after,
+.tab-btn[aria-selected="true"]::after { width: 100%; }
+.v26-tab:hover::after,
+.tab-btn:hover::after { width: 60%; opacity: 0.6; }
+
+/* Notification bell — subtle wiggle when count > 0 */
+@keyframes notifWiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(-8deg); }
+  50%      { transform: rotate(0deg); }
+  75%      { transform: rotate(8deg); }
+}
+.notif-bell.has-unread {
+  animation: notifWiggle var(--motion-slow) var(--ease-in-out) 2;
+}
+.notif-bell {
+  transition: transform var(--motion-base) var(--ease-out), background var(--motion-base) var(--ease-out);
+}
+.notif-bell:hover {
+  transform: scale(1.05);
+  background: rgba(79, 70, 229, 0.10);
+}
+
+/* App user avatar + buttons in topbar — clean hover */
+.app-user-avatar {
+  transition: transform var(--motion-base) var(--ease-out), box-shadow var(--motion-base) var(--ease-out);
+}
+.app-user-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18);
+}
+
+/* ── 9. Loading + skeleton shimmer ──────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton-shimmer {
+  background: linear-gradient(90deg,
+    rgba(203, 213, 225, 0.18) 0%,
+    rgba(203, 213, 225, 0.45) 50%,
+    rgba(203, 213, 225, 0.18) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: 8px;
+}
+[data-theme="dark"] .skeleton-shimmer {
+  background: linear-gradient(90deg,
+    rgba(99, 102, 241, 0.08) 0%,
+    rgba(99, 102, 241, 0.22) 50%,
+    rgba(99, 102, 241, 0.08) 100%);
+}
+
+/* Pulsing dot for "Saving…" toasts */
+@keyframes pulseDot {
+  0%, 100% { opacity: 0.4; transform: scale(0.85); }
+  50%      { opacity: 1;   transform: scale(1.1); }
+}
+.sync-status.pending::before,
+.sync-status[data-state="pending"]::before {
+  content: '●';
+  display: inline-block;
+  margin-right: 6px;
+  color: var(--indigo, #4F46E5);
+  animation: pulseDot 1.2s var(--ease-in-out) infinite;
+}
+
+/* ── 10. History table row hover + Team tab tile polish ─────── */
+.v26-table tbody tr {
+  transition: background var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out);
+}
+.v26-table tbody tr:hover {
+  background: rgba(79, 70, 229, 0.05);
+  box-shadow: inset 4px 0 0 var(--indigo, #4F46E5);
+}
+[data-theme="dark"] .v26-table tbody tr:hover {
+  background: rgba(99, 102, 241, 0.10);
+}
+
+/* History tab (legacy) — apply same polish */
+table.log-table tbody tr,
+.history-table tbody tr {
+  transition: background var(--motion-fast) var(--ease-out);
+}
+table.log-table tbody tr:hover,
+.history-table tbody tr:hover {
+  background: rgba(79, 70, 229, 0.05);
+}
+
+/* ── 11. Tab navigation modernization (.app-nav) ────────────── */
+.app-nav a, .app-nav button, .app-nav .nav-item {
+  transition: color var(--motion-base) var(--ease-out), background var(--motion-base) var(--ease-out);
+  position: relative;
+}
+.app-nav a::after, .app-nav button::after, .app-nav .nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #4F46E5, #7C3AED);
+  border-radius: 2px;
+  transform: translateX(-50%);
+  transition: width var(--motion-slow) var(--ease-out);
+}
+.app-nav .nav-item.active::after,
+.app-nav .nav-item[aria-current="page"]::after,
+.app-nav button.active::after { width: 80%; }
+
+/* ── 12. Modal/overlay glass treatment ──────────────────────── */
+.modal-overlay, .pwd-modal-overlay {
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  background: rgba(15, 23, 42, 0.55) !important;
+}
+.modal, .pwd-modal {
+  box-shadow: var(--shadow-modern-xl) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+[data-theme="dark"] .modal,
+[data-theme="dark"] .pwd-modal {
+  background: rgba(30, 41, 59, 0.92);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ── 13. Action-bar (Back/Confirm/Excel/PDF etc.) polish ────── */
+.action-bar button,
+.ab-btn {
+  transition: all var(--motion-base) var(--ease-out);
+}
+.action-bar button:hover,
+.ab-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-modern-md);
+}
+.action-bar button:active,
+.ab-btn:active {
+  transform: translateY(0);
+  transition-duration: var(--motion-fast);
+}
+
+/* ── 14. Reduce-motion respect ──────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ── 15. Smooth scroll behaviour ────────────────────────────── */
+html { scroll-behavior: smooth; }
+
 </style>
 <!-- v24.4.2: Apply saved theme BEFORE body renders (prevents flash-of-light) — 3-state light/auto/dark -->
 <script>
@@ -8576,8 +9027,9 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.27.3';  // v24.27.3 — Section label rename for clarity: "Content update" → "Deployment model" with card labels showing both old + new terminology in parentheses. Section header changes from "Content update" to "Deployment model". Card 1: "Local network (On-premise)" — sub "On-premises LAN". Card 2: "Remote / Cloud (Cloud)" — sub "BSN.cloud managed". Backend data values (`local` / `cloud`) UNCHANGED so all historical data, Excel exports, recommendation engine, validation rules continue to work. Field-name string in 3 surface spots (form-state validator, Excel export header, history-table column) updated to match. Pairs with backend v25.15.0 (no BE changes).
-const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.27.3 — no change vs v24.27.1.
+const FRONTEND_VERSION = '24.28.0';  // v24.28.0 — Modern visual turnover (Option A from creative-direction plan). Pure CSS layer injected at end of <style> block — overrides existing rules via natural cascade, zero JS changes, fully reversible by deleting one block. Adds: (1) Universal hover system — cards/buttons/KPI tiles/history rows all use unified 200ms ease transitions with lift+shadow on hover, depth on active. (2) Glass-morphism — app header, cards, chart cards, modal overlays get frosted backdrop-filter blur with semi-transparent surfaces. (3) Choice cards — animated check-mark on selection, indigo border-glow ring (4px halo), gradient overlay on selected state. (4) Form fields — focus rings 4px indigo glow with breathing pulse, custom number stepper buttons (circular, scale on hover), enhanced dropdown chevrons. (5) Pill buttons (Yes/No) — selected state gets indigo halo + subtle inner-glow. (6) Primary buttons — gradient + glow shadow + 1px active-press depth. (7) Page chrome — animated underline that slides between sub-tabs (300ms ease), subtle notification bell wiggle on count change. (8) Loading states — skeleton shimmer for charts mid-load, pulsing dots for "Saving…" toasts. Works in both light and dark themes; dark theme uses lighter overlays to compensate for darker surfaces. Pairs with backend v25.15.0 (no BE changes).
+const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.28.0 — no change vs v24.27.3.
+// v24.27.3 — Section label rename for clarity: "Content update" → "Deployment model" with card labels showing both old + new terminology in parentheses.
 // v24.27.2 — KPI tile rework on Team Analytics + My Pipeline. NEW "Case Count" tile (9th card). Hover lift + glass finish + richer colors.
 // v24.27.1 — MM1 + MM2 + MM3 + MM4 bundle. (MM1) Sales/Presales dropdown label disambiguation. (MM2) Pipeline trend chart on My Pipeline subtab. (MM3) retryPendingSync to cors. (MM4) KPI palette aligned to BS indigo/gold/cream.
 // v24.27.0 — C4 from parity audit: Quarterly + Yearly report Send-Now buttons. Super-only "📊 Reports" card in Team tab. Pairs with backend v25.14.0.
