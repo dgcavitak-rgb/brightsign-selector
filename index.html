@@ -8078,6 +8078,42 @@ html { scroll-behavior: smooth; }
   }
 }
 
+/* ════════════════════════════════════════════════════════════════════════
+   v24.31.0 — C5: Animated section transitions
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Pulse-ring on section badge when section just became complete */
+.form-section.just-completed .section-num {
+  animation: badgeCelebrationPulse 900ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes badgeCelebrationPulse {
+  0%   { box-shadow: 0 4px 12px rgba(5, 150, 105, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 0 0 0 rgba(5, 150, 105, 0.5); }
+  60%  { box-shadow: 0 4px 12px rgba(5, 150, 105, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 0 0 14px rgba(5, 150, 105, 0); }
+  100% { box-shadow: 0 4px 12px rgba(5, 150, 105, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 0 0 0 rgba(5, 150, 105, 0); }
+}
+
+/* Reveal animation for conditional fields — CMS sub-wraps, XC OS field, etc.
+   When a hidden field switches to display:block, add this class via JS for
+   a smooth fade+slide-in. */
+.field-reveal {
+  animation: fieldReveal 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes fieldReveal {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* CMS optional toggle wrap + details wrap — smoother reveal when shown */
+#cms-optional-wrap, #cms-details-wrap, #field-xc-os {
+  animation-fill-mode: backwards;
+}
+#cms-optional-wrap[style*="display: block"],
+#cms-details-wrap[style*="display: block"],
+#cms-optional-wrap[style*="display:block"],
+#cms-details-wrap[style*="display:block"] {
+  animation: fieldReveal 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 </style>
 <!-- v24.4.2: Apply saved theme BEFORE body renders (prevents flash-of-light) — 3-state light/auto/dark -->
 <script>
@@ -9602,8 +9638,9 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.30.6';  // v24.30.6 — HOTFIX for Deployment Model visibility deadlock. v24.29.0 moved Deployment Model field INTO Section 05 (CMS), but Section 05 had `style="display:none"` by default and only became visible AFTER `state.form.update` was set — creating a chicken-and-egg: user can't pick Deployment Model because the section containing it is hidden, but section won't show until they pick Deployment Model. Validator correctly fires "Please complete: Deployment model" but the field is unreachable. FIX: (1) Section 05 default display changed from `none` to visible. (2) `toggleCmsSection` updated — Section 05 is always shown; only the CMS sub-fields (vendor, term, optional toggle, billing-structure hint) inside it are conditionally shown/hidden based on `state.form.update`. Deployment Model question is now always the first visible question in Section 05. Pairs with backend v25.15.0.
-const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.30.6 — no change vs v24.30.5.
+const FRONTEND_VERSION = '24.31.0';  // v24.31.0 — C5 of Direction C polish (CAN-HAVE Phase A start). (1) Smooth scroll-to-next-section: when a section flips from incomplete → complete, page smoothly scrolls (600ms ease) to the next incomplete section, but only if it's not already visible in the viewport. Skipped if user explicitly scrolled (debounced 1.5s after manual scroll). (2) Conditional fields (CMS sub-fields, XC OS) get smooth fade+slide-down on reveal instead of snap-in. (3) Section badge gets a one-time pulse-ring glow when it flips to complete state — celebratory micro-interaction. Pairs with backend v25.15.0.
+const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.31.0 — no change vs v24.30.6.
+// v24.30.6 — Hotfix: Deployment Model always visible (Section 05 default visible).
 // v24.30.5 — Hotfix: Mixed splitter inputs editable again.
 // v24.30.4 — HOTFIX for M4 click-interaction bug.
 // v24.30.3 — M4+M5+M6+M7 of Direction C bundled.
@@ -29409,21 +29446,32 @@ async function _renderPipelineTrendBS() {
     const sections = document.querySelectorAll('.form-section[data-section]');
     let completeCount = 0;
     let totalCount = 0;
+    // v24.31.0 (C5): track which sections JUST flipped to complete this pass
+    // so we can play the celebration animation + scroll to next.
+    const justCompleted = [];
     sections.forEach(function(sec) {
       const num = sec.getAttribute('data-section');
-      // Only count sections that are visible (skip CMS section if it's display:none)
       const isVisible = sec.offsetParent !== null || sec.style.display !== 'none';
-      // Section 05 is conditionally visible — only count it if visible
       if (num === '05' && !isVisible) return;
       totalCount++;
+      const wasComplete = sec.getAttribute('data-section-complete') === 'true';
       const complete = _isSectionComplete(num);
       if (complete) {
         sec.setAttribute('data-section-complete', 'true');
         completeCount++;
+        if (!wasComplete) justCompleted.push(sec);  // flipped this pass
       } else {
         sec.removeAttribute('data-section-complete');
       }
     });
+    // v24.31.0 (C5): play celebration pulse + scroll to next incomplete
+    justCompleted.forEach(function(sec) {
+      sec.classList.add('just-completed');
+      setTimeout(function(){ sec.classList.remove('just-completed'); }, 1000);
+    });
+    if (justCompleted.length > 0) {
+      try { _scrollToNextIncompleteSection(justCompleted[justCompleted.length - 1]); } catch(_) {}
+    }
     // v24.30.2 M3: update top progress bar
     const bar = document.getElementById('guided-progress-bar');
     if (bar) {
@@ -29440,6 +29488,38 @@ async function _renderPipelineTrendBS() {
       else bar.classList.remove('is-complete');
     }
   };
+
+  // v24.31.0 (C5): debounce manual scroll detection so we don't auto-scroll
+  // while user is actively scrolling. Sets a flag that blocks auto-scroll for 1.5s.
+  let _userScrolledRecently = false;
+  let _userScrollTimer = null;
+  document.addEventListener('scroll', function() {
+    _userScrolledRecently = true;
+    clearTimeout(_userScrollTimer);
+    _userScrollTimer = setTimeout(function(){ _userScrolledRecently = false; }, 1500);
+  }, { passive: true });
+
+  function _scrollToNextIncompleteSection(fromSection) {
+    if (_userScrolledRecently) return;  // user is in control, don't yank
+    const sections = Array.from(document.querySelectorAll('.form-section[data-section]'));
+    const fromIdx = sections.indexOf(fromSection);
+    if (fromIdx === -1) return;
+    // Find next visible + incomplete section after this one
+    for (let i = fromIdx + 1; i < sections.length; i++) {
+      const sec = sections[i];
+      const isVisible = sec.offsetParent !== null || sec.style.display !== 'none';
+      if (!isVisible) continue;
+      if (sec.getAttribute('data-section-complete') === 'true') continue;
+      // Found it. Scroll only if it's not already mostly in viewport.
+      const rect = sec.getBoundingClientRect();
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      const topVisible = rect.top >= 80 && rect.top < vh * 0.4;
+      if (topVisible) return;  // already visible enough; don't move
+      const targetTop = window.scrollY + rect.top - 100;  // 100px from top of viewport (account for sticky header)
+      window.scrollTo({ top: targetTop, behavior: 'smooth' });
+      return;
+    }
+  }
   // Wire up listeners — any choice-card click, pill click, or qty input triggers a refresh
   document.addEventListener('click', function(e) {
     if (e.target.closest && (e.target.closest('.choice-card') || e.target.closest('.pill'))) {
