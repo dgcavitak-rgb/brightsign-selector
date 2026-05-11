@@ -7846,7 +7846,9 @@ html { scroll-behavior: smooth; }
     0 10px 32px rgba(15, 23, 42, 0.08),
     0 4px 12px rgba(15, 23, 42, 0.04),
     inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
-  overflow: hidden;
+  /* v24.30.4 hotfix: removed `overflow: hidden` — was creating containing block
+     that clipped focus glows on inputs near the section edge. The top stripe
+     (::before) is now clipped by border-radius alone. */
   animation: sectionFadeIn 520ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
 }
 .form-section:nth-of-type(1) { animation-delay: 0ms; }
@@ -7879,7 +7881,9 @@ html { scroll-behavior: smooth; }
   opacity: 1;
 }
 .form-section:hover {
-  transform: translateY(-3px) !important;
+  /* v24.30.4 hotfix: removed `transform: translateY(-3px)` — caused buttons inside
+     section to shift under cursor as user approached them, making clicks miss.
+     Hover shadow intensification kept for visual feedback. */
   box-shadow:
     0 20px 48px rgba(15, 23, 42, 0.12),
     0 8px 16px rgba(15, 23, 42, 0.06),
@@ -9595,8 +9599,9 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.30.3';  // v24.30.3 — M4+M5+M6+M7 of Direction C bundled. (M4) Floating cards per section: enhanced .form-section with stronger layered shadow, larger radius, indigo top-accent stripe (4px gradient bar at top edge), staggered fade-in animation on load. (M5) Segmented-control pill buttons: .pill-group now has sliding indigo indicator that physically slides between options on selection, replacing the prior individual-button selection model. Yes/No questions feel like iOS toggles. (M6) Spring-physics on choice-card selection: choice cards now use cubic-bezier spring curve (0.34, 1.56, 0.64, 1) with overshoot — card "bounces and settles" when picked instead of linear fade. Selected card's check-mark badge also uses spring bounce. (M7) Mobile audit: 44px minimum touch targets on all interactive elements, single-column collapse below 720px for all multi-col grids, sticky CTA bar at bottom of form on mobile, no horizontal scroll guarantees on form sections. Pure CSS + minimal JS. Pairs with backend v25.15.0 (no BE changes). After this: tvONE port + can-have items.
-const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.30.3 — no change vs v24.30.2.
+const FRONTEND_VERSION = '24.30.4';  // v24.30.4 — HOTFIX for M4 click-interaction bug. The .form-section:hover { transform: translateY(-3px) !important } from M4 was causing buttons INSIDE sections (especially the number-input +/− steppers and Mixed splitter steppers) to feel unresponsive — when user mouse approached a button, the parent section would lift, shifting the button up by 3px under the cursor, causing the click to miss. Also removed `overflow: hidden` from .form-section since it created a new containing block that interfered with focus rings on inputs. Hover shadow intensification kept — only the parent transform is gone. Buttons now reliably clickable. Pairs with backend v25.15.0.
+const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.30.4 — no change vs v24.30.3.
+// v24.30.3 — M4+M5+M6+M7 of Direction C bundled.
 // v24.30.2 — M3: Top-of-form sticky progress indicator.
 // v24.30.1 — M2 of Direction C: Section completion check-marks.
 // v24.30.0 — M1 of Direction C: 11 form field labels rewritten as questions across Sections 02/03/04. Section sub-titles enriched.
