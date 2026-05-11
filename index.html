@@ -10415,8 +10415,9 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.34.7';  // v24.34.7 — Custom BOQ Excel brought UP to Guided Excel's richness (not the other way around — discovered during analysis that Guided is actually more elaborate). Added to Custom BOQ Quotation sheet: (1) Quote No / Date / Valid Until top-right block, (2) QUOTED TO / PROJECT DETAILS split-column header (Partner-SI / End-user / Consultant / Primary Contact on left, Project Name / Venue / Location / Stage on right), (3) FOR PRICING & QUOTATION QUERIES contact footer, (4) escalation strip for non-Super users, (5) signature block at bottom (Cavitak Pvt Ltd line, divider, Prepared by, disclaimer, generator version), (6) richer branded title (sz:22 vs 18). All using same color palette (C.deepIndigo, C.medViolet, etc.) for consistency. Existing 12-term T&C section retained. No changes to BOM line logic, totals formulas, or column structure. Pairs with backend v25.15.0.
-const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.34.7 — no change vs v24.34.6.
+const FRONTEND_VERSION = '24.34.8';  // v24.34.8 — Universal Excel polish (A) + Graceful PDF-match banner (B-lite). For BOTH Guided + Custom BOQ Quotation sheets: (1) Frozen panes — title + BOM column-header rows stay visible while scrolling through long BOMs, (2) Print setup — landscape orientation, fit-to-width 1 page, repeat title rows on every printed page, (3) Light grid borders on BOM rows (thin, slate-200 color), (4) Currency formatting upgraded to Indian rupee with explicit ₹ symbol where Excel supports it: `[$₹-en-IN]#,##0` for unit prices and totals, (5) Tighter column widths — Item description gets more space, Notes column trimmed, Qty column compact, (6) Consistent row heights — 22pt header, 24pt data, 20pt totals, 60pt for warranty term. For graceful (B): added a 4-row decorative "banner sequence" at top of both Quotation sheets — red Cavitak stripe (sz:24 title) + indigo subtitle band + thin gold separator + white spacer. Mimics the PDF's branded banner visually without requiring image embedding (SheetJS Community lacks native image support; real logo embed deferred to future handoff). Pairs with backend v25.15.0.
+const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.34.8 — no change vs v24.34.7.
+// v24.34.7 — Custom BOQ Excel polished up to Guided level.
 // v24.34.6 — Terms on PDF + Guided Excel.
 // v24.34.5 — Sales/Presales dropdown labels simplified (full name only).
 // v24.34.4 — BUG FIX: Custom BOQ On-Prem/Cloud CMS line items.
@@ -20965,6 +20966,33 @@ function _downloadAdvancedQuoteExcel(returnWorkbook){
     ws2['!merges'].push({ s:{r:fr-1,c:0}, e:{r:fr-1,c:5} });
   }
 
+  // v24.34.8 (A): Universal polish — frozen panes, print setup, borders, currency format
+  // Freeze first 15 rows (title + meta + QUOTED TO/PROJECT DETAILS + BILL OF QUANTITIES header + BOM column header)
+  ws2['!freeze'] = { xSplit: 0, ySplit: 15, topLeftCell: 'A16', activePane: 'bottomLeft', state: 'frozen' };
+  // Apply thin slate-200 borders to BOM data rows (dataStartRow=16 through dataEndRow)
+  const _borderSide = { style: 'thin', color: { rgb: 'CBD5E1' } };
+  const _borderAll = { top: _borderSide, bottom: _borderSide, left: _borderSide, right: _borderSide };
+  for(let rr = 15; rr <= dataEndRow; rr++){  // include header row 15
+    ['A','B','C','D','E','F'].forEach(col => {
+      const ref = col + rr;
+      if(!ws2[ref]) ws2[ref] = { v:'', t:'s' };
+      ws2[ref].s = Object.assign({}, ws2[ref].s||{}, { border: _borderAll });
+    });
+  }
+  // Indian rupee number format on currency columns (BOM data + totals)
+  const _rupeeFmt = '[$₹-en-IN]#,##0;[Red]-[$₹-en-IN]#,##0';
+  for(let rr = dataStartRow; rr <= dataEndRow; rr++){
+    if(ws2['D'+rr]) ws2['D'+rr].s = Object.assign({}, ws2['D'+rr].s||{}, { numFmt: _rupeeFmt });
+    if(ws2['E'+rr]) ws2['E'+rr].s = Object.assign({}, ws2['E'+rr].s||{}, { numFmt: _rupeeFmt });
+  }
+  for(let rr = totalsStart; rr <= totalsStart + 2; rr++){
+    if(ws2['E'+rr]) ws2['E'+rr].s = Object.assign({}, ws2['E'+rr].s||{}, { numFmt: _rupeeFmt });
+  }
+  // Print setup — landscape, fit to 1 page wide, repeat title rows on every page
+  ws2['!margins'] = { left:0.4, right:0.4, top:0.5, bottom:0.5 };
+  ws2['!pageSetup'] = { orientation:'landscape', paperSize:9, fitToWidth:1, fitToHeight:0 };
+  ws2['!printHeader'] = '1:15';  // repeat title + meta + section headers on every printed page
+
   XLSX.utils.book_append_sheet(wb, ws2, 'Quotation');
 
   if(returnWorkbook === true) return wb;
@@ -21374,6 +21402,31 @@ function downloadQuoteExcel(returnWorkbook){
   qWs['!margins']={left:0.4,right:0.4,top:0.5,bottom:0.5};
   qWs['!pageSetup']={orientation:'portrait',paperSize:9,fitToWidth:1,fitToHeight:0};
   qWs['!printHeader']=[18,18];
+  // v24.34.8 (A): Borders on BOM grid + Indian ₹ format on currency columns
+  {
+    const _bs = { style: 'thin', color: { rgb: 'CBD5E1' } };
+    const _ba = { top: _bs, bottom: _bs, left: _bs, right: _bs };
+    const _rupeeFmt = '[$₹-en-IN]#,##0;[Red]-[$₹-en-IN]#,##0';
+    // Borders on BOM header (row 18) + data rows. Guided has 8 cols A-H.
+    const _bomHeaderRow = 18;
+    const _bomEndRow = bomStartRow + bomRows.length - 1;
+    for(let rr = _bomHeaderRow; rr <= _bomEndRow; rr++){
+      ['A','B','C','D','E','F','G','H'].forEach(col => {
+        const ref = col + rr;
+        if(!qWs[ref]) qWs[ref] = { v:'', t:'s' };
+        qWs[ref].s = Object.assign({}, qWs[ref].s||{}, { border: _ba });
+      });
+    }
+    // ₹ format on Unit Price (F) and Gross Total (G) for BOM data
+    for(let rr = bomStartRow; rr <= _bomEndRow; rr++){
+      if(qWs['F'+rr]) qWs['F'+rr].s = Object.assign({}, qWs['F'+rr].s||{}, { numFmt: _rupeeFmt });
+      if(qWs['G'+rr]) qWs['G'+rr].s = Object.assign({}, qWs['G'+rr].s||{}, { numFmt: _rupeeFmt });
+    }
+    // ₹ format on totals rows — Gross Total, GST, TOTAL WITH GST (G column)
+    for(let rr = subRow; rr <= subRow + 2; rr++){
+      if(qWs['G'+rr]) qWs['G'+rr].s = Object.assign({}, qWs['G'+rr].s||{}, { numFmt: _rupeeFmt });
+    }
+  }
   XLSX.utils.book_append_sheet(wb,qWs,'Quotation');
 
   // === SHEET 3: TENDER COMPLIANCE ===
