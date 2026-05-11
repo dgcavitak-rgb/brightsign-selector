@@ -1129,6 +1129,16 @@ button{font-family:var(--sans);}
   margin-top:1px;
 }
 .app-user{display:flex;align-items:center;gap:14px;}
+/* v24.26.27 (Beauty-3): topbar children explicitly 36px tall so notif bell, avatar,
+   and buttons (👤 My Profile, Sign out) align on the same baseline. Without this,
+   raw <button> elements rendered at browser-default ~32-38px depending on font
+   metrics, making the row look slightly mishmashed. */
+.app-user > button {
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
 .app-user-info{text-align:right;}
 .app-user-name{
   font-family:var(--sans);
@@ -4993,9 +5003,13 @@ html[data-theme="dark"] .pwd-field input{
 }
 .pwd-toggle-btn{
   position:absolute;
-  top:50%;
+  /* v24.26.27 (Beauty-3): use top:0+bottom:0 + auto-margin for true centering
+     instead of 50% + translateY which is sensitive to button height + input
+     padding mismatch. Eye glyph now sits dead-center regardless of font metrics. */
+  top:0;
+  bottom:0;
   right:6px;
-  transform:translateY(-50%);
+  margin:auto 0;
   width:32px;
   height:32px;
   display:flex;
@@ -6459,14 +6473,19 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
 .v26-kpi-label { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; opacity: 0.92; }
 .v26-kpi-value { font-size: 28px; font-weight: 800; line-height: 1.1; }
 .v26-kpi-sub { font-size: 11px; opacity: 0.85; margin-top: 2px; }
-.v26-kpi-blue { background: linear-gradient(135deg, #3B82F6, #2563EB); }
-.v26-kpi-green { background: linear-gradient(135deg, #10B981, #059669); }
-.v26-kpi-purple { background: linear-gradient(135deg, #8B5CF6, #7C3AED); }
-.v26-kpi-indigo { background: linear-gradient(135deg, #6366F1, #4F46E5); }
-.v26-kpi-orange { background: linear-gradient(135deg, #F59E0B, #D97706); }
-.v26-kpi-amber { background: linear-gradient(135deg, #F97316, #EA580C); }
-.v26-kpi-teal { background: linear-gradient(135deg, #14B8A6, #0D9488); }
-.v26-kpi-cyan { background: linear-gradient(135deg, #06B6D4, #0891B2); }
+/* v24.27.1 (MM4, BS Beauty-1): KPI tile palette aligned to BS indigo/gold brand.
+   Was 8 Bootstrap-default gradients (identical to tvONE pre-Beauty-1 which we
+   already toned down to the tvONE forest/gold/slate palette in v25.62). Now BS
+   uses its own indigo + gold + slate variants. Visual hierarchy preserved:
+   green=positive (Won), amber=time-pressure (Days to Close), indigo=primary. */
+.v26-kpi-blue   { background: linear-gradient(135deg, #4338CA, #3730A3); }  /* deep indigo — primary KPI */
+.v26-kpi-green  { background: linear-gradient(135deg, #047857, #065F46); }  /* deep green — positive */
+.v26-kpi-purple { background: linear-gradient(135deg, #5B21B6, #4C1D95); }  /* royal purple — neutral metric */
+.v26-kpi-indigo { background: linear-gradient(135deg, #4F46E5, #3730A3); }  /* indigo — BS brand primary */
+.v26-kpi-orange { background: linear-gradient(135deg, #B08D28, #8B6914); }  /* gold-deep */
+.v26-kpi-amber  { background: linear-gradient(135deg, #B45309, #92400E); }  /* warm amber — caution */
+.v26-kpi-teal   { background: linear-gradient(135deg, #475569, #334155); }  /* slate-gray — secondary */
+.v26-kpi-cyan   { background: linear-gradient(135deg, #6B7280, #4B5563); }  /* neutral steel — tertiary */
 
 /* To-do sections (My Pipeline) */
 .v26-todo-wrap {
@@ -7179,6 +7198,7 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
         </div>
       </div>
       <div class="app-user-avatar" id="user-avatar">?</div>
+      <button onclick="openMyProfileEditorBS()" title="Edit my profile (title, email, phone)" style="padding:6px 12px;">👤 My Profile</button>
       <button onclick="handleLogout()">Sign out</button>
     </div>
   </div>
@@ -7934,6 +7954,19 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
         </div>
       </div>
 
+      <!-- v24.27.1 (MM2): Pipeline trend chart — last 26 weeks of snapshots.
+           Empty state shown when fewer than 4 snapshots exist (snapshots are
+           written weekly Sun 23:00 IST by backend cron). Parity with tvONE C2. -->
+      <div class="v26-table-wrap" style="margin-top:16px;">
+        <div class="v26-table-head">
+          <span style="font-weight:700;">📈 Pipeline trend</span>
+          <span class="v26-table-counter" id="v26-pipeline-trend-meta-bs">— weeks</span>
+        </div>
+        <div id="v26-pipeline-trend-card-bs" style="padding:16px;min-height:260px;">
+          <div style="padding:32px 24px;text-align:center;color:var(--ink-muted);font-size:13px;font-style:italic;">Loading pipeline trend…</div>
+        </div>
+      </div>
+
       <!-- My deals table -->
       <div class="v26-table-wrap">
         <div class="v26-table-head">
@@ -8127,6 +8160,18 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
     </div>
     <!-- v24.11 Cycle 2c — Super profile polished header (rendered only when state.user.isSuper) -->
     <div id="bs-c2c-super-header" style="display:none;"></div>
+    <!-- v24.27.0 (C4): Super-only Reports card — Send quarterly/yearly review emails on demand -->
+    <div id="bs-reports-card" style="display:none; margin-top:20px;">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:8px;">📊 Reports <span style="font-weight:500;font-size:11px;color:var(--ink-subtle);margin-left:8px;text-transform:uppercase;letter-spacing:0.06em;">Super only</span></div>
+        <div style="font-size:12px;color:var(--ink-subtle);margin-bottom:14px;">Send a quarterly or annual review email to the team. Auto-cron also fires on the 1st of each quarter (00:30 IST) + April 1 (FY rollover) — these buttons are for ad-hoc sends.</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn-primary" onclick="sendQuarterlyNowBS()" id="btnSendQuarterlyBS">📅 Send Q-review now</button>
+          <button class="btn-primary" onclick="sendYearlyNowBS()" id="btnSendYearlyBS" style="background:#7C3AED;">📆 Send Annual review now</button>
+          <span id="bs-reports-status" style="margin-left:auto;align-self:center;font-size:12px;color:var(--ink-subtle);"></span>
+        </div>
+      </div>
+    </div>
     <div id="team-content"><!-- Rendered by renderTeamTab() --></div>
   </div>
 </div>
@@ -8493,8 +8538,12 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.26.25';  // v24.26.25 — Backend version-check + mismatch banner (Session 1). Polls new `version_check` action on login + rehydrate. If backend < EXPECTED_BACKEND_MIN OR frontend < expectedFrontendMin returned by server → renders dismissible yellow .data-quality-banner inside #page-app + logs one row to Errors tab via existing error_log_append (errorCode='VERSION_MISMATCH'). Banner messages: "backend too old → ask Super to redeploy" vs "frontend too old → hard-refresh". Dismiss persisted in sessionStorage (key bs-version-banner-dismissed). version_check failure: console warn only, no banner, no log (silent on flaky network). Pairs with backend v25.13.1.
-const EXPECTED_BACKEND_MIN = '25.13.1';  // v24.26.25 — Minimum backend semver this frontend expects. Backends below this trigger the yellow mismatch banner.
+const FRONTEND_VERSION = '24.27.1';  // v24.27.1 — MM1 + MM2 + MM3 + MM4 bundle. (MM1) Sales/Presales dropdown label disambiguation matching tvONE v25.66 — format `fullName · Role` with ⚠ flag when fullName is blank. (MM2) Pipeline trend chart on My Pipeline subtab — ECharts line chart, 26 weeks Open + Weighted value series, pulls from new pipeline_snapshots_list endpoint (backend v25.15.0). Mirrors tvONE C2. (MM3) retryPendingSync at ~line 18541 switched from mode:'no-cors' to mode:'cors' — submission retries now detect server-side failure instead of unconditionally marking success. The 4s verifyPendingSync safety net stays as defense-in-depth. (MM4) BS Beauty-1 polish — v26 dashboard KPI tiles aligned to BS indigo/gold/cream palette (was 8 Bootstrap-rainbow gradients identical to tvONE pre-Beauty-1). Pairs with backend v25.15.0; both must deploy together.
+const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.27.1 — bumped to require pipeline_snapshots_list route.
+// v24.27.0 — C4 from parity audit: Quarterly + Yearly report Send-Now buttons. Super-only "📊 Reports" card in Team tab. Pairs with backend v25.14.0.
+// v24.26.27 — Beauty-3 polish (pure CSS, zero JS/DOM): (1) Topbar (.app-user) — raw <button>s explicitly height:36px to align with .notif-bell and .app-user-avatar. (2) Password show/hide toggle (.pwd-toggle-btn) — anchoring switched from `top:50% + translateY(-50%)` to `top:0 + bottom:0 + margin:auto 0`.
+// v24.26.26 — M3 from parity audit: Self-service profile editor. tvONE users have always been able to edit their own title/email/phone (v26.7); BS users had to ask Super. Now: 👤 My Profile button between user avatar and Sign out in the topbar opens a modal where any user can edit their own professionalTitle / email / phone.
+// v24.26.25 — Backend version-check + mismatch banner (Session 1). Polls new `version_check` action on login + rehydrate. If backend < EXPECTED_BACKEND_MIN OR frontend < expectedFrontendMin returned by server → renders dismissible yellow .data-quality-banner inside #page-app + logs one row to Errors tab via existing error_log_append (errorCode='VERSION_MISMATCH').
 // v24.26.23 — STAGE ANALYTICS REDESIGN. Horizontal bars per stage, % of Lead. Replaces v26.21's busy from→to row format.
 // v24.26.22 — TWO VISUAL UPGRADES. Region card: stacked horizontal bar showing ₹ pipeline distribution. Outcome scorecard: radial progress ring replacing flat % text.
 // v24.26.21 — STAGE ANALYTICS SPLIT into dedicated card. Funnel legend reverted to count + ₹ only. New Stage analytics card shows from→to conversion %.
@@ -10235,11 +10284,25 @@ function _populateSalesPresalesDropdowns(){
     return r === 'presales' || u.isSuper === true;
   });
 
-  // v24.20.1: Clean label — name only, no role suffix, no parentheses.
+  // v24.27.1 (MM1): label includes role to disambiguate same-first-name users
+  // (e.g. Sales Ranjith Kumar vs Presales Ranjith SR). When fullName is blank
+  // in the Users sheet, surface a visible ⚠ warning so Super knows to fix.
   // Selected value still uses loginName (lowercased) for backend storage.
   const buildOpt = function(u){
-    const label = u.fullName || u.loginName;
-    return '<option value="' + escapeHtml(String(u.loginName).toLowerCase()) + '">' +
+    const role = String(u.role || '').trim();
+    const roleStr = role ? ' · ' + role : '';
+    const fullName = String(u.fullName || '').trim();
+    const loginName = String(u.loginName || '').trim();
+    let label, isWarn = false;
+    if (fullName) {
+      label = fullName + roleStr;
+    } else {
+      label = '⚠ (' + loginName + ')' + roleStr;
+      isWarn = true;
+    }
+    const styleAttr = isWarn ? ' style="color:#B45309;"' : '';
+    const titleAttr = isWarn ? ' title="fullName is missing for &quot;' + escapeHtml(loginName) + '&quot; — Super should fill the Users sheet cell."' : '';
+    return '<option value="' + escapeHtml(loginName.toLowerCase()) + '"' + styleAttr + titleAttr + '>' +
            escapeHtml(label) + '</option>';
   };
   salesSel.innerHTML = '<option value="">Select sales owner…</option>' + salesEligible.map(buildOpt).join('');
@@ -12314,6 +12377,158 @@ async function saveProfileGate(){
     saveBtn.textContent = 'Save & Continue';
   }
 }
+
+/* =====================================================================
+   v24.26.26 (M3) — Self-service My Profile editor (BS)
+   =====================================================================
+   Voluntary edit (vs the forced Profile Gate which fires on first login if
+   fields are missing). Any user can update their own professionalTitle /
+   email / phone via a small modal opened from the topbar 👤 button.
+
+   Backend was already capable: users_update accepts self-edit semantics
+   when targetLoginName === requesterLoginName, and BS BE strips role/active
+   /fullName from self-edits (line ~1062: "Self-users can only edit
+   email/phone/professionalTitle"). So we use the SAME action — no new BE
+   route needed.
+   ===================================================================== */
+function openMyProfileEditorBS() {
+  if (!state || !state.user) {
+    alert('Sign in first.');
+    return;
+  }
+  const u = state.user;
+  let m = document.getElementById('myprofile-modal-bs');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = 'myprofile-modal-bs';
+    m.className = 'pwd-modal-overlay';
+    m.innerHTML = ''
+      + '<div class="pwd-modal" style="max-width:480px;">'
+      +   '<div class="pwd-modal-title">👤 My Profile</div>'
+      +   '<div class="pwd-modal-subtitle" style="margin-bottom:14px;">Update your partner-facing details. Your name and role can only be changed by Super.</div>'
+      +   '<div style="display:flex;flex-direction:column;gap:14px;">'
+      +     '<div>'
+      +       '<label style="font-size:11px;color:var(--ink-subtle);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;">Full name</label>'
+      +       '<input type="text" id="myprof-fullname-bs" readonly disabled style="width:100%;margin-top:4px;padding:9px 11px;border:1px solid var(--border-soft,#E5E7EB);border-radius:6px;background:#F8FAFC;color:var(--ink-muted,#64748B);font-size:14px;">'
+      +     '</div>'
+      +     '<div>'
+      +       '<label style="font-size:11px;color:var(--ink-subtle);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;">Professional title</label>'
+      +       '<input type="text" id="myprof-title-bs" placeholder="e.g., Account Manager, Solutions Architect" maxlength="80" style="width:100%;margin-top:4px;padding:9px 11px;border:1px solid var(--border-strong,#CBD5E1);border-radius:6px;font-size:14px;">'
+      +     '</div>'
+      +     '<div>'
+      +       '<label style="font-size:11px;color:var(--ink-subtle);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;">Email</label>'
+      +       '<input type="email" id="myprof-email-bs" placeholder="name@cavitak.com" style="width:100%;margin-top:4px;padding:9px 11px;border:1px solid var(--border-strong,#CBD5E1);border-radius:6px;font-size:14px;">'
+      +     '</div>'
+      +     '<div>'
+      +       '<label style="font-size:11px;color:var(--ink-subtle);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;">Phone</label>'
+      +       '<input type="tel" id="myprof-phone-bs" placeholder="+91 98765 43210" style="width:100%;margin-top:4px;padding:9px 11px;border:1px solid var(--border-strong,#CBD5E1);border-radius:6px;font-size:14px;">'
+      +     '</div>'
+      +   '</div>'
+      +   '<div id="myprofile-error-bs" style="display:none;margin-top:12px;padding:10px 12px;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:6px;color:#B91C1C;font-size:13px;"></div>'
+      +   '<div id="myprofile-status-bs" style="display:none;margin-top:12px;padding:10px 12px;background:#ECFDF5;border:1px solid #6EE7B7;border-radius:6px;color:#065F46;font-size:13px;"></div>'
+      +   '<div class="pwd-modal-actions" style="margin-top:18px;display:flex;justify-content:flex-end;gap:10px;">'
+      +     '<button class="btn-secondary" onclick="closeMyProfileEditorBS()">Close</button>'
+      +     '<button class="btn-primary" id="myprofile-save-btn-bs" onclick="saveMyProfileBS()" style="background:var(--indigo,#4F46E5);color:#fff;border:none;padding:10px 22px;font-size:14px;font-weight:600;border-radius:6px;cursor:pointer;">Save changes</button>'
+      +   '</div>'
+      + '</div>';
+    document.body.appendChild(m);
+  }
+  // Pre-fill from state.user every time so subsequent opens reflect any edits
+  document.getElementById('myprof-fullname-bs').value = String(u.fullName || u.loginName || '');
+  document.getElementById('myprof-title-bs').value   = String(u.professionalTitle || '');
+  document.getElementById('myprof-email-bs').value   = String(u.email || '');
+  document.getElementById('myprof-phone-bs').value   = String(u.phone || '');
+  const errEl = document.getElementById('myprofile-error-bs');
+  if (errEl) errEl.style.display = 'none';
+  const okEl = document.getElementById('myprofile-status-bs');
+  if (okEl) okEl.style.display = 'none';
+  m.style.display = 'flex';
+  setTimeout(function() {
+    const t = document.getElementById('myprof-title-bs');
+    if (t) t.focus();
+  }, 80);
+}
+
+function closeMyProfileEditorBS() {
+  const m = document.getElementById('myprofile-modal-bs');
+  if (m) m.style.display = 'none';
+}
+
+async function saveMyProfileBS() {
+  if (!state || !state.user) return;
+  const errEl = document.getElementById('myprofile-error-bs');
+  const okEl = document.getElementById('myprofile-status-bs');
+  const saveBtn = document.getElementById('myprofile-save-btn-bs');
+  errEl.style.display = 'none';
+  okEl.style.display = 'none';
+
+  const title = String(document.getElementById('myprof-title-bs').value || '').trim();
+  const email = String(document.getElementById('myprof-email-bs').value || '').trim();
+  const phoneRaw = String(document.getElementById('myprof-phone-bs').value || '').trim();
+  const phoneDigits = phoneRaw.replace(/\D/g, '');
+
+  // Validation — match the forced Profile Gate's rules
+  if (title.length < 2) {
+    errEl.textContent = 'Professional title is required (min 2 characters).';
+    errEl.style.display = 'block';
+    document.getElementById('myprof-title-bs').focus();
+    return;
+  }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errEl.textContent = 'Valid email is required (e.g. name@cavitak.com).';
+    errEl.style.display = 'block';
+    document.getElementById('myprof-email-bs').focus();
+    return;
+  }
+  if (phoneDigits.length < 10) {
+    errEl.textContent = 'Phone is required (min 10 digits).';
+    errEl.style.display = 'block';
+    document.getElementById('myprof-phone-bs').focus();
+    return;
+  }
+
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving…';
+  try {
+    const pwHash = await getCurrentAuthHash();
+    const resp = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'users_update',
+        requesterLoginName: state.user.loginName,
+        requesterPasswordHash: pwHash,
+        targetLoginName: state.user.loginName,
+        professionalTitle: title,
+        email: email,
+        phone: phoneRaw
+      })
+    });
+    const data = await resp.json();
+    if (data.status !== 'ok') {
+      errEl.textContent = data.message || 'Update failed';
+      errEl.style.display = 'block';
+      return;
+    }
+    // Mirror updates into state.user so subsequent UI reflects the change without re-login
+    state.user.professionalTitle = title;
+    state.user.email = email;
+    state.user.phone = phoneRaw;
+    okEl.textContent = '✓ Profile updated';
+    okEl.style.display = 'block';
+    // Auto-close after a short delay so the user sees confirmation
+    setTimeout(function() { closeMyProfileEditorBS(); }, 1200);
+  } catch (err) {
+    console.error('[saveMyProfileBS]', err);
+    errEl.textContent = 'Network error — please try again';
+    errEl.style.display = 'block';
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save changes';
+  }
+}
+
 
 function _applyPostLoginUI(){
   const u = state.user;
@@ -18356,11 +18571,22 @@ async function retryPendingSync(manualTrigger){
         requesterLoginName: reqLogin,
         requesterPasswordHash: pwHash
       });
-      await fetch(WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(postPayload)});
+      // v24.27.1 (MM3): switched from mode:'no-cors' to mode:'cors' so retry can
+      // detect server-side failure instead of unconditionally marking success.
+      // The 4s verifyPendingSync below stays as defense-in-depth (catches the
+      // tail case where the response was received but UI state got out of sync).
+      const _resp = await fetch(WEBHOOK_URL,{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(postPayload)});
+      let _retryData = null;
+      try { _retryData = await _resp.json(); } catch (_) { /* tolerate missing JSON */ }
       // Update attempt count
       item.attempts=(item.attempts||0)+1;
       item.lastAttempt=Date.now();
-      successCount++;
+      if (_retryData && _retryData.ok === false) {
+        item.lastError = String(_retryData.error || 'server rejected');
+        failCount++;
+      } else {
+        successCount++;
+      }
     }catch(e){
       item.attempts=(item.attempts||0)+1;
       item.lastAttempt=Date.now();
@@ -22118,6 +22344,11 @@ window.showTab=function(which){
  * ============================================================================ */
 window.renderSuperProfileHeader_c2c = function(){
   const host = document.getElementById('bs-c2c-super-header');
+  // v24.27.0 (C4): Reports card visibility — show only for Super users
+  const reportsCard = document.getElementById('bs-reports-card');
+  if (reportsCard) {
+    reportsCard.style.display = (state.user && state.user.isSuper) ? 'block' : 'none';
+  }
   if(!host) return;
   if(!state.user || !state.user.isSuper){ host.style.display='none'; host.innerHTML=''; return; }
 
@@ -26366,6 +26597,10 @@ if(document.readyState==='loading'){
 
     // Deals table
     _renderMyTable(mine);
+
+    // v24.27.1 (MM2): Pipeline trend chart — pulls last 26 weeks of snapshots.
+    // Fire-and-forget; no need to block the rest of the render.
+    try { _renderPipelineTrendBS(); } catch(err) { console.warn('[BS pipeline-trend]', err); }
   }
 
   function _renderTodoSection(bodyId, countId, deals){
@@ -27625,6 +27860,256 @@ if(document.readyState==='loading'){
     };
   }
 })();
+
+
+/* =====================================================================
+   v24.27.0 (C4) — Send Quarterly / Yearly review email handlers
+   =====================================================================
+   Super-only. Backend computes the period (default = last completed
+   quarter / fiscal year) and sends the email to all active users with
+   valid email addresses, CC'd to dipen.g@cavitak.com.
+   ===================================================================== */
+async function sendQuarterlyNowBS() {
+  if (!state || !state.user || !state.user.isSuper) {
+    alert('Send Q-review is Super-only.');
+    return;
+  }
+  if (!confirm('Send the quarterly review email to all active team members now?\n\nDefault period: the most recently completed fiscal quarter.\nCC: dipen.g@cavitak.com')) return;
+  const status = document.getElementById('bs-reports-status');
+  const btn = document.getElementById('btnSendQuarterlyBS');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  if (status) { status.textContent = 'Sending…'; status.style.color = 'var(--ink-subtle)'; }
+  try {
+    const pwHash = await getCurrentAuthHash();
+    const resp = await fetch(WEBHOOK_URL, {
+      method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'send_quarterly_now',
+        requesterLoginName: state.user.loginName,
+        requesterPasswordHash: pwHash
+      })
+    });
+    const data = await resp.json();
+    if (data.status === 'ok') {
+      const d = data.detail || {};
+      if (status) {
+        status.textContent = '✓ Sent to ' + (d.recipients || '?') + ' recipient' + (d.recipients === 1 ? '' : 's') + ' · Q' + (d.quarter || '?');
+        status.style.color = '#059669';
+      }
+    } else {
+      if (status) { status.textContent = '✗ ' + (data.message || 'failed'); status.style.color = '#DC2626'; }
+    }
+  } catch (err) {
+    console.error('[sendQuarterlyNowBS]', err);
+    if (status) { status.textContent = '✗ Network error'; status.style.color = '#DC2626'; }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📅 Send Q-review now'; }
+    setTimeout(function() { if (status) status.textContent = ''; }, 8000);
+  }
+}
+
+async function sendYearlyNowBS() {
+  if (!state || !state.user || !state.user.isSuper) {
+    alert('Send Annual review is Super-only.');
+    return;
+  }
+  if (!confirm('Send the ANNUAL review email to all active team members now?\n\nDefault period: the most recently completed fiscal year.\nCC: dipen.g@cavitak.com')) return;
+  const status = document.getElementById('bs-reports-status');
+  const btn = document.getElementById('btnSendYearlyBS');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  if (status) { status.textContent = 'Sending…'; status.style.color = 'var(--ink-subtle)'; }
+  try {
+    const pwHash = await getCurrentAuthHash();
+    const resp = await fetch(WEBHOOK_URL, {
+      method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'send_yearly_now',
+        requesterLoginName: state.user.loginName,
+        requesterPasswordHash: pwHash
+      })
+    });
+    const data = await resp.json();
+    if (data.status === 'ok') {
+      const d = data.detail || {};
+      if (status) {
+        status.textContent = '✓ Sent to ' + (d.recipients || '?') + ' recipient' + (d.recipients === 1 ? '' : 's') + ' · FY' + (d.fiscalYear || '?');
+        status.style.color = '#059669';
+      }
+    } else {
+      if (status) { status.textContent = '✗ ' + (data.message || 'failed'); status.style.color = '#DC2626'; }
+    }
+  } catch (err) {
+    console.error('[sendYearlyNowBS]', err);
+    if (status) { status.textContent = '✗ Network error'; status.style.color = '#DC2626'; }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📆 Send Annual review now'; }
+    setTimeout(function() { if (status) status.textContent = ''; }, 8000);
+  }
+}
+
+
+/* =====================================================================
+   v24.27.1 (MM2) — Pipeline trend chart (ECharts line, 26 weeks)
+   =====================================================================
+   Port from tvONE v25.65. Renders on My Pipeline subtab below the to-do
+   sections. Pulls last 26 weeks of pipeline snapshots from the BS backend
+   (pipeline_snapshots_list). If fewer than 4 snapshots exist, shows an
+   explanatory empty state.
+
+   BS-specific differences vs tvONE:
+   - WEBHOOK_URL (not WEB_APP_URL)
+   - state.user.loginName (not currentUser.username)
+   - getCurrentAuthHash() (async, not _authHash global)
+   - requesterLoginName / requesterPasswordHash body field names (snake-ish)
+   - BS indigo accent (#4F46E5) instead of tvONE gold
+   ===================================================================== */
+let _trendChartInstBS = null;
+let _trendCacheBS = { ts: 0, data: null };
+
+async function _renderPipelineTrendBS() {
+  const card = document.getElementById('v26-pipeline-trend-card-bs');
+  const meta = document.getElementById('v26-pipeline-trend-meta-bs');
+  if (!card) return;
+
+  // 60-sec cache
+  let snaps = null;
+  if ((Date.now() - _trendCacheBS.ts) < 60000 && _trendCacheBS.data) {
+    snaps = _trendCacheBS.data;
+  } else {
+    if (!WEBHOOK_URL || !state || !state.user) {
+      card.innerHTML = '<div style="padding:32px 24px;text-align:center;color:var(--ink-muted);font-size:13px;font-style:italic;">Sign in required to load trend.</div>';
+      return;
+    }
+    try {
+      const pwHash = await getCurrentAuthHash();
+      const resp = await fetch(WEBHOOK_URL, {
+        method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          action: 'pipeline_snapshots_list',
+          weeks: 26,
+          requesterLoginName: state.user.loginName,
+          requesterPasswordHash: pwHash
+        })
+      });
+      const data = await resp.json();
+      if (data.status !== 'ok') {
+        card.innerHTML = '<div style="padding:32px 24px;text-align:center;color:var(--ink-muted);font-size:13px;"><strong style="display:block;color:var(--ink);margin-bottom:4px;">Couldn\'t load trend</strong>' + escapeHtml(data.message || 'unknown') + '</div>';
+        return;
+      }
+      snaps = data.snapshots || [];
+      _trendCacheBS = { ts: Date.now(), data: snaps };
+    } catch (err) {
+      console.error('[_renderPipelineTrendBS]', err);
+      card.innerHTML = '<div style="padding:32px 24px;text-align:center;color:var(--ink-muted);font-size:13px;"><strong style="display:block;color:var(--ink);margin-bottom:4px;">Couldn\'t load trend</strong>Network error — try again later.</div>';
+      return;
+    }
+  }
+
+  if (meta) meta.textContent = snaps.length + ' week' + (snaps.length === 1 ? '' : 's');
+
+  // Need at least 4 snapshots for a meaningful trend.
+  if (snaps.length < 4) {
+    card.innerHTML = ''
+      + '<div style="padding:32px 24px;text-align:center;color:var(--ink-muted);font-size:13px;line-height:1.55;font-style:italic;">'
+      +   '<strong style="display:block;font-style:normal;font-weight:600;color:var(--ink);margin-bottom:4px;font-size:14px;">Trend chart needs at least 4 weeks of data</strong>'
+      +   'Snapshots are auto-captured every Sunday at 23:00 IST. '
+      +   'You have ' + snaps.length + ' snapshot' + (snaps.length === 1 ? '' : 's') + ' so far. '
+      +   'Once 4+ weeks accumulate, the trend will render here.'
+      +   '<div style="font-size:11px;margin-top:10px;opacity:0.7;">Super: to trigger an immediate test snapshot, run <code style="background:rgba(79,70,229,0.10);padding:1px 5px;border-radius:3px;font-family:JetBrains Mono,monospace;">_writePipelineSnapshotBS()</code> in Apps Script.</div>'
+      + '</div>';
+    return;
+  }
+
+  card.innerHTML = '<div id="v26-pipeline-trend-host-bs" style="width:100%;height:280px;"></div>';
+  const host = document.getElementById('v26-pipeline-trend-host-bs');
+  if (!host || typeof echarts === 'undefined') {
+    card.innerHTML = '<div style="padding:32px;text-align:center;color:var(--ink-muted);">Chart library unavailable — reload page to retry.</div>';
+    return;
+  }
+
+  if (_trendChartInstBS) { try { _trendChartInstBS.dispose(); } catch (_) {} _trendChartInstBS = null; }
+  _trendChartInstBS = echarts.init(host, null, { renderer: 'svg' });
+
+  const xLabels = snaps.map(function(s) { return String(s.weekISO || ''); });
+  const openSeries = snaps.map(function(s) { return Math.round((s.openValueINR || 0) / 100000) / 10; });
+  const weightedSeries = snaps.map(function(s) { return Math.round((s.weightedPipelineINR || 0) / 100000) / 10; });
+  const fmtCr = function(v) { return '₹' + v.toFixed(1) + ' Cr'; };
+
+  _trendChartInstBS.setOption({
+    grid: { top: 32, right: 24, bottom: 36, left: 56 },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(15,23,42,0.92)',
+      borderColor: 'rgba(79,70,229,0.4)',
+      textStyle: { color: '#fff', fontSize: 12 },
+      formatter: function(params) {
+        if (!params || !params.length) return '';
+        const week = params[0].axisValue;
+        let html = '<div style="font-weight:600;margin-bottom:4px;">' + week + '</div>';
+        params.forEach(function(p) {
+          html += '<div style="font-size:11px;"><span style="color:' + p.color + ';">●</span> ' + p.seriesName + ': <b>' + fmtCr(p.value) + '</b></div>';
+        });
+        return html;
+      }
+    },
+    legend: {
+      data: ['Open Pipeline', 'Weighted Pipeline'],
+      top: 4,
+      textStyle: { color: '#64748B', fontSize: 11 }
+    },
+    xAxis: {
+      type: 'category',
+      data: xLabels,
+      axisLabel: { fontSize: 10, color: '#64748B', interval: Math.max(0, Math.floor(snaps.length / 8)) },
+      axisLine: { lineStyle: { color: 'rgba(100,116,139,0.3)' } }
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: { fontSize: 10, color: '#64748B', formatter: function(v) { return '₹' + v + 'Cr'; } },
+      axisLine: { show: false },
+      splitLine: { lineStyle: { color: 'rgba(100,116,139,0.15)' } }
+    },
+    series: [
+      {
+        name: 'Open Pipeline',
+        type: 'line',
+        data: openSeries,
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 6,
+        lineStyle: { width: 2.5, color: '#4F46E5' },
+        itemStyle: { color: '#4F46E5' },
+        areaStyle: {
+          color: {
+            type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(79,70,229,0.25)' },
+              { offset: 1, color: 'rgba(79,70,229,0.02)' }
+            ]
+          }
+        }
+      },
+      {
+        name: 'Weighted Pipeline',
+        type: 'line',
+        data: weightedSeries,
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 5,
+        lineStyle: { width: 2, color: '#10B981', type: 'dashed' },
+        itemStyle: { color: '#10B981' }
+      }
+    ]
+  });
+
+  if (!window._trendChartResizeWiredBS) {
+    window._trendChartResizeWiredBS = true;
+    window.addEventListener('resize', function() {
+      if (_trendChartInstBS) { try { _trendChartInstBS.resize(); } catch (_) {} }
+    });
+  }
+}
+
 </script>
 </body>
 </html>
