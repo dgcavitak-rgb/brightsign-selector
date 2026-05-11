@@ -10415,8 +10415,9 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.34.8';  // v24.34.8 — Universal Excel polish (A) + Graceful PDF-match banner (B-lite). For BOTH Guided + Custom BOQ Quotation sheets: (1) Frozen panes — title + BOM column-header rows stay visible while scrolling through long BOMs, (2) Print setup — landscape orientation, fit-to-width 1 page, repeat title rows on every printed page, (3) Light grid borders on BOM rows (thin, slate-200 color), (4) Currency formatting upgraded to Indian rupee with explicit ₹ symbol where Excel supports it: `[$₹-en-IN]#,##0` for unit prices and totals, (5) Tighter column widths — Item description gets more space, Notes column trimmed, Qty column compact, (6) Consistent row heights — 22pt header, 24pt data, 20pt totals, 60pt for warranty term. For graceful (B): added a 4-row decorative "banner sequence" at top of both Quotation sheets — red Cavitak stripe (sz:24 title) + indigo subtitle band + thin gold separator + white spacer. Mimics the PDF's branded banner visually without requiring image embedding (SheetJS Community lacks native image support; real logo embed deferred to future handoff). Pairs with backend v25.15.0.
-const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.34.8 — no change vs v24.34.7.
+const FRONTEND_VERSION = '24.34.9';  // v24.34.9 — Excel cell-treatment fixes based on forensic examination of production-emitted file (BS-04092253.xlsx). Seven bugs/issues fixed: (1) Custom BOQ Summary sheet had WRONG hardcoded terms ("30 days from PO", "50% advance, balance on delivery") that contradicted Quotation sheet's correct terms — both sheets now consistent ("4-5 weeks", "100% advance along with PO"). (2) "Expected Close" field displayed raw ISO string like "2026-04-30T18:30:00.000Z" — added _fmtCloseMonth() helper that handles ISO datetime, YYYY-MM, and free-text inputs, formatting as "30 Apr 2026" or "Apr 2026". Applied to Custom BOQ Summary, Custom BOQ Quotation Stage row, and Guided Quotation Stage row. (3) Custom BOQ Summary missing Venue + Sales Person + Presales Person fields that Quotation sheet has — added all three. (4) Notes column F widened from 36 → 56 chars to display long CMS descriptions without truncation. (5) Wrap-text + vertical-top alignment applied to Item + Notes columns on Custom BOQ BOM data rows so multi-line content displays properly. (6) Row heights set to auto-fit (28pt minimum) for BOM data rows so wrapped text stays visible. (7) BOM column header text updated from "Unit Price (INR)" → "Unit Price (₹)" and "Line Total (INR)" → "Line Total (₹)" — header text accurate to currency symbol. Logo image embedding (B) deferred to fresh chat (requires library swap to xlsx-image or exceljs). Pairs with backend v25.15.0.
+const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.34.9 — no change vs v24.34.8.
+// v24.34.8 — Universal Excel polish (frozen panes + borders + ₹ format + print setup).
 // v24.34.7 — Custom BOQ Excel polished up to Guided level.
 // v24.34.6 — Terms on PDF + Guided Excel.
 // v24.34.5 — Sales/Presales dropdown labels simplified (full name only).
@@ -20687,6 +20688,28 @@ function confirmSelection(){
  * picked player + SSD/Wi-Fi/CMS lines). Reuses the same Cavitak palette as
  * the Guided exporter so deliverables look consistent.
  * ========================================================================== */
+// v24.34.9: Global ISO/YYYY-MM/free-text date formatter for Expected Close field — usable from
+// Custom BOQ Summary, both Quotation sheets' Stage row, and PDF generator.
+function _fmtCloseMonth(raw){
+  if(!raw) return '—';
+  const s = String(raw).trim();
+  const isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(isoMatch){
+    try {
+      const d = new Date(s);
+      if(!isNaN(d.getTime())){
+        return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+      }
+    } catch(_){}
+  }
+  const ymMatch = s.match(/^(\d{4})-(\d{2})$/);
+  if(ymMatch){
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[parseInt(ymMatch[2],10)-1] + ' ' + ymMatch[1];
+  }
+  return s;
+}
+
 function _downloadAdvancedQuoteExcel(returnWorkbook){
   const f = state.form;
   const r = state.result;
@@ -20710,6 +20733,17 @@ function _downloadAdvancedQuoteExcel(returnWorkbook){
   }
 
   // === SHEET 1: SUMMARY ===
+  // v24.34.9: helper — user-name resolver (date formatter is now global, see top of file)
+  function _resolveUserName(loginName){
+    if(!loginName) return '—';
+    try {
+      const list = Array.isArray(window._allUsers) ? window._allUsers : [];
+      const u = list.find(function(x){ return String(x.loginName||'').toLowerCase() === String(loginName).toLowerCase(); });
+      if(u && u.fullName) return u.fullName + ' (' + loginName + ')';
+    } catch(_){}
+    return loginName;
+  }
+
   const sAoa = [];
   sAoa.push(['CAVITAK MARKETING — BrightSign Custom BOQ']);
   sAoa.push(['Authorized BrightSign distributor · India · Signage that performs, effortlessly']);
@@ -20720,9 +20754,12 @@ function _downloadAdvancedQuoteExcel(returnWorkbook){
   sAoa.push(['End-user',f.enduser||'—']);
   sAoa.push(['Partner / SI',f.partner||'—']);
   sAoa.push(['Consultant',f.consultant||'—']);
+  sAoa.push(['Venue',f.venue||'—']);
   sAoa.push(['Location',f.city||'—']);
+  sAoa.push(['Sales Person',_resolveUserName(f.salesPerson)]);
+  sAoa.push(['Presales Person',_resolveUserName(f.presalesPerson)]);
   sAoa.push(['Stage',f.stage||'—']);
-  sAoa.push(['Expected Close',f.closemonth||'—']);
+  sAoa.push(['Expected Close',_fmtCloseMonth(f.closemonth)]);
   sAoa.push([]);
   sAoa.push(['CUSTOM BOQ']);
   sAoa.push(['Reference', refId]);
@@ -20742,8 +20779,11 @@ function _downloadAdvancedQuoteExcel(returnWorkbook){
   if(parseInt(acc.wd105Qty,10)>0) sAoa.push(['Wi-Fi (WD105)', acc.wd105Qty + ' modules']);
   sAoa.push([]);
   sAoa.push(['Quote valid until', validUntil]);
-  sAoa.push(['Lead time', '30 days from PO']);
-  sAoa.push(['Payment terms', '50% advance, balance on delivery']);
+  // v24.34.9: Corrected terms — were "30 days from PO" + "50% advance, balance on delivery"
+  // which contradicted the Quotation sheet's "4-5 weeks" + "100% advance" terms (set in v24.34.6).
+  // Both sheets now consistent.
+  sAoa.push(['Lead time', 'Standard 4–5 weeks from receipt of confirmed PO & advance payment']);
+  sAoa.push(['Payment terms', '100% advance along with purchase order']);
 
   const ws1 = XLSX.utils.aoa_to_sheet(sAoa);
   ws1['!cols'] = [ {wch:32}, {wch:48} ];
@@ -20757,10 +20797,15 @@ function _downloadAdvancedQuoteExcel(returnWorkbook){
   css(ws1,'A2',{ font:{name:'Calibri',sz:10,italic:true,color:{rgb:C.white}}, fill:{fgColor:{rgb:C.deepIndigo}}, alignment:{horizontal:'center'} });
   css(ws1,'A3',{ font:{name:'Calibri',sz:11,italic:true,color:{rgb:C.indigoText}}, fill:{fgColor:{rgb:C.medViolet}}, alignment:{horizontal:'center'} });
   ws1['!rows'] = [{hpt:32},{hpt:18},{hpt:22}];
-  // Section headers (PROJECT CONTEXT, CUSTOM BOQ, ACCESSORIES) — bold + label fill — shifted +1 row
-  ['A5','A14','A21'].forEach(ref => {
-    css(ws1,ref,{ font:{name:'Calibri',sz:11,bold:true,color:{rgb:C.medViolet}}, fill:{fgColor:{rgb:C.labelBg}} });
-  });
+  // v24.34.9: Section headers detected dynamically (positions shifted after adding Venue/Sales/Presales fields)
+  // Pattern: any all-caps single-column row that isn't the title row (A1)
+  for(let i = 3; i < sAoa.length; i++){
+    const row = sAoa[i];
+    const rowNum = i + 1;
+    if(row && row.length === 1 && typeof row[0] === 'string' && row[0] === row[0].toUpperCase() && row[0].length > 3 && row[0] !== '—'){
+      css(ws1,'A'+rowNum,{ font:{name:'Calibri',sz:11,bold:true,color:{rgb:C.medViolet}}, fill:{fgColor:{rgb:C.labelBg}} });
+    }
+  }
   XLSX.utils.book_append_sheet(wb, ws1, 'Summary');
 
   // === SHEET 2: QUOTATION ===
@@ -20784,7 +20829,7 @@ function _downloadAdvancedQuoteExcel(returnWorkbook){
   qAoa.push([]);
   // BOM header
   qAoa.push(['BILL OF QUANTITIES','','','','','']);
-  qAoa.push(['#','Item','Qty','Unit Price (INR)','Line Total (INR)','Notes']);
+  qAoa.push(['#','Item','Qty','Unit Price (₹)','Line Total (₹)','Notes']);
   let lineNo = 0;
   rows.forEach(row => {
     lineNo++;
@@ -20842,7 +20887,7 @@ function _downloadAdvancedQuoteExcel(returnWorkbook){
   })();
 
   const ws2 = XLSX.utils.aoa_to_sheet(qAoa);
-  ws2['!cols'] = [ {wch:18}, {wch:42}, {wch:8}, {wch:18}, {wch:18}, {wch:36} ];
+  ws2['!cols'] = [ {wch:18}, {wch:48}, {wch:8}, {wch:18}, {wch:18}, {wch:56} ];  // v24.34.9: Item 42→48, Notes 36→56 for long CMS descriptions
   ws2['!merges'] = [
     // Title rows (A1:F1, A2:F2)
     { s:{r:0,c:0}, e:{r:0,c:5} },
@@ -20905,19 +20950,28 @@ function _downloadAdvancedQuoteExcel(returnWorkbook){
   const dataStartRow = 16;
   const dataEndRow = dataStartRow + rows.length - 1;
   for(let rr = dataStartRow; rr <= dataEndRow; rr++){
-    css(ws2,'A'+rr,{ font:{name:'Calibri',sz:10}, alignment:{horizontal:'center',vertical:'center'} });
-    css(ws2,'B'+rr,{ font:{name:'Calibri',sz:10}, alignment:{horizontal:'left',vertical:'center',wrapText:true,indent:1} });
-    css(ws2,'C'+rr,{ font:{name:'Calibri',sz:10}, alignment:{horizontal:'center',vertical:'center'} });
-    css(ws2,'D'+rr,{ font:{name:'Calibri',sz:10}, numFmt:'#,##0', alignment:{horizontal:'right',vertical:'center'} });
-    css(ws2,'E'+rr,{ font:{name:'Calibri',sz:10,bold:true}, numFmt:'#,##0', alignment:{horizontal:'right',vertical:'center'} });
-    css(ws2,'F'+rr,{ font:{name:'Calibri',sz:9,color:{rgb:C.inkSoft}}, alignment:{horizontal:'left',vertical:'center',wrapText:true,indent:1} });
+    // v24.34.9: vertical:'top' on cells with wrap-text so multi-line content displays from top
+    css(ws2,'A'+rr,{ font:{name:'Calibri',sz:10}, alignment:{horizontal:'center',vertical:'top'} });
+    css(ws2,'B'+rr,{ font:{name:'Calibri',sz:10}, alignment:{horizontal:'left',vertical:'top',wrapText:true,indent:1} });
+    css(ws2,'C'+rr,{ font:{name:'Calibri',sz:10}, alignment:{horizontal:'center',vertical:'top'} });
+    css(ws2,'D'+rr,{ font:{name:'Calibri',sz:10}, numFmt:'#,##0', alignment:{horizontal:'right',vertical:'top'} });
+    css(ws2,'E'+rr,{ font:{name:'Calibri',sz:10,bold:true}, numFmt:'#,##0', alignment:{horizontal:'right',vertical:'top'} });
+    css(ws2,'F'+rr,{ font:{name:'Calibri',sz:9,color:{rgb:C.inkSoft}}, alignment:{horizontal:'left',vertical:'top',wrapText:true,indent:1} });
     // Banded rows
     if((rr - dataStartRow) % 2 === 1){
       ['A','B','C','D','E','F'].forEach(col => {
         css(ws2, col+rr, { fill:{fgColor:{rgb:'F8FAFC'}} });
       });
     }
-    ws2['!rows'].push({hpt:24});
+    // v24.34.9: dynamic row height — estimate from longest text in row vs column width.
+    // Item col B width 48 chars, Notes col F width 56 chars. Roughly 1 line per 50 chars.
+    const itemLen = String((rows[rr - dataStartRow] && rows[rr - dataStartRow].name) || '').length;
+    const noteLen = String((rows[rr - dataStartRow] && rows[rr - dataStartRow].note) || '').length;
+    const itemLines = Math.max(1, Math.ceil(itemLen / 48));
+    const noteLines = Math.max(1, Math.ceil(noteLen / 56));
+    const maxLines = Math.max(itemLines, noteLines, 1);
+    const rowHeight = Math.max(28, maxLines * 18);  // 18pt per text line, 28pt minimum
+    ws2['!rows'].push({hpt: rowHeight});
   }
 
   // Totals rows — 3 rows starting after blank
@@ -21075,7 +21129,7 @@ function downloadQuoteExcel(returnWorkbook){
   sAoa.push(['Sales Person',_resolveUserName(f.salesPerson)]);
   sAoa.push(['Presales Person',_resolveUserName(f.presalesPerson)]);
   sAoa.push(['Stage',f.stage||'—']);
-  sAoa.push(['Expected Close',f.closemonth||'—']);
+  sAoa.push(['Expected Close',_fmtCloseMonth(f.closemonth)]);
   sAoa.push([]);
   sAoa.push(['RECOMMENDED PLAYER']);
   sAoa.push(['Model',m.id]);
@@ -23384,7 +23438,7 @@ async function exportQuotePDF(returnDoc){
     ['Venue',          f.venue || f.venueType || '—'],
     ['Location',       (f.city || '—') + (f.state ? ', ' + f.state : '')],
     ['Stage',          f.stage || '—'],
-    ['Expected Close', f.closemonth || '—']
+    ['Expected Close', _fmtCloseMonth(f.closemonth)]
   ];
   const ctxRowsHtml = (col) => col.map(([k,v]) =>
     `<tr><td style="padding:3px 8px 3px 0;color:#64748B;font-size:11px;font-weight:600;width:90px;vertical-align:top;">${escapeHtml(k)}</td>` +
