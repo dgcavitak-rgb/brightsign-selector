@@ -8693,7 +8693,10 @@ html { scroll-behavior: smooth; }
       </div>
 
       <!-- v24.29.0: Section 05 — CMS (Deployment Model relocated here from Section 02) -->
-      <div class="form-section" id="section-cms" data-section="05" style="display:none;">
+      <!-- v24.30.6: Section 05 default visible (was display:none) because Deployment
+           Model is the first field here and is REQUIRED. Sub-fields inside still
+           conditionally show via toggleCmsSection() based on state.form.update. -->
+      <div class="form-section" id="section-cms" data-section="05">
         <div class="section-head"><div class="section-num">05</div><div><div class="section-title">Content Management</div><div class="section-sub">How content reaches these players and which CMS to use</div></div></div>
 
         <!-- v24.29.0: Deployment Model — moved here from Section 02. It's a CMS concern (where the CMS lives), not a deployment-physics concern. -->
@@ -9599,8 +9602,9 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.30.5';  // v24.30.5 — HOTFIX for Mixed deployment input lockout. Legacy v17 handler (around line 16460) was: (1) making the main f-qty input readOnly when Mixed is selected, (2) disabling ALL `.number-input button` elements page-wide (unscoped selector, hit Indoor + Outdoor + every other stepper), (3) zeroing Indoor/Outdoor to 0,0 — which conflicted with my v24.28.1 Mixed splitter logic where Total stays editable and Indoor/Outdoor auto-balance. v17 logic now stripped: Mixed simply reveals the splitter, Total stays editable, and my MutationObserver-driven auto-balance handler takes over from there. Old `state.form.qtyIndoor/qtyOutdoor` state still cleared on non-mixed for backend compatibility. Pairs with backend v25.15.0.
-const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.30.5 — no change vs v24.30.4.
+const FRONTEND_VERSION = '24.30.6';  // v24.30.6 — HOTFIX for Deployment Model visibility deadlock. v24.29.0 moved Deployment Model field INTO Section 05 (CMS), but Section 05 had `style="display:none"` by default and only became visible AFTER `state.form.update` was set — creating a chicken-and-egg: user can't pick Deployment Model because the section containing it is hidden, but section won't show until they pick Deployment Model. Validator correctly fires "Please complete: Deployment model" but the field is unreachable. FIX: (1) Section 05 default display changed from `none` to visible. (2) `toggleCmsSection` updated — Section 05 is always shown; only the CMS sub-fields (vendor, term, optional toggle, billing-structure hint) inside it are conditionally shown/hidden based on `state.form.update`. Deployment Model question is now always the first visible question in Section 05. Pairs with backend v25.15.0.
+const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.30.6 — no change vs v24.30.5.
+// v24.30.5 — Hotfix: Mixed splitter inputs editable again.
 // v24.30.4 — HOTFIX for M4 click-interaction bug.
 // v24.30.3 — M4+M5+M6+M7 of Direction C bundled.
 // v24.30.2 — M3: Top-of-form sticky progress indicator.
@@ -16691,10 +16695,16 @@ function toggleCmsSection(){
   const isLocalSmall=(f.update==='local' && qty<=25);
   const isLocalLarge=(f.update==='local' && qty>25);
   const isCloud=(f.update==='cloud');
-  // v21.2: Section 05 now appears for EVERY Update choice; Yes/No toggle only for Local ≤25
-  const shouldShowSection=!!f.update;
-  section.style.display=shouldShowSection?'block':'none';
-  if(!shouldShowSection)return;
+  // v24.30.6: Section 05 is ALWAYS visible (Deployment Model lives here and is required).
+  // Only the CMS sub-fields (vendor/term/toggle) inside conditionally show based on f.update.
+  section.style.display='block';
+  const hasUpdate=!!f.update;
+  // CMS sub-fields hidden until Deployment Model is picked
+  if(!hasUpdate){
+    if(optionalWrap)optionalWrap.style.display='none';
+    if(detailsWrap)detailsWrap.style.display='none';
+    return;
+  }
 
   if(isLocalSmall){
     // Optional — show Yes/No toggle. Details visible only if user picked Yes
