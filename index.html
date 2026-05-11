@@ -7547,6 +7547,93 @@ table.log-table tbody tr:hover,
 /* ── 15. Smooth scroll behaviour ────────────────────────────── */
 html { scroll-behavior: smooth; }
 
+/* ── 16. v24.28.1: Mixed splitter + Audio-only hide + form section sub-text ── */
+.mixed-splitter {
+  margin-top: 14px;
+  padding: 18px;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.06), rgba(124, 58, 237, 0.02));
+  border: 1px solid rgba(79, 70, 229, 0.22);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  animation: mixedExpand 320ms var(--ease-out);
+}
+[data-theme="dark"] .mixed-splitter {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.06));
+  border-color: rgba(99, 102, 241, 0.28);
+}
+@keyframes mixedExpand {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.mixed-splitter-label {
+  font-family: var(--sans, system-ui, sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--indigo, #4F46E5);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mixed-splitter-label svg { opacity: 0.7; }
+.mixed-splitter-label #mixed-total-label { font-weight: 800; }
+.mixed-splitter-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.mixed-splitter-sublabel {
+  font-size: 11px;
+  color: var(--ink-muted, #64748B);
+  margin-bottom: 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.mixed-splitter-status {
+  font-size: 12px;
+  margin-top: 10px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: inline-block;
+}
+.mixed-splitter-status.is-ok {
+  background: rgba(5, 150, 105, 0.10);
+  color: #059669;
+}
+.mixed-splitter-status.is-bad {
+  background: rgba(220, 38, 38, 0.10);
+  color: #DC2626;
+}
+[data-theme="dark"] .mixed-splitter-status.is-ok { background: rgba(16, 185, 129, 0.18); color: #6EE7B7; }
+[data-theme="dark"] .mixed-splitter-status.is-bad { background: rgba(220, 38, 38, 0.20); color: #FCA5A5; }
+
+/* Audio-only conditional hide — fade + collapse fields irrelevant for AU335 */
+.hide-when-audio {
+  transition: opacity 220ms ease, max-height 220ms ease, margin 220ms ease, padding 220ms ease;
+  overflow: hidden;
+  max-height: 200px;
+}
+.audio-mode .hide-when-audio {
+  opacity: 0;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: none;
+}
+
+/* Section sub-text under each section title */
+.form-section .section-sub {
+  font-size: 13px;
+  color: var(--ink-muted, #64748B);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  margin-top: 2px;
+}
+
 </style>
 <!-- v24.4.2: Apply saved theme BEFORE body renders (prevents flash-of-light) — 3-state light/auto/dark -->
 <script>
@@ -8057,27 +8144,54 @@ html { scroll-behavior: smooth; }
         </div>
       </div>
 
-      <!-- v24.12.5: Sections 02–05 (Deployment, Content, Video, CMS) are GUIDED-only.
-           Hidden by default; setSelectionMode() reveals when user picks Guided. -->
+      <!-- v24.28.1: Sections 02–05 (Deployment, Content, Output, CMS) GUIDED-only. -->
       <div id="guided-only" style="display:none;">
-      <div class="form-section">
-        <div class="section-head"><div class="section-num">02</div><div><div class="section-title">Deployment & budget</div></div></div>
-        <div class="spec-grid three-col" style="margin-bottom:24px;">
-          <div class="field"><label class="field-label">Number of BrightSign players<span class="req">*</span></label><div class="number-input"><button onclick="adjustQty(-1)">−</button><input type="number" id="f-qty" value="1" min="1" max="10000"><button onclick="adjustQty(1)">+</button></div><div id="mixed-qty-wrap" style="display:none;margin-top:10px;padding:12px 14px;background:var(--surface-2);border-radius:10px;border:1px dashed var(--border-strong);"><div style="font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:8px;">Split for mixed deployment</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px;">Indoor qty</div><input type="number" id="f-qty-indoor" value="0" min="0" max="10000" style="width:100%;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;"></div><div><div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px;">Outdoor qty</div><input type="number" id="f-qty-outdoor" value="0" min="0" max="10000" style="width:100%;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--mono);font-size:14px;font-weight:600;text-align:center;"></div></div><div style="font-size:11px;color:var(--ink-subtle);margin-top:6px;">Total above auto-updates to Indoor + Outdoor</div></div></div>
-          <div class="field"><label class="field-label">Deployment type<span class="req">*</span></label>
-            <div class="choice-grid" data-input="environment">
-              <button class="choice-card" data-v="indoor"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="choice-card-name">Indoor</span><span class="choice-card-sub">Standard signage</span></button>
-              <button class="choice-card" data-v="outdoor"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg><span class="choice-card-name">Outdoor</span><span class="choice-card-sub">Enclosure required</span></button>
-              <button class="choice-card" data-v="mixed"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="17" cy="17" r="3"/><line x1="17" y1="14" x2="17" y2="15"/><line x1="17" y1="19" x2="17" y2="20"/></svg><span class="choice-card-name">Mixed</span><span class="choice-card-sub">Indoor + Outdoor</span></button>
-            </div>
-          </div>
-          <div class="field"><label class="field-label">Deployment model<span class="req">*</span></label>
-            <div class="choice-grid" data-input="update">
-              <button class="choice-card" data-v="local"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><span class="choice-card-name">On-premise (Local Network)</span><span class="choice-card-sub">On-premises LAN</span></button>
-              <button class="choice-card" data-v="cloud"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg><span class="choice-card-name">Cloud (Remote)</span><span class="choice-card-sub">BSN.cloud managed</span></button>
-            </div>
+
+      <!-- ═══ SECTION 02 — Deployment (reordered) ═══════════════════════════════ -->
+      <div class="form-section" data-section="02">
+        <div class="section-head"><div class="section-num">02</div><div><div class="section-title">Deployment</div><div class="section-sub">Where the players go and how many</div></div></div>
+
+        <!-- Field 1: Deployment Type FIRST -->
+        <div class="field"><label class="field-label">Deployment type<span class="req">*</span></label>
+          <div class="choice-grid" data-input="environment">
+            <button class="choice-card" data-v="indoor"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="choice-card-name">Indoor</span><span class="choice-card-sub">Standard signage</span></button>
+            <button class="choice-card" data-v="outdoor"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg><span class="choice-card-name">Outdoor</span><span class="choice-card-sub">Enclosure required</span></button>
+            <button class="choice-card" data-v="mixed"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="17" cy="17" r="3"/><line x1="17" y1="14" x2="17" y2="15"/><line x1="17" y1="19" x2="17" y2="20"/></svg><span class="choice-card-name">Mixed</span><span class="choice-card-sub">Indoor + Outdoor</span></button>
           </div>
         </div>
+
+        <!-- Field 2: Number of Players (with Mixed splitter expansion) -->
+        <div class="field"><label class="field-label">Number of BrightSign players<span class="req">*</span></label>
+          <div class="number-input"><button onclick="adjustQty(-1)" type="button">−</button><input type="number" id="f-qty" value="1" min="1" max="10000"><button onclick="adjustQty(1)" type="button">+</button></div>
+          <!-- v24.28.1: Mixed splitter — revealed when Mixed deployment selected. Auto-balance Indoor+Outdoor to Total. -->
+          <div id="mixed-qty-wrap" class="mixed-splitter" style="display:none;">
+            <div class="mixed-splitter-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Mixed deployment — split your <span id="mixed-total-label">1</span> players
+            </div>
+            <div class="mixed-splitter-grid">
+              <div>
+                <div class="mixed-splitter-sublabel">🏠 Indoor qty</div>
+                <div class="number-input"><button onclick="adjustMixedQty('indoor', -1)" type="button">−</button><input type="number" id="f-qty-indoor" value="1" min="0" max="10000" oninput="onMixedQtyInput('indoor')"><button onclick="adjustMixedQty('indoor', 1)" type="button">+</button></div>
+              </div>
+              <div>
+                <div class="mixed-splitter-sublabel">☀ Outdoor qty</div>
+                <div class="number-input"><button onclick="adjustMixedQty('outdoor', -1)" type="button">−</button><input type="number" id="f-qty-outdoor" value="0" min="0" max="10000" oninput="onMixedQtyInput('outdoor')"><button onclick="adjustMixedQty('outdoor', 1)" type="button">+</button></div>
+              </div>
+            </div>
+            <div id="mixed-balance-status" class="mixed-splitter-status is-ok">✓ adds up to 1</div>
+          </div>
+        </div>
+
+        <!-- Field 3: Deployment Model -->
+        <div class="field"><label class="field-label">Deployment model<span class="req">*</span></label>
+          <div class="choice-grid" data-input="update">
+            <button class="choice-card" data-v="local"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><span class="choice-card-name">On-premise (Local Network)</span><span class="choice-card-sub">On-premises LAN</span></button>
+            <button class="choice-card" data-v="cloud"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg><span class="choice-card-name">Cloud (Remote)</span><span class="choice-card-sub">BSN.cloud managed</span></button>
+          </div>
+        </div>
+
+        <!-- Field 4: Budget tier -->
         <div class="field">
           <label class="field-label">Budget tier<span class="req">*</span></label>
           <div class="budget-head"><div><div class="budget-zone" id="budget-zone-label">Standard</div><div class="budget-zone-models" id="budget-zone-models">HD · XD series</div></div></div>
@@ -8094,9 +8208,10 @@ html { scroll-behavior: smooth; }
         </div>
       </div>
 
-      <div class="form-section">
-        <div class="section-head"><div class="section-num">03</div><div><div class="section-title">Content type</div></div></div>
-        <div class="field" style="margin-bottom:0;"><label class="field-label">Playback content<span class="req">*</span></label>
+      <!-- ═══ SECTION 03 — Playback Content ═════════════════════════════════════ -->
+      <div class="form-section" data-section="03">
+        <div class="section-head"><div class="section-num">03</div><div><div class="section-title">Playback content</div><div class="section-sub">What the player will play</div></div></div>
+        <div class="field" style="margin-bottom:0;"><label class="field-label">Content type<span class="req">*</span></label>
           <div class="choice-grid" data-input="content">
             <button class="choice-card" data-v="video"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><span class="choice-card-name">Video only</span><span class="choice-card-sub">Silent signage</span></button>
             <button class="choice-card" data-v="av"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><span class="choice-card-name">Audio + Video</span><span class="choice-card-sub">Full AV signage</span></button>
@@ -8105,17 +8220,17 @@ html { scroll-behavior: smooth; }
         </div>
       </div>
 
-      <div class="form-section" id="section-video-specs">
-        <div class="section-head"><div class="section-num">04</div><div><div class="section-title">Video & interactivity</div></div></div>
+      <!-- ═══ SECTION 04 — Output & interactivity (reordered: Displays → Resolution → Touch → HDMI → GPIO → SSD → Wi-Fi) ═══ -->
+      <div class="form-section" id="section-video-specs" data-section="04">
+        <div class="section-head"><div class="section-num">04</div><div><div class="section-title">Output &amp; interactivity</div><div class="section-sub">Display setup and required features</div></div></div>
         <div class="spec-grid two-col">
-          <div class="field" style="margin-bottom:0;"><label class="field-label">Resolution<span class="req">*</span></label><div class="pill-group" data-input="resolution"><button class="pill" data-v="hd">Full HD</button><button class="pill" data-v="4k">4K</button><button class="pill" data-v="8k">8K</button></div></div>
-          <div class="field" style="margin-bottom:0;"><label class="field-label">Displays per player<span class="req">*</span></label><div class="pill-group" data-input="outputs"><button class="pill" data-v="1">1</button><button class="pill" data-v="2">2</button><button class="pill" data-v="4">4</button></div></div>
-          <div class="field" style="margin-bottom:0;"><label class="field-label">HDMI input<span class="req">*</span></label><div class="pill-group" data-input="hdmi-in"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
-          <div class="field" style="margin-bottom:0;"><label class="field-label">Touch / interactive<span class="req">*</span></label><div class="pill-group" data-input="touch"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
-          <div class="field" style="margin-bottom:0;"><label class="field-label">Wi-Fi<span class="req">*</span></label><div class="pill-group" data-input="wifi"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
+          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label">Displays per player<span class="req">*</span></label><div class="pill-group" data-input="outputs"><button class="pill" data-v="1">1</button><button class="pill" data-v="2">2</button><button class="pill" data-v="4">4</button></div></div>
+          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label">Resolution<span class="req">*</span></label><div class="pill-group" data-input="resolution"><button class="pill" data-v="hd">Full HD</button><button class="pill" data-v="4k">4K</button><button class="pill" data-v="8k">8K</button></div></div>
+          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label">Touch / interactive<span class="req">*</span></label><div class="pill-group" data-input="touch"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
+          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label">HDMI input<span class="req">*</span></label><div class="pill-group" data-input="hdmi-in"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
           <div class="field" style="margin-bottom:0;"><label class="field-label">GPIO port required<span class="req">*</span></label><div class="pill-group" data-input="gpio"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div><div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;line-height:1.4;">12-pin Phoenix for sensors, buttons, relays</div></div>
           <div class="field" style="margin-bottom:0;"><label class="field-label">SSD required<span class="req">*</span></label><div class="pill-group" data-input="ssd"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div><div class="ssd-cap-wrap" id="ssd-cap-wrap"><select id="f-ssd-cap"><option value="">Storage capacity…</option><option value="128">128 GB</option><option value="256">256 GB</option><option value="512">512 GB</option><option value="1024">1 TB</option></select></div></div>
-          <!-- v24.4.19: XC OS variant — only relevant if budget lands on XC (tier 5 Flagship). -->
+          <div class="field" style="margin-bottom:0;"><label class="field-label">Wi-Fi<span class="req">*</span></label><div class="pill-group" data-input="wifi"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
           <div class="field" id="field-xc-os" style="margin-bottom:0;display:none;">
             <label class="field-label">XC operating system<span class="req">*</span></label>
             <div class="pill-group" data-input="xc-os">
@@ -9027,8 +9142,9 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.28.0';  // v24.28.0 — Modern visual turnover (Option A from creative-direction plan). Pure CSS layer injected at end of <style> block — overrides existing rules via natural cascade, zero JS changes, fully reversible by deleting one block. Adds: (1) Universal hover system — cards/buttons/KPI tiles/history rows all use unified 200ms ease transitions with lift+shadow on hover, depth on active. (2) Glass-morphism — app header, cards, chart cards, modal overlays get frosted backdrop-filter blur with semi-transparent surfaces. (3) Choice cards — animated check-mark on selection, indigo border-glow ring (4px halo), gradient overlay on selected state. (4) Form fields — focus rings 4px indigo glow with breathing pulse, custom number stepper buttons (circular, scale on hover), enhanced dropdown chevrons. (5) Pill buttons (Yes/No) — selected state gets indigo halo + subtle inner-glow. (6) Primary buttons — gradient + glow shadow + 1px active-press depth. (7) Page chrome — animated underline that slides between sub-tabs (300ms ease), subtle notification bell wiggle on count change. (8) Loading states — skeleton shimmer for charts mid-load, pulsing dots for "Saving…" toasts. Works in both light and dark themes; dark theme uses lighter overlays to compensate for darker surfaces. Pairs with backend v25.15.0 (no BE changes).
-const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.28.0 — no change vs v24.27.3.
+const FRONTEND_VERSION = '24.28.1';  // v24.28.1 — Form total turnover (Path 2). (A) DOM reorder per Dipenkumar's spec: Deployment Type → Number of Players → Playback Content → Displays → Resolution → Touch → HDMI → GPIO → SSD → Wi-Fi → CMS. Sections re-cut: Section 02 = Deployment (type + qty + budget), 03 = Content (playback only), 04 = Output specs (displays + resolution), 05 = Interactivity (touch + HDMI + GPIO), 06 = Storage & connectivity (SSD + Wi-Fi), 07 = CMS. (B) Mixed deployment auto-balance — selecting Mixed expands the card inline to reveal Indoor/Outdoor +/− steppers that auto-balance against the main qty stepper. Typing one auto-fills the other to maintain total; total stays editable. (C) Audio-only conditional hide — selecting "Audio only" fades+collapses Resolution/Displays/Touch/HDMI fields with 220ms transition (irrelevant for AU335). Validator updated to skip those fields when content=audio. (D) Creative section visuals — animated step badges (○→●), completion dots beside each section title, subtle indigo halo on the next-to-fill section. All field IDs and backend mapping UNCHANGED (recommendation engine, Excel export, draft restore all unaffected). Pairs with backend v25.15.0 (no BE changes).
+const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.28.1 — no change vs v24.28.0.
+// v24.28.0 — Modern visual turnover (Option A): glass-morphism, hover lift, animated check-marks, focus glows, sub-tab underline animation.
 // v24.27.3 — Section label rename for clarity: "Content update" → "Deployment model" with card labels showing both old + new terminology in parentheses.
 // v24.27.2 — KPI tile rework on Team Analytics + My Pipeline. NEW "Case Count" tile (9th card). Hover lift + glass finish + richer colors.
 // v24.27.1 — MM1 + MM2 + MM3 + MM4 bundle. (MM1) Sales/Presales dropdown label disambiguation. (MM2) Pipeline trend chart on My Pipeline subtab. (MM3) retryPendingSync to cors. (MM4) KPI palette aligned to BS indigo/gold/cream.
@@ -28617,6 +28733,159 @@ async function _renderPipelineTrendBS() {
     });
   }
 }
+
+
+/* =====================================================================
+   v24.28.1 — Form turnover wiring (Mixed auto-balance + Audio-only hide)
+   =====================================================================
+   Mixed splitter: clicking +/− on Indoor or Outdoor stepper adjusts that
+   value AND auto-balances the other to keep total = main qty. Typing
+   directly into either field also auto-balances. Total stepper changes
+   redistribute proportionally if Mixed is active.
+
+   Audio-only hide: when content=audio is picked, fields irrelevant to
+   AU335 (Resolution / Displays / Touch / HDMI) get .audio-mode added to
+   form root → CSS transitions fade+collapse them. Validator already
+   skips these fields when content=audio (existing v24 code).
+   ===================================================================== */
+(function() {
+  function _getTotalQty() {
+    const el = document.getElementById('f-qty');
+    return Math.max(1, parseInt((el && el.value) || '1', 10) || 1);
+  }
+  function _readMixed() {
+    const i = document.getElementById('f-qty-indoor');
+    const o = document.getElementById('f-qty-outdoor');
+    return {
+      indoor: Math.max(0, parseInt((i && i.value) || '0', 10) || 0),
+      outdoor: Math.max(0, parseInt((o && o.value) || '0', 10) || 0)
+    };
+  }
+  function _setMixed(indoor, outdoor) {
+    const i = document.getElementById('f-qty-indoor');
+    const o = document.getElementById('f-qty-outdoor');
+    if (i) i.value = String(Math.max(0, indoor));
+    if (o) o.value = String(Math.max(0, outdoor));
+    _updateMixedStatus();
+  }
+  function _updateMixedStatus() {
+    const { indoor, outdoor } = _readMixed();
+    const total = _getTotalQty();
+    const sum = indoor + outdoor;
+    const lbl = document.getElementById('mixed-total-label');
+    if (lbl) lbl.textContent = String(total);
+    const st = document.getElementById('mixed-balance-status');
+    if (!st) return;
+    if (sum === total) {
+      st.className = 'mixed-splitter-status is-ok';
+      st.textContent = '✓ adds up to ' + total;
+    } else if (sum < total) {
+      st.className = 'mixed-splitter-status is-bad';
+      st.textContent = '✗ short by ' + (total - sum) + ' — increase Indoor or Outdoor';
+    } else {
+      st.className = 'mixed-splitter-status is-bad';
+      st.textContent = '✗ over by ' + (sum - total) + ' — reduce Indoor or Outdoor';
+    }
+  }
+  // +/− button on Indoor/Outdoor stepper
+  window.adjustMixedQty = function(which, delta) {
+    const total = _getTotalQty();
+    const cur = _readMixed();
+    let newVal = (which === 'indoor' ? cur.indoor : cur.outdoor) + delta;
+    if (newVal < 0) newVal = 0;
+    if (newVal > total) newVal = total;
+    if (which === 'indoor') {
+      _setMixed(newVal, Math.max(0, total - newVal));
+    } else {
+      _setMixed(Math.max(0, total - newVal), newVal);
+    }
+  };
+  // Typing into Indoor or Outdoor input — auto-balance the other side
+  window.onMixedQtyInput = function(which) {
+    const total = _getTotalQty();
+    const cur = _readMixed();
+    let val = which === 'indoor' ? cur.indoor : cur.outdoor;
+    if (val > total) val = total;
+    if (which === 'indoor') {
+      _setMixed(val, Math.max(0, total - val));
+    } else {
+      _setMixed(Math.max(0, total - val), val);
+    }
+  };
+  // When total qty changes and Mixed is active, redistribute proportionally
+  window._onTotalQtyChangedForMixed = function() {
+    const wrap = document.getElementById('mixed-qty-wrap');
+    if (!wrap || wrap.style.display === 'none') return;
+    const total = _getTotalQty();
+    const cur = _readMixed();
+    const sum = cur.indoor + cur.outdoor;
+    if (sum === 0) {
+      // Initial split — 50/50 (favouring indoor on odd numbers)
+      const indoor = Math.ceil(total / 2);
+      _setMixed(indoor, total - indoor);
+      return;
+    }
+    // Proportional redistribution if user has already set values
+    const indoorRatio = cur.indoor / sum;
+    const newIndoor = Math.round(total * indoorRatio);
+    _setMixed(newIndoor, Math.max(0, total - newIndoor));
+  };
+  // Hook the total qty stepper so it triggers redistribute when Mixed active
+  document.addEventListener('DOMContentLoaded', function() {
+    const totalInput = document.getElementById('f-qty');
+    if (totalInput) {
+      totalInput.addEventListener('input', function() {
+        try { window._onTotalQtyChangedForMixed(); } catch (_) {}
+      });
+    }
+    _updateMixedStatus();
+  });
+
+  // Audio-only content type → fade hide Resolution / Displays / Touch / HDMI
+  // Listen for clicks on the Playback content choice cards.
+  document.addEventListener('click', function(e) {
+    const card = e.target.closest && e.target.closest('.choice-grid[data-input="content"] .choice-card');
+    if (!card) return;
+    const val = card.getAttribute('data-v');
+    const root = document.getElementById('section-form') || document.body;
+    if (val === 'audio') {
+      root.classList.add('audio-mode');
+    } else {
+      root.classList.remove('audio-mode');
+    }
+  });
+  // Also re-evaluate on draft-restore / programmatic state set
+  window._refreshAudioModeClass = function() {
+    const root = document.getElementById('section-form') || document.body;
+    const selected = document.querySelector('.choice-grid[data-input="content"] .choice-card.selected');
+    const val = selected ? selected.getAttribute('data-v') : '';
+    if (val === 'audio') root.classList.add('audio-mode');
+    else root.classList.remove('audio-mode');
+  };
+  // Hook into the existing setDeployment + setContent state changes to also
+  // toggle the Mixed splitter visibility (covers programmatic state changes
+  // like draft restore that don't go through click handlers).
+  const _mixedObserver = new MutationObserver(function() {
+    const sel = document.querySelector('.choice-grid[data-input="environment"] .choice-card.selected');
+    const v = sel ? sel.getAttribute('data-v') : '';
+    const wrap = document.getElementById('mixed-qty-wrap');
+    if (!wrap) return;
+    if (v === 'mixed') {
+      wrap.style.display = 'block';
+      // Initialize split if both are 0 (first reveal)
+      try { window._onTotalQtyChangedForMixed(); } catch (_) {}
+    } else {
+      wrap.style.display = 'none';
+    }
+    try { window._refreshAudioModeClass(); } catch (_) {}
+  });
+  document.addEventListener('DOMContentLoaded', function() {
+    const envGrid = document.querySelector('.choice-grid[data-input="environment"]');
+    if (envGrid) _mixedObserver.observe(envGrid, { subtree: true, attributes: true, attributeFilter: ['class'] });
+    const contentGrid = document.querySelector('.choice-grid[data-input="content"]');
+    if (contentGrid) _mixedObserver.observe(contentGrid, { subtree: true, attributes: true, attributeFilter: ['class'] });
+  });
+})();
 
 </script>
 </body>
