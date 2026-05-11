@@ -8114,6 +8114,539 @@ html { scroll-behavior: smooth; }
   animation: fieldReveal 380ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* ════════════════════════════════════════════════════════════════════════
+   v24.31.1 — C2: Budget slider redesign
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Taller track with BS-brand gradient (indigo → violet → purple) */
+.budget-slider {
+  width: 100% !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  height: 8px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(90deg,
+    #C7D2FE 0%,
+    #818CF8 25%,
+    #6366F1 50%,
+    #7C3AED 75%,
+    #5B21B6 100%) !important;
+  outline: none;
+  cursor: pointer;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.15) !important;
+  position: relative;
+}
+[data-theme="dark"] .budget-slider {
+  background: linear-gradient(90deg,
+    rgba(99, 102, 241, 0.35) 0%,
+    rgba(124, 58, 237, 0.55) 50%,
+    rgba(168, 85, 247, 0.65) 100%) !important;
+}
+
+/* Glowing thumb — multi-layer shadow + breathing halo */
+.budget-slider::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 30% 30%, #6366F1, #4F46E5 60%, #4338CA) !important;
+  border: 4px solid #fff !important;
+  box-shadow:
+    0 0 0 2px rgba(79, 70, 229, 0.22),
+    0 4px 12px rgba(79, 70, 229, 0.42),
+    0 1px 3px rgba(15, 23, 42, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  cursor: grab;
+  transition:
+    transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 240ms var(--ease-out, ease-out) !important;
+}
+.budget-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.18) !important;
+  box-shadow:
+    0 0 0 5px rgba(79, 70, 229, 0.18),
+    0 8px 22px rgba(79, 70, 229, 0.55),
+    0 2px 6px rgba(15, 23, 42, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+.budget-slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.08) !important;
+}
+.budget-slider::-moz-range-thumb {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 30% 30%, #6366F1, #4F46E5 60%, #4338CA) !important;
+  border: 4px solid #fff !important;
+  box-shadow:
+    0 0 0 2px rgba(79, 70, 229, 0.22),
+    0 4px 12px rgba(79, 70, 229, 0.42),
+    0 1px 3px rgba(15, 23, 42, 0.20) !important;
+  cursor: grab;
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+.budget-slider::-moz-range-thumb:hover {
+  transform: scale(1.18) !important;
+}
+[data-theme="dark"] .budget-slider::-webkit-slider-thumb {
+  border-color: #1E293B !important;
+  background: radial-gradient(circle at 30% 30%, #A5B4FC, #818CF8 60%, #6366F1) !important;
+}
+[data-theme="dark"] .budget-slider::-moz-range-thumb {
+  border-color: #1E293B !important;
+  background: radial-gradient(circle at 30% 30%, #A5B4FC, #818CF8 60%, #6366F1) !important;
+}
+
+/* Markers below — animated indigo underline on active */
+.budget-markers span {
+  position: relative;
+  padding: 6px 8px !important;
+  border-radius: 6px;
+  transition: color 220ms var(--ease-out, ease-out), background 220ms var(--ease-out, ease-out) !important;
+}
+.budget-markers span::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #4F46E5, #7C3AED);
+  border-radius: 2px;
+  transform: translateX(-50%);
+  transition: width 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.budget-markers span:hover {
+  color: var(--ink, #0F172A) !important;
+  background: rgba(79, 70, 229, 0.06);
+}
+.budget-markers span:hover::after { width: 60%; opacity: 0.5; }
+.budget-markers span.active {
+  color: var(--indigo, #4F46E5) !important;
+  font-weight: 700 !important;
+  background: rgba(79, 70, 229, 0.08);
+}
+.budget-markers span.active::after { width: 80%; opacity: 1; }
+[data-theme="dark"] .budget-markers span:hover { background: rgba(99, 102, 241, 0.14); }
+[data-theme="dark"] .budget-markers span.active {
+  color: #A5B4FC !important;
+  background: rgba(99, 102, 241, 0.18);
+}
+
+/* Subtle breathing pulse on thumb shadow when slider is focused via keyboard */
+.budget-slider:focus { outline: none; }
+.budget-slider:focus::-webkit-slider-thumb {
+  animation: thumbBreathing 1.8s ease-in-out infinite;
+}
+@keyframes thumbBreathing {
+  0%, 100% { box-shadow:
+    0 0 0 2px rgba(79, 70, 229, 0.22),
+    0 4px 12px rgba(79, 70, 229, 0.42),
+    0 1px 3px rgba(15, 23, 42, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18); }
+  50%      { box-shadow:
+    0 0 0 6px rgba(79, 70, 229, 0.32),
+    0 6px 18px rgba(79, 70, 229, 0.55),
+    0 2px 4px rgba(15, 23, 42, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22); }
+}
+
+/* Mobile: bigger thumb already in M7 mobile section — this is additive polish */
+@media (max-width: 720px) {
+  .budget-slider {
+    height: 10px !important;
+  }
+  .budget-slider::-webkit-slider-thumb {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .budget-slider::-moz-range-thumb {
+    width: 32px !important;
+    height: 32px !important;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   v24.31.2 — C3: Number stepper pill-shape with bounce
+   ════════════════════════════════════════════════════════════════════════ */
+.number-input {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 4px !important;
+  background: rgba(255, 255, 255, 0.75) !important;
+  border: 1px solid rgba(203, 213, 225, 0.5) !important;
+  border-radius: 999px !important;  /* full pill */
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 1px 3px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  transition: box-shadow 220ms var(--ease-out, ease-out), border-color 220ms var(--ease-out, ease-out) !important;
+}
+.number-input:hover {
+  border-color: rgba(79, 70, 229, 0.4) !important;
+  box-shadow:
+    0 4px 12px rgba(15, 23, 42, 0.08),
+    0 2px 4px rgba(15, 23, 42, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+.number-input:focus-within {
+  border-color: var(--indigo, #4F46E5) !important;
+  box-shadow:
+    0 0 0 4px rgba(79, 70, 229, 0.18),
+    0 4px 12px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+[data-theme="dark"] .number-input {
+  background: rgba(30, 41, 59, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+}
+.number-input button {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;  /* circular */
+  background: transparent !important;
+  border: none !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: var(--ink-muted, #64748B) !important;
+  cursor: pointer;
+  transition:
+    background 160ms var(--ease-out, ease-out),
+    color 160ms var(--ease-out, ease-out),
+    transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.number-input button:hover {
+  background: rgba(79, 70, 229, 0.1) !important;
+  color: var(--indigo, #4F46E5) !important;
+  transform: scale(1.12) !important;
+}
+.number-input button:active {
+  background: rgba(79, 70, 229, 0.22) !important;
+  transform: scale(0.88) !important;
+}
+[data-theme="dark"] .number-input button:hover {
+  background: rgba(99, 102, 241, 0.22) !important;
+  color: #A5B4FC !important;
+}
+.number-input input {
+  width: 80px !important;
+  border: none !important;
+  background: transparent !important;
+  text-align: center !important;
+  font-family: var(--mono, 'JetBrains Mono', monospace) !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: var(--ink, #0F172A) !important;
+  outline: none;
+  box-shadow: none !important;
+  padding: 6px 0 !important;
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+.number-input input:focus {
+  box-shadow: none !important;
+  background: transparent !important;
+}
+[data-theme="dark"] .number-input input { color: #E2E8F0 !important; }
+
+/* Mobile bigger steppers */
+@media (max-width: 720px) {
+  .number-input button {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 20px !important;
+  }
+  .number-input input {
+    font-size: 18px !important;
+    width: 70px !important;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   v24.31.2 — C6: Choice-card bigger icons
+   ════════════════════════════════════════════════════════════════════════ */
+.choice-card .choice-card-icon {
+  width: 32px !important;
+  height: 32px !important;
+  margin-bottom: 8px !important;
+  color: var(--ink-muted, #64748B) !important;
+  transition: color 240ms var(--ease-out, ease-out), transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+.choice-card:hover .choice-card-icon {
+  color: var(--indigo, #4F46E5) !important;
+  transform: scale(1.08);
+}
+.choice-card.selected .choice-card-icon {
+  color: var(--indigo, #4F46E5) !important;
+  transform: scale(1.12);
+}
+@media (max-width: 720px) {
+  .choice-card .choice-card-icon {
+    width: 36px !important;
+    height: 36px !important;
+  }
+}
+[data-theme="dark"] .choice-card:hover .choice-card-icon,
+[data-theme="dark"] .choice-card.selected .choice-card-icon {
+  color: #A5B4FC !important;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   v24.32.0 — C8: Inline validation hints
+   ════════════════════════════════════════════════════════════════════════ */
+/* When a field is filled, the * required asterisk turns green + a small
+   ✓ badge fades in next to the label. Spring entrance. */
+.field[data-field-filled="true"] .req {
+  color: #059669 !important;
+  transition: color 220ms var(--ease-out, ease-out);
+}
+.field[data-field-filled="true"] .field-label::after {
+  content: ' ✓';
+  display: inline-block;
+  margin-left: 6px;
+  color: #059669;
+  font-weight: 800;
+  font-size: 11px;
+  vertical-align: middle;
+  background: rgba(5, 150, 105, 0.10);
+  padding: 1px 6px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  animation: fieldCheckFade 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes fieldCheckFade {
+  from { opacity: 0; transform: translateX(-4px) scale(0.8); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+[data-theme="dark"] .field[data-field-filled="true"] .req {
+  color: #6EE7B7 !important;
+}
+[data-theme="dark"] .field[data-field-filled="true"] .field-label::after {
+  color: #6EE7B7;
+  background: rgba(16, 185, 129, 0.18);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   v24.32.0 — C10: Dark theme audit tightening
+   ════════════════════════════════════════════════════════════════════════ */
+/* Mixed splitter — better contrast against dark surface */
+[data-theme="dark"] .mixed-splitter-label { color: #A5B4FC !important; }
+[data-theme="dark"] .mixed-splitter-sublabel { color: rgba(226, 232, 240, 0.7) !important; }
+
+/* Progress bar — track + fill tuning for dark mode */
+[data-theme="dark"] .guided-progress-track {
+  background: rgba(99, 102, 241, 0.15) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+[data-theme="dark"] .guided-progress-fill {
+  box-shadow: 0 0 12px rgba(165, 180, 252, 0.4) !important;
+}
+
+/* Section badge — slightly brighter indigo in dark mode for visibility */
+[data-theme="dark"] .form-section:not([data-section-complete="true"]) .section-num {
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+
+/* Pill-group segmented control — adjust dark mode contrast */
+[data-theme="dark"] .pill-group .pill {
+  color: rgba(226, 232, 240, 0.6) !important;
+}
+[data-theme="dark"] .pill-group .pill:hover {
+  color: #C7D2FE !important;
+}
+
+/* Form-section glass background — make slightly more opaque in dark for legibility */
+[data-theme="dark"] .form-section {
+  background: rgba(30, 41, 59, 0.72) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Choice cards in dark mode — visible borders */
+[data-theme="dark"] .choice-card {
+  background: rgba(15, 23, 42, 0.4) !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+}
+[data-theme="dark"] .choice-card:hover {
+  border-color: rgba(99, 102, 241, 0.45) !important;
+  background: rgba(99, 102, 241, 0.08) !important;
+}
+[data-theme="dark"] .choice-card.selected {
+  border-color: #818CF8 !important;
+  background: rgba(99, 102, 241, 0.14) !important;
+}
+[data-theme="dark"] .choice-card-name { color: #E2E8F0 !important; }
+[data-theme="dark"] .choice-card-sub { color: rgba(226, 232, 240, 0.55) !important; }
+
+/* ════════════════════════════════════════════════════════════════════════
+   v24.32.0 — C12: Font weight + typography polish
+   ════════════════════════════════════════════════════════════════════════ */
+/* Force smooth font rendering everywhere */
+body, .form-section, .section-title, .field-label, .choice-card-name {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility;
+}
+
+/* Section title — slightly heavier weight with optical adjustment */
+.form-section .section-title {
+  font-weight: 700 !important;
+  font-variation-settings: "wght" 720;
+  letter-spacing: -0.015em;
+}
+
+/* Field labels — tighter uppercase with slightly wider tracking for readability */
+.field-label {
+  font-weight: 700 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: var(--ink-muted, #64748B);
+}
+
+/* Section number badge — tabular figures (numbers all same width) */
+.section-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'ss01' 1;
+}
+
+/* Number-input value — feels more premium with tabular figures */
+.number-input input {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Budget zone label — slightly tighter tracking for the big serif */
+.budget-zone {
+  letter-spacing: -0.02em;
+  font-variation-settings: "wght" 600;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   v24.32.1 — C14: Quick-fill preset shortcuts
+   ════════════════════════════════════════════════════════════════════════ */
+.quick-fill-bar {
+  margin: 0 -4px 22px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.04), rgba(124, 58, 237, 0.02));
+  border: 1px solid rgba(79, 70, 229, 0.16);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+[data-theme="dark"] .quick-fill-bar {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(124, 58, 237, 0.04));
+  border-color: rgba(99, 102, 241, 0.2);
+}
+.quick-fill-label {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-family: var(--sans, system-ui, sans-serif);
+}
+.quick-fill-label > span:first-child {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--indigo, #4F46E5);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.quick-fill-sublabel {
+  font-size: 11.5px;
+  color: var(--ink-muted, #64748B);
+  font-weight: 400;
+}
+[data-theme="dark"] .quick-fill-label > span:first-child { color: #A5B4FC; }
+[data-theme="dark"] .quick-fill-sublabel { color: rgba(226, 232, 240, 0.6); }
+
+.quick-fill-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.quick-fill-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-color 220ms var(--ease-out, ease-out),
+    background 220ms var(--ease-out, ease-out),
+    box-shadow 220ms var(--ease-out, ease-out);
+  font-family: var(--sans, system-ui, sans-serif);
+  min-height: 56px;
+}
+.quick-fill-btn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(79, 70, 229, 0.45);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.14);
+}
+.quick-fill-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+.quick-fill-btn.flash {
+  animation: quickFillFlash 600ms ease-out;
+}
+@keyframes quickFillFlash {
+  0%   { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.5); border-color: rgba(79, 70, 229, 1); }
+  60%  { box-shadow: 0 0 0 10px rgba(79, 70, 229, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+}
+[data-theme="dark"] .quick-fill-btn {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+[data-theme="dark"] .quick-fill-btn:hover {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.45);
+}
+.quick-fill-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.quick-fill-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.quick-fill-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink, #0F172A);
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.quick-fill-desc {
+  font-size: 11px;
+  color: var(--ink-muted, #64748B);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+[data-theme="dark"] .quick-fill-name { color: #E2E8F0; }
+[data-theme="dark"] .quick-fill-desc { color: rgba(226, 232, 240, 0.55); }
+
+/* Mobile: stack to single column for thumb-tap accessibility */
+@media (max-width: 720px) {
+  .quick-fill-buttons { grid-template-columns: 1fr; }
+  .quick-fill-btn { min-height: 52px; }
+}
+
 </style>
 <!-- v24.4.2: Apply saved theme BEFORE body renders (prevents flash-of-light) — 3-state light/auto/dark -->
 <script>
@@ -8637,6 +9170,37 @@ html { scroll-behavior: smooth; }
         </div>
         <div class="guided-progress-track">
           <div class="guided-progress-fill" id="guided-progress-fill" style="width:0%;"></div>
+        </div>
+      </div>
+
+      <!-- v24.32.1 C14: Quick-fill preset shortcuts -->
+      <div class="quick-fill-bar" id="quick-fill-bar">
+        <div class="quick-fill-label">
+          <span>Quick start</span>
+          <span class="quick-fill-sublabel">Click a preset to pre-fill, then adjust as needed</span>
+        </div>
+        <div class="quick-fill-buttons">
+          <button type="button" class="quick-fill-btn" data-preset="indoor-standard" onclick="applyQuickFillPreset('indoor-standard')">
+            <span class="quick-fill-icon">🏪</span>
+            <span class="quick-fill-text">
+              <span class="quick-fill-name">Standard Indoor</span>
+              <span class="quick-fill-desc">1 player · 4K · Wi-Fi</span>
+            </span>
+          </button>
+          <button type="button" class="quick-fill-btn" data-preset="outdoor-signage" onclick="applyQuickFillPreset('outdoor-signage')">
+            <span class="quick-fill-icon">🏟️</span>
+            <span class="quick-fill-text">
+              <span class="quick-fill-name">Outdoor Signage</span>
+              <span class="quick-fill-desc">Performance · SSD · Cloud</span>
+            </span>
+          </button>
+          <button type="button" class="quick-fill-btn" data-preset="interactive-kiosk" onclick="applyQuickFillPreset('interactive-kiosk')">
+            <span class="quick-fill-icon">🖥️</span>
+            <span class="quick-fill-text">
+              <span class="quick-fill-name">Interactive Kiosk</span>
+              <span class="quick-fill-desc">Touch · GPIO · AV</span>
+            </span>
+          </button>
         </div>
       </div>
 
@@ -9638,8 +10202,12 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.31.0';  // v24.31.0 — C5 of Direction C polish (CAN-HAVE Phase A start). (1) Smooth scroll-to-next-section: when a section flips from incomplete → complete, page smoothly scrolls (600ms ease) to the next incomplete section, but only if it's not already visible in the viewport. Skipped if user explicitly scrolled (debounced 1.5s after manual scroll). (2) Conditional fields (CMS sub-fields, XC OS) get smooth fade+slide-down on reveal instead of snap-in. (3) Section badge gets a one-time pulse-ring glow when it flips to complete state — celebratory micro-interaction. Pairs with backend v25.15.0.
-const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.31.0 — no change vs v24.30.6.
+const FRONTEND_VERSION = '24.32.1';  // v24.32.1 — C14 of Direction C polish (Phase C, condensed). Quick-fill shortcuts above Section 02: three preset buttons that one-click-populate the entire Guided form. Presets: (1) "Standard Indoor" — Indoor + qty 1 + Standard budget + Video + 1 display + 4K + Yes Wi-Fi + On-premise. (2) "Outdoor Signage" — Outdoor + qty 1 + Performance + Video + 1 + 4K + Yes SSD + Yes Wi-Fi + Cloud. (3) "Interactive Kiosk" — Indoor + qty 1 + Performance + AV + 1 + 4K + Yes Touch + Yes GPIO + Yes Wi-Fi + On-premise. Each preset programmatically clicks the corresponding choice-cards/pills + sets numeric inputs and dispatches input events so existing handlers fire normally (state.form, validation, completion checks, audio-mode toggle, mixed-splitter visibility, CMS sub-fields). User can adjust anything after applying. C9 (silent pre-fill) explicitly skipped — too risky for daily-use sales tool where wrong specs land in customer BOQs. Pairs with backend v25.15.0.
+const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.32.1 — no change vs v24.32.0.
+// v24.32.0 — Phase B: C8 + C10 + C12 bundled.
+// v24.31.2 — C2 + C3 + C6 bundled.
+// v24.31.1 — C2: Budget slider redesign.
+// v24.31.0 — C5: Animated section transitions (pulse-ring + scroll-to-next + reveal).
 // v24.30.6 — Hotfix: Deployment Model always visible (Section 05 default visible).
 // v24.30.5 — Hotfix: Mixed splitter inputs editable again.
 // v24.30.4 — HOTFIX for M4 click-interaction bug.
@@ -29361,6 +29929,124 @@ async function _renderPipelineTrendBS() {
     if (val === 'audio') root.classList.add('audio-mode');
     else root.classList.remove('audio-mode');
   };
+  // v24.32.1 (C14): Quick-fill preset shortcuts. One click pre-fills the
+  // entire Guided form via programmatic clicks + input events. Existing
+  // handlers fire normally; state.form, validation, completion checks,
+  // audio-mode toggle, mixed-splitter visibility, CMS sub-fields all update.
+  const QUICK_FILL_PRESETS = {
+    'indoor-standard': {
+      environment: 'indoor',
+      qty: 1,
+      budget: 2,          // Standard tier
+      content: 'video',
+      outputs: '1',
+      resolution: '4k',
+      touch: 'no',
+      'hdmi-in': 'no',
+      gpio: 'no',
+      ssd: 'no',
+      wifi: 'yes',
+      update: 'local'
+    },
+    'outdoor-signage': {
+      environment: 'outdoor',
+      qty: 1,
+      budget: 4,          // Performance tier
+      content: 'video',
+      outputs: '1',
+      resolution: '4k',
+      touch: 'no',
+      'hdmi-in': 'no',
+      gpio: 'no',
+      ssd: 'yes',
+      ssdCap: '256',      // default SSD capacity for outdoor
+      wifi: 'yes',
+      update: 'cloud'
+    },
+    'interactive-kiosk': {
+      environment: 'indoor',
+      qty: 1,
+      budget: 4,          // Performance tier
+      content: 'av',
+      outputs: '1',
+      resolution: '4k',
+      touch: 'yes',
+      'hdmi-in': 'no',
+      gpio: 'yes',
+      ssd: 'no',
+      wifi: 'yes',
+      update: 'local'
+    }
+  };
+
+  function _clickChoiceCard(inputKey, value) {
+    const sel = '.choice-grid[data-input="' + inputKey + '"] .choice-card[data-v="' + value + '"]';
+    const card = document.querySelector(sel);
+    if (card) card.click();
+  }
+  function _clickPill(inputKey, value) {
+    const sel = '.pill-group[data-input="' + inputKey + '"] .pill[data-v="' + value + '"]';
+    const pill = document.querySelector(sel);
+    if (pill) pill.click();
+  }
+  function _setNumberInput(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = String(value);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  function _setSelect(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = String(value);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  function _setSlider(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = String(value);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  window.applyQuickFillPreset = function(presetId) {
+    const preset = QUICK_FILL_PRESETS[presetId];
+    if (!preset) return;
+    // Visual flash on the clicked button
+    const btn = document.querySelector('.quick-fill-btn[data-preset="' + presetId + '"]');
+    if (btn) {
+      btn.classList.remove('flash');
+      // re-trigger by reflow
+      void btn.offsetWidth;
+      btn.classList.add('flash');
+      setTimeout(function(){ btn.classList.remove('flash'); }, 700);
+    }
+    // Apply in order — environment first (so Mixed splitter / audio-mode logic
+    // sees the right state when subsequent fields fire)
+    if (preset.environment) _clickChoiceCard('environment', preset.environment);
+    if (preset.content) _clickChoiceCard('content', preset.content);
+    if (preset.update) _clickChoiceCard('update', preset.update);
+    // Pills
+    if (preset.outputs) _clickPill('outputs', preset.outputs);
+    if (preset.resolution) _clickPill('resolution', preset.resolution);
+    if (preset.touch) _clickPill('touch', preset.touch);
+    if (preset['hdmi-in']) _clickPill('hdmi-in', preset['hdmi-in']);
+    if (preset.gpio) _clickPill('gpio', preset.gpio);
+    if (preset.ssd) _clickPill('ssd', preset.ssd);
+    if (preset.wifi) _clickPill('wifi', preset.wifi);
+    // Numeric / select inputs
+    if (preset.qty) _setNumberInput('f-qty', preset.qty);
+    if (preset.budget) _setSlider('f-budget', preset.budget);
+    if (preset.ssdCap) _setSelect('f-ssd-cap', preset.ssdCap);
+    // Refresh completion + field-filled states once everything's set
+    setTimeout(function() {
+      try { window._refreshSectionCompletion(); } catch (_) {}
+      try { window._refreshAudioModeClass(); } catch (_) {}
+    }, 100);
+  };
+
   // Hook into the existing setDeployment + setContent state changes to also
   // toggle the Mixed splitter visibility (covers programmatic state changes
   // like draft restore that don't go through click handlers).
@@ -29442,10 +30128,43 @@ async function _renderPipelineTrendBS() {
     }
     return false;
   }
+  // v24.32.0 (C8): toggle data-field-filled="true" on each .field whose
+  // input/choice-card/pill has a value. Drives the inline ✓ validation hint.
+  function _isFieldFilled(field) {
+    // Choice-card or pill group
+    const cg = field.querySelector('.choice-grid[data-input]');
+    if (cg) return !!cg.querySelector('.choice-card.selected');
+    const pg = field.querySelector('.pill-group[data-input]');
+    if (pg) return !!pg.querySelector('.pill.selected');
+    // Direct input
+    const inp = field.querySelector('input[type="number"], input[type="text"], select, textarea');
+    if (inp) {
+      if (inp.type === 'number') {
+        const v = parseInt(inp.value || '0', 10) || 0;
+        return v >= 1;
+      }
+      return !!(inp.value && String(inp.value).trim());
+    }
+    return false;
+  }
+  function _refreshFieldFilledStates() {
+    // Only consider .field elements that contain a `.req` indicator (required fields)
+    const fields = document.querySelectorAll('#section-form .field');
+    fields.forEach(function(f) {
+      const isReq = !!f.querySelector('.field-label .req');
+      if (!isReq) return;
+      const filled = _isFieldFilled(f);
+      if (filled) f.setAttribute('data-field-filled', 'true');
+      else f.removeAttribute('data-field-filled');
+    });
+  }
+
   window._refreshSectionCompletion = function() {
     const sections = document.querySelectorAll('.form-section[data-section]');
     let completeCount = 0;
     let totalCount = 0;
+    // v24.32.0 (C8): refresh per-field filled state for inline validation hints
+    try { _refreshFieldFilledStates(); } catch (_) {}
     // v24.31.0 (C5): track which sections JUST flipped to complete this pass
     // so we can play the celebration animation + scroll to next.
     const justCompleted = [];
