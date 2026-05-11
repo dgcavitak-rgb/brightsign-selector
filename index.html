@@ -10415,8 +10415,9 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.34.4';  // v24.34.4 — BUG FIX: Custom BOQ ("Advanced") mode was generating the WRONG CMS line item (always "CMS Cloud Subscription") regardless of user's On-Prem / Cloud selection. Root cause: `buildAdvancedBOMCard` at ~line 18799 builds a `synthForm` for `computeCMS()` that copies cmsVendor/cmsTerm/cmsInclude/qty from advancedAccessories, but does NOT pass `update`. So `computeCMS` reads `f.update` from the BASE Guided form state (which might be 'cloud' default or stale). FIX: explicitly translate `acc.cmsType` ('onprem' | 'on-prem' | 'local' → 'local'; 'cloud' | 'remote' or default → 'cloud') into synthForm.update, so computeCMS sees the right value and routes to the correct branch (On-prem = 2 lines [Subscription + Installation]; Cloud = 1 line [Cloud Subscription]). Pairs with backend v25.15.0.
-const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.34.4 — no change vs v24.34.3.
+const FRONTEND_VERSION = '24.34.5';  // v24.34.5 — Sales/Presales dropdown labels simplified per user feedback. v24.27.1 (MM1) appended `· Role` suffix (e.g. "Dipenkumar Gajjar · Super", "Mohd Faiz · Sales") to disambiguate same-first-name users. Per user: not required — labels now show fullName only ("Dipenkumar Gajjar", "Mohd Faiz"). The two Ranjiths are still distinguishable by their actual last initials (Ranjith Kumar vs Ranjith SR). The `⚠ (loginName)` fallback warning for users missing fullName in the Users sheet is preserved (this is a real data-integrity signal Super needs to see), but with the role part dropped. Selected value still uses loginName (lowercased) for backend storage. Pairs with backend v25.15.0.
+const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.34.5 — no change vs v24.34.4.
+// v24.34.4 — BUG FIX: Custom BOQ On-Prem/Cloud CMS line items.
 // v24.34.3 — Remove C14 + redraw pill icons.
 // v24.34.2 — vendor logo sizing #2 + AV icon fix.
 // v24.34.1 — vendor logo sizing fix + pill-question icons.
@@ -12185,20 +12186,21 @@ function _populateSalesPresalesDropdowns(){
     return r === 'presales' || u.isSuper === true;
   });
 
-  // v24.27.1 (MM1): label includes role to disambiguate same-first-name users
-  // (e.g. Sales Ranjith Kumar vs Presales Ranjith SR). When fullName is blank
-  // in the Users sheet, surface a visible ⚠ warning so Super knows to fix.
+  // v24.27.1 (MM1): label was previously `${fullName} · ${role}` to disambiguate
+  // same-first-name users (e.g. Sales Ranjith Kumar vs Presales Ranjith SR).
+  // v24.34.5: role suffix removed per user feedback — labels now show full name only.
+  // Note: same-first-name collisions reappear if any team members share a first name.
+  // The two Ranjiths are already disambiguated by their full names (Ranjith Kumar vs Ranjith SR).
+  // When fullName is blank, still surface a ⚠ warning so Super fixes the Users sheet.
   // Selected value still uses loginName (lowercased) for backend storage.
   const buildOpt = function(u){
-    const role = String(u.role || '').trim();
-    const roleStr = role ? ' · ' + role : '';
     const fullName = String(u.fullName || '').trim();
     const loginName = String(u.loginName || '').trim();
     let label, isWarn = false;
     if (fullName) {
-      label = fullName + roleStr;
+      label = fullName;
     } else {
-      label = '⚠ (' + loginName + ')' + roleStr;
+      label = '⚠ (' + loginName + ')';
       isWarn = true;
     }
     const styleAttr = isWarn ? ' style="color:#B45309;"' : '';
