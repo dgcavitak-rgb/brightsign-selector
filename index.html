@@ -8526,126 +8526,6 @@ body, .form-section, .section-title, .field-label, .choice-card-name {
   font-variation-settings: "wght" 600;
 }
 
-/* ════════════════════════════════════════════════════════════════════════
-   v24.32.1 — C14: Quick-fill preset shortcuts
-   ════════════════════════════════════════════════════════════════════════ */
-.quick-fill-bar {
-  margin: 0 -4px 22px;
-  padding: 16px 18px;
-  background: linear-gradient(135deg, rgba(79, 70, 229, 0.04), rgba(124, 58, 237, 0.02));
-  border: 1px solid rgba(79, 70, 229, 0.16);
-  border-radius: 14px;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-}
-[data-theme="dark"] .quick-fill-bar {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(124, 58, 237, 0.04));
-  border-color: rgba(99, 102, 241, 0.2);
-}
-.quick-fill-label {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 12px;
-  font-family: var(--sans, system-ui, sans-serif);
-}
-.quick-fill-label > span:first-child {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--indigo, #4F46E5);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.quick-fill-sublabel {
-  font-size: 11.5px;
-  color: var(--ink-muted, #64748B);
-  font-weight: 400;
-}
-[data-theme="dark"] .quick-fill-label > span:first-child { color: #A5B4FC; }
-[data-theme="dark"] .quick-fill-sublabel { color: rgba(226, 232, 240, 0.6); }
-
-.quick-fill-buttons {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-.quick-fill-btn {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(203, 213, 225, 0.5);
-  border-radius: 12px;
-  cursor: pointer;
-  text-align: left;
-  transition:
-    transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1),
-    border-color 220ms var(--ease-out, ease-out),
-    background 220ms var(--ease-out, ease-out),
-    box-shadow 220ms var(--ease-out, ease-out);
-  font-family: var(--sans, system-ui, sans-serif);
-  min-height: 56px;
-}
-.quick-fill-btn:hover {
-  transform: translateY(-2px);
-  border-color: rgba(79, 70, 229, 0.45);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.14);
-}
-.quick-fill-btn:active {
-  transform: translateY(0) scale(0.98);
-}
-.quick-fill-btn.flash {
-  animation: quickFillFlash 600ms ease-out;
-}
-@keyframes quickFillFlash {
-  0%   { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.5); border-color: rgba(79, 70, 229, 1); }
-  60%  { box-shadow: 0 0 0 10px rgba(79, 70, 229, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
-}
-[data-theme="dark"] .quick-fill-btn {
-  background: rgba(30, 41, 59, 0.6);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-[data-theme="dark"] .quick-fill-btn:hover {
-  background: rgba(99, 102, 241, 0.12);
-  border-color: rgba(99, 102, 241, 0.45);
-}
-.quick-fill-icon {
-  font-size: 22px;
-  flex-shrink: 0;
-  line-height: 1;
-}
-.quick-fill-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  flex: 1;
-}
-.quick-fill-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink, #0F172A);
-  letter-spacing: -0.005em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.quick-fill-desc {
-  font-size: 11px;
-  color: var(--ink-muted, #64748B);
-  font-weight: 500;
-  letter-spacing: 0.01em;
-}
-[data-theme="dark"] .quick-fill-name { color: #E2E8F0; }
-[data-theme="dark"] .quick-fill-desc { color: rgba(226, 232, 240, 0.55); }
-
-/* Mobile: stack to single column for thumb-tap accessibility */
-@media (max-width: 720px) {
-  .quick-fill-buttons { grid-template-columns: 1fr; }
-  .quick-fill-btn { min-height: 52px; }
-}
 
 /* ════════════════════════════════════════════════════════════════════════
    v24.33.0 — C11: Accessibility audit
@@ -8709,10 +8589,6 @@ body, .form-section, .section-title, .field-label, .choice-card-name {
 }
 .number-input button:focus-visible {
   outline: 2px solid var(--indigo, #4F46E5);
-  outline-offset: 2px;
-}
-.quick-fill-btn:focus-visible {
-  outline: 3px solid rgba(79, 70, 229, 0.6);
   outline-offset: 2px;
 }
 .budget-slider:focus-visible {
@@ -9525,36 +9401,7 @@ body, .form-section, .section-title, .field-label, .choice-card-name {
         </div>
       </div>
 
-      <!-- v24.32.1 C14: Quick-fill preset shortcuts -->
-      <div class="quick-fill-bar" id="quick-fill-bar">
-        <div class="quick-fill-label">
-          <span>Quick start</span>
-          <span class="quick-fill-sublabel">Click a preset to pre-fill, then adjust as needed</span>
-        </div>
-        <div class="quick-fill-buttons">
-          <button type="button" class="quick-fill-btn" data-preset="indoor-standard" onclick="applyQuickFillPreset('indoor-standard')">
-            <span class="quick-fill-icon">🏪</span>
-            <span class="quick-fill-text">
-              <span class="quick-fill-name">Standard Indoor</span>
-              <span class="quick-fill-desc">1 player · 4K · Wi-Fi</span>
-            </span>
-          </button>
-          <button type="button" class="quick-fill-btn" data-preset="outdoor-signage" onclick="applyQuickFillPreset('outdoor-signage')">
-            <span class="quick-fill-icon">🏟️</span>
-            <span class="quick-fill-text">
-              <span class="quick-fill-name">Outdoor Signage</span>
-              <span class="quick-fill-desc">Performance · SSD · Cloud</span>
-            </span>
-          </button>
-          <button type="button" class="quick-fill-btn" data-preset="interactive-kiosk" onclick="applyQuickFillPreset('interactive-kiosk')">
-            <span class="quick-fill-icon">🖥️</span>
-            <span class="quick-fill-text">
-              <span class="quick-fill-name">Interactive Kiosk</span>
-              <span class="quick-fill-desc">Touch · GPIO · AV</span>
-            </span>
-          </button>
-        </div>
-      </div>
+      <!-- v24.34.3: C14 quick-fill preset bar REMOVED per user feedback. -->
 
       <!-- ═══ SECTION 02 — Deployment (reordered) ═══════════════════════════════ -->
       <div class="form-section" data-section="02">
@@ -9625,15 +9472,15 @@ body, .form-section, .section-title, .field-label, .choice-card-name {
       <div class="form-section" id="section-video-specs" data-section="04">
         <div class="section-head"><div class="section-num">04</div><div><div class="section-title">Specs &amp; Features</div><div class="section-sub">Display setup and the hardware features your project needs</div></div></div>
         <div class="spec-grid two-col">
-          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-screens" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>How many screens per player?<span class="req">*</span></label><div class="pill-group" data-input="outputs"><button class="pill" data-v="1">1</button><button class="pill" data-v="2">2</button><button class="pill" data-v="4">4</button></div></div>
-          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-resolution" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/></svg></span>What resolution?<span class="req">*</span></label><div class="pill-group" data-input="resolution"><button class="pill" data-v="hd">Full HD</button><button class="pill" data-v="4k">4K</button><button class="pill" data-v="8k">8K</button></div></div>
-          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-touch" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V6a3 3 0 0 1 6 0v5M9 11h6M9 11l-2 2v4a4 4 0 0 0 4 4h4a4 4 0 0 0 4-4v-4l-2-2"/></svg></span>Touch interaction?<span class="req">*</span></label><div class="pill-group" data-input="touch"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
-          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-hdmi" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="6" rx="1"/><line x1="7" y1="9" x2="7" y2="6"/><line x1="17" y1="9" x2="17" y2="6"/><line x1="12" y1="15" x2="12" y2="20"/></svg></span>HDMI input needed?<span class="req">*</span></label><div class="pill-group" data-input="hdmi-in"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
-          <div class="field" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-gpio" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>GPIO port needed?<span class="req">*</span></label><div class="pill-group" data-input="gpio"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div><div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;line-height:1.4;">12-pin Phoenix for sensors, buttons, relays</div></div>
-          <div class="field" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-ssd" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="14"/><line x1="10" y1="10" x2="10" y2="14"/><circle cx="17" cy="12" r="1"/></svg></span>SSD storage?<span class="req">*</span></label><div class="pill-group" data-input="ssd"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div><div class="ssd-cap-wrap" id="ssd-cap-wrap"><select id="f-ssd-cap"><option value="">Storage capacity…</option><option value="128">128 GB</option><option value="256">256 GB</option><option value="512">512 GB</option><option value="1024">1 TB</option></select></div></div>
-          <div class="field" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-wifi" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12" y2="20.01"/></svg></span>Wi-Fi needed?<span class="req">*</span></label><div class="pill-group" data-input="wifi"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
+          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-screens" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.5"/><line x1="8" y1="20" x2="16" y2="20"/><line x1="12" y1="16" x2="12" y2="20"/><line x1="7" y1="8" x2="17" y2="8" stroke-opacity="0.5"/></svg></span>How many screens per player?<span class="req">*</span></label><div class="pill-group" data-input="outputs"><button class="pill" data-v="1">1</button><button class="pill" data-v="2">2</button><button class="pill" data-v="4">4</button></div></div>
+          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-resolution" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9V8a1 1 0 0 1 1-1h1M16 7h1a1 1 0 0 1 1 1v1M17 17h1a1 1 0 0 0 1-1v-1M7 15v1a1 1 0 0 0 1 1h1"/></svg></span>What resolution?<span class="req">*</span></label><div class="pill-group" data-input="resolution"><button class="pill" data-v="hd">Full HD</button><button class="pill" data-v="4k">4K</button><button class="pill" data-v="8k">8K</button></div></div>
+          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-touch" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V6a3 3 0 1 1 6 0v5"/><path d="M9 11v-1a2 2 0 0 0-4 0v6a6 6 0 0 0 6 6h2a6 6 0 0 0 6-6v-4a2 2 0 0 0-4 0"/><circle cx="12" cy="11" r="0.5" fill="currentColor"/></svg></span>Touch interaction?<span class="req">*</span></label><div class="pill-group" data-input="touch"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
+          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-hdmi" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16l-1.5 6h-13L4 9z"/><line x1="7" y1="11" x2="7" y2="13"/><line x1="10" y1="11" x2="10" y2="13"/><line x1="14" y1="11" x2="14" y2="13"/><line x1="17" y1="11" x2="17" y2="13"/></svg></span>HDMI input needed?<span class="req">*</span></label><div class="pill-group" data-input="hdmi-in"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
+          <div class="field" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-gpio" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 3 4 14 11 14 10 21 20 10 13 10 13 3"/></svg></span>GPIO port needed?<span class="req">*</span></label><div class="pill-group" data-input="gpio"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div><div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;line-height:1.4;">12-pin Phoenix for sensors, buttons, relays</div></div>
+          <div class="field" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-ssd" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="1.5"/><line x1="6" y1="10" x2="14" y2="10" stroke-opacity="0.55"/><line x1="6" y1="13" x2="11" y2="13" stroke-opacity="0.55"/><circle cx="18" cy="13" r="1.4" fill="currentColor"/></svg></span>SSD storage?<span class="req">*</span></label><div class="pill-group" data-input="ssd"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div><div class="ssd-cap-wrap" id="ssd-cap-wrap"><select id="f-ssd-cap"><option value="">Storage capacity…</option><option value="128">128 GB</option><option value="256">256 GB</option><option value="512">512 GB</option><option value="1024">1 TB</option></select></div></div>
+          <div class="field" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-wifi" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5a14 14 0 0 1 18 0"/><path d="M6 12a10 10 0 0 1 12 0"/><path d="M9 15.5a5 5 0 0 1 6 0"/><circle cx="12" cy="19" r="1.2" fill="currentColor"/></svg></span>Wi-Fi needed?<span class="req">*</span></label><div class="pill-group" data-input="wifi"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
           <div class="field" id="field-xc-os" style="margin-bottom:0;display:none;">
-            <label class="field-label"><span class="field-icon field-icon-xc" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg></span>XC operating system<span class="req">*</span></label>
+            <label class="field-label"><span class="field-icon field-icon-xc" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1"/><rect x="9" y="9" width="6" height="6" stroke-opacity="0.55"/><line x1="9" y1="3" x2="9" y2="6"/><line x1="15" y1="3" x2="15" y2="6"/><line x1="9" y1="18" x2="9" y2="21"/><line x1="15" y1="18" x2="15" y2="21"/><line x1="18" y1="9" x2="21" y2="9"/><line x1="18" y1="15" x2="21" y2="15"/><line x1="3" y1="9" x2="6" y2="9"/><line x1="3" y1="15" x2="6" y2="15"/></svg></span>XC operating system<span class="req">*</span></label>
             <div class="pill-group" data-input="xc-os">
               <button class="pill selected" data-v="std">BrightSignOS (Standard)</button>
               <button class="pill" data-v="win">Windows IoT (Win10/Win11)</button>
@@ -10568,8 +10415,9 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.34.2';  // v24.34.2 — Two-part hotfix. (1) Vendor logo sizing #2: v24.34.1 used a fixed slot (width:110px height:24px) with object-fit:contain, but that fought logos wider than ~4.6:1 aspect — Pickcel (5.64:1) and Poppulo (3.18:1) both ended up small. Fix: drop the fixed-width constraint; use height-only (28px for trigger, 32px for options) and let width be natural with a safety max-width cap. min-width slot moves to the LI wrapper alignment column so vendor names line up without squishing logos. (2) "Audio + Video" choice card was showing the SAME camera icon as "Video only" (copy-paste bug from original card markup). Replaced with a distinct speaker + extending waves icon — visually conveys "video AND audio" and is distinct from both Video only (camera) and Audio only (speaker). Pairs with backend v25.15.0.
-const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.34.2 — no change vs v24.34.1.
+const FRONTEND_VERSION = '24.34.3';  // v24.34.3 — Two changes. (1) REVERT C14 quick-fill presets per Dipenkumar's feedback ("not required"). Removed the entire "Quick start" preset bar above Section 02 (DOM block), the applyQuickFillPreset() handler, the QUICK_FILL_PRESETS const, and the CSS for .quick-fill-bar / .quick-fill-buttons / .quick-fill-btn / quickFillFlash keyframe. User can still fill the form manually as before. (2) REDRAWN pill-question icons — the v24.34.1 SVG glyphs were too sparse to read at 14px (Touch looked like a lock, SSD looked like a tiny box, etc.). Replaced with cleaner, more recognizable shapes: monitor with stand (screens), TV with corner brackets (resolution), pointing-hand (touch), HDMI plug body with pins (HDMI), lightning bolt with circuit-like base (GPIO), drive with stripe + LED (SSD), wifi waves with strong baseline (wi-fi), CPU chip with pin legs (XC OS). All icons drawn at viewBox 24×24, stroke-width 1.8, with consistent visual weight. Pairs with backend v25.15.0.
+const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.34.3 — no change vs v24.34.2.
+// v24.34.2 — vendor logo sizing #2 + AV icon fix.
 // v24.34.1 — vendor logo sizing fix + pill-question icons.
 // v24.34.0 — C1: vendor dropdown with brand logos.
 // v24.33.0 — C11: accessibility audit.
@@ -30299,123 +30147,7 @@ async function _renderPipelineTrendBS() {
     if (val === 'audio') root.classList.add('audio-mode');
     else root.classList.remove('audio-mode');
   };
-  // v24.32.1 (C14): Quick-fill preset shortcuts. One click pre-fills the
-  // entire Guided form via programmatic clicks + input events. Existing
-  // handlers fire normally; state.form, validation, completion checks,
-  // audio-mode toggle, mixed-splitter visibility, CMS sub-fields all update.
-  const QUICK_FILL_PRESETS = {
-    'indoor-standard': {
-      environment: 'indoor',
-      qty: 1,
-      budget: 2,          // Standard tier
-      content: 'video',
-      outputs: '1',
-      resolution: '4k',
-      touch: 'no',
-      'hdmi-in': 'no',
-      gpio: 'no',
-      ssd: 'no',
-      wifi: 'yes',
-      update: 'local'
-    },
-    'outdoor-signage': {
-      environment: 'outdoor',
-      qty: 1,
-      budget: 4,          // Performance tier
-      content: 'video',
-      outputs: '1',
-      resolution: '4k',
-      touch: 'no',
-      'hdmi-in': 'no',
-      gpio: 'no',
-      ssd: 'yes',
-      ssdCap: '256',      // default SSD capacity for outdoor
-      wifi: 'yes',
-      update: 'cloud'
-    },
-    'interactive-kiosk': {
-      environment: 'indoor',
-      qty: 1,
-      budget: 4,          // Performance tier
-      content: 'av',
-      outputs: '1',
-      resolution: '4k',
-      touch: 'yes',
-      'hdmi-in': 'no',
-      gpio: 'yes',
-      ssd: 'no',
-      wifi: 'yes',
-      update: 'local'
-    }
-  };
-
-  function _clickChoiceCard(inputKey, value) {
-    const sel = '.choice-grid[data-input="' + inputKey + '"] .choice-card[data-v="' + value + '"]';
-    const card = document.querySelector(sel);
-    if (card) card.click();
-  }
-  function _clickPill(inputKey, value) {
-    const sel = '.pill-group[data-input="' + inputKey + '"] .pill[data-v="' + value + '"]';
-    const pill = document.querySelector(sel);
-    if (pill) pill.click();
-  }
-  function _setNumberInput(id, value) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.value = String(value);
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-    el.dispatchEvent(new Event('change', { bubbles: true }));
-  }
-  function _setSelect(id, value) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.value = String(value);
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-    el.dispatchEvent(new Event('change', { bubbles: true }));
-  }
-  function _setSlider(id, value) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.value = String(value);
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-    el.dispatchEvent(new Event('change', { bubbles: true }));
-  }
-
-  window.applyQuickFillPreset = function(presetId) {
-    const preset = QUICK_FILL_PRESETS[presetId];
-    if (!preset) return;
-    // Visual flash on the clicked button
-    const btn = document.querySelector('.quick-fill-btn[data-preset="' + presetId + '"]');
-    if (btn) {
-      btn.classList.remove('flash');
-      // re-trigger by reflow
-      void btn.offsetWidth;
-      btn.classList.add('flash');
-      setTimeout(function(){ btn.classList.remove('flash'); }, 700);
-    }
-    // Apply in order — environment first (so Mixed splitter / audio-mode logic
-    // sees the right state when subsequent fields fire)
-    if (preset.environment) _clickChoiceCard('environment', preset.environment);
-    if (preset.content) _clickChoiceCard('content', preset.content);
-    if (preset.update) _clickChoiceCard('update', preset.update);
-    // Pills
-    if (preset.outputs) _clickPill('outputs', preset.outputs);
-    if (preset.resolution) _clickPill('resolution', preset.resolution);
-    if (preset.touch) _clickPill('touch', preset.touch);
-    if (preset['hdmi-in']) _clickPill('hdmi-in', preset['hdmi-in']);
-    if (preset.gpio) _clickPill('gpio', preset.gpio);
-    if (preset.ssd) _clickPill('ssd', preset.ssd);
-    if (preset.wifi) _clickPill('wifi', preset.wifi);
-    // Numeric / select inputs
-    if (preset.qty) _setNumberInput('f-qty', preset.qty);
-    if (preset.budget) _setSlider('f-budget', preset.budget);
-    if (preset.ssdCap) _setSelect('f-ssd-cap', preset.ssdCap);
-    // Refresh completion + field-filled states once everything's set
-    setTimeout(function() {
-      try { window._refreshSectionCompletion(); } catch (_) {}
-      try { window._refreshAudioModeClass(); } catch (_) {}
-    }, 100);
-  };
+  // v24.34.3: C14 quick-fill preset JS (QUICK_FILL_PRESETS const + applyQuickFillPreset + helpers) REMOVED per user feedback.
 
   // Hook into the existing setDeployment + setContent state changes to also
   // toggle the Mixed splitter visibility (covers programmatic state changes
