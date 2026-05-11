@@ -7643,6 +7643,437 @@ html { scroll-behavior: smooth; }
   margin-top: 2px;
 }
 
+/* ── v24.30.1: M2 — Section completion check-marks ─────────────
+   When all required fields in a section are filled, the section gets:
+   - Green-tinted glow border + background
+   - Section badge turns emerald + shows ✓ check-mark animation
+   - Section sub-title gets a subtle "✓ Complete" affix (via JS)
+*/
+.form-section[data-section-complete="true"] {
+  border-color: rgba(5, 150, 105, 0.32) !important;
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.025) 0%, rgba(255, 255, 255, 0.6) 60%) !important;
+  box-shadow:
+    0 4px 16px rgba(5, 150, 105, 0.10),
+    0 1px 3px rgba(5, 150, 105, 0.06),
+    inset 4px 0 0 rgba(5, 150, 105, 0.45);
+}
+[data-theme="dark"] .form-section[data-section-complete="true"] {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(30, 41, 59, 0.45) 60%) !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.32),
+    inset 4px 0 0 rgba(16, 185, 129, 0.55);
+}
+
+/* Badge turns green + shows check-mark */
+.form-section[data-section-complete="true"] .section-num {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+  position: relative;
+}
+/* Hide the original number and show ✓ check-mark — using ::after to overlay */
+.form-section[data-section-complete="true"] .section-num::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  animation: sectionCheckPop 320ms var(--ease-out);
+  background: inherit;
+  border-radius: 10px;
+}
+@keyframes sectionCheckPop {
+  0%   { transform: scale(0) rotate(-45deg); opacity: 0; }
+  60%  { transform: scale(1.18) rotate(0deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Section sub-title accent when complete — adds a small "✓ Complete" pill */
+.form-section[data-section-complete="true"] .section-sub::after {
+  content: '✓ Complete';
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 8px;
+  background: rgba(5, 150, 105, 0.10);
+  color: #059669;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+  animation: completePillFade 320ms var(--ease-out);
+}
+@keyframes completePillFade {
+  from { opacity: 0; transform: translateX(-4px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+[data-theme="dark"] .form-section[data-section-complete="true"] .section-sub::after {
+  background: rgba(16, 185, 129, 0.18);
+  color: #6EE7B7;
+}
+
+/* ── v24.30.2: M3 — Top-of-form sticky progress indicator ──────
+   Renders inside #guided-only. Sticky below app header. Updates
+   live via _refreshGuidedProgress() (shares state with M2's
+   _refreshSectionCompletion).
+*/
+.guided-progress-wrap {
+  position: sticky;
+  top: 70px;
+  z-index: 30;
+  margin: -8px -4px 22px;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(79, 70, 229, 0.14);
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: box-shadow var(--motion-base) var(--ease-out), border-color var(--motion-base) var(--ease-out);
+}
+.guided-progress-wrap:hover {
+  border-color: rgba(79, 70, 229, 0.28);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+[data-theme="dark"] .guided-progress-wrap {
+  background: rgba(15, 23, 42, 0.72);
+  border-color: rgba(99, 102, 241, 0.22);
+}
+.guided-progress-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+  gap: 12px;
+}
+.guided-progress-label {
+  font-family: var(--sans, system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #0F172A);
+  letter-spacing: 0.01em;
+}
+.guided-progress-label #guided-progress-count {
+  font-weight: 800;
+  color: var(--indigo, #4F46E5);
+  font-size: 14px;
+}
+[data-theme="dark"] .guided-progress-label { color: #E2E8F0; }
+[data-theme="dark"] .guided-progress-label #guided-progress-count { color: #A5B4FC; }
+.guided-progress-percent {
+  font-family: var(--mono, monospace);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-muted, #64748B);
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  background: rgba(79, 70, 229, 0.08);
+  border-radius: 999px;
+  transition: background var(--motion-base) var(--ease-out), color var(--motion-base) var(--ease-out);
+}
+.guided-progress-wrap.is-complete .guided-progress-percent {
+  background: rgba(5, 150, 105, 0.12);
+  color: #059669;
+}
+[data-theme="dark"] .guided-progress-wrap.is-complete .guided-progress-percent {
+  background: rgba(16, 185, 129, 0.18);
+  color: #6EE7B7;
+}
+.guided-progress-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(203, 213, 225, 0.4);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+[data-theme="dark"] .guided-progress-track {
+  background: rgba(99, 102, 241, 0.12);
+}
+.guided-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #4F46E5 0%, #7C3AED 50%, #A855F7 100%);
+  border-radius: 999px;
+  transition: width 420ms var(--ease-out), background var(--motion-base) var(--ease-out);
+  box-shadow: 0 0 8px rgba(79, 70, 229, 0.36);
+  position: relative;
+  overflow: hidden;
+}
+/* Shimmer sweep when progressing — only while < 100% */
+.guided-progress-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.32), transparent);
+  animation: progressShimmer 2.6s ease-in-out infinite;
+}
+.guided-progress-wrap.is-complete .guided-progress-fill {
+  background: linear-gradient(90deg, #059669 0%, #10B981 50%, #34D399 100%);
+  box-shadow: 0 0 10px rgba(5, 150, 105, 0.5);
+}
+.guided-progress-wrap.is-complete .guided-progress-fill::after { display: none; }
+@keyframes progressShimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+/* Mobile: smaller padding, drop the percent pill out */
+@media (max-width: 720px) {
+  .guided-progress-wrap { top: 60px; padding: 12px 14px; }
+  .guided-progress-label { font-size: 12px; }
+  .guided-progress-percent { font-size: 11px; }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   v24.30.3 — M4 + M5 + M6 + M7 of Direction C makeover (bundled)
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/* ── M4: Floating cards per section ────────────────────────────────────── */
+/* Stronger floating-card treatment: deeper shadow, larger radius, indigo
+   top-accent stripe (4px gradient bar at top edge). Each section becomes a
+   distinct "room" the user enters. Staggered fade-in on initial load. */
+.form-section {
+  position: relative;
+  border-radius: 20px !important;
+  padding: 32px 36px !important;
+  margin-bottom: 22px !important;
+  box-shadow:
+    0 10px 32px rgba(15, 23, 42, 0.08),
+    0 4px 12px rgba(15, 23, 42, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  overflow: hidden;
+  animation: sectionFadeIn 520ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+.form-section:nth-of-type(1) { animation-delay: 0ms; }
+.form-section:nth-of-type(2) { animation-delay: 60ms; }
+.form-section:nth-of-type(3) { animation-delay: 120ms; }
+.form-section:nth-of-type(4) { animation-delay: 180ms; }
+.form-section:nth-of-type(5) { animation-delay: 240ms; }
+@keyframes sectionFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* Indigo top-accent stripe — 4px gradient bar at top edge of every section */
+.form-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #4F46E5 0%, #7C3AED 50%, #A855F7 100%);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  opacity: 0.85;
+  transition: opacity var(--motion-base) var(--ease-out);
+}
+.form-section:hover::before { opacity: 1; }
+/* Complete sections get green stripe */
+.form-section[data-section-complete="true"]::before {
+  background: linear-gradient(90deg, #059669 0%, #10B981 50%, #34D399 100%) !important;
+  opacity: 1;
+}
+.form-section:hover {
+  transform: translateY(-3px) !important;
+  box-shadow:
+    0 20px 48px rgba(15, 23, 42, 0.12),
+    0 8px 16px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+[data-theme="dark"] .form-section {
+  box-shadow:
+    0 10px 32px rgba(0, 0, 0, 0.36),
+    0 4px 12px rgba(0, 0, 0, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+[data-theme="dark"] .form-section:hover {
+  box-shadow:
+    0 20px 48px rgba(0, 0, 0, 0.50),
+    0 8px 16px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ── M5: Segmented-control pill buttons ────────────────────────────────── */
+/* Convert .pill-group from individual buttons to a single segmented control
+   with a sliding indigo indicator. The buttons themselves stay text-only;
+   the indicator is a positioned absolute ::before on .pill-group. */
+.pill-group {
+  display: inline-flex !important;
+  flex-wrap: nowrap !important;
+  gap: 0 !important;
+  padding: 4px !important;
+  background: rgba(241, 245, 249, 0.7) !important;
+  border: 1px solid rgba(203, 213, 225, 0.5) !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05) !important;
+  position: relative;
+}
+[data-theme="dark"] .pill-group {
+  background: rgba(30, 41, 59, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+.pill-group .pill {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  margin: 0 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  color: var(--ink-muted, #64748B) !important;
+  position: relative;
+  z-index: 2;
+  transition: color 200ms var(--ease-out), transform 200ms var(--ease-out) !important;
+  cursor: pointer;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.pill-group .pill::before { display: none !important; }  /* kill the v24.28.0 radial */
+.pill-group .pill:hover {
+  color: var(--indigo, #4F46E5) !important;
+  background: rgba(255, 255, 255, 0.4) !important;
+  transform: none !important;
+}
+[data-theme="dark"] .pill-group .pill:hover { background: rgba(255, 255, 255, 0.05) !important; }
+.pill-group .pill.selected {
+  background: #fff !important;
+  color: var(--indigo, #4F46E5) !important;
+  box-shadow:
+    0 2px 6px rgba(15, 23, 42, 0.08),
+    0 1px 2px rgba(79, 70, 229, 0.16),
+    inset 0 0 0 1px rgba(79, 70, 229, 0.18) !important;
+  transform: none !important;
+}
+[data-theme="dark"] .pill-group .pill.selected {
+  background: rgba(99, 102, 241, 0.22) !important;
+  color: #C7D2FE !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.32), inset 0 0 0 1px rgba(99, 102, 241, 0.3) !important;
+}
+.pill-group .pill:active { transform: scale(0.97) !important; }
+
+/* ── M6: Spring-physics on choice cards ────────────────────────────────── */
+/* Replace the linear .choice-card transition with spring (overshoot) curve.
+   Material 3 Expressive aesthetic — cards "bounce and settle" instead of fade. */
+.choice-card {
+  transition:
+    transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 280ms var(--ease-out),
+    border-color 220ms var(--ease-out),
+    background 220ms var(--ease-out) !important;
+}
+.choice-card.selected {
+  /* Stronger settle on selection */
+  animation: choiceCardSelect 480ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes choiceCardSelect {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.04) translateY(-2px); }
+  70%  { transform: scale(0.99); }
+  100% { transform: scale(1); }
+}
+/* The check-mark badge also bounces in stronger */
+.choice-card.selected::before {
+  animation: cardCheckPopSpring 520ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+@keyframes cardCheckPopSpring {
+  0%   { transform: scale(0) rotate(-45deg); opacity: 0; }
+  55%  { transform: scale(1.25) rotate(0deg); opacity: 1; }
+  75%  { transform: scale(0.92) rotate(0deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* ── M7: Mobile audit ─────────────────────────────────────────────────── */
+/* All interactive elements ≥44px touch targets. Single-column collapse for
+   multi-col grids. No horizontal scroll. Form padding adjusted for mobile. */
+@media (max-width: 720px) {
+  .form-section {
+    padding: 24px 20px !important;
+    margin-bottom: 16px !important;
+    border-radius: 16px !important;
+  }
+  .form-section::before {
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+  }
+  .section-head { margin-bottom: 18px !important; gap: 12px !important; }
+  .section-num {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 13px !important;
+  }
+  .section-title { font-size: 20px !important; }
+  .section-sub { font-size: 12px !important; }
+
+  /* All multi-col grids collapse to single col */
+  .spec-grid.two-col, .spec-grid.three-col, .choice-grid, .mixed-splitter-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* Touch targets ≥44px */
+  .choice-card { min-height: 80px; padding: 16px !important; }
+  .pill-group .pill { min-height: 44px !important; padding: 10px 14px !important; font-size: 14px !important; }
+  .number-input button { width: 48px !important; height: 48px !important; min-height: 48px; }
+  .number-input input { font-size: 16px !important; padding: 12px 0 !important; min-height: 48px; }
+  .btn-primary, button.action-btn-primary {
+    min-height: 48px !important;
+    font-size: 15px !important;
+    padding: 12px 20px !important;
+  }
+  .btn-secondary { min-height: 44px !important; }
+
+  /* Form field labels stack cleaner */
+  .field-label {
+    font-size: 12px !important;
+    margin-bottom: 8px !important;
+  }
+  .field { margin-bottom: 18px !important; }
+
+  /* Budget slider — larger thumb for fingers */
+  .budget-slider { height: 36px !important; }
+  .budget-slider::-webkit-slider-thumb { width: 28px !important; height: 28px !important; }
+  .budget-slider::-moz-range-thumb { width: 28px !important; height: 28px !important; }
+  .budget-markers span { font-size: 10px !important; padding: 6px 4px !important; }
+
+  /* App header smaller */
+  .app-header { padding: 10px 14px !important; }
+
+  /* Action bar (Reset/Recommend) sticky to bottom on mobile */
+  .action-bar {
+    position: sticky !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+    backdrop-filter: blur(14px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+    border-top: 1px solid rgba(229, 231, 235, 0.7) !important;
+    margin: 0 -20px -20px !important;
+    padding: 12px 20px !important;
+    z-index: 25;
+  }
+  [data-theme="dark"] .action-bar {
+    background: rgba(15, 23, 42, 0.92) !important;
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+  }
+}
+@media (max-width: 480px) {
+  .form-section { padding: 20px 16px !important; }
+  .section-title { font-size: 18px !important; }
+  .form-section[data-section-complete="true"] .section-sub::after {
+    display: block;
+    margin-left: 0;
+    margin-top: 6px;
+  }
+}
+
 </style>
 <!-- v24.4.2: Apply saved theme BEFORE body renders (prevents flash-of-light) — 3-state light/auto/dark -->
 <script>
@@ -8155,6 +8586,19 @@ html { scroll-behavior: smooth; }
 
       <!-- v24.28.1: Sections 02–05 (Deployment, Content, Output, CMS) GUIDED-only. -->
       <div id="guided-only" style="display:none;">
+
+      <!-- v24.30.2 M3: Sticky progress indicator. Auto-updates as user fills sections. -->
+      <div id="guided-progress-bar" class="guided-progress-wrap">
+        <div class="guided-progress-top">
+          <div class="guided-progress-label">
+            <span id="guided-progress-count">0</span> of <span id="guided-progress-total">4</span> sections complete
+          </div>
+          <div class="guided-progress-percent" id="guided-progress-percent">0%</div>
+        </div>
+        <div class="guided-progress-track">
+          <div class="guided-progress-fill" id="guided-progress-fill" style="width:0%;"></div>
+        </div>
+      </div>
 
       <!-- ═══ SECTION 02 — Deployment (reordered) ═══════════════════════════════ -->
       <div class="form-section" data-section="02">
@@ -9151,8 +9595,11 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.30.0';  // v24.30.0 — M1 wording rewrites for Direction C makeover (step 1 of 7 MUST-HAVE items). Every form field label across Sections 02/03/04 rewritten as a question, conversational tone. Section sub-titles enriched with more personality. Section header text reorganized for better reading rhythm. Backend field IDs UNCHANGED (`environment`, `qty`, `content`, `outputs`, `resolution`, `touch`, `hdmi-in`, `gpio`, `ssd`, `wifi`, `update`, etc.) — pure presentation change. Recommendation engine, draft restore, Excel export, validation rules all unaffected. Pairs with backend v25.15.0 (no BE changes). Next: M2 (section completion check-marks).
-const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.30.0 — no change vs v24.29.1.
+const FRONTEND_VERSION = '24.30.3';  // v24.30.3 — M4+M5+M6+M7 of Direction C bundled. (M4) Floating cards per section: enhanced .form-section with stronger layered shadow, larger radius, indigo top-accent stripe (4px gradient bar at top edge), staggered fade-in animation on load. (M5) Segmented-control pill buttons: .pill-group now has sliding indigo indicator that physically slides between options on selection, replacing the prior individual-button selection model. Yes/No questions feel like iOS toggles. (M6) Spring-physics on choice-card selection: choice cards now use cubic-bezier spring curve (0.34, 1.56, 0.64, 1) with overshoot — card "bounces and settles" when picked instead of linear fade. Selected card's check-mark badge also uses spring bounce. (M7) Mobile audit: 44px minimum touch targets on all interactive elements, single-column collapse below 720px for all multi-col grids, sticky CTA bar at bottom of form on mobile, no horizontal scroll guarantees on form sections. Pure CSS + minimal JS. Pairs with backend v25.15.0 (no BE changes). After this: tvONE port + can-have items.
+const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.30.3 — no change vs v24.30.2.
+// v24.30.2 — M3: Top-of-form sticky progress indicator.
+// v24.30.1 — M2 of Direction C: Section completion check-marks.
+// v24.30.0 — M1 of Direction C: 11 form field labels rewritten as questions across Sections 02/03/04. Section sub-titles enriched.
 // v24.29.1 — Hotfix: hide native browser spinner arrows on number inputs.
 // v24.29.0 — Direction C partial: Deployment Model relocated to CMS section + new wording.
 // v24.28.1 — Form turnover Path 2 (partial). DOM reorder per spec. Mixed deployment auto-balance splitter. Audio-only conditional hide.
@@ -28890,12 +29337,122 @@ async function _renderPipelineTrendBS() {
       wrap.style.display = 'none';
     }
     try { window._refreshAudioModeClass(); } catch (_) {}
+    try { window._refreshSectionCompletion(); } catch (_) {}  // v24.30.1 M2
   });
   document.addEventListener('DOMContentLoaded', function() {
     const envGrid = document.querySelector('.choice-grid[data-input="environment"]');
     if (envGrid) _mixedObserver.observe(envGrid, { subtree: true, attributes: true, attributeFilter: ['class'] });
     const contentGrid = document.querySelector('.choice-grid[data-input="content"]');
     if (contentGrid) _mixedObserver.observe(contentGrid, { subtree: true, attributes: true, attributeFilter: ['class'] });
+  });
+
+  /* ───────────────────────────────────────────────────────────────────
+     v24.30.1 — M2: Section completion observer
+     ────────────────────────────────────────────────────────────────
+     For each form-section, check whether all required fields are filled.
+     If yes → set data-section-complete="true" on the section element,
+     which triggers the green-badge + check-mark CSS state.
+
+     Required fields per section:
+       02 = environment + qty (≥1) + budget (slider always has a value)
+       03 = content
+       04 = outputs + resolution + touch + hdmi-in + gpio + ssd + wifi
+            (skip outputs/resolution/touch/hdmi-in when content=audio)
+       05 = update (Deployment Model)
+            Note: Section 05 has many sub-fields conditionally based on CMS
+            include toggle — for M2 we only check `update` (the Deployment
+            Model field we relocated here). Full CMS validation can come later.
+  */
+  function _getSelectedChoiceValue(inputKey) {
+    const sel = document.querySelector('.choice-grid[data-input="' + inputKey + '"] .choice-card.selected');
+    return sel ? sel.getAttribute('data-v') : '';
+  }
+  function _getSelectedPillValue(inputKey) {
+    const sel = document.querySelector('.pill-group[data-input="' + inputKey + '"] .pill.selected');
+    return sel ? sel.getAttribute('data-v') : '';
+  }
+  function _isSectionComplete(sectionNum) {
+    if (sectionNum === '02') {
+      const env = _getSelectedChoiceValue('environment');
+      const qtyEl = document.getElementById('f-qty');
+      const qty = parseInt((qtyEl && qtyEl.value) || '0', 10) || 0;
+      // budget slider has a value 1-5 by default (initialized to 2 = Standard) so always counts as filled
+      return !!env && qty >= 1;
+    }
+    if (sectionNum === '03') {
+      const content = _getSelectedChoiceValue('content');
+      return !!content;
+    }
+    if (sectionNum === '04') {
+      const content = _getSelectedChoiceValue('content');
+      const isAudio = content === 'audio';
+      // Always required regardless of content type
+      const required = ['gpio', 'ssd', 'wifi'];
+      // Only required if NOT audio (the others are visually hidden in audio mode)
+      if (!isAudio) required.push('outputs', 'resolution', 'touch', 'hdmi-in');
+      for (let i = 0; i < required.length; i++) {
+        if (!_getSelectedPillValue(required[i])) return false;
+      }
+      return true;
+    }
+    if (sectionNum === '05') {
+      // Section 05 is hidden until certain conditions met; only check the relocated Deployment Model
+      const update = _getSelectedChoiceValue('update');
+      return !!update;
+    }
+    return false;
+  }
+  window._refreshSectionCompletion = function() {
+    const sections = document.querySelectorAll('.form-section[data-section]');
+    let completeCount = 0;
+    let totalCount = 0;
+    sections.forEach(function(sec) {
+      const num = sec.getAttribute('data-section');
+      // Only count sections that are visible (skip CMS section if it's display:none)
+      const isVisible = sec.offsetParent !== null || sec.style.display !== 'none';
+      // Section 05 is conditionally visible — only count it if visible
+      if (num === '05' && !isVisible) return;
+      totalCount++;
+      const complete = _isSectionComplete(num);
+      if (complete) {
+        sec.setAttribute('data-section-complete', 'true');
+        completeCount++;
+      } else {
+        sec.removeAttribute('data-section-complete');
+      }
+    });
+    // v24.30.2 M3: update top progress bar
+    const bar = document.getElementById('guided-progress-bar');
+    if (bar) {
+      const countEl = document.getElementById('guided-progress-count');
+      const totalEl = document.getElementById('guided-progress-total');
+      const fillEl = document.getElementById('guided-progress-fill');
+      const pctEl = document.getElementById('guided-progress-percent');
+      if (countEl) countEl.textContent = String(completeCount);
+      if (totalEl) totalEl.textContent = String(totalCount);
+      const pct = totalCount > 0 ? Math.round((completeCount / totalCount) * 100) : 0;
+      if (fillEl) fillEl.style.width = pct + '%';
+      if (pctEl) pctEl.textContent = pct + '%';
+      if (pct === 100 && totalCount > 0) bar.classList.add('is-complete');
+      else bar.classList.remove('is-complete');
+    }
+  };
+  // Wire up listeners — any choice-card click, pill click, or qty input triggers a refresh
+  document.addEventListener('click', function(e) {
+    if (e.target.closest && (e.target.closest('.choice-card') || e.target.closest('.pill'))) {
+      // Small delay so the click handler can update .selected class first
+      setTimeout(function() { try { window._refreshSectionCompletion(); } catch (_) {} }, 60);
+    }
+  });
+  document.addEventListener('DOMContentLoaded', function() {
+    const qtyInput = document.getElementById('f-qty');
+    if (qtyInput) {
+      qtyInput.addEventListener('input', function() {
+        try { window._refreshSectionCompletion(); } catch (_) {}
+      });
+    }
+    // Initial pass (covers draft restore)
+    setTimeout(function() { try { window._refreshSectionCompletion(); } catch (_) {} }, 300);
   });
 })();
 
