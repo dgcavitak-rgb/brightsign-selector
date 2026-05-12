@@ -10770,7 +10770,10 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.36.2';  // v24.36.2 — Tiny label refinement per user spec. HDMI input label "HDMI live source input?" → "HDMI live source input port?" (added "port" word to exactly match user's handwritten Page 1 notes "HDMI Live source input port: Yes/No"). No other changes. Pairs with backend v25.15.0.
+const FRONTEND_VERSION = '24.36.3';  // v24.36.3 — Two bugfixes per user feedback. (1) HEADER NAME "—" BUG: On fresh login (sign-in from login page), the user-label-name slot stayed as the HTML default "—" because _applyPostLoginUI() was NEVER actually called in the fresh-login flow despite the v24.20.1 comment claiming it would be called "below". The "below" promise was never fulfilled. Only the rehydrate path (refresh while signed in) called it, which is why the issue only surfaced on cold logins. Now calls _applyPostLoginUI() in the fresh-login flow too — idempotent so safe against duplicate calls in slow login races. (2) NOTIFICATIONS NOT CLEARING DAILY: Notifications had 7-day rolling retention. User wants yesterday's notifications gone at 12:01 AM (daily reset). Changed _loadNotifs_ cutoff from "now - 7 days" to "start of today (00:00:00 local time)". Notifs older than midnight are now filtered out on every load and the cleaned list is persisted so the bell badge count stays accurate. NOTIF_RETENTION_MS constant kept declared (referenced elsewhere) but no longer used as the cutoff in _loadNotifs_. Pairs with backend v25.15.0.
+// v24.36.2 — Label refinement: HDMI input → "HDMI live source input port?" (added "port").
+// v24.36.1 — Card 03 field order refinement: Resolution → Touch → HDMI input → GPIO → HDMI Output port → SSD → Wi-Fi. "How many screens per player?" relabeled to "How many HDMI Output port?".
+// v24.36.0 — Form reorganization: 5 → 4 cards. Section 02 = Signage Player Quantity. Section 03 = Technical Requirement (Playback merged in). Section 04 = CMS. Card 02 qty conditional on environment selection. Buttons → "Generate BOQ →".
 // v24.36.1 — Card 03 field order refinement. Reordered to: Resolution → Touch → HDMI input → GPIO → HDMI Output port → SSD → Wi-Fi. Relabeled "How many screens per player?" → "How many HDMI Output port?". Tightened labels. Field ID `outputs` unchanged.
 // v24.36.0 — Form reorganization per user spec (Dipenkumar's handwritten notes). 5 → 4 cards. Section 02 renamed "Signage Player Quantity". Section 03 "Playback" merged into "Technical Requirement". Section 05 renumbered → 04 + retitled "CMS / Content Management Software". HDMI label reworded. Buttons → "Generate BOQ →". Card 02 qty CONDITIONAL on environment selection. Mixed→Indoor/Outdoor switch zeros stale split values. Pairs with backend v25.15.0.
 // v24.35.0 — Mobile compatibility + dark/light theme pass for BS Form (cards 01-05 + Calculate button + Custom BOQ). Help-icon tooltips on tap, iOS zoom prevention, <380px breakpoint, XC OS toggle bigger on mobile, header compactness fix. Custom BOQ selects + XC OS Windows button theme-aware. Pairs with backend v25.15.0.
@@ -12769,7 +12772,16 @@ function getCmsPrice(vendor, priceType, term){
   function _loadNotifs_() {
     try {
       const raw = JSON.parse(localStorage.getItem(_notifKey_()) || '[]');
-      const cutoff = Date.now() - NOTIF_RETENTION_MS;
+      // v24.36.3 (BUGFIX per user request): Notifications now auto-clear at midnight.
+      // Previously used 7-day rolling cutoff (NOTIF_RETENTION_MS = 7 days). User reported
+      // yesterday's notifications were sticking around — they want a clean slate every day
+      // at 12:01 AM. New cutoff = start of today (00:00:00 local time). Notifications
+      // older than today are filtered out on every load (next bell-click after midnight
+      // wipes them visually; first pushNotification of the new day saves the cleaned list).
+      // NOTE: NOTIF_RETENTION_MS constant kept declared for compatibility but no longer used here.
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const cutoff = today.getTime();
       // v24.25.3 — backfill old "Untitled" subs (left over from pre-v24.25.0 entries
       // which didn't enforce project name). Cosmetic relabel only — actual deal
       // record on the sheet is unchanged. We keep the original ts so order is preserved.
@@ -12784,7 +12796,9 @@ function getCmsPrice(vendor, priceType, term){
         }
         return n;
       });
-      if(mutated){
+      // v24.36.3: If we filtered out any pre-today entries, persist the cleaned list
+      // so the bell badge count is also accurate on next render.
+      if(fixed.length !== raw.length || mutated){
         try { localStorage.setItem(_notifKey_(), JSON.stringify(fixed.slice(0, NOTIF_MAX_ITEMS))); } catch(_){}
       }
       return fixed;
@@ -15166,6 +15180,13 @@ async function handleLogin(){
     // v24.20.1 (Bug #3): Don't render user-label-name + avatar here — _applyPostLoginUI()
     // does that idempotently and is called below (or via rehydrate). Previously this block
     // and _applyPostLoginUI both wrote the SUPER badge → resulted in two pills.
+    // v24.36.3 (BUGFIX): _applyPostLoginUI() was NEVER actually called in the fresh-login
+    // path despite this comment. The "below" promise was never fulfilled. Result: on fresh
+    // sign-in, the user-label-name slot stayed as the HTML default "—" because nothing
+    // populated it from state.user.fullName. The rehydrate path (refresh page while signed
+    // in) DID call it, which is why the issue only surfaced on cold logins. Calling it
+    // here now — idempotent so duplicate calls in slow login sequences are safe.
+    try { _applyPostLoginUI(); } catch(e) { console.warn('[v24.36.3] _applyPostLoginUI threw:', e); }
     document.getElementById('user-label-role').textContent=state.user.role;
     const initials=(state.user.fullName||name).split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase();
     const avatar=document.getElementById('user-avatar');
