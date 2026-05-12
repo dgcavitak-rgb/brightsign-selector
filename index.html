@@ -8871,6 +8871,351 @@ body, .form-section, .section-title, .field-label, .choice-card-name {
 [data-theme="dark"] .field-icon-wifi      { background: rgba(16, 185, 129, 0.22); color: #6EE7B7; }
 [data-theme="dark"] .field-icon-xc        { background: rgba(99, 102, 241, 0.20); color: #A5B4FC; }
 
+/* ============================================================================
+ * v24.35.0 — MOBILE COMPATIBILITY + DARK/LIGHT THEME PASS (BS Form)
+ * Mobile: Android + iPhone standard widths (360–430px) + folded narrow phone (≤380px)
+ * Theme:  Plug gaps where inline styles ignored the dark theme system
+ *
+ * Augments existing 720/640/480px breakpoints — does not replace them.
+ * BS already has solid mobile coverage; this fills the remaining gaps.
+ * ============================================================================ */
+
+/* ── HELP-ICON TOOLTIPS ON TOUCH ──────────────────────────────────────── */
+/* The existing .help-icon:hover rule (line ~6368) doesn't fire on touch.
+   Add focus/active triggers so tap reveals the tip on phones. */
+@media (hover: none), (pointer: coarse) {
+  .help-icon {
+    /* Bigger touch target — was 16×16 */
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .help-icon:focus,
+  .help-icon:active {
+    background: var(--indigo, #4F46E5);
+    color: #fff;
+    border-color: var(--indigo, #4F46E5);
+    outline: none;
+  }
+  .help-icon:focus::after,
+  .help-icon:active::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.97);
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.5;
+    white-space: normal;
+    width: min(260px, calc(100vw - 40px));
+    text-align: left;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+    z-index: 1000;
+    pointer-events: none;
+  }
+}
+
+/* ── iOS ZOOM-ON-FOCUS PREVENTION ─────────────────────────────────────── */
+/* Inputs ≥16px font-size on mobile prevents Safari from auto-zooming on focus.
+   Existing 720px breakpoint covers most cases but enforce universally at ≤480px. */
+@media (max-width: 480px) {
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="date"],
+  input[type="month"],
+  select,
+  textarea,
+  .field input,
+  .field select,
+  .field textarea,
+  .spec-grid input,
+  .spec-grid select,
+  .spec-grid textarea {
+    font-size: 16px !important;
+    min-height: 46px;
+  }
+  textarea,
+  .field textarea {
+    min-height: 88px;
+  }
+}
+
+/* ── NARROW PHONE (≤380px) — folded Z Fold, older Androids ────────────── */
+/* BS has no <380px breakpoint. Add one for cramped widths. */
+@media (max-width: 380px) {
+  /* Page padding tighter */
+  .container,
+  .form-section {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+  .form-section {
+    padding-top: 18px !important;
+    padding-bottom: 18px !important;
+  }
+  /* Section pill smaller */
+  .section-num {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 11px !important;
+  }
+  .section-title { font-size: 17px !important; }
+  .section-sub { font-size: 11.5px !important; }
+
+  /* Page title smaller */
+  .page-title,
+  h1.page-title {
+    font-size: 22px !important;
+    line-height: 1.25 !important;
+  }
+
+  /* Choice cards (LED size, deployment, etc.): tighter */
+  .choice-card {
+    padding: 12px !important;
+    min-height: 72px !important;
+  }
+  .choice-card .choice-title {
+    font-size: 13px !important;
+  }
+  .choice-card .choice-sub {
+    font-size: 11px !important;
+  }
+
+  /* Pills slightly tighter */
+  .pill-group .pill {
+    padding: 9px 12px !important;
+    font-size: 13px !important;
+    min-height: 42px !important;
+  }
+
+  /* Number input −/+ buttons */
+  .number-input button {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  /* Action bar buttons stack-friendly */
+  .action-bar {
+    padding: 10px 14px !important;
+    gap: 8px !important;
+  }
+  .action-bar button {
+    font-size: 14px !important;
+    min-height: 46px !important;
+  }
+}
+
+/* ── CUSTOM BOQ XC OS TOGGLE — bigger tap target on mobile ────────────── */
+@media (max-width: 480px) {
+  .adv-xc-os-btn {
+    padding: 8px 14px !important;
+    font-size: 12.5px !important;
+    min-height: 36px !important;
+  }
+  .adv-xc-os-toggle {
+    gap: 6px !important;
+  }
+}
+
+/* ── DARK THEME: Custom BOQ selects with hardcoded background ─────────── */
+/* The 3 inline-styled selects (CMS term/type, SSD cap) had background:#fff
+   which we already removed from HTML. This ensures the dark theme override
+   beats any inline color value if it ever sneaks back in. */
+html[data-theme="dark"] #adv-cms-term,
+html[data-theme="dark"] #adv-cms-type,
+html[data-theme="dark"] #adv-ssd-cap {
+  background: var(--surface, #141937) !important;
+  color: var(--ink, #F1F5F9) !important;
+  border-color: var(--border-strong, rgba(148,163,184,0.30)) !important;
+}
+
+/* Custom BOQ XC OS inactive button: dark-theme variant. The active button
+   uses var(--indigo) which already works in both themes. */
+html[data-theme="dark"] .adv-xc-os-btn[data-os="win"]:not(.active) {
+  background: var(--surface-2, #1B2142) !important;
+  color: var(--ink-muted, #CBD5E1) !important;
+  border-color: var(--border-strong, rgba(148,163,184,0.30)) !important;
+}
+html[data-theme="dark"] .adv-xc-os-btn[data-os="win"]:not(.active):hover {
+  background: rgba(79, 70, 229, 0.18) !important;
+  border-color: rgba(165, 180, 252, 0.45) !important;
+}
+
+/* ── HEADER COMPACTNESS ON MOBILE (≤640px) ───────────────────────────────
+ * The desktop header has BrightSign logo + "Product Selector / Cavitak Marketing"
+ * text on left, and on right: user info + theme toggle (☀ A ☾) + 🔔 bell + DG avatar
+ * + 👤 My Profile button + Sign out button. On a 360px-wide screen all that won't
+ * fit horizontally — so it wraps to 4+ lines, eats ~280px of vertical space, and
+ * pushes the page title down where the sticky header covers it on scroll.
+ *
+ * Fix strategy:
+ *   1. Allow .app-header to wrap into 2 rows (logo row + actions row)
+ *   2. Hide non-essential text labels — keep icons
+ *   3. Compress theme toggle (☀ A ☾) — smaller pills
+ *   4. Smaller logo, hide the divider
+ *   5. Make user info more compact (name only, no role tagline)
+ *   6. Add scroll-margin-top to page titles so sticky header doesn't cover them
+ *
+ * The previous @media(max-width:640px) coverage existed but wasn't aggressive enough.
+ * This block is INTENTIONALLY high-specificity to override base + dark theme rules. */
+@media (max-width: 640px) {
+  /* Allow header to wrap into stacked rows */
+  .app-header {
+    padding: 10px 14px !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    row-gap: 10px !important;
+  }
+  /* Logo + brand text: full first row, tighter */
+  .app-logo {
+    flex: 1 1 100%;
+    min-width: 0;
+    gap: 8px !important;
+  }
+  .app-header-logo-wrap {
+    gap: 8px !important;
+  }
+  .app-header-logo {
+    height: 22px !important;
+  }
+  .app-header-logo-divider {
+    display: none !important;
+  }
+  .app-logo-name {
+    font-size: 15px !important;
+    line-height: 1.2 !important;
+  }
+  .app-logo-sub {
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0.05em !important;
+  }
+  .app-logo-text {
+    min-width: 0;
+    overflow: hidden;
+  }
+  /* Right-side actions: second row, scrollable horizontally if cramped */
+  .app-user {
+    flex: 1 1 100%;
+    gap: 8px !important;
+    justify-content: flex-end !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .app-user::-webkit-scrollbar {
+    display: none;
+  }
+  /* User info: compact — name only, no role tagline, smaller */
+  .app-user-info {
+    flex-shrink: 0;
+    min-width: 0;
+  }
+  .app-user-name {
+    font-size: 12px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .app-user-role {
+    display: none !important;  /* role pill goes away on mobile to save space */
+  }
+  /* Theme toggle: compact pills */
+  .theme-pill-group {
+    flex-shrink: 0;
+    gap: 2px !important;
+  }
+  .theme-pill {
+    width: 30px !important;
+    height: 30px !important;
+    padding: 0 !important;
+    font-size: 13px !important;
+  }
+  .theme-pill-icon {
+    font-size: 13px !important;
+  }
+  /* Notif bell: smaller */
+  .notif-bell {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 14px !important;
+    padding: 0 !important;
+    flex-shrink: 0;
+  }
+  /* Avatar: smaller */
+  .app-user-avatar {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 12px !important;
+    flex-shrink: 0;
+  }
+  /* My Profile + Sign out: icon-only style buttons, very compact */
+  .app-user > button {
+    height: 32px !important;
+    padding: 6px 10px !important;
+    font-size: 11.5px !important;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  /* Force buttons to be 32px tall (override beauty-3 rule at line ~1136) */
+  .app-user button {
+    height: 32px !important;
+  }
+
+  /* Page title shouldn't be hidden under sticky header */
+  .container .page-title,
+  h1.page-title,
+  .page-title {
+    scroll-margin-top: 120px;
+    padding-top: 8px;
+  }
+
+  /* Container top padding: small breathing room under header */
+  .container {
+    padding-top: 16px !important;
+  }
+}
+
+/* Even tighter at narrow phone */
+@media (max-width: 380px) {
+  .app-header {
+    padding: 8px 10px !important;
+  }
+  .app-logo-name {
+    font-size: 14px !important;
+  }
+  .app-logo-sub {
+    font-size: 8.5px !important;
+  }
+  .app-header-logo {
+    height: 20px !important;
+  }
+  .theme-pill {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  .notif-bell, .app-user-avatar {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  .app-user > button {
+    padding: 5px 8px !important;
+    font-size: 11px !important;
+  }
+}
+
 </style>
 <!-- v24.4.2: Apply saved theme BEFORE body renders (prevents flash-of-light) — 3-state light/auto/dark -->
 <script>
@@ -9405,10 +9750,10 @@ body, .form-section, .section-title, .field-label, .choice-card-name {
 
       <!-- ═══ SECTION 02 — Deployment (reordered) ═══════════════════════════════ -->
       <div class="form-section" data-section="02">
-        <div class="section-head"><div class="section-num">02</div><div><div class="section-title">Deployment</div><div class="section-sub">Tell us where these players will live and how many you need</div></div></div>
+        <div class="section-head"><div class="section-num">02</div><div><div class="section-title">Signage Player Quantity</div><div class="section-sub">Where these players live, how many, and budget tier</div></div></div>
 
         <!-- Field 1: Deployment Type FIRST -->
-        <div class="field"><label class="field-label">Where will these players live?<span class="req">*</span></label>
+        <div class="field"><label class="field-label">Where will signage players be installed?<span class="req">*</span></label>
           <div class="choice-grid" data-input="environment">
             <button class="choice-card" data-v="indoor"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="choice-card-name">Indoor</span><span class="choice-card-sub">Standard signage</span></button>
             <button class="choice-card" data-v="outdoor"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg><span class="choice-card-name">Outdoor</span><span class="choice-card-sub">Enclosure required</span></button>
@@ -9416,14 +9761,20 @@ body, .form-section, .section-title, .field-label, .choice-card-name {
           </div>
         </div>
 
-        <!-- Field 2: Number of Players (with Mixed splitter expansion) -->
-        <div class="field"><label class="field-label">How many players in total?<span class="req">*</span></label>
-          <div class="number-input"><button onclick="adjustQty(-1)" type="button">−</button><input type="number" id="f-qty" value="1" min="1" max="10000"><button onclick="adjustQty(1)" type="button">+</button></div>
-          <!-- v24.28.1: Mixed splitter — revealed when Mixed deployment selected. Auto-balance Indoor+Outdoor to Total. -->
+        <!-- v24.36.0: Field 2 — Quantity is now CONDITIONAL — hidden until environment is chosen.
+             Indoor/Outdoor → single qty input
+             Mixed → split qty inputs (Indoor + Outdoor) + auto-computed total
+             Until environment is selected, this entire wrapper stays hidden (display:none). -->
+        <div class="field" id="qty-wrap" style="display:none;"><label class="field-label" id="qty-label">How many players?<span class="req">*</span></label>
+          <!-- Single-environment qty input (visible for Indoor or Outdoor) -->
+          <div id="qty-single-wrap">
+            <div class="number-input"><button onclick="adjustQty(-1)" type="button">−</button><input type="number" id="f-qty" value="1" min="1" max="10000"><button onclick="adjustQty(1)" type="button">+</button></div>
+          </div>
+          <!-- v24.28.1 Mixed splitter — revealed when Mixed deployment selected. Auto-balance Indoor+Outdoor to Total. -->
           <div id="mixed-qty-wrap" class="mixed-splitter" style="display:none;">
             <div class="mixed-splitter-label">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              Mixed deployment — split your <span id="mixed-total-label">1</span> players
+              Mixed deployment — enter quantity for each
             </div>
             <div class="mixed-splitter-grid">
               <div>
@@ -9435,7 +9786,7 @@ body, .form-section, .section-title, .field-label, .choice-card-name {
                 <div class="number-input"><button onclick="adjustMixedQty('outdoor', -1)" type="button">−</button><input type="number" id="f-qty-outdoor" value="0" min="0" max="10000" oninput="onMixedQtyInput('outdoor')"><button onclick="adjustMixedQty('outdoor', 1)" type="button">+</button></div>
               </div>
             </div>
-            <div id="mixed-balance-status" class="mixed-splitter-status is-ok">✓ adds up to 1</div>
+            <div id="mixed-balance-status" class="mixed-splitter-status is-ok">Total: <span id="mixed-total-label">1</span> players</div>
           </div>
         </div>
 
@@ -9456,26 +9807,27 @@ body, .form-section, .section-title, .field-label, .choice-card-name {
         </div>
       </div>
 
-      <!-- ═══ SECTION 03 — Playback Content ═════════════════════════════════════ -->
-      <div class="form-section" data-section="03">
-        <div class="section-head"><div class="section-num">03</div><div><div class="section-title">Playback</div><div class="section-sub">What kind of content will these players show?</div></div></div>
-        <div class="field" style="margin-bottom:0;"><label class="field-label">What kind of content?<span class="req">*</span></label>
+      <!-- v24.36.0: Old Section 03 "Playback" merged into Section 03 "Technical Requirement" below as first field.
+           Card count drops from 5 to 4 per user spec. -->
+
+      <!-- ═══ SECTION 03 — Technical Requirement (Player Type merged in from old Sec 03) ═══ -->
+      <div class="form-section" id="section-video-specs" data-section="03">
+        <div class="section-head"><div class="section-num">03</div><div><div class="section-title">Technical Requirement</div><div class="section-sub">Player type, display setup, signal handling, and accessories</div></div></div>
+
+        <!-- v24.36.0: Player type (Video / Audio+Video / Audio only) — moved here from old Section 03 -->
+        <div class="field"><label class="field-label">Player type<span class="req">*</span></label>
           <div class="choice-grid" data-input="content">
             <button class="choice-card" data-v="video"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><span class="choice-card-name">Video only</span><span class="choice-card-sub">Silent signage</span></button>
             <button class="choice-card" data-v="av"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 5 8 9 4 9 4 15 8 15 13 19 13 5"/><path d="M17 8a5 5 0 0 1 0 8"/><path d="M20 5a9 9 0 0 1 0 14"/></svg><span class="choice-card-name">Audio + Video</span><span class="choice-card-sub">Full AV signage</span></button>
             <button class="choice-card" data-v="audio"><svg class="choice-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg><span class="choice-card-name">Audio only</span><span class="choice-card-sub">AU335 player</span></button>
           </div>
         </div>
-      </div>
 
-      <!-- ═══ SECTION 04 — Output & interactivity (reordered: Displays → Resolution → Touch → HDMI → GPIO → SSD → Wi-Fi) ═══ -->
-      <div class="form-section" id="section-video-specs" data-section="04">
-        <div class="section-head"><div class="section-num">04</div><div><div class="section-title">Specs &amp; Features</div><div class="section-sub">Display setup and the hardware features your project needs</div></div></div>
         <div class="spec-grid two-col">
           <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-screens" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.5"/><line x1="8" y1="20" x2="16" y2="20"/><line x1="12" y1="16" x2="12" y2="20"/><line x1="7" y1="8" x2="17" y2="8" stroke-opacity="0.5"/></svg></span>How many screens per player?<span class="req">*</span></label><div class="pill-group" data-input="outputs"><button class="pill" data-v="1">1</button><button class="pill" data-v="2">2</button><button class="pill" data-v="4">4</button></div></div>
           <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-resolution" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9V8a1 1 0 0 1 1-1h1M16 7h1a1 1 0 0 1 1 1v1M17 17h1a1 1 0 0 0 1-1v-1M7 15v1a1 1 0 0 0 1 1h1"/></svg></span>What resolution?<span class="req">*</span></label><div class="pill-group" data-input="resolution"><button class="pill" data-v="hd">Full HD</button><button class="pill" data-v="4k">4K</button><button class="pill" data-v="8k">8K</button></div></div>
           <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-touch" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V6a3 3 0 1 1 6 0v5"/><path d="M9 11v-1a2 2 0 0 0-4 0v6a6 6 0 0 0 6 6h2a6 6 0 0 0 6-6v-4a2 2 0 0 0-4 0"/><circle cx="12" cy="11" r="0.5" fill="currentColor"/></svg></span>Touch interaction?<span class="req">*</span></label><div class="pill-group" data-input="touch"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
-          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-hdmi" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16l-1.5 6h-13L4 9z"/><line x1="7" y1="11" x2="7" y2="13"/><line x1="10" y1="11" x2="10" y2="13"/><line x1="14" y1="11" x2="14" y2="13"/><line x1="17" y1="11" x2="17" y2="13"/></svg></span>HDMI input needed?<span class="req">*</span></label><div class="pill-group" data-input="hdmi-in"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
+          <div class="field hide-when-audio" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-hdmi" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16l-1.5 6h-13L4 9z"/><line x1="7" y1="11" x2="7" y2="13"/><line x1="10" y1="11" x2="10" y2="13"/><line x1="14" y1="11" x2="14" y2="13"/><line x1="17" y1="11" x2="17" y2="13"/></svg></span>HDMI live source input?<span class="req">*</span></label><div class="pill-group" data-input="hdmi-in"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
           <div class="field" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-gpio" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 3 4 14 11 14 10 21 20 10 13 10 13 3"/></svg></span>GPIO port needed?<span class="req">*</span></label><div class="pill-group" data-input="gpio"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div><div style="font-size:11px;color:var(--ink-subtle);margin-top:4px;line-height:1.4;">12-pin Phoenix for sensors, buttons, relays</div></div>
           <div class="field" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-ssd" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="1.5"/><line x1="6" y1="10" x2="14" y2="10" stroke-opacity="0.55"/><line x1="6" y1="13" x2="11" y2="13" stroke-opacity="0.55"/><circle cx="18" cy="13" r="1.4" fill="currentColor"/></svg></span>SSD storage?<span class="req">*</span></label><div class="pill-group" data-input="ssd"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div><div class="ssd-cap-wrap" id="ssd-cap-wrap"><select id="f-ssd-cap"><option value="">Storage capacity…</option><option value="128">128 GB</option><option value="256">256 GB</option><option value="512">512 GB</option><option value="1024">1 TB</option></select></div></div>
           <div class="field" style="margin-bottom:0;"><label class="field-label"><span class="field-icon field-icon-wifi" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5a14 14 0 0 1 18 0"/><path d="M6 12a10 10 0 0 1 12 0"/><path d="M9 15.5a5 5 0 0 1 6 0"/><circle cx="12" cy="19" r="1.2" fill="currentColor"/></svg></span>Wi-Fi needed?<span class="req">*</span></label><div class="pill-group" data-input="wifi"><button class="pill" data-v="yes">Yes</button><button class="pill" data-v="no">No</button></div></div>
@@ -9491,12 +9843,9 @@ body, .form-section, .section-title, .field-label, .choice-card-name {
         </div>
       </div>
 
-      <!-- v24.29.0: Section 05 — CMS (Deployment Model relocated here from Section 02) -->
-      <!-- v24.30.6: Section 05 default visible (was display:none) because Deployment
-           Model is the first field here and is REQUIRED. Sub-fields inside still
-           conditionally show via toggleCmsSection() based on state.form.update. -->
-      <div class="form-section" id="section-cms" data-section="05">
-        <div class="section-head"><div class="section-num">05</div><div><div class="section-title">Content Management</div><div class="section-sub">How content reaches these players and which CMS to use</div></div></div>
+      <!-- v24.36.0: CMS renumbered from 05 → 04 (Playback card merged into Tech Req, so 5→4 cards) -->
+      <div class="form-section" id="section-cms" data-section="04">
+        <div class="section-head"><div class="section-num">04</div><div><div class="section-title">CMS / Content Management Software</div><div class="section-sub">Where content lives and which CMS to use</div></div></div>
 
         <!-- v24.29.0: Deployment Model — moved here from Section 02. It's a CMS concern (where the CMS lives), not a deployment-physics concern. -->
         <div class="field"><label class="field-label">Where will content come from?<span class="req">*</span></label>
@@ -9602,7 +9951,7 @@ body, .form-section, .section-title, .field-label, .choice-card-name {
               </div>
             </div>
             <div class="field" style="margin-bottom:0;"><label class="field-label">CMS term (years)</label>
-              <select id="adv-cms-term" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;background:#fff;">
+              <select id="adv-cms-term" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;background:var(--surface);color:var(--ink);">
                 <option value="1">1 year</option>
                 <option value="2">2 years</option>
                 <option value="3">3 years</option>
@@ -9613,7 +9962,7 @@ body, .form-section, .section-title, .field-label, .choice-card-name {
           </div>
           <div class="spec-grid two-col" style="margin-bottom:18px;">
             <div class="field" style="margin-bottom:0;"><label class="field-label">CMS type<span class="help-icon" data-tip="Cloud = vendor hosts the CMS (BSN.cloud, Pickcel, Korbyt). On-Prem = customer runs the CMS on their own server (BS Network/Korbyt OnPrem).">?</span></label>
-              <select id="adv-cms-type" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;background:#fff;">
+              <select id="adv-cms-type" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;background:var(--surface);color:var(--ink);">
                 <option value="cloud">Cloud (Remote)</option>
                 <option value="onprem">On-Prem (Local)</option>
               </select>
@@ -9626,7 +9975,7 @@ body, .form-section, .section-title, .field-label, .choice-card-name {
           </div>
           <div class="spec-grid three-col">
             <div class="field" style="margin-bottom:0;"><label class="field-label">SSD capacity</label>
-              <select id="adv-ssd-cap" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;background:#fff;">
+              <select id="adv-ssd-cap" style="width:100%;padding:10px 12px;border:1px solid var(--border-strong);border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:500;background:var(--surface);color:var(--ink);">
                 <option value="">— None —</option>
                 <option value="128">128 GB</option>
                 <option value="256">256 GB</option>
@@ -9659,7 +10008,9 @@ body, .form-section, .section-title, .field-label, .choice-card-name {
     </div>
     <div class="action-bar">
       <button class="btn-secondary" onclick="resetForm()">Reset</button>
-      <button class="btn-action" id="action-recommend" onclick="runSelector()" style="display:none;">Recommend →</button>
+      <!-- v24.36.0: Both action buttons now display "Generate BOQ →" per user spec.
+           Underlying onclick functions stay separate (runSelector for Guided, runAdvancedBOQ for Custom BOQ). -->
+      <button class="btn-action" id="action-recommend" onclick="runSelector()" style="display:none;">Generate BOQ →</button>
       <button class="btn-action" id="action-generate-boq" onclick="runAdvancedBOQ()" style="display:none;">Generate BOQ →</button>
     </div>
   </div>
@@ -10415,7 +10766,9 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.34.9';  // v24.34.9 — Excel cell-treatment fixes based on forensic examination of production-emitted file (BS-04092253.xlsx). Seven bugs/issues fixed: (1) Custom BOQ Summary sheet had WRONG hardcoded terms ("30 days from PO", "50% advance, balance on delivery") that contradicted Quotation sheet's correct terms — both sheets now consistent ("4-5 weeks", "100% advance along with PO"). (2) "Expected Close" field displayed raw ISO string like "2026-04-30T18:30:00.000Z" — added _fmtCloseMonth() helper that handles ISO datetime, YYYY-MM, and free-text inputs, formatting as "30 Apr 2026" or "Apr 2026". Applied to Custom BOQ Summary, Custom BOQ Quotation Stage row, and Guided Quotation Stage row. (3) Custom BOQ Summary missing Venue + Sales Person + Presales Person fields that Quotation sheet has — added all three. (4) Notes column F widened from 36 → 56 chars to display long CMS descriptions without truncation. (5) Wrap-text + vertical-top alignment applied to Item + Notes columns on Custom BOQ BOM data rows so multi-line content displays properly. (6) Row heights set to auto-fit (28pt minimum) for BOM data rows so wrapped text stays visible. (7) BOM column header text updated from "Unit Price (INR)" → "Unit Price (₹)" and "Line Total (INR)" → "Line Total (₹)" — header text accurate to currency symbol. Logo image embedding (B) deferred to fresh chat (requires library swap to xlsx-image or exceljs). Pairs with backend v25.15.0.
+const FRONTEND_VERSION = '24.36.0';  // v24.36.0 — Form reorganization per user spec (Dipenkumar's handwritten notes). 5 → 4 cards. CHANGES: (1) Section 02 renamed "Deployment" → "Signage Player Quantity". Subtitle reworded "Where these players live, how many, and budget tier". (2) Section 03 "Playback" MERGED into top of new Section 03 "Technical Requirement" (was "Specs & Features") as first field "Player type". Card count drops 5 → 4. (3) Section 05 "Content Management" renumbered to Section 04 + retitled "CMS / Content Management Software". (4) HDMI input label reworded "HDMI input needed?" → "HDMI live source input?" per user spec. (5) Bottom action buttons BOTH renamed: "Recommend →" / "Generate BOQ →" → both "Generate BOQ →" (underlying functions runSelector + runAdvancedBOQ stay separate, only the label changes). (6) CRITICAL UX CHANGE — Card 02 qty fields now CONDITIONAL: hidden until environment (Indoor/Outdoor/Mixed) is chosen. Label adapts: "How many Indoor players?" / "How many Outdoor players?" / "How many players? (split by location)". For Indoor or Outdoor: single qty input. For Mixed: split inputs (Indoor + Outdoor) with auto-computed total. (7) BUGFIX in conditional qty logic: when user switches from Mixed to Indoor/Outdoor, f-qty-indoor and f-qty-outdoor are zeroed so engine's `(indoor + outdoor) || single` correctly falls through to f-qty. (8) _isSectionComplete updated for new 4-card numbering: section 02 (env + qty, mixed-aware), section 03 (content + specs merged), section 04 (was 05). (9) _refreshSectionCompletion no longer has special-case skip for section 05 (since it's gone). NO CHANGES to: field IDs (all f-* unchanged), engine logic (runSelector + runAdvancedBOQ untouched), backend schema, Excel export, History display, edit-existing flow (populateFormFromRow_), draft save/restore. PRESERVES: all v24.35.0 mobile + dark/light fixes, all existing section completion animations + sparkle + sticky progress bar (these were already in BS — just used existing infrastructure). Pairs with backend v25.15.0. Plan doc: PLAN-bs-v24.36.0.md.
+// v24.35.0 — Mobile compatibility + dark/light theme pass for BS Form (cards 01-05 + Calculate button + Custom BOQ). Help-icon tooltips on tap, iOS zoom prevention, <380px breakpoint, XC OS toggle bigger on mobile, header compactness fix. Custom BOQ selects + XC OS Windows button theme-aware. Pairs with backend v25.15.0.
+// v24.34.9 — Excel cell-treatment fixes based on forensic examination of production-emitted file (BS-04092253.xlsx). Seven bugs/issues fixed: (1) Custom BOQ Summary sheet had WRONG hardcoded terms ("30 days from PO", "50% advance, balance on delivery") that contradicted Quotation sheet's correct terms — both sheets now consistent ("4-5 weeks", "100% advance along with PO"). (2) "Expected Close" field displayed raw ISO string like "2026-04-30T18:30:00.000Z" — added _fmtCloseMonth() helper. (3) Custom BOQ Summary missing Venue + Sales Person + Presales Person fields — added all three. (4) Notes column F widened from 36→56 chars. (5) Wrap-text + vertical-top alignment on Item + Notes columns. (6) Row heights set to auto-fit (28pt minimum). (7) BOM column header text updated from "Unit Price (INR)"→"Unit Price (₹)". Logo image embedding deferred to fresh chat. Pairs with backend v25.15.0.
 const EXPECTED_BACKEND_MIN = '25.15.0';  // v24.34.9 — no change vs v24.34.8.
 // v24.34.8 — Universal Excel polish (frozen panes + borders + ₹ format + print setup).
 // v24.34.7 — Custom BOQ Excel polished up to Guided level.
@@ -24944,7 +25297,7 @@ function populateAdvancedPlayerTable(){
             style="padding:5px 10px; font-size:11px; font-weight:600; border:1px solid var(--indigo, #4F46E5); background:var(--indigo, #4F46E5); color:#fff; border-radius:6px; cursor:pointer; white-space:nowrap;">BrightOS</button>
           <button type="button" class="adv-xc-os-btn" data-os="win"
             onclick="advSetXcOs('${p.id}', 'win')"
-            style="padding:5px 10px; font-size:11px; font-weight:600; border:1px solid var(--border-strong, #CBD5E1); background:#fff; color:var(--ink-muted, #64748B); border-radius:6px; cursor:pointer; white-space:nowrap;">Windows OS</button>
+            style="padding:5px 10px; font-size:11px; font-weight:600; border:1px solid var(--border-strong, #CBD5E1); background:var(--surface); color:var(--ink-muted, #64748B); border-radius:6px; cursor:pointer; white-space:nowrap;">Windows OS</button>
         </div>
       </td>` : `<td class="adv-os-cell"></td>`;
     return `
@@ -30445,6 +30798,37 @@ async function _renderPipelineTrendBS() {
     const sel = document.querySelector('.choice-grid[data-input="environment"] .choice-card.selected');
     const v = sel ? sel.getAttribute('data-v') : '';
     const wrap = document.getElementById('mixed-qty-wrap');
+    const qtyWrap = document.getElementById('qty-wrap');
+    const qtySingleWrap = document.getElementById('qty-single-wrap');
+    const qtyLabel = document.getElementById('qty-label');
+    // v24.36.0: Conditional qty visibility — qty fields hidden until environment chosen
+    if (qtyWrap) {
+      if (v === 'indoor' || v === 'outdoor' || v === 'mixed') {
+        qtyWrap.style.display = '';
+      } else {
+        qtyWrap.style.display = 'none';
+      }
+    }
+    // v24.36.0: Update qty label based on choice + toggle single vs split inputs
+    if (qtyLabel) {
+      if (v === 'indoor') qtyLabel.innerHTML = 'How many Indoor players?<span class="req">*</span>';
+      else if (v === 'outdoor') qtyLabel.innerHTML = 'How many Outdoor players?<span class="req">*</span>';
+      else if (v === 'mixed') qtyLabel.innerHTML = 'How many players? (split by location)<span class="req">*</span>';
+      else qtyLabel.innerHTML = 'How many players?<span class="req">*</span>';
+    }
+    if (qtySingleWrap) {
+      qtySingleWrap.style.display = (v === 'mixed') ? 'none' : '';
+    }
+    // v24.36.0 BUGFIX: When env is NOT mixed, zero out f-qty-indoor and f-qty-outdoor
+    // so the engine's `(indoor + outdoor) || single` math correctly falls through to f-qty.
+    // Otherwise stale indoor/outdoor values (e.g. left over after switching from Mixed)
+    // would override the user's Indoor/Outdoor qty entered in f-qty.
+    if (v && v !== 'mixed') {
+      const iEl = document.getElementById('f-qty-indoor');
+      const oEl = document.getElementById('f-qty-outdoor');
+      if (iEl) iEl.value = '0';
+      if (oEl) oEl.value = '0';
+    }
     if (!wrap) return;
     if (v === 'mixed') {
       wrap.style.display = 'block';
@@ -30490,30 +30874,37 @@ async function _renderPipelineTrendBS() {
   }
   function _isSectionComplete(sectionNum) {
     if (sectionNum === '02') {
+      // v24.36.0: Section 02 = Signage Player Quantity (env + qty + budget).
+      // Qty is conditional: Mixed → check indoor+outdoor sums; otherwise f-qty.
       const env = _getSelectedChoiceValue('environment');
-      const qtyEl = document.getElementById('f-qty');
-      const qty = parseInt((qtyEl && qtyEl.value) || '0', 10) || 0;
-      // budget slider has a value 1-5 by default (initialized to 2 = Standard) so always counts as filled
-      return !!env && qty >= 1;
+      if (!env) return false;
+      let qty = 0;
+      if (env === 'mixed') {
+        const i = parseInt((document.getElementById('f-qty-indoor') || {}).value || '0', 10) || 0;
+        const o = parseInt((document.getElementById('f-qty-outdoor') || {}).value || '0', 10) || 0;
+        qty = i + o;
+      } else {
+        const qtyEl = document.getElementById('f-qty');
+        qty = parseInt((qtyEl && qtyEl.value) || '0', 10) || 0;
+      }
+      // budget slider has default value 2; always counts as filled
+      return qty >= 1;
     }
     if (sectionNum === '03') {
+      // v24.36.0: Section 03 = Technical Requirement (Player type + Specs + Accessories merged).
+      // Player type (content) required; specs required unless Audio-only.
       const content = _getSelectedChoiceValue('content');
-      return !!content;
-    }
-    if (sectionNum === '04') {
-      const content = _getSelectedChoiceValue('content');
+      if (!content) return false;
       const isAudio = content === 'audio';
-      // Always required regardless of content type
       const required = ['gpio', 'ssd', 'wifi'];
-      // Only required if NOT audio (the others are visually hidden in audio mode)
       if (!isAudio) required.push('outputs', 'resolution', 'touch', 'hdmi-in');
       for (let i = 0; i < required.length; i++) {
         if (!_getSelectedPillValue(required[i])) return false;
       }
       return true;
     }
-    if (sectionNum === '05') {
-      // Section 05 is hidden until certain conditions met; only check the relocated Deployment Model
+    if (sectionNum === '04') {
+      // v24.36.0: Section 04 = CMS (was 05). Only Deployment Model is checked here.
       const update = _getSelectedChoiceValue('update');
       return !!update;
     }
@@ -30562,7 +30953,8 @@ async function _renderPipelineTrendBS() {
     sections.forEach(function(sec) {
       const num = sec.getAttribute('data-section');
       const isVisible = sec.offsetParent !== null || sec.style.display !== 'none';
-      if (num === '05' && !isVisible) return;
+      // v24.36.0: no special-case for any section number — count all visible form-sections
+      if (!isVisible) return;
       totalCount++;
       const wasComplete = sec.getAttribute('data-section-complete') === 'true';
       const complete = _isSectionComplete(num);
