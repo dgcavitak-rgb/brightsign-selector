@@ -10770,7 +10770,8 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.36.3';  // v24.36.3 — Two bugfixes per user feedback. (1) HEADER NAME "—" BUG: On fresh login (sign-in from login page), the user-label-name slot stayed as the HTML default "—" because _applyPostLoginUI() was NEVER actually called in the fresh-login flow despite the v24.20.1 comment claiming it would be called "below". The "below" promise was never fulfilled. Only the rehydrate path (refresh while signed in) called it, which is why the issue only surfaced on cold logins. Now calls _applyPostLoginUI() in the fresh-login flow too — idempotent so safe against duplicate calls in slow login races. (2) NOTIFICATIONS NOT CLEARING DAILY: Notifications had 7-day rolling retention. User wants yesterday's notifications gone at 12:01 AM (daily reset). Changed _loadNotifs_ cutoff from "now - 7 days" to "start of today (00:00:00 local time)". Notifs older than midnight are now filtered out on every load and the cleaned list is persisted so the bell badge count stays accurate. NOTIF_RETENTION_MS constant kept declared (referenced elsewhere) but no longer used as the cutoff in _loadNotifs_. Pairs with backend v25.15.0.
+const FRONTEND_VERSION = '24.37.0';  // v24.37.0 — PDF + Excel customer-facing quote output trimmed per user spec. SCOPE: result-page export buttons (Download PDF, Download Excel) — both Advanced and Guided flows. HEADER (PROJECT CONTEXT block at top of doc): trimmed from ~10 fields down to 5 fields per user spec: Project, End-user, Venue, Location (city+state combined), Partner/SI. REMOVED from header: Consultant, Sales Person, Presales Person, Stage, Expected Close, Primary Contact. FOOTER: replaced old state.user-based "FOR PRICING & QUOTATION QUERIES" / "Prepared by" footer with new SALESPERSON CONTACT block (Name/Role/Phone/Email — 4 lines, vertical) at bottom of doc after T&C. Salesperson resolved from f.salesPerson (the deal's salesperson, not current logged-in user). CONDITIONAL PRESALES CONTACT block — only renders if f.presalesPerson is non-empty. If presales not selected on form: entire PRESALES block omitted (no "Presales: —" placeholder, no empty section). Per user spec: "if presale not selected then dont fill". TOUCHED: (1) BS Advanced Quote Excel — Summary sheet PROJECT CONTEXT + footer (lines ~21127-21200). (2) BS Advanced Quote Excel — Quotation sheet QUOTED TO/PROJECT DETAILS header + footer (lines ~21240, ~21280). (3) BS Guided Quote Excel — Summary sheet PROJECT CONTEXT + helper functions (lines ~21531). (4) BS Guided Quote Excel — Quotation sheet QUOTED TO header + footer (lines ~21648, ~21745). (5) BS Quote PDF (exportQuotePDF) — ctxLeft/ctxRight trimmed + footer rewritten (lines ~23863, ~23986). NOT TOUCHED: (a) Form Card 01 fields — per user "Keep in form Just do not add in PDF & Excel, Nothing to remove from form". (b) Result page Project Summary card (buildProjectCardV21) — stays rich with all 22 fields, the PDF render path is separate. (c) WhatsApp share modal — user didn't request changes. (d) Engine logic / backend / Submissions sheet schema / BoM table / T&C / pricing — all unchanged. (e) History admin exports (exportXLSX/exportPDF at lines 23666/24153) — different code path, unchanged. NEW HELPER: _resolveUserDetails(loginName) returns {fullName, role, phone, email} from window._allUsers cache. Pairs with backend v25.15.0.
+  // v24.36.3 — Two bugfixes per user feedback. (1) HEADER NAME "—" BUG: On fresh login (sign-in from login page), the user-label-name slot stayed as the HTML default "—" because _applyPostLoginUI() was NEVER actually called in the fresh-login flow despite the v24.20.1 comment claiming it would be called "below". The "below" promise was never fulfilled. Only the rehydrate path (refresh while signed in) called it, which is why the issue only surfaced on cold logins. Now calls _applyPostLoginUI() in the fresh-login flow too — idempotent so safe against duplicate calls in slow login races. (2) NOTIFICATIONS NOT CLEARING DAILY: Notifications had 7-day rolling retention. User wants yesterday's notifications gone at 12:01 AM (daily reset). Changed _loadNotifs_ cutoff from "now - 7 days" to "start of today (00:00:00 local time)". Notifs older than midnight are now filtered out on every load and the cleaned list is persisted so the bell badge count stays accurate. NOTIF_RETENTION_MS constant kept declared (referenced elsewhere) but no longer used as the cutoff in _loadNotifs_. Pairs with backend v25.15.0.
 // v24.36.2 — Label refinement: HDMI input → "HDMI live source input port?" (added "port").
 // v24.36.1 — Card 03 field order refinement: Resolution → Touch → HDMI input → GPIO → HDMI Output port → SSD → Wi-Fi. "How many screens per player?" relabeled to "How many HDMI Output port?".
 // v24.36.0 — Form reorganization: 5 → 4 cards. Section 02 = Signage Player Quantity. Section 03 = Technical Requirement (Playback merged in). Section 04 = CMS. Card 02 qty conditional on environment selection. Buttons → "Generate BOQ →".
@@ -21123,23 +21124,36 @@ function _downloadAdvancedQuoteExcel(returnWorkbook){
     } catch(_){}
     return loginName;
   }
+  // v24.37.0: full-detail resolver for footer SALESPERSON/PRESALES CONTACT blocks
+  function _resolveUserDetails(loginName){
+    if(!loginName) return null;
+    try {
+      const list = Array.isArray(window._allUsers) ? window._allUsers : [];
+      const u = list.find(function(x){ return String(x.loginName||'').toLowerCase() === String(loginName).toLowerCase(); });
+      if(u) return {
+        fullName: u.fullName || loginName,
+        role: u.professionalTitle || u.role || '—',
+        phone: u.phone || '—',
+        email: u.email || '—'
+      };
+    } catch(_){}
+    return { fullName: loginName, role: '—', phone: '—', email: '—' };
+  }
 
   const sAoa = [];
   sAoa.push(['CAVITAK MARKETING — BrightSign Custom BOQ']);
   sAoa.push(['Authorized BrightSign distributor · India · Signage that performs, effortlessly']);
   sAoa.push([(f.project||'Project')+' · '+dateStr]);
   sAoa.push([]);
+  // v24.37.0: PROJECT CONTEXT trimmed to 5 fields per user spec.
+  // Removed: Consultant, Sales Person, Presales Person, Stage, Expected Close.
+  // Sales/Presales moved to SALESPERSON CONTACT / PRESALES CONTACT footer blocks below.
   sAoa.push(['PROJECT CONTEXT']);
   sAoa.push(['Project',f.project||'—']);
   sAoa.push(['End-user',f.enduser||'—']);
-  sAoa.push(['Partner / SI',f.partner||'—']);
-  sAoa.push(['Consultant',f.consultant||'—']);
   sAoa.push(['Venue',f.venue||'—']);
-  sAoa.push(['Location',f.city||'—']);
-  sAoa.push(['Sales Person',_resolveUserName(f.salesPerson)]);
-  sAoa.push(['Presales Person',_resolveUserName(f.presalesPerson)]);
-  sAoa.push(['Stage',f.stage||'—']);
-  sAoa.push(['Expected Close',_fmtCloseMonth(f.closemonth)]);
+  sAoa.push(['Location',((f.city||'—')+((f.state)?', '+f.state:''))]);
+  sAoa.push(['Partner / SI',f.partner||'—']);
   sAoa.push([]);
   sAoa.push(['CUSTOM BOQ']);
   sAoa.push(['Reference', refId]);
@@ -21164,6 +21178,28 @@ function _downloadAdvancedQuoteExcel(returnWorkbook){
   // Both sheets now consistent.
   sAoa.push(['Lead time', 'Standard 4–5 weeks from receipt of confirmed PO & advance payment']);
   sAoa.push(['Payment terms', '100% advance along with purchase order']);
+
+  // v24.37.0: SALESPERSON CONTACT block — always rendered (project must have a salesPerson)
+  const _sp = _resolveUserDetails(f.salesPerson);
+  if(_sp){
+    sAoa.push([]);
+    sAoa.push(['SALESPERSON CONTACT']);
+    sAoa.push(['Name', _sp.fullName]);
+    sAoa.push(['Role', _sp.role]);
+    sAoa.push(['Phone', _sp.phone]);
+    sAoa.push(['Email', _sp.email]);
+  }
+  // v24.37.0: PRESALES CONTACT block — CONDITIONAL, only if presales person was selected.
+  // Per user spec: "if presale not selected then dont fill" — entire block omitted.
+  const _pp = _resolveUserDetails(f.presalesPerson);
+  if(_pp && f.presalesPerson){
+    sAoa.push([]);
+    sAoa.push(['PRESALES CONTACT']);
+    sAoa.push(['Name', _pp.fullName]);
+    sAoa.push(['Role', _pp.role]);
+    sAoa.push(['Phone', _pp.phone]);
+    sAoa.push(['Email', _pp.email]);
+  }
 
   const ws1 = XLSX.utils.aoa_to_sheet(sAoa);
   ws1['!cols'] = [ {wch:32}, {wch:48} ];
@@ -21200,12 +21236,13 @@ function _downloadAdvancedQuoteExcel(returnWorkbook){
   qAoa.push(['','','','','Date:',dateStr]);
   qAoa.push(['','','','','Valid Until:',validUntil]);
   qAoa.push([]);
+  // v24.37.0: Quotation sheet header trimmed per user spec — 5 fields only.
+  // Removed: Consultant column, Stage column, Primary Contact field (now in salesperson footer).
   // QUOTED TO / PROJECT DETAILS split header
   qAoa.push(['QUOTED TO','','','PROJECT DETAILS','','']);
   qAoa.push(['Partner / SI',(f.partner||'—'),'','Project Name',(f.project||'—'),'']);
   qAoa.push(['End-user',(f.enduser||'—'),'','Venue',(f.venue||'—'),'']);
-  qAoa.push(['Consultant',(f.consultant||'—'),'','Location',(f.city||'—'),'']);
-  qAoa.push(['Primary Contact',(f.contactname||'—'),'','Stage',(f.stage||'—'),'']);
+  qAoa.push(['','','','Location',((f.city||'—')+((f.state)?', '+f.state:'')),'']);
   qAoa.push([]);
   // BOM header
   qAoa.push(['BILL OF QUANTITIES','','','','','']);
@@ -21241,27 +21278,31 @@ function _downloadAdvancedQuoteExcel(returnWorkbook){
   qAoa.push(['Support','Onsite / Online support charges quoted extra on request.','','','','']);
   qAoa.push(['Cancellation','Orders once placed are non-cancellable. Advance payment is non-refundable for despatched/in-transit goods.','','','','']);
   qAoa.push(['Jurisdiction','All disputes subject to Ahmedabad jurisdiction. Indian law applies.','','','','']);
-  // v24.34.7: Contact footer + signature block (mirroring Guided Excel)
+  // v24.37.0: Footer rewritten — pulls from f.salesPerson (the deal's salesperson, not current logged-in user)
+  // and conditional f.presalesPerson. Per user spec: "Sales Person footer must required" + "if presale not selected then dont fill"
   qAoa.push([]);
-  qAoa.push(['FOR PRICING & QUOTATION QUERIES','','','','','']);
   (function(){
-    const _u = state.user || {};
-    const _name = String(String(_u.fullName || '')).trim() || 'Cavitak Marketing';
-    const _title = String(_u.professionalTitle || '').trim() || 'Cavitak Marketing';
-    const _email = String(_u.email || '').trim() || 'dipen.g@cavitak.com';
-    const _phone = String(_u.phone || '').trim() || '+91 8160 756 906';
-    const _isSuper = _u.isSuper === true;
-    qAoa.push([_name, _title + ' · Cavitak Marketing','','','','']);
-    qAoa.push(['Email: ' + _email + ' · Phone: ' + _phone,'','','','','']);
-    if(!_isSuper){
-      qAoa.push(['For pricing escalation: Dipenkumar Gajjar · National Product Manager · dipen.g@cavitak.com · +91 8160 756 906','','','','','']);
+    const _sp = _resolveUserDetails(f.salesPerson);
+    if(_sp){
+      qAoa.push(['SALESPERSON CONTACT','','','','','']);
+      qAoa.push(['Name', _sp.fullName,'','','','']);
+      qAoa.push(['Role', _sp.role,'','','','']);
+      qAoa.push(['Phone', _sp.phone,'','','','']);
+      qAoa.push(['Email', _sp.email,'','','','']);
     }
-    qAoa.push(['Issued by: ' + _name + ' · Cavitak Marketing Pvt Ltd','','','','','']);
+    const _pp = _resolveUserDetails(f.presalesPerson);
+    if(_pp && f.presalesPerson){
+      qAoa.push([]);
+      qAoa.push(['PRESALES CONTACT','','','','','']);
+      qAoa.push(['Name', _pp.fullName,'','','','']);
+      qAoa.push(['Role', _pp.role,'','','','']);
+      qAoa.push(['Phone', _pp.phone,'','','','']);
+      qAoa.push(['Email', _pp.email,'','','','']);
+    }
     qAoa.push([]);
     qAoa.push([]);
     qAoa.push(['Cavitak Marketing Pvt Ltd · Authorized BrightSign distributor · India','','','','','']);
     qAoa.push(['——————————————————————————————————————————','','','','','']);
-    qAoa.push(['Prepared by: ' + _name + ' · ' + _title + ' · ' + _phone + ' · ' + _email,'','','','','']);
     qAoa.push(['This document is for internal reference and customer discussion. Pricing subject to current price list, forex, and landed-cost variations.','','','','','']);
     qAoa.push(['Generated by BrightSign Product Selector · v' + (typeof FRONTEND_VERSION !== 'undefined' ? FRONTEND_VERSION : '') + ' (Custom BOQ)','','','','','']);
   })();
@@ -21488,14 +21529,15 @@ function downloadQuoteExcel(returnWorkbook){
   sAoa.push(['Authorized BrightSign distributor · India · Signage that performs, effortlessly']);
   sAoa.push(['Quote: '+refId+' · '+(f.project||'Project')+' · '+dateStr]);
   sAoa.push([]);
+  // v24.37.0: PROJECT CONTEXT trimmed to 5 fields per user spec.
+  // Removed: Consultant, Sales Person (moved to footer), Presales Person (moved to footer, conditional), Stage, Expected Close.
   sAoa.push(['PROJECT CONTEXT']);
   sAoa.push(['Project',f.project||'—']);
   sAoa.push(['End-user',f.enduser||'—']);
-  sAoa.push(['Partner / SI',f.partner||'—']);
-  sAoa.push(['Consultant',f.consultant||'—']);
   sAoa.push(['Venue',f.venue||'—']);
-  sAoa.push(['Location',f.city||'—']);
-  // v24.26.14: Sales/Presales person fields ADDED — were missing from Excel export.
+  sAoa.push(['Location',((f.city||'—')+((f.state)?', '+f.state:''))]);
+  sAoa.push(['Partner / SI',f.partner||'—']);
+  // v24.26.14: Sales/Presales person fields — kept as helpers but moved to footer in v24.37.0.
   // Resolves loginName → "Full Name (loginName)" via _allUsers cache when available, else loginName, else "—".
   function _resolveUserName(loginName){
     if(!loginName) return '—';
@@ -21506,10 +21548,21 @@ function downloadQuoteExcel(returnWorkbook){
     } catch(_){}
     return loginName;
   }
-  sAoa.push(['Sales Person',_resolveUserName(f.salesPerson)]);
-  sAoa.push(['Presales Person',_resolveUserName(f.presalesPerson)]);
-  sAoa.push(['Stage',f.stage||'—']);
-  sAoa.push(['Expected Close',_fmtCloseMonth(f.closemonth)]);
+  // v24.37.0: full-detail resolver for footer SALESPERSON/PRESALES CONTACT blocks
+  function _resolveUserDetails(loginName){
+    if(!loginName) return null;
+    try {
+      const list = Array.isArray(window._allUsers) ? window._allUsers : [];
+      const u = list.find(function(x){ return String(x.loginName||'').toLowerCase() === String(loginName).toLowerCase(); });
+      if(u) return {
+        fullName: u.fullName || loginName,
+        role: u.professionalTitle || u.role || '—',
+        phone: u.phone || '—',
+        email: u.email || '—'
+      };
+    } catch(_){}
+    return { fullName: loginName, role: '—', phone: '—', email: '—' };
+  }
   sAoa.push([]);
   sAoa.push(['RECOMMENDED PLAYER']);
   sAoa.push(['Model',m.id]);
@@ -21592,11 +21645,11 @@ function downloadQuoteExcel(returnWorkbook){
   qAoa.push(['','','','','Date:',dateStr,'']);
   qAoa.push(['','','','','Valid Until:',validUntil,'']);
   qAoa.push([]);
+  // v24.37.0: Trimmed header per user spec — removed Consultant, Primary Contact, Stage rows.
   qAoa.push(['QUOTED TO','','','PROJECT DETAILS','','','']);
   qAoa.push(['Partner / SI',f.partner||'—','','Project Name',f.project||'—','','']);
   qAoa.push(['End-user',f.enduser||'—','','Venue',f.venue||'—','','']);
-  qAoa.push(['Consultant',f.consultant||'—','','Location',f.city||'—','','']);
-  qAoa.push(['Primary Contact',f.contactname||'—','','Stage',f.stage||'—','','']);
+  qAoa.push(['','','','Location',((f.city||'—')+((f.state)?', '+f.state:'')),'','']);
   qAoa.push([]);
   qAoa.push(['RECOMMENDED SOLUTION']);
   qAoa.push([m.id,'',m.tag+' · BrightSign Series 5','','','','']);
@@ -21690,31 +21743,31 @@ function downloadQuoteExcel(returnWorkbook){
   qAoa.push(['Cancellation','Orders once placed are non-cancellable. Advance payment is non-refundable for despatched/in-transit goods.','','','','','']);
   qAoa.push(['Jurisdiction','All disputes subject to Ahmedabad jurisdiction. Indian law applies.','','','','','']);
   qAoa.push([]);
-  qAoa.push(['FOR PRICING & QUOTATION QUERIES']);
-  // v24.19.2: Use logged-in user's identity in contact footer, with Dipenkumar as escalation for non-Super
+  // v24.37.0: Replaced state.user-based contact footer with deal salesperson + conditional presales blocks.
+  // Per user spec: "Sales Person footer must required both app & both format" + "if presale not selected then dont fill".
+  qAoa.push([]);
   (function(){
-    const _u = state.user || {};
-    const _name = String(String(_u.fullName || '')).trim() || 'Cavitak Marketing';
-    const _title = String(_u.professionalTitle || '').trim() || 'Cavitak Marketing';
-    const _email = String(_u.email || '').trim() || 'dipen.g@cavitak.com';
-    const _phone = String(_u.phone || '').trim() || '+91 8160 756 906';
-    const _isSuper = _u.isSuper === true;
-    qAoa.push([_name, _title + ' · Cavitak Marketing','','','','','']);
-    qAoa.push(['Email: ' + _email + ' · Phone: ' + _phone,'','','','','','']);
-    if(!_isSuper){
-      // Escalation strip — only when user is not the Super (avoids "escalate to yourself")
-      qAoa.push(['For pricing escalation: Dipenkumar Gajjar · National Product Manager · dipen.g@cavitak.com · +91 8160 756 906','','','','','','']);
+    const _sp = _resolveUserDetails(f.salesPerson);
+    if(_sp){
+      qAoa.push(['SALESPERSON CONTACT','','','','','','']);
+      qAoa.push(['Name', _sp.fullName,'','','','','']);
+      qAoa.push(['Role', _sp.role,'','','','','']);
+      qAoa.push(['Phone', _sp.phone,'','','','','']);
+      qAoa.push(['Email', _sp.email,'','','','','']);
     }
-    qAoa.push(['Issued by: ' + _name + ' · Cavitak Marketing Pvt Ltd','','','','','','']);
-
-    // v24.25.0 (#8) — Signature block at the bottom of the Excel Quotation sheet.
-    // Mirrors the PDF footer pattern. Visible on every printed/shared quote so the
-    // recipient sees Cavitak branding + sender accountability.
+    const _pp = _resolveUserDetails(f.presalesPerson);
+    if(_pp && f.presalesPerson){
+      qAoa.push([]);
+      qAoa.push(['PRESALES CONTACT','','','','','','']);
+      qAoa.push(['Name', _pp.fullName,'','','','','']);
+      qAoa.push(['Role', _pp.role,'','','','','']);
+      qAoa.push(['Phone', _pp.phone,'','','','','']);
+      qAoa.push(['Email', _pp.email,'','','','','']);
+    }
     qAoa.push([]);
     qAoa.push([]);
     qAoa.push(['Cavitak Marketing Pvt Ltd · Authorized BrightSign distributor · India','','','','','','','']);
     qAoa.push(['——————————————————————————————————————————','','','','','','','']);
-    qAoa.push(['Prepared by: ' + _name + ' · ' + _title + ' · ' + _phone + ' · ' + _email,'','','','','','','']);
     qAoa.push(['This document is for internal reference and customer discussion. Pricing subject to current price list, forex, and landed-cost variations.','','','','','','','']);
     qAoa.push(['Generated by BrightSign Product Selector · v' + (typeof FRONTEND_VERSION !== 'undefined' ? FRONTEND_VERSION : ''),'','','','','','','']);
   })();
@@ -23808,17 +23861,16 @@ async function exportQuotePDF(returnDoc){
   const u = state.user || {};
 
   // Project context fields with safe fallbacks
+  // v24.37.0: Trimmed to 5 fields per user spec (Result page card unchanged — separate render).
+  // Removed: Consultant, Stage, Expected Close (now Sales/Presales moved to footer below BoM).
   const ctxLeft = [
     ['Project',     f.project   || '—'],
     ['End-user',    f.enduser   || '—'],
-    ['Partner / SI',f.partner   || '—'],
-    ['Consultant',  f.consultant|| '—']
+    ['Venue',       f.venue || f.venueType || '—']
   ];
   const ctxRight = [
-    ['Venue',          f.venue || f.venueType || '—'],
-    ['Location',       (f.city || '—') + (f.state ? ', ' + f.state : '')],
-    ['Stage',          f.stage || '—'],
-    ['Expected Close', _fmtCloseMonth(f.closemonth)]
+    ['Location',    (f.city || '—') + (f.state ? ', ' + f.state : '')],
+    ['Partner / SI',f.partner   || '—']
   ];
   const ctxRowsHtml = (col) => col.map(([k,v]) =>
     `<tr><td style="padding:3px 8px 3px 0;color:#64748B;font-size:11px;font-weight:600;width:90px;vertical-align:top;">${escapeHtml(k)}</td>` +
@@ -23932,19 +23984,54 @@ async function exportQuotePDF(returnDoc){
         </table>
       </div>
 
-      <!-- v24.20.0 (#18): Footer — branded with mini logo, contact, disclaimer -->
+      <!-- v24.37.0: Footer rewritten — pulls from f.salesPerson/f.presalesPerson (the deal's people, not current user).
+           Per user spec: "Sales Person footer must required both app & both format" + "if presale not selected then dont fill". -->
       <div style="border-top:2px solid #312E81;margin-top:18px;padding:16px 32px 20px;font-family:'Helvetica Neue',Arial,sans-serif;background:linear-gradient(180deg,#F8FAFC 0%,#FFFFFF 100%);">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
           <img src="${CAVITAK_LOGO_DATA_URL}" alt="Cavitak" style="height:24px;width:auto;display:block;opacity:0.85;" />
           <div style="font-size:9px;color:#94A3B8;text-align:right;line-height:1.5;">
             Cavitak Marketing Pvt Ltd<br>
             Authorized BrightSign distributor · India
           </div>
         </div>
-        <div style="font-size:10px;color:#475569;font-weight:600;padding-top:8px;border-top:1px dashed #E2E8F0;">
-          Prepared by: ${escapeHtml(u.fullName || 'Cavitak Marketing')}${u.professionalTitle ? ' · ' + escapeHtml(u.professionalTitle) : ''}${u.phone ? ' · ' + escapeHtml(u.phone) : ''}${u.email ? ' · ' + escapeHtml(u.email) : ''}
-        </div>
-        <div style="font-size:9px;color:#94A3B8;margin-top:6px;line-height:1.5;">
+        ${(function(){
+          // Resolve salesperson — required block per user spec
+          let html = '';
+          try {
+            const list = Array.isArray(window._allUsers) ? window._allUsers : [];
+            const findUser = function(loginName){
+              if(!loginName) return null;
+              const u = list.find(function(x){ return String(x.loginName||'').toLowerCase() === String(loginName).toLowerCase(); });
+              if(u) return { fullName: u.fullName || loginName, role: u.professionalTitle || u.role || '—', phone: u.phone || '—', email: u.email || '—' };
+              return { fullName: loginName, role: '—', phone: '—', email: '—' };
+            };
+            const sp = findUser(f.salesPerson);
+            if(sp){
+              html += '<div style="font-size:11px;font-weight:700;color:#312E81;letter-spacing:0.5px;margin-bottom:6px;padding-top:8px;border-top:1px dashed #E2E8F0;">SALESPERSON CONTACT</div>';
+              html += '<div style="font-size:10px;color:#0F172A;line-height:1.7;">';
+              html += '<div><span style="color:#64748B;font-weight:600;width:54px;display:inline-block;">Name:</span> ' + escapeHtml(sp.fullName) + '</div>';
+              html += '<div><span style="color:#64748B;font-weight:600;width:54px;display:inline-block;">Role:</span> ' + escapeHtml(sp.role) + '</div>';
+              html += '<div><span style="color:#64748B;font-weight:600;width:54px;display:inline-block;">Phone:</span> ' + escapeHtml(sp.phone) + '</div>';
+              html += '<div><span style="color:#64748B;font-weight:600;width:54px;display:inline-block;">Email:</span> ' + escapeHtml(sp.email) + '</div>';
+              html += '</div>';
+            }
+            // Conditional presales — only when filled
+            if(f.presalesPerson){
+              const pp = findUser(f.presalesPerson);
+              if(pp){
+                html += '<div style="font-size:11px;font-weight:700;color:#312E81;letter-spacing:0.5px;margin:14px 0 6px;padding-top:8px;border-top:1px dashed #E2E8F0;">PRESALES CONTACT</div>';
+                html += '<div style="font-size:10px;color:#0F172A;line-height:1.7;">';
+                html += '<div><span style="color:#64748B;font-weight:600;width:54px;display:inline-block;">Name:</span> ' + escapeHtml(pp.fullName) + '</div>';
+                html += '<div><span style="color:#64748B;font-weight:600;width:54px;display:inline-block;">Role:</span> ' + escapeHtml(pp.role) + '</div>';
+                html += '<div><span style="color:#64748B;font-weight:600;width:54px;display:inline-block;">Phone:</span> ' + escapeHtml(pp.phone) + '</div>';
+                html += '<div><span style="color:#64748B;font-weight:600;width:54px;display:inline-block;">Email:</span> ' + escapeHtml(pp.email) + '</div>';
+                html += '</div>';
+              }
+            }
+          } catch(_){}
+          return html;
+        })()}
+        <div style="font-size:9px;color:#94A3B8;margin-top:14px;line-height:1.5;padding-top:8px;border-top:1px dashed #E2E8F0;">
           This document is for internal reference and customer discussion. Pricing subject to current price list, forex, and landed-cost variations.
         </div>
         <div style="font-size:9px;color:#94A3B8;margin-top:4px;text-align:right;">
