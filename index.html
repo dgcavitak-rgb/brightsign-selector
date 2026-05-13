@@ -8,12 +8,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-<!-- v24.38.0: Chart.js still required by Review-tab cards bsC3aRenderVelocity (Stage
-     Velocity Histogram, Super-only) + bsC3dRenderTrend (26-week Pipeline Trend).
-     ECharts owns all v26 Dashboard charts. The dead Chart.js paths (renderCharts,
-     _renderDetailedV2) were removed in v24.38.0. Migrating c3a/c3d to ECharts so
-     this library can be dropped entirely is a future task. ~400KB CDN. -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- v24.39.0: Chart.js DROPPED. Both legacy callers (bsC3aRenderVelocity, bsC3dRenderTrend)
+     turned out to be zombie code — their DOM targets (bs-c3a-velocity-wrap, bs-c3d-trend-wrap)
+     never existed; every getElementById returned null and the functions exited early without
+     rendering anything. The v24.26.5 comment even acknowledged "they early-return on missing
+     DOM but would throw on missing global". v24.39.0 deletes both functions and the CDN tag.
+     ECharts now owns 100% of charting in BS frontend. ~400KB CDN saved. -->
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 <!-- v24.26.8: echarts-gl for 3D India map (Geo3D extruded states) -->
 <script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
@@ -10771,7 +10771,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.38.0';  // v24.38.0 — DEAD-CODE CLEANUP. No behavior change. Removed three orphan code blocks (~957 lines): (1) renderCharts() — legacy v18 dashboard renderer (404 lines), zero callers, contained 6 of 10 new Chart() calls. (2) v24.25.3 Detailed Analytics v2 IIFE (_renderDetailedV2 + helpers _renderStageChart/_renderPartnersChart/_renderLeaderboards/_renderModelPerf/_fyOf/_lastYM and ~10 more) — 532 lines, explicitly DISABLED per v24.26.1 comment ("v2 wrapper DISABLED... null-reference errors... new v26 module owns all Dashboard rendering"); contained 2 more new Chart() calls. (3) fetchAggregate() inside C2a IIFE (~25 lines) — sole frontend caller of sales_history_aggregate action; the C2a SAP/Actuals path was removed in v24.16.0 but this fetcher remained orphan. Chart.js library load KEPT (still used by live bsC3aRenderVelocity + bsC3dRenderTrend in Review tab). Pairs with backend v25.16.0 which drops handleSalesHistoryAggregate stub + handleReviewData + handlePlanOfActionUpdate (no frontend callers).
+const FRONTEND_VERSION = '24.39.0';  // v24.39.0 — CHART.JS DROPPED. Both Review-tab callers (bsC3aRenderVelocity, bsC3dRenderTrend) turned out to be zombie code, not live functions awaiting migration. Their DOM targets (bs-c3a-velocity-wrap, bs-c3d-trend-wrap) never existed anywhere in the HTML — every getElementById returned null and the functions exited early without rendering. The v24.26.5 historical comment had already acknowledged this ("they early-return on missing DOM but would throw on missing global") — Chart.js was kept loaded only as a defensive measure against the typeof-Chart-undefined check inside the zombie functions. v24.39.0 deletes: (1) bsC3aRenderVelocity (~135 lines including comment), (2) bsC3dRenderTrend (~119 lines including comment), (3) both callsites in bsC2aRender (~6 lines + comments), (4) the chart.umd.min.js CDN script tag. ECharts now owns 100% of charting in BS frontend; ~400KB library load removed; ~252 lines of dead JS removed. Pairs with backend v25.17.0 which drops handleStageVelocityAggregate (orphan after this deploy). The v26 Dashboard's pipeline trend (_renderPipelineTrendBS) keeps the pipeline_snapshots_list backend handler in active use.
   // v24.36.3 — Two bugfixes per user feedback. (1) HEADER NAME "—" BUG: On fresh login (sign-in from login page), the user-label-name slot stayed as the HTML default "—" because _applyPostLoginUI() was NEVER actually called in the fresh-login flow despite the v24.20.1 comment claiming it would be called "below". The "below" promise was never fulfilled. Only the rehydrate path (refresh while signed in) called it, which is why the issue only surfaced on cold logins. Now calls _applyPostLoginUI() in the fresh-login flow too — idempotent so safe against duplicate calls in slow login races. (2) NOTIFICATIONS NOT CLEARING DAILY: Notifications had 7-day rolling retention. User wants yesterday's notifications gone at 12:01 AM (daily reset). Changed _loadNotifs_ cutoff from "now - 7 days" to "start of today (00:00:00 local time)". Notifs older than midnight are now filtered out on every load and the cleaned list is persisted so the bell badge count stays accurate. NOTIF_RETENTION_MS constant kept declared (referenced elsewhere) but no longer used as the cutoff in _loadNotifs_. Pairs with backend v25.15.0.
 // v24.36.2 — Label refinement: HDMI input → "HDMI live source input port?" (added "port").
 // v24.36.1 — Card 03 field order refinement: Resolution → Touch → HDMI input → GPIO → HDMI Output port → SSD → Wi-Fi. "How many screens per player?" relabeled to "How many HDMI Output port?".
@@ -24299,7 +24299,11 @@ window.showTab=function(which){
 
   window.bsC2aRender = async function(){
     // v24.16.0: SAP/C2a Actuals comparison removed (sales_history_aggregate became
-    // a stub in v25.0.5). This function now only drives drilldown + velocity + trend.
+    // a stub in v25.0.5). This function now only drives drilldown.
+    // v24.39.0: c3a velocity + c3d trend callsites removed — both render functions
+    // were dead (DOM targets bs-c3a-velocity-wrap / bs-c3d-trend-wrap never existed;
+    // both early-returned on getElementById==null). The v26 Dashboard owns its own
+    // pipeline trend via _renderPipelineTrendBS using the same backend action.
     wirePoaBlur();
     // v24.10 Cycle 2b — refresh drilldown table on every Review render
     // v24.12 Cycle 3A: fetch stage transitions FIRST so drilldown daysInStage is accurate
@@ -24307,14 +24311,6 @@ window.showTab=function(which){
       await window._bsC2bFetchTransitions();
     }
     if(typeof bsC2bRender === 'function') bsC2bRender();
-    // v24.12 Cycle 3A: render stage velocity card (fire-and-forget; empty state renders immediately)
-    if(typeof window.bsC3aRenderVelocity === 'function'){
-      window.bsC3aRenderVelocity();  // async internally; does its own fetch
-    }
-    // v25.1.0 Cycle 3D: render pipeline trend card (fire-and-forget; shows empty state if no snapshots yet)
-    if(typeof window.bsC3dRenderTrend === 'function'){
-      window.bsC3dRenderTrend();
-    }
   };
 })();
 /* END v24.9 Cycle 2a block */
@@ -24645,260 +24641,8 @@ function _bsC2cStat(label, value){
 function _bsEscapeHtml(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 /* END v24.11 Cycle 2c block */
 
-/* ============================================================================
- * v24.12 Cycle 3A — Stage velocity histogram (Super only)
- * Calls backend action=stage_velocity_aggregate and renders a Chart.js bar chart.
- * Empty state shown when thresholdMet===false (no stage has sampleSize ≥ 5 yet).
- * ============================================================================ */
-window.bsC3aRenderVelocity = async function(){
-  const wrap = document.getElementById('bs-c3a-velocity-wrap');
-  if(!wrap) return;
-  // Super-only: hide the whole card for non-Super users
-  const isSuper = !!(state && state.user && state.user.isSuper);
-  if(!isSuper){ wrap.style.display = 'none'; return; }
-  wrap.style.display = 'block';
-
-  const caption = document.getElementById('bs-c3a-velocity-caption');
-  const body = document.getElementById('bs-c3a-velocity-body');
-  const emptyEl = document.getElementById('bs-c3a-velocity-empty');
-  const canvas = document.getElementById('bs-c3a-velocity-chart');
-  if(!canvas || !emptyEl) return;
-
-  // Fetch aggregate
-  let data = null;
-  try {
-    if(!WEBHOOK_URL || !state.user) return;
-    const resp = await fetch(WEBHOOK_URL, {
-      method:'POST',
-      mode:'cors',
-      headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify({ action:'stage_velocity_aggregate' })
-    });
-    data = await resp.json();
-  } catch(err){
-    console.warn('[bsC3a velocity fetch] failed:', err);
-    if(caption) caption.textContent = '· unable to load';
-    return;
-  }
-  if(!data || data.status !== 'ok'){
-    if(caption) caption.textContent = '· ' + ((data && data.message) || 'load failed');
-    return;
-  }
-
-  const metrics = Array.isArray(data.stageMetrics) ? data.stageMetrics : [];
-  const thresholdMet = !!data.thresholdMet;
-  const totalDeals = Number(data.totalDealsWithHistory || 0);
-
-  // Caption
-  if(caption){
-    if(thresholdMet){
-      caption.textContent = '· team average, based on ' + totalDeals + ' deal' + (totalDeals === 1 ? '' : 's') + ' with recorded transitions';
-    } else {
-      caption.textContent = '· awaiting more data';
-    }
-  }
-
-  // Empty-state handling
-  if(!thresholdMet){
-    canvas.style.display = 'none';
-    emptyEl.style.display = 'block';
-    // Tear down any previous chart instance
-    if(window._bsC3aVelocityChart){
-      try { window._bsC3aVelocityChart.destroy(); } catch(_){}
-      window._bsC3aVelocityChart = null;
-    }
-    return;
-  }
-
-  canvas.style.display = 'block';
-  emptyEl.style.display = 'none';
-
-  // Chart.js must be loaded — existing Review charts depend on it, so it should be present.
-  if(typeof Chart === 'undefined'){
-    if(caption) caption.textContent = '· Chart.js not loaded';
-    return;
-  }
-
-  const labels = metrics.map(function(m){ return m.stage; });
-  const values = metrics.map(function(m){ return Number((m.avgDays || 0).toFixed(1)); });
-  const samples = metrics.map(function(m){ return m.sampleSize || 0; });
-
-  // Indigo-violet gradient matching BrightSign theme
-  const ctx = canvas.getContext('2d');
-  const bgColors = metrics.map(function(m, i){
-    if((m.sampleSize || 0) < 5) return 'rgba(148, 163, 184, 0.55)';  // muted gray for low-sample stages
-    // Deep indigo → violet by index
-    const palette = ['#1E1B4B', '#312E81', '#4338CA', '#6366F1', '#7C3AED'];
-    return palette[i % palette.length];
-  });
-
-  // Tear down old chart before re-creating
-  if(window._bsC3aVelocityChart){
-    try { window._bsC3aVelocityChart.destroy(); } catch(_){}
-    window._bsC3aVelocityChart = null;
-  }
-
-  window._bsC3aVelocityChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Avg days in stage',
-        data: values,
-        backgroundColor: bgColors,
-        borderRadius: 6,
-        borderSkipped: false,
-        _sampleSizes: samples  // carried for tooltip
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: function(ctx){
-              const n = (ctx.dataset._sampleSizes && ctx.dataset._sampleSizes[ctx.dataIndex]) || 0;
-              return ctx.parsed.y + ' days avg · ' + n + ' sample' + (n === 1 ? '' : 's');
-            }
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid: { display: false },
-          ticks: { font: { size: 11 } }
-        },
-        y: {
-          beginAtZero: true,
-          title: { display: true, text: 'Days', font: { size: 11 } },
-          ticks: { font: { size: 11 } }
-        }
-      }
-    }
-  });
-};
 /* END v24.12 Cycle 3A block */
 
-/* ============================================================================
- * v25.1.0 Cycle 3D — Pipeline trend (weekly snapshots line chart)
- * ============================================================================
- * Reads from backend `pipeline_snapshots_list` action, draws a line chart of
- * weekly open-pipeline count + value over the last 26 weeks. Renders into
- * #bs-c3d-trend-chart canvas. Visible to all users (read-only insight).
- * ============================================================================ */
-window.bsC3dRenderTrend = async function(){
-  const wrap = document.getElementById('bs-c3d-trend-wrap');
-  if(!wrap || !state.user) return;
-  // Show the card for any signed-in user
-  wrap.style.display = 'block';
-
-  const captionEl = document.getElementById('bs-c3d-trend-caption');
-  const emptyEl = document.getElementById('bs-c3d-trend-empty');
-  const canvas = document.getElementById('bs-c3d-trend-chart');
-  if(!canvas) return;
-
-  let snapshots = [];
-  try {
-    const pwHash = await getCurrentAuthHash();
-    const resp = await fetch(WEBHOOK_URL, {
-      method:'POST', mode:'cors',
-      headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify({
-        action: 'pipeline_snapshots_list',
-        limit: 26,
-        requesterLoginName: state.user.loginName,
-        requesterPasswordHash: pwHash
-      })
-    });
-    const data = await resp.json();
-    if(data && data.status === 'ok') snapshots = Array.isArray(data.snapshots) ? data.snapshots : [];
-  } catch(e){
-    console.warn('[c3d] snapshots fetch failed:', e);
-  }
-
-  if(snapshots.length === 0){
-    canvas.style.display = 'none';
-    if(emptyEl){
-      // v24.14.1: Differentiate empty-state message by role.
-      // Super sees the actionable technical hint; everyone else sees a friendly message.
-      const isSuper = state.user && state.user.isSuper;
-      emptyEl.textContent = isSuper
-        ? 'No snapshots yet. Run setupPipelineSnapshotTrigger() once from the Apps Script editor to install the weekly cron and capture the first snapshot.'
-        : 'Pipeline trend will appear here as weekly snapshots accumulate.';
-      emptyEl.style.display = 'block';
-    }
-    if(captionEl) captionEl.textContent = '· no data';
-    return;
-  }
-  canvas.style.display = 'block';
-  if(emptyEl) emptyEl.style.display = 'none';
-  if(captionEl) captionEl.textContent = '· last ' + snapshots.length + ' week' + (snapshots.length===1?'':'s');
-
-  const labels = snapshots.map(s => {
-    const d = new Date(s.snapshotDate);
-    if(isNaN(d.getTime())) return '';
-    return d.toLocaleDateString('en-IN', {day:'2-digit', month:'short'});
-  });
-  const counts = snapshots.map(s => s.totalOpenCount || 0);
-  const values = snapshots.map(s => (s.totalOpenValue || 0) / 100000);  // Lakhs
-
-  // Destroy previous chart if any
-  if(window._bsC3dTrendChart && typeof window._bsC3dTrendChart.destroy === 'function'){
-    window._bsC3dTrendChart.destroy();
-  }
-  const ctx = canvas.getContext('2d');
-  window._bsC3dTrendChart = new Chart(ctx, {
-    type:'line',
-    data:{
-      labels:labels,
-      datasets:[
-        {
-          label:'Open deals (count)',
-          data:counts,
-          borderColor:'#4F46E5',
-          backgroundColor:'rgba(79,70,229,0.10)',
-          borderWidth:2,
-          pointRadius:3,
-          tension:0.25,
-          yAxisID:'y'
-        },
-        {
-          label:'Open value (₹ Lakh)',
-          data:values,
-          borderColor:'#10B981',
-          backgroundColor:'rgba(16,185,129,0.10)',
-          borderWidth:2,
-          pointRadius:3,
-          tension:0.25,
-          yAxisID:'y1'
-        }
-      ]
-    },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      interaction:{mode:'index', intersect:false},
-      plugins:{
-        legend:{position:'bottom', labels:{boxWidth:12, font:{size:11}}},
-        tooltip:{
-          callbacks:{
-            label:function(ctx){
-              const v = ctx.parsed.y;
-              if(ctx.dataset.yAxisID === 'y1') return ctx.dataset.label + ': ₹' + v.toFixed(1) + ' L';
-              return ctx.dataset.label + ': ' + v;
-            }
-          }
-        }
-      },
-      scales:{
-        y:{type:'linear', position:'left', beginAtZero:true, title:{display:true, text:'Count', font:{size:10}}},
-        y1:{type:'linear', position:'right', beginAtZero:true, grid:{drawOnChartArea:false}, title:{display:true, text:'₹ Lakh', font:{size:10}}}
-      }
-    }
-  });
-};
 /* END v25.1.0 Cycle 3D block */
 
 /* ============================================================================
