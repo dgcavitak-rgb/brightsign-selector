@@ -492,6 +492,10 @@ html[data-theme="dark"] .cm-picker-month{background:rgba(30,41,59,0.7);border-co
 html[data-theme="dark"] .cm-picker-month:hover{background:rgba(79,70,229,0.2);}
 html[data-theme="dark"] .cm-picker-nav{color:#94A3B8;}
 html[data-theme="dark"] .cm-picker-nav:hover{background:rgba(148,163,184,0.1);}
+/* v24.41.0: Two minor dark-mode gaps for cm-picker hover states (light pink/blue washes
+ * were intended for light mode only; on dark they'd flash light-on-dark briefly). */
+html[data-theme="dark"] .cm-picker-clear:hover{background:rgba(220,38,38,0.18);}
+html[data-theme="dark"] .cm-picker-close:hover{background:rgba(99,102,241,0.18);}
 
 /* ======================================================================
  * v24.12.6: Custom BOQ Result page summary card (Advanced mode).
@@ -10771,7 +10775,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.40.0';  // v24.40.0 — P2 dead-code cleanup. No behavior change. Removed 24 orphan functions (~814 lines), mostly Review-tab pre-v26 leftovers that survived the v24.26 rebuild without callers: populateReviewDropdowns (~378 lines, biggest single orphan), bsC2dExport (~71 lines), buildTenderSpecCard (~60 lines), renderCard (~47 lines), populateReviewPeriodSelects/renderKPIs (~38 lines each), renderSuperStats (~23 lines), _renderHorizBars (~22 lines), computeDelta (~16 lines), onReviewDropdownChange (~15 lines), parseDealValueClient (~14 lines), applyFilters (~11 lines), onReviewSearchChange/renderFilterCount (~8 lines each), _fyOf (~7 lines), bsKpiOnPeriodChange/onCockpitFilterChange (~6 lines each), toggleClauseSection/toggleSpecSection/toggleAllSpecs/updateReviewAdminBarVisibility_/removeFromQueue (~5 lines each), _lastYM (~4 lines), _stageBadge (~3 lines, nested inside populateReviewDropdowns), _testModeKey (~1 line). KEPT buildProjectCard (1-line defensive alias to buildProjectCardV21). Each delete validated individually with node --check. Pairs with backend v25.18.0.
+const FRONTEND_VERSION = '24.41.0';  // v24.41.0 — Two production fixes + verified dark-mode coverage. (1) AUTOFILL TRIM (sha256Hex): coerces password to String and calls .trim() before encoding. Mobile/desktop autofill sometimes appends invisible whitespace (trailing space, newline) which produces a different hash than what's stored, causing "Incorrect password" even though visible characters match. This was the root cause of the 2026-05-13 production lockout. (2) PIPELINE TREND CHART (Dashboard, _renderPipelineTrendBS): 3 hardcoded #64748B axis-label/legend colors swapped for inline theme-aware vars (reads document.documentElement.data-theme directly since this fn is outside the v26 module's _themeColors() scope). Also fixed 2 hardcoded rgba grid-line colors. (3) CM-PICKER POLISH: added 2 minor dark-mode hover-state overrides (.cm-picker-clear:hover, .cm-picker-close:hover) that were missed in prior coverage. Audit finding: BS dark-mode coverage is actually quite thorough — most of the "208 uncovered rules" my scanner flagged turned out to have html[data-theme="dark"] overrides 4-9 lines below the light rule; the scanner didn't recognize that pattern. Real remaining gaps are mostly Tender-Spec print styles (intentionally light for PDF export) and error/branded buttons (color-specific by design). No additional changes shipped here; defer further audit to a screenshot-driven session. Pairs with backend v25.18.0 (no backend changes from v25.18.0).
   // v24.36.3 — Two bugfixes per user feedback. (1) HEADER NAME "—" BUG: On fresh login (sign-in from login page), the user-label-name slot stayed as the HTML default "—" because _applyPostLoginUI() was NEVER actually called in the fresh-login flow despite the v24.20.1 comment claiming it would be called "below". The "below" promise was never fulfilled. Only the rehydrate path (refresh while signed in) called it, which is why the issue only surfaced on cold logins. Now calls _applyPostLoginUI() in the fresh-login flow too — idempotent so safe against duplicate calls in slow login races. (2) NOTIFICATIONS NOT CLEARING DAILY: Notifications had 7-day rolling retention. User wants yesterday's notifications gone at 12:01 AM (daily reset). Changed _loadNotifs_ cutoff from "now - 7 days" to "start of today (00:00:00 local time)". Notifs older than midnight are now filtered out on every load and the cleaned list is persisted so the bell badge count stays accurate. NOTIF_RETENTION_MS constant kept declared (referenced elsewhere) but no longer used as the cutoff in _loadNotifs_. Pairs with backend v25.15.0.
 // v24.36.2 — Label refinement: HDMI input → "HDMI live source input port?" (added "port").
 // v24.36.1 — Card 03 field order refinement: Resolution → Touch → HDMI input → GPIO → HDMI Output port → SSD → Wi-Fi. "How many screens per player?" relabeled to "How many HDMI Output port?".
@@ -14422,9 +14426,16 @@ if(document.readyState==='loading'){
   }catch(e){/* silent */}
 })();
 
-/* v22.6: Client-side SHA-256 using Web Crypto API */
+/* v22.6: Client-side SHA-256 using Web Crypto API.
+ * v24.41.0: Coerce to String + trim() before encoding. Mobile/desktop autofill
+ * sometimes appends invisible whitespace (trailing space, newline) to password
+ * fields. Without trim, the resulting hash mismatches the stored hash and login
+ * fails with "Incorrect password" even though the visible characters match.
+ * No realistic password contains intentional leading/trailing whitespace, so
+ * trimming is safe. */
 async function sha256Hex(str){
-  const buf=new TextEncoder().encode(str);
+  const clean=String(str==null?'':str).trim();
+  const buf=new TextEncoder().encode(clean);
   const digest=await crypto.subtle.digest('SHA-256',buf);
   return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
@@ -28675,6 +28686,12 @@ async function _renderPipelineTrendBS() {
   const weightedSeries = snaps.map(function(s) { return Math.round((s.weightedPipelineINR || 0) / 100000) / 10; });
   const fmtCr = function(v) { return '₹' + v.toFixed(1) + ' Cr'; };
 
+  // v24.41.0: Inline theme-aware colors (this fn is outside the v26 module so _themeColors() is out of scope)
+  const _isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const _inkMuted = _isDark ? '#CBD5E1' : '#64748B';
+  const _splitLine = _isDark ? 'rgba(148,163,184,0.14)' : 'rgba(100,116,139,0.15)';
+  const _axisLine = _isDark ? 'rgba(148,163,184,0.30)' : 'rgba(100,116,139,0.3)';
+
   _trendChartInstBS.setOption({
     grid: { top: 32, right: 24, bottom: 36, left: 56 },
     tooltip: {
@@ -28695,19 +28712,19 @@ async function _renderPipelineTrendBS() {
     legend: {
       data: ['Open Pipeline', 'Weighted Pipeline'],
       top: 4,
-      textStyle: { color: '#64748B', fontSize: 11 }
+      textStyle: { color: _inkMuted, fontSize: 11 }
     },
     xAxis: {
       type: 'category',
       data: xLabels,
-      axisLabel: { fontSize: 10, color: '#64748B', interval: Math.max(0, Math.floor(snaps.length / 8)) },
-      axisLine: { lineStyle: { color: 'rgba(100,116,139,0.3)' } }
+      axisLabel: { fontSize: 10, color: _inkMuted, interval: Math.max(0, Math.floor(snaps.length / 8)) },
+      axisLine: { lineStyle: { color: _axisLine } }
     },
     yAxis: {
       type: 'value',
-      axisLabel: { fontSize: 10, color: '#64748B', formatter: function(v) { return '₹' + v + 'Cr'; } },
+      axisLabel: { fontSize: 10, color: _inkMuted, formatter: function(v) { return '₹' + v + 'Cr'; } },
       axisLine: { show: false },
-      splitLine: { lineStyle: { color: 'rgba(100,116,139,0.15)' } }
+      splitLine: { lineStyle: { color: _splitLine } }
     },
     series: [
       {
