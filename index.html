@@ -10771,7 +10771,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.39.0';  // v24.39.0 — CHART.JS DROPPED. Both Review-tab callers (bsC3aRenderVelocity, bsC3dRenderTrend) turned out to be zombie code, not live functions awaiting migration. Their DOM targets (bs-c3a-velocity-wrap, bs-c3d-trend-wrap) never existed anywhere in the HTML — every getElementById returned null and the functions exited early without rendering. The v24.26.5 historical comment had already acknowledged this ("they early-return on missing DOM but would throw on missing global") — Chart.js was kept loaded only as a defensive measure against the typeof-Chart-undefined check inside the zombie functions. v24.39.0 deletes: (1) bsC3aRenderVelocity (~135 lines including comment), (2) bsC3dRenderTrend (~119 lines including comment), (3) both callsites in bsC2aRender (~6 lines + comments), (4) the chart.umd.min.js CDN script tag. ECharts now owns 100% of charting in BS frontend; ~400KB library load removed; ~252 lines of dead JS removed. Pairs with backend v25.17.0 which drops handleStageVelocityAggregate (orphan after this deploy). The v26 Dashboard's pipeline trend (_renderPipelineTrendBS) keeps the pipeline_snapshots_list backend handler in active use.
+const FRONTEND_VERSION = '24.40.0';  // v24.40.0 — P2 dead-code cleanup. No behavior change. Removed 24 orphan functions (~814 lines), mostly Review-tab pre-v26 leftovers that survived the v24.26 rebuild without callers: populateReviewDropdowns (~378 lines, biggest single orphan), bsC2dExport (~71 lines), buildTenderSpecCard (~60 lines), renderCard (~47 lines), populateReviewPeriodSelects/renderKPIs (~38 lines each), renderSuperStats (~23 lines), _renderHorizBars (~22 lines), computeDelta (~16 lines), onReviewDropdownChange (~15 lines), parseDealValueClient (~14 lines), applyFilters (~11 lines), onReviewSearchChange/renderFilterCount (~8 lines each), _fyOf (~7 lines), bsKpiOnPeriodChange/onCockpitFilterChange (~6 lines each), toggleClauseSection/toggleSpecSection/toggleAllSpecs/updateReviewAdminBarVisibility_/removeFromQueue (~5 lines each), _lastYM (~4 lines), _stageBadge (~3 lines, nested inside populateReviewDropdowns), _testModeKey (~1 line). KEPT buildProjectCard (1-line defensive alias to buildProjectCardV21). Each delete validated individually with node --check. Pairs with backend v25.18.0.
   // v24.36.3 — Two bugfixes per user feedback. (1) HEADER NAME "—" BUG: On fresh login (sign-in from login page), the user-label-name slot stayed as the HTML default "—" because _applyPostLoginUI() was NEVER actually called in the fresh-login flow despite the v24.20.1 comment claiming it would be called "below". The "below" promise was never fulfilled. Only the rehydrate path (refresh while signed in) called it, which is why the issue only surfaced on cold logins. Now calls _applyPostLoginUI() in the fresh-login flow too — idempotent so safe against duplicate calls in slow login races. (2) NOTIFICATIONS NOT CLEARING DAILY: Notifications had 7-day rolling retention. User wants yesterday's notifications gone at 12:01 AM (daily reset). Changed _loadNotifs_ cutoff from "now - 7 days" to "start of today (00:00:00 local time)". Notifs older than midnight are now filtered out on every load and the cleaned list is persisted so the bell badge count stays accurate. NOTIF_RETENTION_MS constant kept declared (referenced elsewhere) but no longer used as the cutoff in _loadNotifs_. Pairs with backend v25.15.0.
 // v24.36.2 — Label refinement: HDMI input → "HDMI live source input port?" (added "port").
 // v24.36.1 — Card 03 field order refinement: Resolution → Touch → HDMI input → GPIO → HDMI Output port → SSD → Wi-Fi. "How many screens per player?" relabeled to "How many HDMI Output port?".
@@ -19297,84 +19297,6 @@ function buildBOMCard(m,f,cms){
   return html;
 }
 /* v21: Dual-model tender spec — Common clauses shared, per-model unique sections stacked */
-function buildTenderSpecCard(m,om){
-  // Common clauses = baseline (shared across all models)
-  const commonClauses=TENDER_CLAUSES.baseline||{};
-  // Primary model unique = group-specific clauses for the primary model
-  const primaryUnique=TENDER_CLAUSES[m.group]||{};
-  // Outdoor variant unique = group-specific clauses for outdoor (if Mixed)
-  const outdoorUnique=om?(TENDER_CLAUSES[om.group]||{}):null;
-
-  // Helper to count total clauses in a clause set
-  function countClauses(clauseSet){let n=0;Object.keys(clauseSet).forEach(s=>{n+=clauseSet[s].length;});return n;}
-  function renderClauseSection(clauseSet,startNum){
-    let num=startNum;
-    let innerHtml='';
-    Object.keys(clauseSet).forEach(sectionName=>{
-      const clauses=clauseSet[sectionName];
-      innerHtml+=`<div style="margin-top:12px;margin-bottom:4px;"><strong style="font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted);">${sectionName}</strong></div>`;
-      innerHtml+=`<table class="tender-clause-table"><thead><tr><th class="tender-clause-num">#</th><th>Clause</th></tr></thead><tbody>`;
-      clauses.forEach(clause=>{
-        num++;
-        innerHtml+=`<tr><td class="tender-clause-num">${String(num).padStart(2,'0')}</td><td>${clause}</td></tr>`;
-      });
-      innerHtml+=`</tbody></table>`;
-    });
-    return {html:innerHtml,lastNum:num};
-  }
-
-  const commonCount=countClauses(commonClauses);
-  const primaryCount=countClauses(primaryUnique);
-  const outdoorCount=outdoorUnique?countClauses(outdoorUnique):0;
-
-  let html=`<div class="glass-card"><div class="glass-card-title"><span class="glass-card-title-icon" style="background:linear-gradient(135deg,#0D9488 0%,#0F766E 100%);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></span>Tender Specifications<span style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-subtle);font-weight:500;letter-spacing:0.04em;text-transform:uppercase;">${commonCount+primaryCount+outdoorCount} clauses total</span></div><div class="glass-card-divider"></div>`;
-
-  // Common section
-  if(commonCount>0){
-    html+=`<div class="tender-section tender-section-common">`;
-    html+=`<div class="tender-section-head"><div class="tender-section-badge">Common</div><div class="tender-section-title">Applies to both models</div><div class="tender-section-count">${commonCount} clause${commonCount===1?'':'s'}</div></div>`;
-    const r=renderClauseSection(commonClauses,0);
-    html+=r.html;
-    html+=`</div>`;
-  }
-
-  // Primary model section
-  html+=`<div class="tender-section">`;
-  html+=`<div class="tender-section-head"><div class="tender-section-badge">${om?'Primary · Indoor':'Primary'}</div><div class="tender-section-title">${m.id} — ${m.tag}</div><div class="tender-section-count">${primaryCount} clause${primaryCount===1?'':'s'}</div></div>`;
-  const rPrimary=renderClauseSection(primaryUnique,commonCount);
-  html+=rPrimary.html;
-  html+=`</div>`;
-
-  // Outdoor variant section (only for Mixed with different model)
-  if(om && outdoorCount>0){
-    html+=`<div class="tender-section tender-section-outdoor">`;
-    html+=`<div class="tender-section-head"><div class="tender-section-badge">Outdoor Variant</div><div class="tender-section-title">${om.id} — ${om.tag}</div><div class="tender-section-count">${outdoorCount} clause${outdoorCount===1?'':'s'}</div></div>`;
-    const rOutdoor=renderClauseSection(outdoorUnique,commonCount+primaryCount);
-    html+=rOutdoor.html;
-    html+=`</div>`;
-  }
-
-  html+=`</div>`;
-  return html;
-}
-
-function toggleClauseSection(el){
-  const section=el.closest('.clause-section');
-  section.classList.toggle('open');
-  el.classList.toggle('open');
-}
-
-function toggleSpecSection(el){
-  const section=el.closest('.spec-section');
-  section.classList.toggle('open');
-  el.classList.toggle('open');
-}
-function toggleAllSpecs(open){
-  document.querySelectorAll('.spec-section').forEach(s=>{
-    s.classList.toggle('open',open);
-    s.querySelector('.spec-section-head').classList.toggle('open',open);
-  });
-}
 /* v21: Project summary card wrapped in glass-card with refreshed typography */
 function buildProjectCardV21(){
   const f=state.form;
@@ -19730,7 +19652,6 @@ async function refreshPricesFromSheet(){
  * The isTest column on Sheet1 stays intact (just unread/unwritten). User has
  * been advised to manually delete pre-existing test rows for clean state.
  */
-function _testModeKey(){ return null; }
 function _initTestMode(){ window._testModeOn = false; }
 function _renderTestModeBanner(){ /* no-op */ }
 function setTestMode(on){
@@ -20059,21 +19980,6 @@ function buildEntryPayload(status){
 
 /* v24.4.0: Client-side deal value normalizer. Matches server logic.
    Accepts 125000, "1,25,000", "1.25 L", "1.25 Cr", "50k" — returns integer rupees. */
-function parseDealValueClient(v){
-  if(v==null||v==='')return 0;
-  if(typeof v==='number')return Math.max(0,Math.round(v));
-  const s=v.toString().trim().toLowerCase().replace(/,/g,'').replace(/₹/g,'').trim();
-  if(!s)return 0;
-  const m=s.match(/^(-?\d+(?:\.\d+)?)\s*(cr|crore|crores|l|lakh|lakhs|k|thousand|th)?$/);
-  if(!m){const n=parseFloat(s);return isNaN(n)?0:Math.max(0,Math.round(n));}
-  let n=parseFloat(m[1]);
-  const unit=m[2]||'';
-  if(unit==='cr'||unit==='crore'||unit==='crores')n*=10000000;
-  else if(unit==='l'||unit==='lakh'||unit==='lakhs')n*=100000;
-  else if(unit==='k'||unit==='thousand'||unit==='th')n*=1000;
-  return isNaN(n)?0:Math.max(0,Math.round(n));
-}
-
 /* v24.16.3: Full Indian comma format — no K/L/Cr abbreviations.
    12500000 → "₹1,25,00,000" (was: "₹1.25 Cr"). User feedback: abbreviations
    are misleading on a quote partner sees. Function name kept for compatibility.
@@ -20121,63 +20027,7 @@ function getClientFYQuarter(date){
 }
 
 /* Populate the period selector dropdowns */
-function populateReviewPeriodSelects(){
-  const now=getClientFYQuarter();
-  const curFY=now.fy;
-  const prevFYStartYear=now.fyStartYear-1;
-  const prevFY=('0'+(prevFYStartYear%100)).slice(-2)+'-'+('0'+((prevFYStartYear+1)%100)).slice(-2);
-
-  const options=[
-    {value:'FY'+curFY+'-'+now.quarter,label:'Current: '+now.quarter+' FY '+curFY+' (active)'},
-    {value:'FY'+curFY+'-Q1',label:'Q1 FY '+curFY+' (Apr–Jun)'},
-    {value:'FY'+curFY+'-Q2',label:'Q2 FY '+curFY+' (Jul–Sep)'},
-    {value:'FY'+curFY+'-Q3',label:'Q3 FY '+curFY+' (Oct–Dec)'},
-    {value:'FY'+curFY+'-Q4',label:'Q4 FY '+curFY+' (Jan–Mar)'},
-    {value:'YTD-'+curFY,label:'YTD FY '+curFY},
-    {value:'FY'+curFY,label:'Full FY '+curFY},
-    {value:'FY'+prevFY+'-Q1',label:'Q1 FY '+prevFY},
-    {value:'FY'+prevFY+'-Q2',label:'Q2 FY '+prevFY},
-    {value:'FY'+prevFY+'-Q3',label:'Q3 FY '+prevFY},
-    {value:'FY'+prevFY+'-Q4',label:'Q4 FY '+prevFY},
-    {value:'FY'+prevFY,label:'Full FY '+prevFY},
-    {value:'ALL',label:'All time'}
-  ];
-  const periodEl=document.getElementById('review-period');
-  const compareEl=document.getElementById('review-compare');
-  if(!periodEl||!compareEl)return;
-  if(periodEl.options.length>0)return; // already populated
-  options.forEach(o=>{
-    const opt1=new Option(o.label,o.value);
-    const opt2=new Option(o.label,o.value);
-    periodEl.appendChild(opt1);
-    compareEl.appendChild(opt2);
-  });
-  // Add "none" for compare
-  const none=new Option('(no comparison)','NONE');
-  compareEl.insertBefore(none,compareEl.firstChild);
-  // Defaults: current quarter + same quarter prev FY
-  periodEl.value='FY'+curFY+'-'+now.quarter;
-  compareEl.value='FY'+prevFY+'-'+now.quarter;
-}
-
 /* Compute delta + arrow class + formatted label */
-function computeDelta(current,previous,isPercent){
-  if(previous==null||previous===0){
-    if(current>0)return {cls:'delta-up',label:'new'};
-    return {cls:'delta-flat',label:'—'};
-  }
-  const diff=current-previous;
-  if(isPercent){
-    const pp=Math.round(diff*10)/10;
-    if(Math.abs(pp)<0.1)return {cls:'delta-flat',label:'flat'};
-    return {cls:pp>0?'delta-up':'delta-down',label:(pp>0?'↑':'↓')+' '+Math.abs(pp)+'pp'};
-  }
-  if(previous===0)return {cls:current>0?'delta-up':'delta-flat',label:current>0?'new':'—'};
-  const pct=(diff/previous)*100;
-  if(Math.abs(pct)<1)return {cls:'delta-flat',label:'flat'};
-  return {cls:pct>0?'delta-up':'delta-down',label:(pct>0?'↑':'↓')+' '+Math.abs(Math.round(pct))+'%'};
-}
-
 /* Main render function — fetches review_data + draws 6 cards */
 
 
@@ -20216,12 +20066,6 @@ function updateRelationshipCounts_(){
 }
 
 /** Show/hide the Super-only upload bar based on current user */
-function updateReviewAdminBarVisibility_(){
-  const bar = document.getElementById('review-admin-bar');
-  if(!bar) return;
-  bar.style.display = (state.user && state.user.isSuper) ? '' : 'none';
-}
-
 /* v24.26.1: renderReview STUBBED. Old Review tab was consolidated into Dashboard\'s
    "Team Analytics" inner tab in v24.26.0. Any legacy call site routes there. */
 async function renderReview(){
@@ -20793,12 +20637,6 @@ function queuePendingEntry(entry){
     queue.push({refId:entry.refId,payload:entry,attempts:1,queuedAt:now,lastAttempt:now,lastError:null});
   }
   savePendingQueue(queue);
-}
-
-function removeFromQueue(refId){
-  const queue=loadPendingQueue();
-  const filtered=queue.filter(q=>q.refId!==refId);
-  if(filtered.length!==queue.length)savePendingQueue(filtered);
 }
 
 /* Verifier: fetches central log via action=read, removes from queue any refId that appears there */
@@ -23137,18 +22975,6 @@ function populateFilterOptions(entries){
   });
 }
 
-function applyFilters(){
-  window._filters.city=document.getElementById('flt-city').value;
-  window._filters.user=document.getElementById('flt-user').value;
-  window._filters.project=document.getElementById('flt-project').value;
-  window._filters.partner=document.getElementById('flt-partner').value;
-  window._filters.consultant=document.getElementById('flt-consultant').value;
-  // v24: date range
-  const dr=document.getElementById('flt-daterange');
-  window._filters.dateRange=dr?dr.value:'all';
-  renderDashboard();  // v23.1: filters live on dashboard tab now
-}
-
 function applyFiltersToEntries(entries){
   const f=window._filters;
   // v24: Compute date cutoff once
@@ -23182,79 +23008,7 @@ function clearFilters(){
   renderDashboard();  // v23.1: filters on dashboard
 }
 
-function renderFilterCount(shown,total,el){
-  el.style.display='flex';
-  if(shown===total){
-    el.innerHTML=`Showing <strong>${total}</strong> entries`;
-  } else {
-    el.innerHTML=`Showing <strong>${shown}</strong> of ${total} entries${hasActiveFilters()?' · <span style="color:var(--blue);cursor:pointer;" onclick="clearFilters()">Clear filters</span>':''}`;
-  }
-}
-
-function renderSuperStats(entries,dashEl){
-  if(!entries.length){dashEl.style.display='none';return;}
-  const users={};const cities={};
-  entries.forEach(e=>{users[e.user]=(users[e.user]||0)+1;cities[e.city]=(cities[e.city]||0)+1;});
-  const totalQty=entries.reduce((sum,e)=>sum+(parseInt(e.qty)||0),0);
-  const confirmed=entries.filter(e=>e.status==='saved').length;
-  const confirmedPct=entries.length?Math.round(confirmed/entries.length*100):0;
-  dashEl.style.display='block';
-  dashEl.innerHTML=`
-    <div class="super-banner">
-      <div class="super-banner-icon"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
-      <div class="super-banner-text">
-        <div class="super-banner-title">Super user dashboard</div>
-        <div class="super-banner-sub">All-team pipeline view · use filters above to drill down</div>
-      </div>
-    </div>
-    <div class="super-stats">
-      <div class="stat-card"><div class="stat-label">Selections</div><div class="stat-value">${entries.length}</div></div>
-      <div class="stat-card"><div class="stat-label">Total player qty</div><div class="stat-value">${totalQty}</div></div>
-      <div class="stat-card"><div class="stat-label">Active users</div><div class="stat-value">${Object.keys(users).length}</div></div>
-      <div class="stat-card"><div class="stat-label">Confirmed rate</div><div class="stat-value">${confirmedPct}%</div></div>
-    </div>`;
-}
-
 /* v18: Render KPI strip with animated count-up numbers */
-function renderKPIs(filtered,allEntries){
-  // v20: Count unique values across filtered entries
-  // Ignore placeholder values ("—", "", "(unnamed)", "-") so metrics reflect real data only
-  function uniqCount(arr,field){
-    const s=new Set();
-    arr.forEach(e=>{
-      const v=(e[field]||'').toString().trim();
-      if(v && v!=='—' && v!=='-' && v!=='(unnamed)')s.add(v.toLowerCase());
-    });
-    return s.size;
-  }
-  const projects   = uniqCount(filtered,'project');
-  const consultants= uniqCount(filtered,'consultant');
-  const partners   = uniqCount(filtered,'partner');
-  const cities     = uniqCount(filtered,'city');
-  const endusers   = uniqCount(filtered,'enduser');
-  const totalSelections=filtered.length;
-  const totalQty=filtered.reduce((s,e)=>s+(parseInt(e.qty)||0),0);
-  const activeUsers=new Set(filtered.map(e=>e.user)).size;
-  const totalAll=allEntries.length;
-  const filterHint=totalSelections===totalAll?`all time · ${totalSelections} selection${totalSelections===1?'':'s'}`:`${totalSelections} of ${totalAll} total`;
-
-  animateNumber('kpi-projects',projects);
-  animateNumber('kpi-consultants',consultants);
-  animateNumber('kpi-partners',partners);
-  animateNumber('kpi-cities',cities);
-  animateNumber('kpi-endusers',endusers);
-
-  document.getElementById('kpi-projects-trend').textContent=filterHint;
-  document.getElementById('kpi-consultants-trend').textContent=`across ${totalSelections} selection${totalSelections===1?'':'s'}`;
-  document.getElementById('kpi-partners-trend').textContent=`channel partners engaged`;
-  document.getElementById('kpi-cities-trend').textContent=`${cities===1?'city':'cities'} covered`;
-  document.getElementById('kpi-endusers-trend').textContent=`unique end-users`;
-
-  document.getElementById('dash-last-update').textContent=new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit', timeZone: 'Asia/Kolkata'});
-  document.getElementById('dash-active-users').textContent=activeUsers;
-  document.getElementById('dash-total-selections').textContent=totalSelections.toLocaleString('en-IN');
-}
-
 /* Animate numeric value from 0 to target */
 function animateNumber(elId,target){
   const el=document.getElementById(elId);
@@ -24192,55 +23946,6 @@ window.showTab=function(which){
       _c2aSaving = false;
     }
   }
-
-  function renderCard(agg){
-    const pipeline = currentPipelineForBS();
-    const asofEl = document.getElementById('bs-c2a-asof');
-    if(asofEl && agg && agg.asOfDate){
-      const d = new Date(agg.asOfDate);
-      asofEl.textContent = 'As of: ' + d.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
-    } else if(asofEl){
-      asofEl.textContent = 'As of: — (no sales data uploaded yet)';
-    }
-
-    if(!agg){
-      ['bs-c2a-cur-label','bs-c2a-cmp-label','bs-c2a-cur-actuals','bs-c2a-cmp-actuals','bs-c2a-delta','bs-c2a-cur-pipeline','bs-c2a-cur-tx','bs-c2a-cmp-tx']
-        .forEach(function(id){ const el=document.getElementById(id); if(el) el.textContent='—'; });
-      return;
-    }
-
-    // Current
-    document.getElementById('bs-c2a-cur-label').textContent = agg.current ? agg.current.label : '—';
-    document.getElementById('bs-c2a-cur-actuals').textContent = fmtINR(agg.current ? agg.current.actuals : null);
-    document.getElementById('bs-c2a-cur-pipeline').textContent = fmtINR(pipeline.total);
-    document.getElementById('bs-c2a-cur-tx').textContent =
-      (agg.current ? (agg.current.txCount + ' invoices') : '—') + ' · ' + pipeline.count + ' open deals';
-
-    // Compare column
-    const cmpCard = document.getElementById('bs-c2a-cmp-card');
-    if(agg.compare){
-      cmpCard.style.display = '';
-      document.getElementById('bs-c2a-cmp-label').textContent = agg.compare.label;
-      if(agg.compareHasData){
-        document.getElementById('bs-c2a-cmp-actuals').textContent = fmtINR(agg.compare.actuals);
-        document.getElementById('bs-c2a-cmp-tx').textContent = agg.compare.txCount + ' invoices';
-        const d = fmtDelta(agg.deltaPct);
-        const deltaEl = document.getElementById('bs-c2a-delta');
-        deltaEl.textContent = d.text;
-        deltaEl.style.color = d.color;
-      } else {
-        document.getElementById('bs-c2a-cmp-actuals').textContent = '—';
-        document.getElementById('bs-c2a-cmp-tx').textContent = 'No data for this period';
-        const deltaEl = document.getElementById('bs-c2a-delta');
-        deltaEl.textContent = '—';
-        deltaEl.style.color = 'var(--ink-subtle,#94A3B8)';
-      }
-    } else {
-      // YTD mode — no comparison
-      cmpCard.style.display = 'none';
-    }
-  }
-
   async function loadAndRenderNote(periodKey, fy, scope, qOrH){
     const ta = document.getElementById('bs-c2a-poa');
     const metaEl = document.getElementById('bs-c2a-poa-meta');
@@ -24486,78 +24191,7 @@ window.showTab=function(which){
 
   /* ---------------- Cycle 2d — Excel export (uses xlsx-js-style already loaded) ---------------- */
 
-  window.bsC2dExport = function(){
-    if(typeof XLSX === 'undefined'){
-      alert('Excel library not loaded. Please refresh and try again.');
-      return;
-    }
-    const agg = window._bsC2aLastAgg || null;
-    const poaEl = document.getElementById('bs-c2a-poa');
-    const poaText = poaEl ? (poaEl.value || '') : '';
-    const poaPeriod = (poaEl && poaEl.dataset.periodKey) || (agg && agg.periodKey) || '';
-
-    const openDeals = _openDeals();
-    const pipelineTotal = openDeals.reduce(function(s, r){ return s + r.dealValueINR; }, 0);
-
-    const wb = XLSX.utils.book_new();
-
-    // Sheet 1: Summary
-    const sum = [
-      ['BrightSign — Channel Review Export'],
-      ['Generated', new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })],
-      ['Generated by', (state.user && state.user.fullName) ? state.user.fullName : '—'],
-      ['As of date', agg ? new Date(agg.asOfDate).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}) : '—'],
-      [],
-      ['Comparison mode', agg ? agg.mode : '—'],
-      ['Period', agg && agg.current ? agg.current.label : '—'],
-      [],
-      ['Current period'],
-      ['  Actuals (₹)', agg && agg.current ? agg.current.actuals : 0],
-      ['  Invoices',   agg && agg.current ? agg.current.txCount : 0],
-      ['  Pipeline (₹)', pipelineTotal],
-      ['  Open deals', openDeals.length],
-      []
-    ];
-    if(agg && agg.compare){
-      sum.push(['Comparison period'],
-        ['  Label', agg.compare.label],
-        ['  Actuals (₹)', agg.compareHasData ? agg.compare.actuals : 0],
-        ['  Invoices',   agg.compareHasData ? agg.compare.txCount : 0],
-        ['  Δ Actuals %', (agg.deltaPct !== null && agg.deltaPct !== undefined) ? agg.deltaPct.toFixed(2) : '—'],
-        []);
-    }
-    sum.push(['Plan of Action'], ['  Period key', poaPeriod], ['  Text', poaText]);
-    const wsSum = XLSX.utils.aoa_to_sheet(sum);
-    wsSum['!cols'] = [{wch:28},{wch:60}];
-    XLSX.utils.book_append_sheet(wb, wsSum, 'Summary');
-
-    // Sheet 2: Pipeline (drilldown)
-    const pipHeaders = ['Project','End-user','Partner','Stage','Deal Value (₹)','Expected Close','Days in Stage','Owner'];
-    const pipRows = openDeals.map(function(r){
-      return [r.project, r.enduser, r.partner, r.stage, r.dealValueINR, r.closemonth, r.daysInStage, r.user];
-    });
-    const wsPip = XLSX.utils.aoa_to_sheet([pipHeaders].concat(pipRows));
-    wsPip['!cols'] = [{wch:30},{wch:30},{wch:30},{wch:14},{wch:16},{wch:16},{wch:14},{wch:24}];
-    XLSX.utils.book_append_sheet(wb, wsPip, 'Pipeline');
-
-    // Sheet 3: Relationship counts (from DOM)
-    const countCards = [
-      ['Metric', 'Count'],
-      ['Active Partners / SI', (document.getElementById('kpi-active-partners')||{}).textContent || '—'],
-      ['Active Consultants',   (document.getElementById('kpi-active-consultants')||{}).textContent || '—'],
-      ['Active End-Users',     (document.getElementById('kpi-active-endusers')||{}).textContent || '—']
-    ];
-    const wsRel = XLSX.utils.aoa_to_sheet(countCards);
-    wsRel['!cols'] = [{wch:30},{wch:12}];
-    XLSX.utils.book_append_sheet(wb, wsRel, 'Relationships');
-
-    const fy = (agg && agg.fy) ? agg.fy : 'FY';
-    const mode = (agg && agg.mode) ? agg.mode : 'review';
-    const stamp = new Date().toISOString().replace(/[:.]/g,'-').slice(0,16);
-    const filename = 'BrightSign_Review_' + fy + '_' + mode + '_' + stamp + '.xlsx';
-    XLSX.writeFile(wb, filename);
-  };
-})();
+  })();
 /* END v24.10 Cycle 2b + 2d block */
 
 /* ============================================================================
@@ -25583,14 +25217,7 @@ if(document.readyState==='loading'){
     _renderModelsCard(log, range);
   };
 
-  window.bsKpiOnPeriodChange = function(){
-    const sel = document.getElementById('bs-kpi-period');
-    if(!sel) return;
-    try { localStorage.setItem(LS_KEY, sel.value); } catch(e){}
-    window.bsRenderReviewKPIs();
-  };
-
-  // Mobile responsive: collapse to single column on narrow viewports.
+    // Mobile responsive: collapse to single column on narrow viewports.
   // Done via injected stylesheet instead of CSS file edit to keep this self-contained.
   (function _injectMobileCSS(){
     const css = '@media (max-width: 720px){' +
@@ -26061,32 +25688,7 @@ if(document.readyState==='loading'){
     } catch(_){}
   }
 
-  window.onReviewSearchChange = function(){
-    _ensureExtendedFilters();
-    const el = document.getElementById('rf-search');
-    window._reviewFilters.search = el ? String(el.value || '').toLowerCase().trim() : '';
-    _persistFiltersExtended();
-    _updateFiltersSummaryV2();
-    _refireAggregators();
-  };
-
-  window.onReviewDropdownChange = function(group, value){
-    _ensureExtendedFilters();
-    const f = window._reviewFilters;
-    const v = String(value || '').trim();
-    if(group === 'fy' || group === 'outcome'){
-      f[group] = v ? new Set([v]) : new Set();
-    } else if(FILTER_GROUPS.indexOf(group) >= 0){
-      // Existing groups (leadSource/region/state/salesPerson/presalesPerson/enduser/consultant):
-      // dropdown is single-select; clear then add. Empty = clear.
-      f[group] = v ? new Set([v]) : new Set();
-    }
-    _persistFiltersExtended();
-    _updateFiltersSummaryV2();
-    _refireAggregators();
-  };
-
-  // v24.25.0 — re-implement summary count to include search/fy/outcome
+      // v24.25.0 — re-implement summary count to include search/fy/outcome
   function _updateFiltersSummaryV2(){
     const sumEl = document.getElementById('review-filters-summary');
     if(!sumEl) return;
@@ -26170,381 +25772,6 @@ if(document.readyState==='loading'){
     };
   })();
 
-  // Repopulate the dropdown options from current data, and restore selections.
-  // Called from renderReview() each time the tab opens.
-  window.populateReviewDropdowns = function(){
-    _ensureExtendedFilters();
-    const f = window._reviewFilters;
-    const log   = Array.isArray(window._centralLog) ? window._centralLog : [];
-    const users = Array.isArray(window._allUsers) ? window._allUsers : [];
-
-    // Restore search input
-    const searchEl = document.getElementById('rf-search');
-    if(searchEl) searchEl.value = String(f.search || '');
-
-    // Helper: rebuild a select from a list of {value, label} options + 'All' default.
-    function rebuildSelect(id, allLabel, items, currentVal){
-      const sel = document.getElementById(id);
-      if(!sel) return;
-      const sortItems = items.slice().sort(function(a, b){
-        return String(a.label).localeCompare(String(b.label));
-      });
-      const opts = ['<option value="">' + allLabel + '</option>'].concat(
-        sortItems.map(function(it){
-          const v = String(it.value).replace(/"/g, '&quot;');
-          const l = (typeof escapeHtml === 'function') ? escapeHtml(String(it.label)) : String(it.label);
-          return '<option value="' + v + '">' + l + '</option>';
-        })
-      );
-      sel.innerHTML = opts.join('');
-      if(currentVal && sel.querySelector('option[value="' + String(currentVal).replace(/"/g, '\\"') + '"]')){
-        sel.value = currentVal;
-      } else {
-        sel.value = '';
-      }
-    }
-
-    // States — distinct, canonical case preserved
-    const stateMap = {};
-    log.forEach(function(e){
-      const s = String(e && e.state || '').trim();
-      if(s) stateMap[s.toLowerCase()] = s;
-    });
-    const stateItems = Object.values(stateMap).map(function(s){ return {value:s, label:s}; });
-    rebuildSelect('rf-d-state', 'All states', stateItems, Array.from(f.state || [])[0] || '');
-
-    // Sales / Presales people — pull from users sheet, role-filtered
-    const salesItems = [];
-    const presalesItems = [];
-    users.forEach(function(u){
-      if(!u || u.isActive === false) return;
-      const ln = String(u.loginName || '').toLowerCase().trim();
-      if(!ln) return;
-      const fn = String(u.fullName || u.loginName || '').trim();
-      const role = String(u.role || '').trim();
-      // v24.21.4: Sales role gets the Sales filter; Presales role gets Presales filter.
-      // BU Head + Super are eligible for both (they may handle either function).
-      if(/^Sales$/i.test(role) || /^BU\s*Head$/i.test(role) || u.isSuper === true){
-        salesItems.push({value:ln, label:fn});
-      }
-      if(/^Presales$/i.test(role) || /^BU\s*Head$/i.test(role) || u.isSuper === true){
-        presalesItems.push({value:ln, label:fn});
-      }
-    });
-    rebuildSelect('rf-d-salesPerson', 'All sales', salesItems, Array.from(f.salesPerson || [])[0] || '');
-    rebuildSelect('rf-d-presalesPerson', 'All presales', presalesItems, Array.from(f.presalesPerson || [])[0] || '');
-
-    // Static dropdowns — just restore selected value
-    const setSel = function(id, v){
-      const el = document.getElementById(id);
-      if(el) el.value = String(v || '');
-    };
-    setSel('rf-d-leadSource', Array.from(f.leadSource || [])[0] || '');
-    setSel('rf-d-region',     Array.from(f.region || [])[0] || '');
-    setSel('rf-d-fy',         Array.from(f.fy || [])[0] || '');
-    setSel('rf-d-outcome',    Array.from(f.outcome || [])[0] || '');
-
-    // Populate Sales Person dropdown for the Sales card too
-    const rsSalesPick = document.getElementById('rs-sales-pick');
-    if(rsSalesPick){
-      const cur = rsSalesPick.value;
-      const sortedSales = salesItems.slice().sort(function(a, b){
-        return String(a.label).localeCompare(String(b.label));
-      });
-      rsSalesPick.innerHTML = '<option value="">— Pick a sales person —</option>' +
-        sortedSales.map(function(it){
-          const v = String(it.value).replace(/"/g, '&quot;');
-          const l = (typeof escapeHtml === 'function') ? escapeHtml(String(it.label)) : String(it.label);
-          return '<option value="' + v + '">' + l + '</option>';
-        }).join('');
-      if(cur && rsSalesPick.querySelector('option[value="' + cur.replace(/"/g, '\\"') + '"]')){
-        rsSalesPick.value = cur;
-      }
-    }
-
-    _updateFiltersSummaryV2();
-  };
-
-  // Override clearAllReviewFilters so it ALSO resets search/fy/outcome and clears
-  // the new dropdown values in the DOM.
-  window.clearAllReviewFilters = function(){
-    _ensureExtendedFilters();
-    FILTER_GROUPS.forEach(function(g){ window._reviewFilters[g].clear(); });
-    window._reviewFilters.search = '';
-    if(window._reviewFilters.fy)      window._reviewFilters.fy.clear();
-    if(window._reviewFilters.outcome) window._reviewFilters.outcome.clear();
-    _persistFiltersExtended();
-    // Reset DOM controls
-    ['rf-d-leadSource','rf-d-fy','rf-d-region','rf-d-state','rf-d-salesPerson','rf-d-presalesPerson','rf-d-outcome'].forEach(function(id){
-      const el = document.getElementById(id);
-      if(el) el.value = '';
-    });
-    const s = document.getElementById('rf-search');
-    if(s) s.value = '';
-    _updateFiltersSummaryV2();
-    _refireAggregators();
-  };
-
-  /* ============================================================
-     v24.25.0 (item 6) — Region card renderer.
-     Picks a region; computes count/value/won/win-rate + top reps + top
-     customers + clickable deal list (open + recently closed). All from
-     the unfiltered pipeline-cutoff log so it stands alone from the
-     filter row above.  */
-  function _fmtINRsafe(n){
-    if(typeof formatINR === 'function') return formatINR(n);
-    return '₹' + (Math.round(n||0)).toLocaleString('en-IN');
-  }
-  function _readDealValSafe(e){
-    if(typeof _readDealValue === 'function'){
-      try { return _readDealValue(e); } catch(_){}
-    }
-    const v = e && (e.dealValueINR || e.dealValue || e.dealvalueinr);
-    const n = parseFloat(v);
-    return isFinite(n) ? n : 0;
-  }
-  function _resolveOwnerName(loginName){
-    if(!loginName) return '';
-    const users = Array.isArray(window._allUsers) ? window._allUsers : [];
-    for(let i = 0; i < users.length; i++){
-      const u = users[i];
-      if(u && String(u.loginName||'').toLowerCase() === String(loginName).toLowerCase()){
-        return u.fullName || u.loginName || loginName;
-      }
-    }
-    return loginName;
-  }
-  function _entriesAfterCutoff(){
-    const raw = Array.isArray(window._centralLog) ? window._centralLog : [];
-    if(typeof _filterTestData === 'function'){
-      const filtered = _filterTestData(raw, window._reviewIncludeTest === true);
-      // Also drop pre-cutoff
-      if(typeof window._entryAfterPipelineCutoff === 'function'){
-        return filtered.filter(window._entryAfterPipelineCutoff);
-      }
-      return filtered;
-    }
-    return raw;
-  }
-  function _stageBadge(stage){
-    return '<span class="rs-deal-stage">' + (typeof escapeHtml === 'function' ? escapeHtml(stage) : stage) + '</span>';
-  }
-
-  window.renderReviewRegionCard = function(regionName){
-    const card = document.getElementById('review-region-card');
-    const body = document.getElementById('rs-region-body');
-    if(!body) return;
-    if(card) card.setAttribute('data-region', regionName || '');
-    if(!regionName){
-      body.className = 'rs-empty-strong';
-      body.innerHTML = '<div class="rs-empty-strong-icon">◉</div>' +
-        '<div style="font-weight:600;color:var(--ink,#0F172A);margin-bottom:6px;font-size:13px;">Pick a region above</div>' +
-        '<div style="font-size:12px;line-height:1.5;">Selecting a region populates deal count · pipeline ₹ · win rate · top reps · top customers · deal list.</div>' +
-        '<div style="margin-top:10px;font-size:11px;color:var(--ink-subtle,#94A3B8);">Tip: For all-region rollup, see the <strong>Dashboard cockpit</strong>.</div>';
-      return;
-    }
-    body.className = 'rs-body';
-    const entries = _entriesAfterCutoff().filter(function(e){
-      return _stateToRegion(e.state) === regionName;
-    });
-    if(entries.length === 0){
-      body.innerHTML = '<div class="rs-empty-strong"><div class="rs-empty-strong-icon">○</div><div>No deals tagged to ' + (typeof escapeHtml === 'function' ? escapeHtml(regionName) : regionName) + ' yet.</div></div>';
-      return;
-    }
-    // KPIs
-    let openCount = 0, openVal = 0, wonCount = 0, wonVal = 0, lostCount = 0;
-    const repTotals = {};
-    const customerTotals = {};
-    entries.forEach(function(e){
-      const v = _readDealValSafe(e);
-      const out = String(e.outcome || 'open').toLowerCase();
-      if(out === 'open'){ openCount++; openVal += v; }
-      if(out === 'won'){  wonCount++;  wonVal += v; }
-      if(out === 'lost'){ lostCount++; }
-      const sp = String(e.salesPerson || '').toLowerCase().trim();
-      if(sp){ repTotals[sp] = (repTotals[sp] || 0) + v; }
-      const cust = String(e.enduser || '').trim();
-      if(cust){ customerTotals[cust] = (customerTotals[cust] || 0) + v; }
-    });
-    const winRate = (wonCount + lostCount) > 0 ? Math.round((wonCount / (wonCount + lostCount)) * 100) : 0;
-    const topReps = Object.keys(repTotals).map(function(k){
-      return {name:_resolveOwnerName(k), val:repTotals[k]};
-    }).sort(function(a, b){ return b.val - a.val; }).slice(0, 3);
-    const topCustomers = Object.keys(customerTotals).map(function(k){
-      return {name:k, val:customerTotals[k]};
-    }).sort(function(a, b){ return b.val - a.val; }).slice(0, 3);
-
-    const STAGE_ORDER = {'Lead':0,'Opportunity':1,'Proposal':2,'Negotiation':3,'Order':4};
-    const dealsSorted = entries.slice().sort(function(a, b){
-      const oa = String(a.outcome || 'open').toLowerCase();
-      const ob = String(b.outcome || 'open').toLowerCase();
-      if(oa !== ob){ return oa === 'open' ? -1 : (ob === 'open' ? 1 : 0); }
-      const sa = STAGE_ORDER[a.stage] != null ? STAGE_ORDER[a.stage] : 99;
-      const sb = STAGE_ORDER[b.stage] != null ? STAGE_ORDER[b.stage] : 99;
-      return sa - sb;
-    });
-
-    const tile = function(label, value, sub, tone){
-      return '<div class="rs-tile" data-tone="' + tone + '"><div class="rs-tile-label">' + label + '</div>' +
-             '<div class="rs-tile-value">' + value + '</div>' +
-             '<div class="rs-tile-sub">' + (sub || '') + '</div></div>';
-    };
-    const rankedItems = function(arr){
-      if(!arr.length) return '<li><span class="rs-list-name" style="color:var(--ink-subtle);font-style:italic;font-weight:400;">— none —</span></li>';
-      return arr.map(function(it, idx){
-        return '<li>' +
-                 '<span class="rs-list-rank">' + (idx + 1) + '</span>' +
-                 '<span class="rs-list-name">' + (typeof escapeHtml === 'function' ? escapeHtml(it.name) : it.name) + '</span>' +
-                 '<span class="rs-list-val">' + _fmtINRsafe(it.val) + '</span>' +
-               '</li>';
-      }).join('');
-    };
-    const dealRow = function(e){
-      const proj = String(e.project || 'Untitled');
-      const stg = String(e.stage || '');
-      const out = String(e.outcome || 'open').toLowerCase();
-      const v = _readDealValSafe(e);
-      const refId = String(e.refId || '').replace(/'/g, "\\'");
-      const stageAttr = (out === 'won' || out === 'lost' || out === 'on-hold')
-        ? 'data-outcome="' + out + '"' : 'data-stage="' + stg + '"';
-      const stageLbl = (out === 'won') ? 'Won' : (out === 'lost') ? 'Lost' : (out === 'on-hold') ? 'On hold' : stg;
-      return '<div class="rs-deal-row" onclick="(typeof openEditFromHistory===\'function\')&&openEditFromHistory(\'' + refId + '\')">' +
-               '<div class="rs-deal-proj">' + (typeof escapeHtml === 'function' ? escapeHtml(proj) : proj) + '</div>' +
-               (stageLbl ? '<span class="rs-deal-stage" ' + stageAttr + '>' + stageLbl + '</span>' : '') +
-               '<div class="rs-deal-val">' + _fmtINRsafe(v) + '</div>' +
-             '</div>';
-    };
-    const dealRows = dealsSorted.slice(0, 25).map(dealRow).join('');
-
-    body.innerHTML =
-      '<div class="rs-tile-grid">' +
-        tile('Total deals', String(entries.length), 'in ' + (typeof escapeHtml === 'function' ? escapeHtml(regionName) : regionName), 'total') +
-        tile('Open ₹', _fmtINRsafe(openVal), openCount + ' open', 'open') +
-        tile('Won ₹', _fmtINRsafe(wonVal), wonCount + ' won', 'won') +
-        tile('Win rate', winRate + '%', (wonCount + lostCount) + ' resolved', 'rate') +
-      '</div>' +
-      '<div class="rs-section">' +
-        '<div class="rs-section-title">Top sales reps</div>' +
-        '<ul class="rs-list">' + rankedItems(topReps) + '</ul>' +
-      '</div>' +
-      '<div class="rs-section">' +
-        '<div class="rs-section-title">Top customers</div>' +
-        '<ul class="rs-list">' + rankedItems(topCustomers) + '</ul>' +
-      '</div>' +
-      '<div class="rs-section">' +
-        '<div class="rs-section-title">Deals · ' + dealsSorted.length + ' total · showing ' + Math.min(25, dealsSorted.length) + '</div>' +
-        '<div class="rs-deals">' + (dealRows || '<div class="rs-empty">No deals to show</div>') + '</div>' +
-      '</div>';
-  };
-  window._renderRegionCardForCurrentPick = function(){
-    const sel = document.getElementById('rs-region-pick');
-    if(sel) renderReviewRegionCard(sel.value);
-  };
-
-  /* ============================================================
-     v24.25.0 (item 7) — Sales person card renderer.
-     Picks a sales person; computes their tagged-deal numbers, stage
-     breakdown, and clickable deal list. Stage breakdown shows depth in
-     funnel which is what BU-Head reviews care about. */
-  window.renderReviewSalesCard = function(salesLoginName){
-    const body = document.getElementById('rs-sales-body');
-    if(!body) return;
-    if(!salesLoginName){
-      body.className = 'rs-empty-strong';
-      body.innerHTML = '<div class="rs-empty-strong-icon">☰</div>' +
-        '<div style="font-weight:600;color:var(--ink,#0F172A);margin-bottom:6px;font-size:13px;">Pick a sales person above</div>' +
-        '<div style="font-size:12px;line-height:1.5;">Selecting a rep shows their tagged deals · pipeline ₹ · win rate · stage breakdown.</div>' +
-        '<div style="margin-top:10px;font-size:11px;color:var(--ink-subtle,#94A3B8);">Tip: For team-wide ranking, see <strong>User Leaderboard</strong> in Dashboard → Detailed analytics.</div>';
-      return;
-    }
-    body.className = 'rs-body';
-    const ln = String(salesLoginName).toLowerCase().trim();
-    const entries = _entriesAfterCutoff().filter(function(e){
-      return String(e.salesPerson || '').toLowerCase().trim() === ln;
-    });
-    if(entries.length === 0){
-      const safeName = (typeof escapeHtml === 'function') ? escapeHtml(_resolveOwnerName(ln)) : _resolveOwnerName(ln);
-      body.innerHTML = '<div class="rs-empty-strong"><div class="rs-empty-strong-icon">○</div><div>No deals tagged to ' + safeName + ' yet.</div></div>';
-      return;
-    }
-    let openCount = 0, openVal = 0, wonCount = 0, wonVal = 0, lostCount = 0;
-    const stageCounts = {Lead:0, Opportunity:0, Proposal:0, Negotiation:0, Order:0};
-    const stageVals   = {Lead:0, Opportunity:0, Proposal:0, Negotiation:0, Order:0};
-    entries.forEach(function(e){
-      const v = _readDealValSafe(e);
-      const out = String(e.outcome || 'open').toLowerCase();
-      if(out === 'open'){
-        openCount++; openVal += v;
-        const stg = String(e.stage || '').trim();
-        if(stageCounts[stg] != null){ stageCounts[stg]++; stageVals[stg] += v; }
-      }
-      if(out === 'won'){ wonCount++; wonVal += v; }
-      if(out === 'lost'){ lostCount++; }
-    });
-    const winRate = (wonCount + lostCount) > 0 ? Math.round((wonCount / (wonCount + lostCount)) * 100) : 0;
-
-    const maxStageVal = Math.max.apply(null, Object.values(stageVals).concat([1]));
-    const STAGES_ORDER = ['Lead','Opportunity','Proposal','Negotiation','Order'];
-    const stageBars = STAGES_ORDER.map(function(s){
-      const c = stageCounts[s] || 0;
-      const v = stageVals[s] || 0;
-      const pct = maxStageVal > 0 ? Math.min(100, (v / maxStageVal) * 100) : 0;
-      return '<div class="rs-stage-bar">' +
-               '<div class="rs-stage-bar-row">' +
-                 '<span class="rs-stage-bar-label">' + s + '</span>' +
-                 '<span class="rs-stage-bar-meta">' + c + ' · ' + _fmtINRsafe(v) + '</span>' +
-               '</div>' +
-               '<div class="rs-stage-bar-track">' +
-                 '<div class="rs-stage-bar-fill" data-stage="' + s + '" style="width:' + pct.toFixed(1) + '%;"></div>' +
-               '</div>' +
-             '</div>';
-    }).join('');
-
-    const STAGE_ORDER = {'Lead':0,'Opportunity':1,'Proposal':2,'Negotiation':3,'Order':4};
-    const dealsSorted = entries.slice().sort(function(a, b){
-      const oa = String(a.outcome || 'open').toLowerCase();
-      const ob = String(b.outcome || 'open').toLowerCase();
-      if(oa !== ob){ return oa === 'open' ? -1 : (ob === 'open' ? 1 : 0); }
-      return (STAGE_ORDER[a.stage] != null ? STAGE_ORDER[a.stage] : 99) -
-             (STAGE_ORDER[b.stage] != null ? STAGE_ORDER[b.stage] : 99);
-    });
-    const dealRow = function(e){
-      const proj = String(e.project || 'Untitled');
-      const stg = String(e.stage || '');
-      const out = String(e.outcome || 'open').toLowerCase();
-      const v = _readDealValSafe(e);
-      const refId = String(e.refId || '').replace(/'/g, "\\'");
-      const stageAttr = (out === 'won' || out === 'lost' || out === 'on-hold')
-        ? 'data-outcome="' + out + '"' : 'data-stage="' + stg + '"';
-      const stageLbl = (out === 'won') ? 'Won' : (out === 'lost') ? 'Lost' : (out === 'on-hold') ? 'On hold' : stg;
-      return '<div class="rs-deal-row" onclick="(typeof openEditFromHistory===\'function\')&&openEditFromHistory(\'' + refId + '\')">' +
-               '<div class="rs-deal-proj">' + (typeof escapeHtml === 'function' ? escapeHtml(proj) : proj) + '</div>' +
-               (stageLbl ? '<span class="rs-deal-stage" ' + stageAttr + '>' + stageLbl + '</span>' : '') +
-               '<div class="rs-deal-val">' + _fmtINRsafe(v) + '</div>' +
-             '</div>';
-    };
-    const dealRows = dealsSorted.slice(0, 25).map(dealRow).join('');
-    const tile = function(label, value, sub, tone){
-      return '<div class="rs-tile" data-tone="' + tone + '"><div class="rs-tile-label">' + label + '</div>' +
-             '<div class="rs-tile-value">' + value + '</div>' +
-             '<div class="rs-tile-sub">' + (sub || '') + '</div></div>';
-    };
-    body.innerHTML =
-      '<div class="rs-tile-grid">' +
-        tile('Tagged deals', String(entries.length), '', 'total') +
-        tile('Open ₹', _fmtINRsafe(openVal), openCount + ' open', 'open') +
-        tile('Won ₹', _fmtINRsafe(wonVal), wonCount + ' won', 'won') +
-        tile('Win rate', winRate + '%', (wonCount + lostCount) + ' resolved', 'rate') +
-      '</div>' +
-      '<div class="rs-section">' +
-        '<div class="rs-section-title">Open pipeline by stage</div>' +
-        stageBars +
-      '</div>' +
-      '<div class="rs-section">' +
-        '<div class="rs-section-title">Deals · ' + dealsSorted.length + ' total · showing ' + Math.min(25, dealsSorted.length) + '</div>' +
-        '<div class="rs-deals">' + (dealRows || '<div class="rs-empty">No deals to show</div>') + '</div>' +
-      '</div>';
-  };
   window._renderSalesCardForCurrentPick = function(){
     const sel = document.getElementById('rs-sales-pick');
     if(sel) renderReviewSalesCard(sel.value);
@@ -27551,14 +26778,7 @@ if(document.readyState==='loading'){
     _renderMoving();
   };
 
-  window.onCockpitFilterChange = function(){
-    const w = document.getElementById('cockpit-window');
-    const r = document.getElementById('cockpit-region');
-    _saveFilters({window: w ? w.value : 'thisQuarter', region: r ? r.value : ''});
-    window.renderCockpit();
-  };
-
-  // v24.25.7 — onCockpitTestToggle stubbed (Test Mode retired). Pinned to false
+    // v24.25.7 — onCockpitTestToggle stubbed (Test Mode retired). Pinned to false
   // so any code path still reading window._reviewIncludeTest treats data as
   // "no test rows to include — already gone" (the filter is now a pass-through).
   window.onCockpitTestToggle = function(){ /* no-op */ };
@@ -27633,10 +26853,6 @@ if(document.readyState==='loading'){
   }
   function _nextYM(){
     const d = new Date(); d.setMonth(d.getMonth() + 1);
-    return d.getFullYear() * 100 + (d.getMonth() + 1);
-  }
-  function _lastYM(){
-    const d = new Date(); d.setMonth(d.getMonth() - 1);
     return d.getFullYear() * 100 + (d.getMonth() + 1);
   }
   // v24.26.8: Days since stage last changed. Uses stageEnteredAt if backend provides; falls back to ts.
@@ -27715,13 +26931,6 @@ if(document.readyState==='loading'){
     return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
   }
   // Extract Cavitak FY from a date. FY April-March. e.g. April 2026 = FY 26-27
-  function _fyOf(ms){
-    if(!ms) return null;
-    const d = new Date(ms);
-    const y = d.getFullYear();
-    const m = d.getMonth(); // 0-11
-    return m >= 3 ? y : y - 1; // returns starting year (2026 for FY26-27)
-  }
   function _quarterClose(){
     // Cavitak FY April-March, quarters: Apr-Jun, Jul-Sep, Oct-Dec, Jan-Mar
     const now = new Date();
@@ -28694,28 +27903,6 @@ if(document.readyState==='loading'){
       map[k] = (map[k] || 0) + 1;
     });
     return Object.keys(map).sort(function(a, b){ return map[b] - map[a]; }).slice(0, n).map(function(k){ return { name: k, count: map[k] }; });
-  }
-  function _renderHorizBars(domId, top, color, key){
-    _destroyChart(key);
-    const _theme = _themeColors();
-    const dom = document.getElementById(domId);
-    if(!dom) return;
-    dom.innerHTML = '';
-    if(!top.length){ dom.innerHTML = '<div style="padding:32px;text-align:center;color:var(--ink-muted);">No data yet</div>'; return; }
-    const inst = _initECharts(domId);
-    if(!inst) return;
-    inst.setOption({
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      grid: { left: 8, right: 24, top: 12, bottom: 12, containLabel: true },
-      xAxis: { type: 'value', axisLabel: { color: _theme.inkMuted, fontSize: 11 }, splitLine: { lineStyle: { color: _theme.splitLine } } },
-      yAxis: { type: 'category', data: top.map(function(t){ return t.name; }).reverse(), axisLabel: { color: _theme.ink, fontSize: 11 } },
-      series: [{
-        type: 'bar', data: top.map(function(t){ return t.count; }).reverse(),
-        itemStyle: { color: color, borderRadius: [0, 6, 6, 0] },
-        label: { show: true, position: 'right', color: _theme.ink, fontSize: 11, fontWeight: 700 }
-      }]
-    });
-    _v26Charts[key] = inst;
   }
   /* ────────────────────── Top Partners + Top Consultants — v24.26.8 OPTION B ──────────────────────
    * KPI STRIP (4 cards) + ₹-sorted bars. Tells the concentration & pipeline story.
