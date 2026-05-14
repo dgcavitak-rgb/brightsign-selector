@@ -1859,6 +1859,12 @@ html[data-theme="dark"] .ab2-btn.is-primary:hover{
   cursor:pointer;transition:all 140ms;margin-top:10px;
 }
 .btn-primary:hover{background:var(--blue-dark);}
+/* v24.43.2 — Inline-toolbar modifier: opt-out of the default full-width sizing for buttons
+ * that live in a flex action row (Directory's Add Customer, Reports' Send Q-review/Annual etc).
+ * Use case: .btn-primary.inline in a flex wrap container. Keeps brand styling, drops the stretch. */
+.btn-primary.inline{
+  width:auto;margin-top:0;padding:10px 18px;font-size:13px;
+}
 .result-card{
   background:var(--glass-bg-strong);
   backdrop-filter:var(--glass-blur);
@@ -7174,7 +7180,10 @@ html[data-theme="dark"] .clause-remark{background:var(--surface-2);border-color:
 .card,
 .v26-chart-card,
 .v26-table-wrap {
-  background: rgba(255, 255, 255, 0.82);
+  /* v24.43.2: bumped from rgba(255,255,255,0.82) to 0.94 to reduce lavender-gradient bleed
+   * at the top of cards (showed up as faint beige tint at high zoom levels). Still translucent
+   * for the modern look, just cleaner against the page gradient. */
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(229, 231, 235, 0.7);
@@ -10416,8 +10425,8 @@ html[data-theme="dark"] .adv-xc-os-btn[data-os="win"]:not(.active):hover {
         <div class="card-title" style="margin-bottom:8px;">📊 Reports <span style="font-weight:500;font-size:11px;color:var(--ink-subtle);margin-left:8px;text-transform:uppercase;letter-spacing:0.06em;">Super only</span></div>
         <div style="font-size:12px;color:var(--ink-subtle);margin-bottom:14px;">Send a quarterly or annual review email to the team. Auto-cron also fires on the 1st of each quarter (00:30 IST) + April 1 (FY rollover) — these buttons are for ad-hoc sends.</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="btn-primary" onclick="sendQuarterlyNowBS()" id="btnSendQuarterlyBS">📅 Send Q-review now</button>
-          <button class="btn-primary" onclick="sendYearlyNowBS()" id="btnSendYearlyBS" style="background:#7C3AED;">📆 Send Annual review now</button>
+          <button class="btn-primary inline" onclick="sendQuarterlyNowBS()" id="btnSendQuarterlyBS">📅 Send Q-review now</button>
+          <button class="btn-primary inline" onclick="sendYearlyNowBS()" id="btnSendYearlyBS" style="background:#7C3AED;">📆 Send Annual review now</button>
           <span id="bs-reports-status" style="margin-left:auto;align-self:center;font-size:12px;color:var(--ink-subtle);"></span>
         </div>
       </div>
@@ -10471,7 +10480,7 @@ html[data-theme="dark"] .adv-xc-os-btn[data-os="win"]:not(.active):hover {
           <option>Transport</option>
           <option>Other</option>
         </select>
-        <button class="btn-primary" onclick="openAddCustomerModal()" id="dirAddBtn">+ Add Customer</button>
+        <button class="btn-primary inline" onclick="openAddCustomerModal()" id="dirAddBtn">+ Add Customer</button>
         <button class="btn-secondary" onclick="refreshCustomers()">↻ Refresh</button>
       </div>
       <div id="customerCountLabel" style="font-size:12px;color:var(--ink-subtle);font-family:var(--mono);letter-spacing:0.08em;margin-bottom:10px;"></div>
@@ -10788,7 +10797,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.43.0';  // v24.43.0 — THREE BUNDLED CHANGES on top of v24.42.1. (1) APPLY-PER-LINE DISCOUNT: replaced the inline-onchange Disc% input in both BOM tables with an [input + Apply button] pair. Typing the input is now a draft; clicking Apply commits to state and re-renders. Button shows "Apply" before, "✓" after — visual confirmation per line. The old _onDiscLineChange is kept as a no-op for back-compat. (2) BoM / BoQ OUTPUT MODE TOGGLE: new segmented control at top of result page — BoQ (default, shows prices, discount controls, totals) vs BoM (no prices, no discount controls, no totals; shows Sr No / Description / Model No / Qty / Notes). State key state._resultMode persists for the session, resets to 'boq' on new selection. Filename format: BS-<refId>-BoQ.xlsx / .pdf for BoQ mode, BS-<refId>-BoM.xlsx / .pdf for BoM mode. Excel + PDF content respect the mode — BoM exports omit pricing columns + totals; BoQ exports unchanged from v24.42.1. (3) SILENT SAVE TOASTS: removed "Saving…", "Saved ✓", "Saved. Ready for next selection.", "Excel downloaded ✓", "PDF downloaded", "Discounts saved." success popups. Button visual feedback + tab switches + the ✓ Saved badge already convey success. Errors still toast so users know to retry. Won-deal confetti still fires. "Manual sync" toasts (user-initiated) kept since user asked for that action. Backend v25.19.0 unchanged.
+const FRONTEND_VERSION = '24.43.2';  // v24.43.2 — Aesthetics pass on Directory + Team Reports + general card surface. (1) Added .btn-primary.inline modifier that opts out of width:100% / margin-top:10px (the global default for .btn-primary, used by login + modal primary CTAs). Applied .inline to: Directory's "+ Add Customer", Team Reports' "📅 Send Q-review now" + "📆 Send Annual review now". These buttons now size to content and sit naturally inline with their neighbors instead of stretching full-row. (2) Card surface opacity bumped from rgba(255,255,255,0.82) to 0.94 — page gradient still bleeds slightly for the modern glass look but no longer reads as a beige tint at the top of cards (which Dipenkumar reported on the Reports / Stuck & slipped cards). Backend v25.19.0 unchanged.
   // v24.36.3 — Two bugfixes per user feedback. (1) HEADER NAME "—" BUG: On fresh login (sign-in from login page), the user-label-name slot stayed as the HTML default "—" because _applyPostLoginUI() was NEVER actually called in the fresh-login flow despite the v24.20.1 comment claiming it would be called "below". The "below" promise was never fulfilled. Only the rehydrate path (refresh while signed in) called it, which is why the issue only surfaced on cold logins. Now calls _applyPostLoginUI() in the fresh-login flow too — idempotent so safe against duplicate calls in slow login races. (2) NOTIFICATIONS NOT CLEARING DAILY: Notifications had 7-day rolling retention. User wants yesterday's notifications gone at 12:01 AM (daily reset). Changed _loadNotifs_ cutoff from "now - 7 days" to "start of today (00:00:00 local time)". Notifs older than midnight are now filtered out on every load and the cleaned list is persisted so the bell badge count stays accurate. NOTIF_RETENTION_MS constant kept declared (referenced elsewhere) but no longer used as the cutoff in _loadNotifs_. Pairs with backend v25.15.0.
 // v24.36.2 — Label refinement: HDMI input → "HDMI live source input port?" (added "port").
 // v24.36.1 — Card 03 field order refinement: Resolution → Touch → HDMI input → GPIO → HDMI Output port → SSD → Wi-Fi. "How many screens per player?" relabeled to "How many HDMI Output port?".
@@ -13345,8 +13354,19 @@ window._onDiscApplyLine = function(btn){
   const pct = _discValidatePct(input.value);
   input.value = pct;
   _discApplyLinePct(lineKey, pct);
-  // Re-render so totals + button state update
-  if(typeof renderResult === 'function') renderResult();
+  // v24.43.1 — Brief ✓ flash on the clicked button (1.5s), then re-render with normal "Apply" state.
+  // This gives explicit feedback per click without making ✓ a persistent state (which would
+  // confuse users on re-open: a saved 10% would show ✓ even though they haven't clicked Apply).
+  const origLabel = btn.textContent;
+  btn.textContent = '✓';
+  btn.style.background = 'rgba(16,185,129,0.18)';
+  btn.style.color = '#065F46';
+  btn.style.borderColor = 'rgba(16,185,129,0.40)';
+  btn.disabled = true;
+  setTimeout(function(){
+    // Re-render so totals reflect the new discount and button reverts to default
+    if(typeof renderResult === 'function') renderResult();
+  }, 900);
 };
 window._onDiscProjectChange = function(input){
   if(!input) return;
@@ -18842,9 +18862,7 @@ function renderResult(){
     advHtml += _buildResultModeToggle();           // v24.43.0
     advHtml += buildAdvancedBOQSummaryCard(r, f);
     advHtml += buildAdvancedBOMCard(r, f);
-    if(state._resultMode !== 'bom'){               // v24.43.0: hide discount controls in BoM mode
-      advHtml += _buildDiscountControlCard();
-    }
+    // v24.43.1 — Discount Controls card removed. Per-line Apply buttons (in BoM table cells) are the entire UX.
     advHtml += buildProjectCardV21();
     advHtml += buildPricingCallout();
     host.innerHTML = advHtml;
@@ -18904,9 +18922,7 @@ function renderResult(){
 
   // BOM card, Project summary (Tender spec removed in v24.12.12)
   html+=buildBOMCard(m,f,cms);
-  if(state._resultMode !== 'bom'){             // v24.43.0
-    html+=_buildDiscountControlCard();
-  }
+  // v24.43.1 — Discount Controls card removed.
   html+=buildProjectCardV21();
 
   host.innerHTML=html;
@@ -19560,11 +19576,13 @@ function buildAdvancedBOMCard(r, f){
     // v24.43.0 — Apply button per line. Typing the input is a draft; clicking Apply commits to state.
     // Pending input value tracked via data-pending attribute; on Apply we read it, validate, write to state,
     // and re-render. Local state is read by Confirm/Save Discounts as usual.
-    const isApplied = (discPctNow > 0);
+    // v24.43.1 — Button always says "Apply" at render time. ✓ flash is purely transient via _onDiscApplyLine.
+    // (Earlier "isApplied = discPctNow > 0" caused the button to show ✓ on re-open of saved deals
+    //  even though the user hadn't clicked Apply in this session — confusing.)
     const discInput = (row.unitPrice != null)
       ? `<div class="disc-line-pair" style="display:inline-flex;align-items:center;gap:4px;">` +
-          `<input type="number" min="0" max="20" step="0.5" value="${discPctNow}" data-line-key="${lineKey}" class="disc-line-input" style="width:54px;padding:4px 6px;border:1px solid var(--border-soft,rgba(0,0,0,0.12));border-radius:6px;text-align:right;font-family:var(--mono);font-size:12px;background:var(--surface,#fff);color:var(--ink,#0F172A);" />` +
-          `<button type="button" class="disc-line-apply" onclick="window._onDiscApplyLine && window._onDiscApplyLine(this)" style="padding:4px 8px;font-size:11px;font-weight:600;background:${isApplied?'rgba(16,185,129,0.14)':'rgba(79,70,229,0.10)'};color:${isApplied?'#065F46':'var(--indigo,#4F46E5)'};border:1px solid ${isApplied?'rgba(16,185,129,0.30)':'rgba(79,70,229,0.25)'};border-radius:5px;cursor:pointer;">${isApplied?'✓':'Apply'}</button>` +
+          `<input type="text" inputmode="decimal" pattern="[0-9]*\.?[0-9]*" maxlength="5" value="${discPctNow}" data-line-key="${lineKey}" class="disc-line-input" style="width:54px;padding:4px 6px;border:1px solid var(--border-soft,rgba(0,0,0,0.12));border-radius:6px;text-align:right;font-family:var(--mono);font-size:12px;background:var(--surface,#fff);color:var(--ink,#0F172A);" />` +
+          `<button type="button" class="disc-line-apply" onclick="window._onDiscApplyLine && window._onDiscApplyLine(this)" style="padding:4px 8px;font-size:11px;font-weight:600;background:rgba(79,70,229,0.10);color:var(--indigo,#4F46E5);border:1px solid rgba(79,70,229,0.25);border-radius:5px;cursor:pointer;">Apply</button>` +
         `</div>`
       : '<span style="color:var(--ink-subtle);">—</span>';
     const projOverrideHint = (row.discPct > 0 && parseFloat(state._projectDiscount) > 0 && row.discPct === parseFloat(state._projectDiscount)) ? '<div style="font-size:9px;color:var(--ink-subtle);margin-top:2px;">project</div>' : '';
@@ -19654,11 +19672,13 @@ function buildBOMCard(m,f,cms){
     const subCell=row.netLineTotal!=null?formatINR(row.netLineTotal):'<span style="color:var(--ink-subtle);">—</span>';
     const discPctNow = (row.discPct > 0) ? row.discPct : (parseFloat(state._lineDiscounts && state._lineDiscounts[lineKey]) || 0);
     // v24.43.0 — Apply button per line (same as Advanced BOM).
-    const isApplied = (discPctNow > 0);
+    // v24.43.1 — Button always says "Apply" at render time. ✓ flash is purely transient via _onDiscApplyLine.
+    // (Earlier "isApplied = discPctNow > 0" caused the button to show ✓ on re-open of saved deals
+    //  even though the user hadn't clicked Apply in this session — confusing.)
     const discInput = (row.unitPrice != null)
       ? `<div class="disc-line-pair" style="display:inline-flex;align-items:center;gap:4px;">` +
-          `<input type="number" min="0" max="20" step="0.5" value="${discPctNow}" data-line-key="${lineKey}" class="disc-line-input" style="width:54px;padding:4px 6px;border:1px solid var(--border-soft,rgba(0,0,0,0.12));border-radius:6px;text-align:right;font-family:var(--mono);font-size:12px;background:var(--surface,#fff);color:var(--ink,#0F172A);" />` +
-          `<button type="button" class="disc-line-apply" onclick="window._onDiscApplyLine && window._onDiscApplyLine(this)" style="padding:4px 8px;font-size:11px;font-weight:600;background:${isApplied?'rgba(16,185,129,0.14)':'rgba(79,70,229,0.10)'};color:${isApplied?'#065F46':'var(--indigo,#4F46E5)'};border:1px solid ${isApplied?'rgba(16,185,129,0.30)':'rgba(79,70,229,0.25)'};border-radius:5px;cursor:pointer;">${isApplied?'✓':'Apply'}</button>` +
+          `<input type="text" inputmode="decimal" pattern="[0-9]*\.?[0-9]*" maxlength="5" value="${discPctNow}" data-line-key="${lineKey}" class="disc-line-input" style="width:54px;padding:4px 6px;border:1px solid var(--border-soft,rgba(0,0,0,0.12));border-radius:6px;text-align:right;font-family:var(--mono);font-size:12px;background:var(--surface,#fff);color:var(--ink,#0F172A);" />` +
+          `<button type="button" class="disc-line-apply" onclick="window._onDiscApplyLine && window._onDiscApplyLine(this)" style="padding:4px 8px;font-size:11px;font-weight:600;background:rgba(79,70,229,0.10);color:var(--indigo,#4F46E5);border:1px solid rgba(79,70,229,0.25);border-radius:5px;cursor:pointer;">Apply</button>` +
         `</div>`
       : '<span style="color:var(--ink-subtle);">—</span>';
     const projOverrideHint = (row.discPct > 0 && parseFloat(state._projectDiscount) > 0 && row.discPct === parseFloat(state._projectDiscount)) ? '<div style="font-size:9px;color:var(--ink-subtle);margin-top:2px;">project</div>' : '';
