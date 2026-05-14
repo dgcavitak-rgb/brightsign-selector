@@ -10788,7 +10788,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.42.0';  // v24.42.0 — DISCOUNT STRUCTURE (BS only). Per-line + project-level discount 0-20%, no approval gate. New on the Result page: 6-column BOM table (Item / Qty / List Price / Disc% input / Net Unit / Line Total) replacing the 4-col version, plus a "Discount Controls" card with project-level input + "Apply to all lines" button + "Save Discounts" button that POSTs to backend discount_update handler. Lines or project ≥15% trigger an in-card warning + flagged AuditLog entry. State carries _lineDiscounts (map: lineKey → pct) and _projectDiscount (number); both persist to Sheet1 cols AY/AZ via the new BE handler. Edit-mode rehydration restores saved discounts when opening a past deal. Effective pct = max(line-specific, project-level) so project acts as a floor. Both Excel exports (Guided + Custom BOQ) now write NET unit prices into cells, encode List/Disc% in Notes, and show List Subtotal / Total Discount / Net Subtotal breakdown when discounts apply. Tender Spec PDF mirrors the same: net unit prominent, list price as a small subline, discount breakdown in totals box. SSD/microSD T&C line ("Models supplied with an M.2 NVMe SSD do not include the standard 64GB microSD card.") added to both Excel exports + PDF — conditional, only renders when BOM contains an SSD line item. New "High Discount Activity (≥15%)" widget in Team Analytics tab — Super-only, fetches via backend discount_high_list, shows last-30-days flagged deals with project, partner, deal ₹, max %, sales rep, time-ago. Cached 60 sec. Pairs with backend v25.19.0 (cols AY/AZ + discount_update + discount_high_list handlers).
+const FRONTEND_VERSION = '24.43.0';  // v24.43.0 — THREE BUNDLED CHANGES on top of v24.42.1. (1) APPLY-PER-LINE DISCOUNT: replaced the inline-onchange Disc% input in both BOM tables with an [input + Apply button] pair. Typing the input is now a draft; clicking Apply commits to state and re-renders. Button shows "Apply" before, "✓" after — visual confirmation per line. The old _onDiscLineChange is kept as a no-op for back-compat. (2) BoM / BoQ OUTPUT MODE TOGGLE: new segmented control at top of result page — BoQ (default, shows prices, discount controls, totals) vs BoM (no prices, no discount controls, no totals; shows Sr No / Description / Model No / Qty / Notes). State key state._resultMode persists for the session, resets to 'boq' on new selection. Filename format: BS-<refId>-BoQ.xlsx / .pdf for BoQ mode, BS-<refId>-BoM.xlsx / .pdf for BoM mode. Excel + PDF content respect the mode — BoM exports omit pricing columns + totals; BoQ exports unchanged from v24.42.1. (3) SILENT SAVE TOASTS: removed "Saving…", "Saved ✓", "Saved. Ready for next selection.", "Excel downloaded ✓", "PDF downloaded", "Discounts saved." success popups. Button visual feedback + tab switches + the ✓ Saved badge already convey success. Errors still toast so users know to retry. Won-deal confetti still fires. "Manual sync" toasts (user-initiated) kept since user asked for that action. Backend v25.19.0 unchanged.
   // v24.36.3 — Two bugfixes per user feedback. (1) HEADER NAME "—" BUG: On fresh login (sign-in from login page), the user-label-name slot stayed as the HTML default "—" because _applyPostLoginUI() was NEVER actually called in the fresh-login flow despite the v24.20.1 comment claiming it would be called "below". The "below" promise was never fulfilled. Only the rehydrate path (refresh while signed in) called it, which is why the issue only surfaced on cold logins. Now calls _applyPostLoginUI() in the fresh-login flow too — idempotent so safe against duplicate calls in slow login races. (2) NOTIFICATIONS NOT CLEARING DAILY: Notifications had 7-day rolling retention. User wants yesterday's notifications gone at 12:01 AM (daily reset). Changed _loadNotifs_ cutoff from "now - 7 days" to "start of today (00:00:00 local time)". Notifs older than midnight are now filtered out on every load and the cleaned list is persisted so the bell badge count stays accurate. NOTIF_RETENTION_MS constant kept declared (referenced elsewhere) but no longer used as the cutoff in _loadNotifs_. Pairs with backend v25.15.0.
 // v24.36.2 — Label refinement: HDMI input → "HDMI live source input port?" (added "port").
 // v24.36.1 — Card 03 field order refinement: Resolution → Touch → HDMI input → GPIO → HDMI Output port → SSD → Wi-Fi. "How many screens per player?" relabeled to "How many HDMI Output port?".
@@ -13239,6 +13239,39 @@ function _discApplyProjectPct(pct){
   state._discountSaved = false;
 }
 
+/* v24.43.0 — Result-page output mode toggle.
+ * Segmented control: [BoQ] [BoM]. BoQ shows full pricing; BoM hides prices, discount,
+ * and totals — leaves only Sr No / Description / Model No / Qty / Notes. Filename + PDF
+ * content respect the toggle. State key: state._resultMode ('boq' default | 'bom'). */
+function _buildResultModeToggle(){
+  if(!state || !state.result) return '';
+  const mode = state._resultMode || 'boq';
+  const boqActive = (mode === 'boq');
+  const bomActive = (mode === 'bom');
+  return (
+    '<div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">' +
+      '<span style="font-size:11px;color:var(--ink-subtle);letter-spacing:0.04em;text-transform:uppercase;font-weight:600;">Output</span>' +
+      '<div style="display:inline-flex;background:var(--surface-2,rgba(0,0,0,0.04));border-radius:8px;padding:3px;gap:2px;">' +
+        '<button type="button" onclick="window._onResultModeChange && window._onResultModeChange(\'boq\')" ' +
+          'style="padding:6px 14px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;' +
+          (boqActive ? 'background:var(--indigo,#4F46E5);color:#fff;' : 'background:transparent;color:var(--ink-muted,#475569);') + '">' +
+          'BoQ <span style="font-weight:400;opacity:0.85;font-size:10px;">(with price)</span>' +
+        '</button>' +
+        '<button type="button" onclick="window._onResultModeChange && window._onResultModeChange(\'bom\')" ' +
+          'style="padding:6px 14px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;' +
+          (bomActive ? 'background:var(--indigo,#4F46E5);color:#fff;' : 'background:transparent;color:var(--ink-muted,#475569);') + '">' +
+          'BoM <span style="font-weight:400;opacity:0.85;font-size:10px;">(no price)</span>' +
+        '</button>' +
+      '</div>' +
+    '</div>'
+  );
+}
+window._onResultModeChange = function(mode){
+  if(mode !== 'boq' && mode !== 'bom') return;
+  state._resultMode = mode;
+  if(typeof renderResult === 'function') renderResult();
+};
+
 /* v24.42.0 — Result-page discount control card.
  * Sits between BOM and Project Summary. Shows:
  *   - Project-level discount input (sets floor for all lines)
@@ -13257,9 +13290,15 @@ function _buildDiscountControlCard(){
   const highWarn = (proj >= 15 || (state._lineDiscounts && Object.keys(state._lineDiscounts).some(function(k){ return parseFloat(state._lineDiscounts[k]) >= 15; })))
     ? '<div style="margin-top:8px;padding:8px 12px;border-radius:8px;background:rgba(245,158,11,0.12);border-left:3px solid #F59E0B;font-size:12px;color:#92400E;line-height:1.5;"><strong>High discount alert:</strong> One or more lines ≥15%. This will be flagged in the audit log and visible to Super on the Dashboard.</div>'
     : '';
-  const editRefId = (window._editRefId || (state.result && state.result.refId) || '');
-  const saveBtnDisabled = (!editRefId || state._discountSaved) ? 'disabled' : '';
-  const saveBtnTitle = !editRefId ? 'Save the quote first (Confirm button) before applying discounts' : (state._discountSaved ? 'No changes to save' : 'Save discounts to deal record');
+  // v24.42.1 — Save Discounts button enabled only when editing an existing saved deal.
+  // For a fresh deal, the Confirm button writes lineDiscounts/projectDiscount as part of
+  // the normal save flow, so a separate Save Discounts isn't needed there. This button
+  // exists for the "open a past deal → change only the discount → save just that" path.
+  const isEditingExisting = !!window._editRefId;
+  const saveBtnDisabled = (!isEditingExisting || state._discountSaved) ? 'disabled' : '';
+  const saveBtnTitle = !isEditingExisting
+    ? 'For new quotes, click Confirm — it saves discount along with the quote'
+    : (state._discountSaved ? 'No changes to save' : 'Save discount changes to this deal');
   return (
     '<div class="glass-card" style="margin-top:16px;">' +
     '<div class="glass-card-title">' +
@@ -13290,14 +13329,23 @@ function _buildDiscountControlCard(){
   );
 }
 
-/* v24.42.0 — Discount change handlers. Wired via onchange in BOM inputs. */
+/* v24.43.0 — Discount change handlers. Per-line uses explicit Apply button (was inline onchange).
+   _onDiscLineChange retained as no-op to avoid breaking any cached HTML; new flow uses _onDiscApplyLine. */
 window._onDiscLineChange = function(input){
+  // v24.43.0: deprecated — Apply button is now the commit path. Left as no-op for back-compat.
+};
+window._onDiscApplyLine = function(btn){
+  if(!btn) return;
+  // The input is the previous sibling within the same .disc-line-pair wrapper
+  const wrap = btn.parentElement;
+  if(!wrap) return;
+  const input = wrap.querySelector('input.disc-line-input');
   if(!input) return;
   const lineKey = input.getAttribute('data-line-key');
   const pct = _discValidatePct(input.value);
-  input.value = pct;  // reflect clamping
+  input.value = pct;
   _discApplyLinePct(lineKey, pct);
-  // Re-render result to recompute totals
+  // Re-render so totals + button state update
   if(typeof renderResult === 'function') renderResult();
 };
 window._onDiscProjectChange = function(input){
@@ -13321,10 +13369,11 @@ window._onDiscApplyProjectToAll = function(){
   if(typeof renderResult === 'function') renderResult();
 };
 window._onDiscSaveClick = async function(){
-  const refId = window._editRefId || (state.result && state.result.refId) || '';
+  // v24.42.1 — Only fires for edit-existing-deal flow. New deals save discount via Confirm.
+  const refId = window._editRefId || '';
   if(!refId) {
-    if(typeof showToast === 'function') showToast('Save the deal first (Confirm), then apply discounts.', 'warning');
-    else alert('Save the deal first (Confirm), then apply discounts.');
+    if(typeof showToast === 'function') showToast('Click Confirm to save the quote — discounts are saved with it.', 'info');
+    else alert('Click Confirm to save the quote — discounts are saved with it.');
     return;
   }
   if(!state.user || !state.user.loginName || !window._sessionPassword){
@@ -13351,7 +13400,7 @@ window._onDiscSaveClick = async function(){
     const data = await resp.json();
     if(data && data.status === 'ok'){
       state._discountSaved = true;
-      if(typeof showToast === 'function') showToast(data.highFlagged ? 'Discounts saved. High-discount entry logged for Super review.' : 'Discounts saved.', 'success');
+      // v24.43.0 — Silent on success. ✓ Saved badge + button-state change is feedback enough.
       if(typeof renderResult === 'function') renderResult();
     } else {
       if(typeof showToast === 'function') showToast('Save failed: ' + ((data && data.message) || 'unknown error'), 'error');
@@ -14255,7 +14304,11 @@ const state = {
   // Persisted in Sheet1 cols AY/AZ. Editable on reopen. AuditLog flags ≥15%.
   _lineDiscounts: {},      // map: { lineKey: percent } — percent 0-20
   _projectDiscount: 0,     // number 0-20, applies to all lines as override
-  _discountSaved: true     // dirty flag — true means current state matches server
+  _discountSaved: true,    // dirty flag — true means current state matches server
+  // v24.43.0 — Result-page output mode toggle. 'boq' shows prices (default); 'bom' hides all
+  // pricing columns and the discount controls. Affects on-screen, Excel filename + content,
+  // and PDF content. NOT persisted to backend — re-defaults to 'boq' on each load.
+  _resultMode: 'boq'
 };
 
 /* ===== LOGIN ===== */
@@ -18786,9 +18839,12 @@ function renderResult(){
   // Order on Result page: BOQ summary → BOM (multi-model) → Project Summary → Pricing callout (last).
   if(r && r.isAdvanced){
     let advHtml = '';
+    advHtml += _buildResultModeToggle();           // v24.43.0
     advHtml += buildAdvancedBOQSummaryCard(r, f);
     advHtml += buildAdvancedBOMCard(r, f);
-    advHtml += _buildDiscountControlCard();   // v24.42.0
+    if(state._resultMode !== 'bom'){               // v24.43.0: hide discount controls in BoM mode
+      advHtml += _buildDiscountControlCard();
+    }
     advHtml += buildProjectCardV21();
     advHtml += buildPricingCallout();
     host.innerHTML = advHtml;
@@ -18804,6 +18860,7 @@ function renderResult(){
   // v21.3 HERO — dark gradient with product photo, deployment badge, reordered pills
   const deployLabel=f.environment==='indoor'?'INDOOR':f.environment==='outdoor'?'OUTDOOR':f.environment==='mixed'?'MIXED':'';
   let html='';
+  html += _buildResultModeToggle();   // v24.43.0
   // Primary hero — uses main recommended model
   html+=buildHeroCard(m,f,cms,deployLabel,om?'INDOOR':deployLabel,'primary');
   // Flagship override note
@@ -18847,7 +18904,9 @@ function renderResult(){
 
   // BOM card, Project summary (Tender spec removed in v24.12.12)
   html+=buildBOMCard(m,f,cms);
-  html+=_buildDiscountControlCard();   // v24.42.0
+  if(state._resultMode !== 'bom'){             // v24.43.0
+    html+=_buildDiscountControlCard();
+  }
   html+=buildProjectCardV21();
 
   host.innerHTML=html;
@@ -19328,6 +19387,44 @@ if(typeof escapeHtml === 'undefined'){
  * the row format of buildBOMCard so state._bomTotals stays compatible with
  * the Excel export.
  * ========================================================================== */
+/* v24.43.0 — BoM-mode renderer (no prices).
+ * Renders rows as: Sr No | Description | Model No | Qty | Notes.
+ * Used by both buildAdvancedBOMCard and buildBOMCard when state._resultMode === 'bom'.
+ * Description = item display name minus the model fragment.
+ * Model No    = SKU extracted from the row (same logic as _discLineKey base extraction). */
+function _renderBomMode(rows){
+  function extractModelSku(name){
+    if(!name) return '';
+    const m = String(name).match(/\b(LS\d{3,4}|HD\d{3,4}|XD\d{3,4}|XT\d{3,4}|XC\d{3,4}|WD\d{3,4}|BS-[A-Z]+-?\d*|SSD-\d{2,4})\b/);
+    return m ? m[1] : '';
+  }
+  let html = '<div class="glass-card"><div class="glass-card-title">' +
+    '<span class="glass-card-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M9 3v18"/></svg></span>' +
+    'Bill of Materials' +
+    '<span style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-subtle);font-weight:500;letter-spacing:0.04em;text-transform:uppercase;">' + rows.length + ' line item' + (rows.length===1?'':'s') + '</span>' +
+    '</div><div class="glass-card-divider"></div>' +
+    '<table class="bom-table-v21"><thead><tr>' +
+      '<th class="num" style="width:50px;">Sr</th>' +
+      '<th>Description</th>' +
+      '<th style="width:140px;">Model No</th>' +
+      '<th class="num" style="width:60px;">Qty</th>' +
+      '<th>Notes</th>' +
+    '</tr></thead><tbody>';
+  rows.forEach(function(row, idx){
+    const sku = extractModelSku(row.name);
+    const desc = row.name || '';
+    html += '<tr>' +
+      '<td class="num">' + (idx+1) + '</td>' +
+      '<td><div class="bom-item-name-v21">' + desc + '</div></td>' +
+      '<td style="font-family:var(--mono);font-size:12px;color:var(--ink-muted,#475569);">' + (sku || '—') + '</td>' +
+      '<td class="num">' + (row.qty || 0) + '</td>' +
+      '<td><div class="bom-item-note-v21" style="font-size:11px;color:var(--ink-subtle);">' + (row.note || '') + '</div></td>' +
+    '</tr>';
+  });
+  html += '</tbody></table></div>';
+  return html;
+}
+
 function buildAdvancedBOMCard(r, f){
   const rows = [];
   const selections = Array.isArray(r.advancedSelections) ? r.advancedSelections : [];
@@ -19425,6 +19522,12 @@ function buildAdvancedBOMCard(r, f){
     }
   }
 
+  // v24.43.0 — BoM mode: render compact no-price table and cache rows-only totals for export.
+  if(state._resultMode === 'bom'){
+    state._bomTotals = { subtotal: 0, gst: 0, grandTotal: 0, rows: rows, discountedSubtotal: 0, totalDiscount: 0 };
+    return _renderBomMode(rows);
+  }
+
   // 5. Compute subtotals + grand total (same logic as buildBOMCard)
   // v24.42.0: Apply per-line discounts. Effective pct = max(line, project).
   let subtotal = 0;
@@ -19454,8 +19557,15 @@ function buildAdvancedBOMCard(r, f){
     const netUnitCell = (row.netUnitPrice != null && row.unitPrice != null) ? formatINR(row.netUnitPrice) : '<span style="color:var(--ink-subtle);">—</span>';
     const subCell  = row.netLineTotal != null ? formatINR(row.netLineTotal) : '<span style="color:var(--ink-subtle);">—</span>';
     const discPctNow = (row.discPct > 0) ? row.discPct : (parseFloat(state._lineDiscounts && state._lineDiscounts[lineKey]) || 0);
+    // v24.43.0 — Apply button per line. Typing the input is a draft; clicking Apply commits to state.
+    // Pending input value tracked via data-pending attribute; on Apply we read it, validate, write to state,
+    // and re-render. Local state is read by Confirm/Save Discounts as usual.
+    const isApplied = (discPctNow > 0);
     const discInput = (row.unitPrice != null)
-      ? `<input type="number" min="0" max="20" step="0.5" value="${discPctNow}" data-line-key="${lineKey}" class="disc-line-input" style="width:56px;padding:4px 6px;border:1px solid var(--border-soft,rgba(0,0,0,0.12));border-radius:6px;text-align:right;font-family:var(--mono);font-size:12px;background:var(--surface,#fff);color:var(--ink,#0F172A);" onchange="window._onDiscLineChange && window._onDiscLineChange(this)" />`
+      ? `<div class="disc-line-pair" style="display:inline-flex;align-items:center;gap:4px;">` +
+          `<input type="number" min="0" max="20" step="0.5" value="${discPctNow}" data-line-key="${lineKey}" class="disc-line-input" style="width:54px;padding:4px 6px;border:1px solid var(--border-soft,rgba(0,0,0,0.12));border-radius:6px;text-align:right;font-family:var(--mono);font-size:12px;background:var(--surface,#fff);color:var(--ink,#0F172A);" />` +
+          `<button type="button" class="disc-line-apply" onclick="window._onDiscApplyLine && window._onDiscApplyLine(this)" style="padding:4px 8px;font-size:11px;font-weight:600;background:${isApplied?'rgba(16,185,129,0.14)':'rgba(79,70,229,0.10)'};color:${isApplied?'#065F46':'var(--indigo,#4F46E5)'};border:1px solid ${isApplied?'rgba(16,185,129,0.30)':'rgba(79,70,229,0.25)'};border-radius:5px;cursor:pointer;">${isApplied?'✓':'Apply'}</button>` +
+        `</div>`
       : '<span style="color:var(--ink-subtle);">—</span>';
     const projOverrideHint = (row.discPct > 0 && parseFloat(state._projectDiscount) > 0 && row.discPct === parseFloat(state._projectDiscount)) ? '<div style="font-size:9px;color:var(--ink-subtle);margin-top:2px;">project</div>' : '';
     html += `<tr><td><div class="bom-item-name-v21">${row.name}</div>${row.note?`<div class="bom-item-note-v21">${row.note}</div>`:''}</td><td class="num">${row.qty}</td><td class="num" style="white-space:nowrap;">${unitCell}</td><td class="num">${discInput}${projOverrideHint}</td><td class="num" style="white-space:nowrap;">${netUnitCell}</td><td class="num" style="white-space:nowrap;">${subCell}</td></tr>`;
@@ -19510,6 +19620,11 @@ function buildBOMCard(m,f,cms){
   if(cms.rows && cms.rows.length){
     cms.rows.forEach(row=>rows.push(row));
   }
+  // v24.43.0 — BoM mode short-circuit (no prices).
+  if(state._resultMode === 'bom'){
+    state._bomTotals = { subtotal: 0, gst: 0, grandTotal: 0, rows: rows, discountedSubtotal: 0, totalDiscount: 0 };
+    return _renderBomMode(rows);
+  }
   // v24.4.19: Compute subtotals and grand total
   // v24.42.0: Apply per-line discounts. Effective pct = max(line, project). Net = round(unit * (1-pct/100)).
   let subtotal=0;
@@ -19538,9 +19653,13 @@ function buildBOMCard(m,f,cms){
     const netUnitCell=(row.netUnitPrice!=null && row.unitPrice!=null)?formatINR(row.netUnitPrice):'<span style="color:var(--ink-subtle);">—</span>';
     const subCell=row.netLineTotal!=null?formatINR(row.netLineTotal):'<span style="color:var(--ink-subtle);">—</span>';
     const discPctNow = (row.discPct > 0) ? row.discPct : (parseFloat(state._lineDiscounts && state._lineDiscounts[lineKey]) || 0);
-    // Disc% input: editable inline. data-line-key attaches to state map.
+    // v24.43.0 — Apply button per line (same as Advanced BOM).
+    const isApplied = (discPctNow > 0);
     const discInput = (row.unitPrice != null)
-      ? `<input type="number" min="0" max="20" step="0.5" value="${discPctNow}" data-line-key="${lineKey}" class="disc-line-input" style="width:56px;padding:4px 6px;border:1px solid var(--border-soft,rgba(0,0,0,0.12));border-radius:6px;text-align:right;font-family:var(--mono);font-size:12px;background:var(--surface,#fff);color:var(--ink,#0F172A);" onchange="window._onDiscLineChange && window._onDiscLineChange(this)" />`
+      ? `<div class="disc-line-pair" style="display:inline-flex;align-items:center;gap:4px;">` +
+          `<input type="number" min="0" max="20" step="0.5" value="${discPctNow}" data-line-key="${lineKey}" class="disc-line-input" style="width:54px;padding:4px 6px;border:1px solid var(--border-soft,rgba(0,0,0,0.12));border-radius:6px;text-align:right;font-family:var(--mono);font-size:12px;background:var(--surface,#fff);color:var(--ink,#0F172A);" />` +
+          `<button type="button" class="disc-line-apply" onclick="window._onDiscApplyLine && window._onDiscApplyLine(this)" style="padding:4px 8px;font-size:11px;font-weight:600;background:${isApplied?'rgba(16,185,129,0.14)':'rgba(79,70,229,0.10)'};color:${isApplied?'#065F46':'var(--indigo,#4F46E5)'};border:1px solid ${isApplied?'rgba(16,185,129,0.30)':'rgba(79,70,229,0.25)'};border-radius:5px;cursor:pointer;">${isApplied?'✓':'Apply'}</button>` +
+        `</div>`
       : '<span style="color:var(--ink-subtle);">—</span>';
     const projOverrideHint = (row.discPct > 0 && parseFloat(state._projectDiscount) > 0 && row.discPct === parseFloat(state._projectDiscount)) ? '<div style="font-size:9px;color:var(--ink-subtle);margin-top:2px;">project</div>' : '';
     html+=`<tr><td><div class="bom-item-name-v21">${row.name}</div>${row.note?`<div class="bom-item-note-v21">${row.note}</div>`:''}</td><td class="num">${row.qty}</td><td class="num" style="white-space:nowrap;">${unitCell}</td><td class="num">${discInput}${projOverrideHint}</td><td class="num" style="white-space:nowrap;">${netUnitCell}</td><td class="num" style="white-space:nowrap;">${subCell}</td></tr>`;
@@ -20236,7 +20355,14 @@ function buildEntryPayload(status){
     salesPerson:    f.salesPerson    || '',
     presalesPerson: f.presalesPerson || '',
     // v24.26.19: General internal notes (free-text per opportunity, NOT in Excel/PDF exports)
-    notes: f.notes || ''
+    notes: f.notes || '',
+    // v24.42.1 — Discount structure persistence. Without this, the normal Confirm/save
+    // flow writes empty AY/AZ which BLANKS any previously-saved discount when the user
+    // re-saves an edited deal. Including them here means: Confirm saves current discount
+    // state automatically — no need for a separate "Save Discounts" call when the user
+    // confirms the deal. lineDiscounts is stringified JSON; projectDiscount is a number.
+    lineDiscounts:   JSON.stringify(state._lineDiscounts || {}),
+    projectDiscount: (function(){ const n = parseFloat(state._projectDiscount); return (isFinite(n) && n >= 0 && n <= 20) ? n : 0; })()
   };
 }
 
@@ -20765,8 +20891,7 @@ async function logEntry(status,onDone){
   }
   // Central webhook
   if(WEBHOOK_URL){
-    const msg=status==='saved'?'Saving…':'Saving…';
-    showSync(msg);
+    // v24.43.0 — Removed "Saving…" toast (telemetry-feel). Button visual feedback handles status.
     // v22.4: Push to pending queue BEFORE attempting. If fetch resolves, sync verifier will confirm + remove. If not, retry.
     queuePendingEntry(entry);
     // v24.12.1 fix: backend's handleLogPost requires requesterLoginName + requesterPasswordHash (added by v24.7 hardening).
@@ -20800,7 +20925,9 @@ async function logEntry(status,onDone){
           if(onDone)onDone();
           return;
         }
-        showSync(status==='saved'?'Saved ✓':'Saved ✓','success');
+        // v24.43.0 — Removed "Saved ✓" success toast. Confirm button already shows visual feedback;
+        // surfacing the save event as a toast made the app feel like it was logging telemetry.
+        // Errors still toast (line below) so users know to retry. Won-deal confetti still fires.
         // v24.22.0 (#10): Won-deal confetti. Fires only when outcome is 'won' on this save —
         // doesn't fire for 'open' updates or stage-only edits. Skip when edit mode opened
         // already-won deal (no need to celebrate again on every minor edit).
@@ -20822,11 +20949,11 @@ async function logEntry(status,onDone){
       })
       .catch(err=>{
         console.warn('Webhook failed:',err);
-        showSync('Saved · will upload when connection returns','error');
+        showSync('Save failed — will retry when online','error');
         if(onDone)onDone();
       });
   } else {
-    showSync(status==='saved'?'Saved ✓':'Saved ✓','success');
+    // v24.43.0 — Silent no-webhook path.
     if(onDone)onDone();
   }
 }
@@ -21111,6 +21238,9 @@ function confirmSelection(){
     btn.style.cursor='not-allowed';
   }
   logEntry('saved',function(){
+    // v24.42.1 — Confirm now includes lineDiscounts/projectDiscount in payload, so any
+    // unsaved discount edits are persisted as part of the normal Confirm flow.
+    state._discountSaved = true;
     // Update Confirm button to show success feedback briefly
     if(btn){
       const _lbl = btn.querySelector('.ab2-label');
@@ -21148,7 +21278,7 @@ function confirmSelection(){
       state.result=null;
       document.getElementById('tab-result').style.display='none';
       showTab('form');
-      showSync('Saved. Ready for next selection.','success');
+      // v24.43.0 — Removed "Saved. Ready for next selection." toast. Tab switch + reset is feedback enough.
       // v24.16.0 — Notification on deal save (different sub for edit vs new)
       if(typeof pushNotification === 'function'){
         if(_wasEditing){
@@ -21348,41 +21478,57 @@ function _downloadAdvancedQuoteExcel(returnWorkbook){
   // BOM header
   // v24.42.0: Stay at 6 cols (merges/styling assume this). Encode discount in Notes column,
   // and surface discount summary rows below the regular totals.
-  qAoa.push(['BILL OF QUANTITIES','','','','','']);
-  qAoa.push(['#','Item','Qty','Unit Price (₹)','Line Total (₹)','Notes']);
-  let lineNo = 0;
-  rows.forEach(row => {
-    lineNo++;
-    const _pct = (typeof row.discPct === 'number') ? row.discPct : 0;
-    // Show NET unit price + NET line total in the existing cells. List + Disc% goes into Notes.
-    const _displayUnit = (row.netUnitPrice != null) ? row.netUnitPrice : (row.unitPrice != null ? row.unitPrice : '—');
-    const _displayLine = (row.netLineTotal != null) ? row.netLineTotal : (row.lineTotal != null ? row.lineTotal : '—');
-    let _noteWithDisc = row.note || '';
-    if(_pct > 0 && row.unitPrice != null){
-      const _listNote = 'List ₹' + Math.round(row.unitPrice).toLocaleString('en-IN') + ' · ' + _pct + '% off';
-      _noteWithDisc = _noteWithDisc ? (_listNote + ' · ' + _noteWithDisc) : _listNote;
-    }
-    qAoa.push([
-      lineNo,
-      row.name || '',
-      row.qty || 0,
-      _displayUnit,
-      _displayLine,
-      _noteWithDisc
-    ]);
-  });
-  qAoa.push([]);
-  // v24.42.0: Summary rows. If discount applied, show breakdown; otherwise standard totals.
-  const _hasDisc = (totals.totalDiscount && totals.totalDiscount > 0);
-  if(_hasDisc){
-    qAoa.push(['','','','List Subtotal', totals.subtotal, '']);
-    qAoa.push(['','','','Total Discount', -1 * totals.totalDiscount, '']);
-    qAoa.push(['','','','Net Subtotal', (totals.discountedSubtotal != null ? totals.discountedSubtotal : totals.subtotal), '']);
+  // v24.43.0: BoM mode (no prices) — same 6-col grid, but cols repurposed:
+  //   # | Description | Model No | Qty | Notes | (blank)
+  const _xlBomMode = (state._resultMode === 'bom');
+  if(_xlBomMode){
+    qAoa.push(['BILL OF MATERIALS','','','','','']);
+    qAoa.push(['#','Description','Model No','Qty','Notes','']);
+    let lineNo = 0;
+    rows.forEach(row => {
+      lineNo++;
+      const skuM = String(row.name||'').match(/\b(LS\d{3,4}|HD\d{3,4}|XD\d{3,4}|XT\d{3,4}|XC\d{3,4}|WD\d{3,4}|BS-[A-Z]+-?\d*|SSD-\d{2,4})\b/);
+      const sku = skuM ? skuM[1] : '';
+      qAoa.push([lineNo, row.name || '', sku, row.qty || 0, row.note || '', '']);
+    });
+    // No totals rows in BoM mode — skip to T&C.
   } else {
-    qAoa.push(['','','','Gross Total', totals.subtotal, '']);
-  }
-  qAoa.push(['','','','GST @ 18%',  totals.gst,      '']);
-  qAoa.push(['','','','Total with GST', totals.grandTotal, '']);
+    qAoa.push(['BILL OF QUANTITIES','','','','','']);
+    qAoa.push(['#','Item','Qty','Unit Price (₹)','Line Total (₹)','Notes']);
+    let lineNo = 0;
+    rows.forEach(row => {
+      lineNo++;
+      const _pct = (typeof row.discPct === 'number') ? row.discPct : 0;
+      // Show NET unit price + NET line total in the existing cells. List + Disc% goes into Notes.
+      const _displayUnit = (row.netUnitPrice != null) ? row.netUnitPrice : (row.unitPrice != null ? row.unitPrice : '—');
+      const _displayLine = (row.netLineTotal != null) ? row.netLineTotal : (row.lineTotal != null ? row.lineTotal : '—');
+      let _noteWithDisc = row.note || '';
+      if(_pct > 0 && row.unitPrice != null){
+        const _listNote = 'List ₹' + Math.round(row.unitPrice).toLocaleString('en-IN') + ' · ' + _pct + '% off';
+        _noteWithDisc = _noteWithDisc ? (_listNote + ' · ' + _noteWithDisc) : _listNote;
+      }
+      qAoa.push([
+        lineNo,
+        row.name || '',
+        row.qty || 0,
+        _displayUnit,
+        _displayLine,
+        _noteWithDisc
+      ]);
+    });
+    qAoa.push([]);
+    // v24.42.0: Summary rows. If discount applied, show breakdown; otherwise standard totals.
+    const _hasDisc = (totals.totalDiscount && totals.totalDiscount > 0);
+    if(_hasDisc){
+      qAoa.push(['','','','List Subtotal', totals.subtotal, '']);
+      qAoa.push(['','','','Total Discount', -1 * totals.totalDiscount, '']);
+      qAoa.push(['','','','Net Subtotal', (totals.discountedSubtotal != null ? totals.discountedSubtotal : totals.subtotal), '']);
+    } else {
+      qAoa.push(['','','','Gross Total', totals.subtotal, '']);
+    }
+    qAoa.push(['','','','GST @ 18%',  totals.gst,      '']);
+    qAoa.push(['','','','Total with GST', totals.grandTotal, '']);
+  } // end !_xlBomMode
   // v24.34.6: Terms & Conditions
   qAoa.push([]);
   qAoa.push(['TERMS & CONDITIONS','','','','','']);
@@ -21603,7 +21749,9 @@ function _downloadAdvancedQuoteExcel(returnWorkbook){
 
   if(returnWorkbook === true) return wb;
 
-  const filename = 'BrightSign_CustomBOQ_'+(f.project||'Quote').replace(/[^a-zA-Z0-9]+/g,'_')+'_'+refId+'.xlsx';
+  // v24.43.0 — Filename format: BS-<case>-BoQ.xlsx (with prices) or BS-<case>-BoM.xlsx (no prices).
+  const _modeSuffix = (state._resultMode === 'bom') ? 'BoM' : 'BoQ';
+  const filename = refId + '-' + _modeSuffix + '.xlsx';
   XLSX.writeFile(wb, filename);
 }
 
@@ -21785,8 +21933,14 @@ function downloadQuoteExcel(returnWorkbook){
   qAoa.push(['RECOMMENDED SOLUTION']);
   qAoa.push([m.id,'',m.tag+' · BrightSign Series 5','','','','']);
   qAoa.push([]);
-  qAoa.push(['BILL OF QUANTITIES']);
-  qAoa.push(['#','SAP Code','SKU','Description','Qty','Unit Price (₹)','Gross Total (₹)','Notes']);  // v24.6.0
+  // v24.43.0 — BoM mode swaps the BoM header + skips totals later.
+  const _xlBomModeGuided = (state._resultMode === 'bom');
+  qAoa.push([_xlBomModeGuided ? 'BILL OF MATERIALS' : 'BILL OF QUANTITIES']);
+  if(_xlBomModeGuided){
+    qAoa.push(['#','SAP Code','Model No','Description','Qty','','','Notes']);
+  } else {
+    qAoa.push(['#','SAP Code','SKU','Description','Qty','Unit Price (₹)','Gross Total (₹)','Notes']);  // v24.6.0
+  }
 
   // v24.4.19: Prefer real BOM totals cached by buildBOMCard — these already include pricing,
   // XC variant handling, WD105, and CMS rows. Fall back to legacy logic if not present.
@@ -21853,6 +22007,11 @@ function downloadQuoteExcel(returnWorkbook){
   const bomStartRow=qAoa.length+1;
   bomRows.forEach((row,i)=>{
     const rn=bomStartRow+i;
+    if(_xlBomModeGuided){
+      // v24.43.0 — BoM mode: cols # | SAP Code | Model No | Description | Qty | (blank) | (blank) | Notes
+      qAoa.push([i+1, getSapCode(row.sku)||'—', row.sku, row.desc, row.qty, '', '', row.notes||'']);
+      return;
+    }
     // v24.42.0: Write NET unit price to cell F (so formula E*F gives net line total).
     // List price + disc% goes into Notes for transparency. Falls back to plain unit price if no discount.
     const pct = (typeof row.discPct === 'number') ? row.discPct : 0;
@@ -21869,19 +22028,23 @@ function downloadQuoteExcel(returnWorkbook){
 
   const subRow=bomStartRow+bomRows.length+1;
   qAoa.push([]);
-  // v24.42.0: If any discount applied, surface list + total-discount breakdown rows above the Net.
-  const _totalsObj = state._bomTotals || {};
-  const _hasDisc = (_totalsObj.totalDiscount && _totalsObj.totalDiscount > 0);
-  if(_hasDisc){
-    qAoa.push(['','','','','','List Subtotal', Number(_totalsObj.subtotal || 0), '']);
-    qAoa.push(['','','','','','Total Discount', -1 * Number(_totalsObj.totalDiscount || 0), '']);
-    qAoa.push(['','','','','','Net Subtotal', {f:`SUM(G${bomStartRow}:G${subRow-2})`}, '']);
-    qAoa.push(['','','','','','GST @ 18%',{f:`G${subRow+2}*0.18`},'']);
-    qAoa.push(['','','','','','TOTAL WITH GST (₹)',{f:`G${subRow+2}+G${subRow+3}`},'']);
+  if(_xlBomModeGuided){
+    // v24.43.0 — Skip all totals rows in BoM mode (no prices).
   } else {
-    qAoa.push(['','','','','','Gross Total',{f:`SUM(G${bomStartRow}:G${subRow-2})`},'']);
-    qAoa.push(['','','','','','GST @ 18%',{f:`G${subRow}*0.18`},'']);
-    qAoa.push(['','','','','','TOTAL WITH GST (₹)',{f:`G${subRow}+G${subRow+1}`},'']);
+    // v24.42.0: If any discount applied, surface list + total-discount breakdown rows above the Net.
+    const _totalsObj = state._bomTotals || {};
+    const _hasDisc = (_totalsObj.totalDiscount && _totalsObj.totalDiscount > 0);
+    if(_hasDisc){
+      qAoa.push(['','','','','','List Subtotal', Number(_totalsObj.subtotal || 0), '']);
+      qAoa.push(['','','','','','Total Discount', -1 * Number(_totalsObj.totalDiscount || 0), '']);
+      qAoa.push(['','','','','','Net Subtotal', {f:`SUM(G${bomStartRow}:G${subRow-2})`}, '']);
+      qAoa.push(['','','','','','GST @ 18%',{f:`G${subRow+2}*0.18`},'']);
+      qAoa.push(['','','','','','TOTAL WITH GST (₹)',{f:`G${subRow+2}+G${subRow+3}`},'']);
+    } else {
+      qAoa.push(['','','','','','Gross Total',{f:`SUM(G${bomStartRow}:G${subRow-2})`},'']);
+      qAoa.push(['','','','','','GST @ 18%',{f:`G${subRow}*0.18`},'']);
+      qAoa.push(['','','','','','TOTAL WITH GST (₹)',{f:`G${subRow}+G${subRow+1}`},'']);
+    }
   }
   qAoa.push([]);
   qAoa.push(['TERMS & CONDITIONS']);
@@ -22081,11 +22244,13 @@ function downloadQuoteExcel(returnWorkbook){
   XLSX.utils.book_append_sheet(wb,qWs,'Quotation');
 
   // === SHEET 3: TENDER COMPLIANCE ===
-  const fname=`BrightSign-Quote-${m.id}-${(f.project||'Project').replace(/[^a-zA-Z0-9]/g,'_').slice(0,30)}-${new Date().toISOString().slice(0,10)}.xlsx`;
+  // v24.43.0 — Filename = BS-<case>-BoQ.xlsx or BS-<case>-BoM.xlsx based on output mode.
+  const _modeSuffix = (state._resultMode === 'bom') ? 'BoM' : 'BoQ';
+  const fname = refId + '-' + _modeSuffix + '.xlsx';
   // v22.5: If returnWorkbook is set, don't write file — return { wb, fname } so email function can reuse
   if(returnWorkbook===true){return {wb:wb,fname:fname};}
   XLSX.writeFile(wb,fname);
-  showSync('Excel downloaded ✓ (Summary · Quotation)','success');
+  // v24.43.0 — Removed "Excel downloaded ✓" toast (Ask 3 — silence telemetry-feel toasts).
 }
 
 /* v22.5.1: Email the Excel quote via the USER's OWN mail app.
@@ -22227,8 +22392,9 @@ async function sendEmailViaBackend(){
         throw new Error('PDF generation failed: ' + why);
       }
       const refId = (state.result && state.result.refId) || 'BS-' + Date.now().toString().slice(-8);
-      const safeProj = (state.form.project || 'project').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
-      pdfFilename = 'Quote_' + refId + '_' + safeProj + '.pdf';
+      // v24.43.0 — Match download filename pattern.
+      const _modeSuffix = (state._resultMode === 'bom') ? 'BoM' : 'BoQ';
+      pdfFilename = refId + '-' + _modeSuffix + '.pdf';
       // jsPDF.output('datauristring') returns 'data:application/pdf;base64,XXX' — strip the prefix
       const dataUri = doc.output('datauristring');
       pdfBase64 = dataUri.split(',')[1] || dataUri;
@@ -23542,9 +23708,24 @@ async function exportQuotePDF(returnDoc){
   const playerLine = r.isAdvanced ? null : (r.model || null);
 
   // Build BOM rows HTML
+  // v24.43.0 — BoM mode renders a no-price row layout (Sr / Description / Model No / Qty / Notes).
   // v24.42.0: Show NET unit price prominently; if discount > 0, append "(List ₹X · Y% off)" beneath in muted ink.
+  const _pdfBomMode = (state._resultMode === 'bom');
   const bomRowsHtml = state._bomTotals.rows.map((row, idx) => {
     const rowBg = idx % 2 === 1 ? '#F8FAFC' : '#FFFFFF';
+    if(_pdfBomMode){
+      // Extract model SKU from row name (same logic as _renderBomMode)
+      const _skuM = String(row.name||'').match(/\b(LS\d{3,4}|HD\d{3,4}|XD\d{3,4}|XT\d{3,4}|XC\d{3,4}|WD\d{3,4}|BS-[A-Z]+-?\d*|SSD-\d{2,4})\b/);
+      const _sku = _skuM ? _skuM[1] : '—';
+      return `
+        <tr style="background:${rowBg};">
+          <td style="padding:9px 10px;border:1px solid #E2E8F0;color:#0F172A;font-size:11px;text-align:right;width:8%;vertical-align:top;">${idx+1}</td>
+          <td style="padding:9px 10px;border:1px solid #E2E8F0;font-weight:600;color:#0F172A;font-size:11px;width:38%;vertical-align:top;">${escapeHtml(String(row.name||''))}</td>
+          <td style="padding:9px 10px;border:1px solid #E2E8F0;color:#1E293B;font-size:11px;font-family:monospace;width:18%;vertical-align:top;">${escapeHtml(_sku)}</td>
+          <td style="padding:9px 10px;border:1px solid #E2E8F0;color:#1E293B;font-size:11px;text-align:right;width:8%;vertical-align:top;">${row.qty||0}</td>
+          <td style="padding:9px 10px;border:1px solid #E2E8F0;color:#64748B;font-size:10px;width:28%;vertical-align:top;">${escapeHtml(String(row.note||''))}</td>
+        </tr>`;
+    }
     const _pct = (typeof row.discPct === 'number') ? row.discPct : 0;
     const _netUnit = (row.netUnitPrice != null) ? row.netUnitPrice : row.unitPrice;
     const _netLine = (row.netLineTotal != null) ? row.netLineTotal : row.lineTotal;
@@ -23642,21 +23823,32 @@ async function exportQuotePDF(returnDoc){
         ${playerBlock}
 
         <!-- Bill of Quantities -->
-        <div style="margin-top:22px;font-size:12px;font-weight:700;color:#0F172A;letter-spacing:0.5px;margin-bottom:8px;">BILL OF QUANTITIES</div>
+        <!-- v24.43.0: heading + columns + totals respect _resultMode (BoQ shows prices, BoM hides them) -->
+        <div style="margin-top:22px;font-size:12px;font-weight:700;color:#0F172A;letter-spacing:0.5px;margin-bottom:8px;">${_pdfBomMode ? 'BILL OF MATERIALS' : 'BILL OF QUANTITIES'}</div>
         <div style="height:1px;background:#E2E8F0;margin-bottom:10px;"></div>
         <table style="width:100%;border-collapse:collapse;font-family:'Helvetica Neue',Arial,sans-serif;">
           <thead>
             <tr style="background:#4F46E5;color:#FFFFFF;">
+              ${_pdfBomMode ? `
+              <th style="padding:10px;text-align:right;font-size:10px;font-weight:700;letter-spacing:0.4px;border:1px solid #4F46E5;">SR</th>
+              <th style="padding:10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.4px;border:1px solid #4F46E5;">DESCRIPTION</th>
+              <th style="padding:10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.4px;border:1px solid #4F46E5;">MODEL NO</th>
+              <th style="padding:10px;text-align:right;font-size:10px;font-weight:700;letter-spacing:0.4px;border:1px solid #4F46E5;">QTY</th>
+              <th style="padding:10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.4px;border:1px solid #4F46E5;">NOTES</th>
+              ` : `
               <th style="padding:10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.4px;border:1px solid #4F46E5;">ITEM</th>
               <th style="padding:10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.4px;border:1px solid #4F46E5;">NOTES</th>
               <th style="padding:10px;text-align:right;font-size:10px;font-weight:700;letter-spacing:0.4px;border:1px solid #4F46E5;">QTY</th>
               <th style="padding:10px;text-align:right;font-size:10px;font-weight:700;letter-spacing:0.4px;border:1px solid #4F46E5;">UNIT PRICE</th>
               <th style="padding:10px;text-align:right;font-size:10px;font-weight:700;letter-spacing:0.4px;border:1px solid #4F46E5;">GROSS TOTAL</th>
+              `}
             </tr>
           </thead>
           <tbody>${bomRowsHtml}</tbody>
         </table>
 
+        <!-- v24.43.0: Totals block omitted entirely in BoM mode (no prices anywhere). -->
+        ${_pdfBomMode ? '' : `
         <!-- v24.20.0 (#18): Polished totals box — clear GST distinction, branded total line -->
         <!-- v24.42.0: When a discount is applied, show List Subtotal + Total Discount above Net. -->
         <div style="margin-top:18px;display:flex;justify-content:flex-end;">
@@ -23685,6 +23877,7 @@ async function exportQuotePDF(returnDoc){
             </tr>
           </table>
         </div>
+        `}
       </div>
 
       <!-- v24.34.6: Terms & Conditions section — flows onto page 2 via existing multi-page slicing -->
@@ -23819,10 +24012,10 @@ async function exportQuotePDF(returnDoc){
 
   if(returnDoc === true) return doc;
 
-  // Sanitize filename — strip non-safe chars from project name
-  const safeProj = (f.project || 'project').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
-  doc.save('Quote_' + refId + '_' + safeProj + '.pdf');
-  if(typeof showSync === 'function') showSync('PDF downloaded','success');
+  // v24.43.0 — Filename respects BoQ/BoM mode. Filename: BS-<case>-BoQ.pdf or BS-<case>-BoM.pdf.
+  const _modeSuffix = (state._resultMode === 'bom') ? 'BoM' : 'BoQ';
+  doc.save(refId + '-' + _modeSuffix + '.pdf');
+  // v24.43.0 — Removed "PDF downloaded" toast (silence telemetry-feel toasts).
 }
 
 /* v24.18.1 — WhatsApp share via modal with real anchor link.
