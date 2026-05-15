@@ -10592,7 +10592,7 @@ html[data-theme="dark"] .adv-xc-os-btn[data-os="win"]:not(.active):hover {
     <div class="dir-modal-body">
       <div id="emailModalError" class="dir-modal-err"></div>
       <div style="background:var(--surface-2,#F5F3FF);border:1px solid var(--border-soft,#E5E7EB);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--ink-muted,#475569);">
-        📤 Opens in your <strong>Outlook</strong> (<span id="emailModalFromHint">—</span>) · 📎 PDF + Excel auto-download · <strong>dipen.g@cavitak.com</strong> always CC'd · attach files in Outlook before sending
+        📤 Opens in your <strong>Outlook</strong> · 📎 PDF + Excel auto-download · <strong>dipen.g@cavitak.com</strong> always CC'd · attach files in Outlook before sending
       </div>
       <div class="form-group">
         <label>To <span class="req">*</span></label>
@@ -22358,11 +22358,19 @@ function openEmailModal(){
   document.getElementById('emailModalError').textContent = '';
   document.getElementById('emailModalError').style.display = 'none';
   // v24.18.0: Show user's own email as the sender hint
-  const fromHintEl = document.getElementById('emailModalFromHint');
-  if(fromHintEl) fromHintEl.textContent = (state.user && state.user.email) || '(your email — set it in Profile)';
+  // v24.44.1 — Dropped fromHint setter: subtitle no longer shows "(your email)" hint.
+  // The mailto: flow opens whatever Outlook profile the rep has as default — the app
+  // can't control which identity sends. Showing the rep's Cavitak email in the subtitle
+  // was misleading (implied the app chooses the From). Removed for clarity.
+  // v24.44.1 — Reset cancellation flag on open. Used by sendEmailViaBackend to
+  // bail out if the rep closes the modal mid-export (Cancel / X / Escape).
+  window._emailModalCancelled = false;
   document.getElementById('emailModal').style.display = 'flex';
 }
 function closeEmailModal(){
+  // v24.44.1 — Set cancellation flag so an in-flight export-then-mailto chain in
+  // sendEmailViaBackend bails out gracefully instead of opening Outlook after Cancel.
+  window._emailModalCancelled = true;
   document.getElementById('emailModal').style.display = 'none';
 }
 async function sendEmailViaBackend(){
@@ -22408,25 +22416,31 @@ async function sendEmailViaBackend(){
 
   try {
     // Auto-download PDF + Excel so the rep can drag-attach them in Outlook.
-    // We trigger PDF first (faster), then Excel. Each is wrapped in try/catch so one
-    // failing doesn't block the other or the mailto: open. Excel can take 3-8s on slow
-    // devices, so we give it a head start before opening the mail client (which steals
-    // focus on some OSes).
+    // Serial (not parallel) — both heavy ops share the main JS thread, so parallelizing
+    // via Promise.allSettled wouldn't save time. Each is wrapped in try/catch so one
+    // failing doesn't block the other or the mailto: open. PDF takes 3-5s (html2canvas),
+    // Excel takes 1-3s (XLSX.writeFile). Total wait ~5-10s before Outlook opens —
+    // show per-step progress on the button so the rep knows it's working.
     if(includeAttachments){
-      // PDF — exportQuotePDF with no arg triggers download (returns null on precondition fail).
+      // Step 1/2 — PDF (exportQuotePDF with no arg triggers download; returns null on precondition fail).
+      sendBtn.textContent = 'Generating PDF (1 of 2)…';
       try {
         await exportQuotePDF();
       } catch (pdfErr) {
         console.warn('[v24.44.1] PDF download failed (continuing):', pdfErr);
       }
-      // Excel — downloadQuoteExcel auto-routes to Advanced when state.result.isAdvanced.
-      // Returns nothing on success; alerts and returns on precondition fail (no result / no XLSX).
-      // We catch any throw and continue; the mailto: open is what matters.
+      // v24.44.1 — Bail out if rep cancelled the modal during PDF generation.
+      if (window._emailModalCancelled) return;
+      // Step 2/2 — Excel (downloadQuoteExcel auto-routes to _downloadAdvancedQuoteExcel when state.result.isAdvanced).
+      // Synchronous — returns nothing on success; alerts and returns on precondition fail (no result / no XLSX).
+      sendBtn.textContent = 'Generating Excel (2 of 2)…';
       try {
         downloadQuoteExcel();
       } catch (xlErr) {
         console.warn('[v24.44.1] Excel download failed (continuing):', xlErr);
       }
+      // v24.44.1 — Bail out if rep cancelled during Excel generation.
+      if (window._emailModalCancelled) return;
     }
 
     // Build the mailto: URL. RFC 6068 spec — all params URI-encoded.
@@ -22443,6 +22457,8 @@ async function sendEmailViaBackend(){
 
     // Small delay so the rep sees the download notifications before mail client steals focus.
     setTimeout(function() {
+      // v24.44.1 — Final cancellation check: rep may have hit Cancel in the 600ms window.
+      if (window._emailModalCancelled) return;
       try {
         window.location.href = mailtoUrl;
       } catch (mailErr) {
@@ -22454,6 +22470,9 @@ async function sendEmailViaBackend(){
 
     // Close modal after a longer beat so the rep sees the success toast against the modal first
     setTimeout(function() {
+      // v24.44.1 — Don't show "Outlook opened" toast if rep cancelled (closeEmailModal
+      // already ran via Cancel/X click; calling it again is fine but the toast would lie).
+      if (window._emailModalCancelled) return;
       closeEmailModal();
       showSync('Outlook opened · attach the downloaded files and click Send', 'success');
     }, 1200);
