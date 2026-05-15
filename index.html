@@ -10582,7 +10582,7 @@ html[data-theme="dark"] .adv-xc-os-btn[data-os="win"]:not(.active):hover {
   </div>
 </div>
 
-<!-- v24.18.0: Email-to-partner modal — sends PDF via backend MailApp -->
+<!-- v24.18.0: Email-to-partner modal — v24.44.1 mailto: flow (opens user's Outlook with auto-downloaded PDF + Excel to attach) -->
 <div id="emailModal" class="dir-modal-overlay" style="display:none;">
   <div class="dir-modal" style="max-width:640px;">
     <div class="dir-modal-head">
@@ -10592,7 +10592,7 @@ html[data-theme="dark"] .adv-xc-os-btn[data-os="win"]:not(.active):hover {
     <div class="dir-modal-body">
       <div id="emailModalError" class="dir-modal-err"></div>
       <div style="background:var(--surface-2,#F5F3FF);border:1px solid var(--border-soft,#E5E7EB);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--ink-muted,#475569);">
-        📤 Sent <strong>from your email</strong> (<span id="emailModalFromHint">—</span>) · 📎 PDF auto-attached · <strong>dipen.g@cavitak.com</strong> always CC'd
+        📤 Opens in your <strong>Outlook</strong> (<span id="emailModalFromHint">—</span>) · 📎 PDF + Excel auto-download · <strong>dipen.g@cavitak.com</strong> always CC'd · attach files in Outlook before sending
       </div>
       <div class="form-group">
         <label>To <span class="req">*</span></label>
@@ -10613,12 +10613,12 @@ html[data-theme="dark"] .adv-xc-os-btn[data-os="win"]:not(.active):hover {
       </div>
       <div style="display:flex;gap:10px;align-items:center;margin-top:6px;">
         <input type="checkbox" id="emailModalIncludePdf" checked style="margin:0;">
-        <label for="emailModalIncludePdf" style="margin:0;font-size:13px;color:var(--ink-muted);cursor:pointer;">Attach PDF quote</label>
+        <label for="emailModalIncludePdf" style="margin:0;font-size:13px;color:var(--ink-muted);cursor:pointer;">Auto-download PDF + Excel before opening Outlook</label>
       </div>
     </div>
     <div class="dir-modal-foot">
       <button class="btn-secondary" onclick="closeEmailModal()">Cancel</button>
-      <button class="btn-primary" onclick="sendEmailViaBackend()" id="emailModalSendBtn">Send Email</button>
+      <button class="btn-primary" onclick="sendEmailViaBackend()" id="emailModalSendBtn">Open in Outlook</button>
     </div>
   </div>
 </div>
@@ -10797,7 +10797,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.44.0';  // v24.44.0 — PDF polish (Excel logo embedding deferred to next session per agreed split). Three small targeted improvements to the Tender Spec / Quote PDF export: (1) NEW: Cavitak-branded footer band added above the version footer line. Mini Cavitak logo (26px) on left + right-aligned attribution "Cavitak Marketing Pvt Ltd" (bold, indigo) over "Authorized BrightSign Distributor · India" (muted slate). Subtle indigo→violet tinted background (rgba 0.04) with 2px solid #4F46E5 top border. Mirrors the header strip treatment for visual cohesion — reads as the official Cavitak signoff before the technical disclaimer. (2) Header title color tightened from #312E81 (dark indigo) → #4F46E5 (indigo, matching the accent strip end + new footer band border). Subtle cohesion win, no layout change. (3) Discovery: the Cavitak logo (635×277 JPEG, ~13KB) was already encoded as CAVITAK_LOGO_DATA_URL constant from v24.20.0 — no re-encoding needed. Reused the same constant for the new footer mini-logo. Backend v25.19.0 unchanged. Excel still uses xlsx-js-style; ExcelJS swap for image embedding is the next focused session.
+const FRONTEND_VERSION = '24.44.1';  // v24.44.1 — EMAIL FLOW: replaced backend send (broken on M365 — emails went from script-owner@gmail.com "on behalf of" rep, flagged as spoofing by Outlook receivers and dropped/spammed) with true mailto: flow. Click "Open in Outlook" in modal now: (1) downloads BOTH the PDF and Excel quote files for the rep to attach, (2) opens their default mail client (Outlook on M365) with To/CC/Subject/Body pre-filled from the modal fields, (3) rep attaches the just-downloaded files in Outlook and clicks Send — email truly originates from rep's mailbox, appears in their Sent folder, passes SPF/DKIM/DMARC. dipen.g@cavitak.com forced CC pre-filled (rep can technically remove but instructed not to). Modal subtitle updated to reflect new flow. Backend email_send handler intentionally left in place (dormant, no UI call site) — easy revert if ever needed. No backend deploy required. Pairs with v25.19.0. Previously: v24.44.0 — PDF polish (Excel logo embedding deferred to next session per agreed split). Three small targeted improvements to the Tender Spec / Quote PDF export: (1) NEW: Cavitak-branded footer band added above the version footer line. Mini Cavitak logo (26px) on left + right-aligned attribution "Cavitak Marketing Pvt Ltd" (bold, indigo) over "Authorized BrightSign Distributor · India" (muted slate). Subtle indigo→violet tinted background (rgba 0.04) with 2px solid #4F46E5 top border. Mirrors the header strip treatment for visual cohesion — reads as the official Cavitak signoff before the technical disclaimer. (2) Header title color tightened from #312E81 (dark indigo) → #4F46E5 (indigo, matching the accent strip end + new footer band border). Subtle cohesion win, no layout change. (3) Discovery: the Cavitak logo (635×277 JPEG, ~13KB) was already encoded as CAVITAK_LOGO_DATA_URL constant from v24.20.0 — no re-encoding needed. Reused the same constant for the new footer mini-logo. Backend v25.19.0 unchanged. Excel still uses xlsx-js-style; ExcelJS swap for image embedding is the next focused session.
   // v24.36.3 — Two bugfixes per user feedback. (1) HEADER NAME "—" BUG: On fresh login (sign-in from login page), the user-label-name slot stayed as the HTML default "—" because _applyPostLoginUI() was NEVER actually called in the fresh-login flow despite the v24.20.1 comment claiming it would be called "below". The "below" promise was never fulfilled. Only the rehydrate path (refresh while signed in) called it, which is why the issue only surfaced on cold logins. Now calls _applyPostLoginUI() in the fresh-login flow too — idempotent so safe against duplicate calls in slow login races. (2) NOTIFICATIONS NOT CLEARING DAILY: Notifications had 7-day rolling retention. User wants yesterday's notifications gone at 12:01 AM (daily reset). Changed _loadNotifs_ cutoff from "now - 7 days" to "start of today (00:00:00 local time)". Notifs older than midnight are now filtered out on every load and the cleaned list is persisted so the bell badge count stays accurate. NOTIF_RETENTION_MS constant kept declared (referenced elsewhere) but no longer used as the cutoff in _loadNotifs_. Pairs with backend v25.15.0.
 // v24.36.2 — Label refinement: HDMI input → "HDMI live source input port?" (added "port").
 // v24.36.1 — Card 03 field order refinement: Resolution → Touch → HDMI input → GPIO → HDMI Output port → SSD → Wi-Fi. "How many screens per player?" relabeled to "How many HDMI Output port?".
@@ -22366,15 +22366,20 @@ function closeEmailModal(){
   document.getElementById('emailModal').style.display = 'none';
 }
 async function sendEmailViaBackend(){
+  // v24.44.1 — Function name kept for back-compat; behaviour replaced with mailto: flow.
+  // (1) Validate modal fields. (2) Auto-download BOTH PDF and Excel quote files.
+  // (3) Open user's default mail client (Outlook on M365) with To/CC/Subject/Body pre-filled.
+  // (4) Rep attaches the just-downloaded files in Outlook and clicks Send.
+  // Email truly originates from rep's mailbox — appears in Sent folder, passes SPF/DKIM/DMARC.
   const errEl = document.getElementById('emailModalError');
   const sendBtn = document.getElementById('emailModalSendBtn');
   errEl.textContent = ''; errEl.style.display = 'none';
 
   const to = document.getElementById('emailModalTo').value.trim();
-  const cc = document.getElementById('emailModalCc').value.trim();
+  const ccExtra = document.getElementById('emailModalCc').value.trim();
   const subject = document.getElementById('emailModalSubject').value.trim();
   const body = document.getElementById('emailModalBody').value.trim();
-  const includePdf = document.getElementById('emailModalIncludePdf').checked;
+  const includeAttachments = document.getElementById('emailModalIncludePdf').checked;
 
   // Validation
   if(!to){ errEl.textContent = 'Recipient (To) is required.'; errEl.style.display = 'block'; return; }
@@ -22383,82 +22388,86 @@ async function sendEmailViaBackend(){
     errEl.style.display = 'block'; return;
   }
   if(!subject){ errEl.textContent = 'Subject is required.'; errEl.style.display = 'block'; return; }
-  if(!WEBHOOK_URL){ errEl.textContent = 'Cannot send — webhook URL is not configured.'; errEl.style.display = 'block'; return; }
+
+  // Build CC list — dipen.g@cavitak.com is always forced; user-entered extras are appended.
+  // De-dup case-insensitively so we don't end up with "dipen.g@cavitak.com, dipen.g@cavitak.com".
+  const FORCED_CC = 'dipen.g@cavitak.com';
+  const ccList = [FORCED_CC];
+  if(ccExtra){
+    ccExtra.split(',').map(function(s){ return s.trim(); }).filter(Boolean).forEach(function(addr){
+      if(addr.toLowerCase() !== FORCED_CC.toLowerCase() &&
+         !ccList.some(function(x){ return x.toLowerCase() === addr.toLowerCase(); })){
+        ccList.push(addr);
+      }
+    });
+  }
+  const ccCombined = ccList.join(',');
 
   sendBtn.disabled = true;
-  sendBtn.textContent = 'Sending…';
+  sendBtn.textContent = 'Preparing files…';
 
   try {
-    let pdfBase64 = null, pdfFilename = null;
-    if(includePdf){
-      // v24.26.14: Improved error visibility for PDF generation failures.
-      // Previously: generic "PDF generation failed" hid actual reason (no recommendation,
-      // BOM not built yet, jsPDF lib missing, etc). Now: specific message + console log.
-      let doc = null;
+    // Auto-download PDF + Excel so the rep can drag-attach them in Outlook.
+    // We trigger PDF first (faster), then Excel. Each is wrapped in try/catch so one
+    // failing doesn't block the other or the mailto: open. Excel can take 3-8s on slow
+    // devices, so we give it a head start before opening the mail client (which steals
+    // focus on some OSes).
+    if(includeAttachments){
+      // PDF — exportQuotePDF with no arg triggers download (returns null on precondition fail).
       try {
-        doc = await exportQuotePDF(true);
+        await exportQuotePDF();
       } catch (pdfErr) {
-        console.error('[sendEmailViaBackend] exportQuotePDF threw:', pdfErr);
-        throw new Error('PDF generation crashed: ' + (pdfErr.message || pdfErr));
+        console.warn('[v24.44.1] PDF download failed (continuing):', pdfErr);
       }
-      if(!doc){
-        // exportQuotePDF returns null when preconditions fail. Build a specific message.
-        let why = 'unknown reason';
-        if(!state.result || state.result.noRec) why = 'no recommendation available';
-        else if(!state._bomTotals || !state._bomTotals.rows || !state._bomTotals.rows.length) why = 'BOM not built — click Recommend / Generate BOQ first';
-        else if(typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF) why = 'PDF library not loaded — refresh page';
-        else if(typeof window.html2canvas !== 'function') why = 'PDF rendering library not loaded — refresh page';
-        console.error('[sendEmailViaBackend] PDF gen returned null:', why, {result:state.result, bomReady: !!(state._bomTotals && state._bomTotals.rows)});
-        throw new Error('PDF generation failed: ' + why);
-      }
-      const refId = (state.result && state.result.refId) || 'BS-' + Date.now().toString().slice(-8);
-      // v24.43.0 — Match download filename pattern.
-      const _modeSuffix = (state._resultMode === 'bom') ? 'BoM' : 'BoQ';
-      pdfFilename = refId + '-' + _modeSuffix + '.pdf';
-      // jsPDF.output('datauristring') returns 'data:application/pdf;base64,XXX' — strip the prefix
-      const dataUri = doc.output('datauristring');
-      pdfBase64 = dataUri.split(',')[1] || dataUri;
-      // v24.26.14: Sanity check — empty base64 means doc.output failed silently
-      if(!pdfBase64 || pdfBase64.length < 100){
-        console.error('[sendEmailViaBackend] PDF datauristring suspiciously short:', pdfBase64 ? pdfBase64.length : 0);
-        throw new Error('PDF generated but appears empty — try Download PDF first to verify');
+      // Excel — downloadQuoteExcel auto-routes to Advanced when state.result.isAdvanced.
+      // Returns nothing on success; alerts and returns on precondition fail (no result / no XLSX).
+      // We catch any throw and continue; the mailto: open is what matters.
+      try {
+        downloadQuoteExcel();
+      } catch (xlErr) {
+        console.warn('[v24.44.1] Excel download failed (continuing):', xlErr);
       }
     }
 
-    const pwHash = await getCurrentAuthHash();
-    const payload = {
-      action: 'email_send',
-      requesterLoginName: state.user.loginName,
-      requesterPasswordHash: pwHash,
-      to: to,
-      cc: cc,
-      subject: subject,
-      body: body,
-      attachmentBase64: pdfBase64,
-      attachmentFilename: pdfFilename,
-      attachmentMime: 'application/pdf'
-    };
+    // Build the mailto: URL. RFC 6068 spec — all params URI-encoded.
+    // Note: some mail clients have URL length limits (Outlook on Windows ~2KB historically,
+    // newer builds much higher). Body is the only field that could realistically blow this.
+    // If we ever hit the limit, the modal body field already has the full content — rep
+    // can copy-paste manually as fallback.
+    const mailtoUrl = 'mailto:' + encodeURIComponent(to)
+      + '?cc=' + encodeURIComponent(ccCombined)
+      + '&subject=' + encodeURIComponent(subject)
+      + '&body=' + encodeURIComponent(body);
 
-    const resp = await fetch(WEBHOOK_URL, {
-      method: 'POST',
-      mode: 'cors',
-      headers: {'Content-Type': 'text/plain'},
-      body: JSON.stringify(payload)
-    });
-    const data = await resp.json();
-    if(data.status !== 'ok'){
-      throw new Error(data.message || 'Backend error');
-    }
+    sendBtn.textContent = 'Opening Outlook…';
 
-    closeEmailModal();
-    showSync('Email sent to ' + to + ' ✓','success');
+    // Small delay so the rep sees the download notifications before mail client steals focus.
+    setTimeout(function() {
+      try {
+        window.location.href = mailtoUrl;
+      } catch (mailErr) {
+        console.error('[v24.44.1] mailto: launch failed:', mailErr);
+        errEl.textContent = 'Could not open mail client. Copy the body from the modal manually.';
+        errEl.style.display = 'block';
+      }
+    }, 600);
+
+    // Close modal after a longer beat so the rep sees the success toast against the modal first
+    setTimeout(function() {
+      closeEmailModal();
+      showSync('Outlook opened · attach the downloaded files and click Send', 'success');
+    }, 1200);
+
   } catch(err){
-    errEl.textContent = 'Send failed: ' + (err.message || err);
+    errEl.textContent = 'Failed: ' + (err.message || err);
     errEl.style.display = 'block';
-    console.error('[sendEmailViaBackend]', err);
+    console.error('[sendEmailViaBackend/mailto]', err);
   } finally {
-    sendBtn.disabled = false;
-    sendBtn.textContent = 'Send Email';
+    // Re-enable the button after a short delay so the rep can't double-fire while files download
+    setTimeout(function() {
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Open in Outlook';
+    }, 2000);
   }
 }
 
