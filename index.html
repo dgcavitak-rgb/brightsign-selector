@@ -10797,7 +10797,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.43.2';  // v24.43.2 — Aesthetics pass on Directory + Team Reports + general card surface. (1) Added .btn-primary.inline modifier that opts out of width:100% / margin-top:10px (the global default for .btn-primary, used by login + modal primary CTAs). Applied .inline to: Directory's "+ Add Customer", Team Reports' "📅 Send Q-review now" + "📆 Send Annual review now". These buttons now size to content and sit naturally inline with their neighbors instead of stretching full-row. (2) Card surface opacity bumped from rgba(255,255,255,0.82) to 0.94 — page gradient still bleeds slightly for the modern glass look but no longer reads as a beige tint at the top of cards (which Dipenkumar reported on the Reports / Stuck & slipped cards). Backend v25.19.0 unchanged.
+const FRONTEND_VERSION = '24.44.0';  // v24.44.0 — PDF polish (Excel logo embedding deferred to next session per agreed split). Three small targeted improvements to the Tender Spec / Quote PDF export: (1) NEW: Cavitak-branded footer band added above the version footer line. Mini Cavitak logo (26px) on left + right-aligned attribution "Cavitak Marketing Pvt Ltd" (bold, indigo) over "Authorized BrightSign Distributor · India" (muted slate). Subtle indigo→violet tinted background (rgba 0.04) with 2px solid #4F46E5 top border. Mirrors the header strip treatment for visual cohesion — reads as the official Cavitak signoff before the technical disclaimer. (2) Header title color tightened from #312E81 (dark indigo) → #4F46E5 (indigo, matching the accent strip end + new footer band border). Subtle cohesion win, no layout change. (3) Discovery: the Cavitak logo (635×277 JPEG, ~13KB) was already encoded as CAVITAK_LOGO_DATA_URL constant from v24.20.0 — no re-encoding needed. Reused the same constant for the new footer mini-logo. Backend v25.19.0 unchanged. Excel still uses xlsx-js-style; ExcelJS swap for image embedding is the next focused session.
   // v24.36.3 — Two bugfixes per user feedback. (1) HEADER NAME "—" BUG: On fresh login (sign-in from login page), the user-label-name slot stayed as the HTML default "—" because _applyPostLoginUI() was NEVER actually called in the fresh-login flow despite the v24.20.1 comment claiming it would be called "below". The "below" promise was never fulfilled. Only the rehydrate path (refresh while signed in) called it, which is why the issue only surfaced on cold logins. Now calls _applyPostLoginUI() in the fresh-login flow too — idempotent so safe against duplicate calls in slow login races. (2) NOTIFICATIONS NOT CLEARING DAILY: Notifications had 7-day rolling retention. User wants yesterday's notifications gone at 12:01 AM (daily reset). Changed _loadNotifs_ cutoff from "now - 7 days" to "start of today (00:00:00 local time)". Notifs older than midnight are now filtered out on every load and the cleaned list is persisted so the bell badge count stays accurate. NOTIF_RETENTION_MS constant kept declared (referenced elsewhere) but no longer used as the cutoff in _loadNotifs_. Pairs with backend v25.15.0.
 // v24.36.2 — Label refinement: HDMI input → "HDMI live source input port?" (added "port").
 // v24.36.1 — Card 03 field order refinement: Resolution → Touch → HDMI input → GPIO → HDMI Output port → SSD → Wi-Fi. "How many screens per player?" relabeled to "How many HDMI Output port?".
@@ -23806,11 +23806,12 @@ async function exportQuotePDF(returnDoc){
   const printHtml = `
     <div id="pdf-print-host" style="position:fixed;left:-99999px;top:0;width:794px;background:#FFFFFF;font-family:'Helvetica Neue',Arial,sans-serif;color:#0F172A;padding:0;">
       <!-- v24.20.0 (#18): Header strip — Cavitak logo on left, quote meta on right -->
+      <!-- v24.44.0: title color tightened to #4F46E5 to match accent strip end + match Cavitak-band header bar. -->
       <div style="background:#FFFFFF;border-bottom:3px solid #DC2626;padding:18px 32px;display:flex;justify-content:space-between;align-items:center;">
         <div style="display:flex;align-items:center;gap:14px;">
           <img src="${CAVITAK_LOGO_DATA_URL}" alt="Cavitak" style="height:48px;width:auto;display:block;" />
           <div style="border-left:2px solid #E2E8F0;padding-left:14px;">
-            <div style="font-size:13px;font-weight:700;color:#312E81;letter-spacing:-0.2px;">BrightSign Product Selector</div>
+            <div style="font-size:13px;font-weight:700;color:#4F46E5;letter-spacing:-0.2px;">BrightSign Product Selector</div>
             <div style="font-size:9.5px;color:#475569;margin-top:2px;font-style:italic;">Signage that performs, effortlessly</div>
           </div>
         </div>
@@ -23977,6 +23978,18 @@ async function exportQuotePDF(returnDoc){
         })()}
         <div style="font-size:9px;color:#94A3B8;margin-top:14px;line-height:1.5;padding-top:8px;border-top:1px dashed #E2E8F0;">
           This document is for internal reference and customer discussion. Pricing subject to current price list, forex, and landed-cost variations.
+        </div>
+        <!-- v24.44.0 — Cavitak-branded attribution band (mirrors the header treatment for visual cohesion).
+             Mini Cavitak logo on the left, "Cavitak Marketing Pvt Ltd · Authorized BrightSign Distributor · India" on the right.
+             Sits between the disclaimer and the version line so it reads as the official signoff. -->
+        <div style="margin-top:18px;border-top:2px solid #4F46E5;background:linear-gradient(90deg,rgba(79,70,229,0.04) 0%,rgba(124,58,237,0.04) 100%);padding:10px 0;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <img src="${CAVITAK_LOGO_DATA_URL}" alt="Cavitak" style="height:26px;width:auto;display:block;" />
+          </div>
+          <div style="text-align:right;line-height:1.45;">
+            <div style="font-size:11px;font-weight:700;color:#312E81;letter-spacing:0.2px;">Cavitak Marketing Pvt Ltd</div>
+            <div style="font-size:9.5px;color:#475569;margin-top:1px;">Authorized BrightSign Distributor · India</div>
+          </div>
         </div>
         <div style="font-size:9px;color:#94A3B8;margin-top:4px;text-align:right;">
           Generated by BrightSign Product Selector · v${typeof FRONTEND_VERSION !== 'undefined' ? FRONTEND_VERSION : ''}
