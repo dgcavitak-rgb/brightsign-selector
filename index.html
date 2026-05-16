@@ -9304,10 +9304,10 @@ html[data-theme="dark"] .adv-xc-os-btn[data-os="win"]:not(.active):hover {
          Stale fallback text is overwritten by updateVersionFooter() with the real
          FRONTEND_VERSION constant once the page script runs. -->
     <div id="login-version-wrap" style="text-align:center;margin-top:14px;font-size:11px;color:var(--ink-subtle,#94A3B8);font-family:var(--mono,monospace);letter-spacing:0.05em;">
-      <span id="login-version">v24.45.5</span>
+      <span id="login-version">v24.45.9</span>
     </div>
   </div>
-  <div class="login-footer">Dipenkumar Gajjar · National Product Manager · +91 8160 756 906 · dipen.g@cavitak.com</div>
+  <div class="login-footer">Dipenkumar Gajjar · National Product Lead · +91 8160 756 906 · dipen.g@cavitak.com</div>
   <!-- v24.14.10 P3-6 fix: version footer element. updateVersionFooter() populates this on load. -->
   <div id="app-version-footer" class="app-version-footer"></div>
 </div>
@@ -10808,7 +10808,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.45.5';  // v24.45.5 — EXCEL SPACING AUDIT: cell-by-cell pass over the Excel renderer. (1) Date / Valid Until rows given explicit 16px height + vertical-middle alignment (were falling back to default 16 with no v-align, slight imbalance vs the 24px QUOTATION label). (2) Stray "—" placeholder removed from the empty left cell on the 3rd PROJECT DETAILS row (the row that has Location on the right but no matching QUOTED TO field on the left) — left cells now genuinely blank. (3) Unit Price / Line Total table-header cells given the same 1-char right indent as the numeric data cells below them, so the header text lines up directly above its figures. Verified by cell-by-cell openpyxl inspection across all 6 modes — borders, fills, alignment, row heights all consistent. No backend change. Pairs with v25.19.0. Previously: v24.45.4 — EXCEL POLISH: (1) Salesperson + Presales contact blocks now BOTH always render — Presales is optional, so when none is assigned the block shows "Not assigned" instead of being silently skipped (Excel layout now consistent deal-to-deal). (2) Cell/row/column spacing audit: T&C row heights now scale with text length (long entries — Warranty, Cancellation, Forex — no longer clipped at fixed 18px); QUOTED TO / PROJECT DETAILS value cells wrap long venue/location names with height scaling; verdict band wraps long Mixed-config verdict lines; Subtotal/GST/GRAND TOTAL value cells get a 1-char right indent so figures don't sit flush on the cell border. No backend change. Pairs with v25.19.0. Previously: v24.45.3 — UX FIX: "For Better Pricing" contact card moved to the BOTTOM of the Guided Result page (now renders after the BOM card + Project Summary). The Custom BOQ / Advanced path already placed it last since v24.12.6 — the Guided path was missed and still rendered it ABOVE the BOM table. Both paths are now consistent: pricing callout is the final card. No behavior change beyond render order. Pairs with v25.19.0. Previously: v24.45.2 — BUGFIX: Guided + Mixed mode Indoor/Outdoor steppers were clamped at 1 (treated a stale hidden total as the cap); now Indoor and Outdoor are independent counters and the total is derived from their sum. Root cause: adjustMixedQty / onMixedQtyInput treated the split as constrained by a SEPARATE total (the hidden single-mode f-qty input, which defaults to 1). Every +/- click was clamped to that stale total of 1, and the "other side" was auto-balanced to total-minus-thisValue — so Indoor+Outdoor could never exceed 1. Fix: in Mixed mode the TOTAL is now DERIVED from Indoor + Outdoor (the correct model). Indoor and Outdoor are independent counters (each 0..10000); adjusting one never touches the other. _updateMixedStatus + recalcMixedTotal keep the hidden f-qty input AND state.form.qty/qtyIndoor/qtyOutdoor in sync with the running sum so all downstream consumers (BOM, CMS 25-player threshold, backend payload) get the right total. _setMixed now calls recalcMixedTotal directly because the +/- buttons set .value programmatically and do NOT fire the 'input' event recalcMixedTotal was bound to (latent bug, previously masked by the broken clamp). Entering Mixed mode initializes state from the Indoor/Outdoor fields. _onTotalQtyChangedForMixed is now a no-op. Logic verified by simulation. No backend change. Pairs with v25.19.0. Previously: v24.45.1 — Added frontend version label on the login screen (parity with tvONE). Was: xlsx-js-style with old red CAVITAK MARKETING banner header. Now: Cavitak logo top-left + "BrightSign Product Selector" title in deep indigo (#312E81) + tricolor stripe (indigo/violet/red) + gold verdict band + indigo BoM table headers + red GRAND TOTAL banner + 12-row T&C block + salesperson + presales footer with Cavitak branded distributor band. New shared renderer _renderBsQuoteExcel(quote) takes a normalized payload, handles both BoQ (with prices) and BoM (no prices) modes, embeds Cavitak logo from existing CAVITAK_LOGO_DATA_URL constant (no re-encoding). Existing call sites unchanged: same downloadQuoteExcel() and _downloadAdvancedQuoteExcel() signatures preserved. Old xlsx-js-style functions deleted (~930 lines of legacy code removed). ExcelJS CDN added in <head>. ~150 KB lib download (gzipped) on first page load. Smoke-tested with realistic BoQ + BoM + empty-BOM payloads — all 3 render cleanly. Visual verification via LibreOffice headless render confirms the design matches the tvONE reference Excel pixel-for-pixel in structure. Pairs with backend v25.19.0. xlsx-js-style stays loaded for legacy History-tab CSV-style exportXLSX() (different use case, not customer-facing). Previously: v24.44.2 — UX wording sweep matching tvONE neutralized vocabulary.: All mid-action button labels neutralized to "Loading…": 'Saving…' (×7 — main save flow, profile, customer save, c2a/poa, pricing refresh) → 'Loading…'; 'Signing in…' (×2 — submit button + splash) → 'Loading…'; 'Signing in ✓' splash → 'Done ✓'; 'Sending…' (×4 — pre-mailto email modal stragglers) → 'Loading…'. All success toasts unified to 'Done ✓': 'Saved ✓' statusEl text (×3 — profile, settings, status checks) → 'Done ✓'; 'Password updated ✓' → 'Done ✓'; 'Template saved ✓' → 'Done ✓'; 'Template reset to default ✓' → 'Done ✓'; 'Backup deleted ✓' → 'Done ✓'; 'Session extended ✓' → 'Done ✓'; '✓ Prices refreshed — Pricing, Accessories, CMS, Catalog all reloaded' → 'Done ✓'; 'Up to date ✓' → 'Done ✓'; 'All entries uploaded ✓' (×2) → 'Done ✓'; 'History updated ✓' → 'Done ✓'; 'Refreshed ✓' → 'Done ✓'. Sync toast default text 'Saving…' → 'Working…' (was the brief flash before being replaced by the actual status). Net: BS now matches tvONE's neutralized vocabulary — a rep switching between apps sees the same words for the same operations. 23 surgical edits across the file. No backend change. Pairs with v25.19.0. Previously: v24.44.1 — EMAIL FLOW mailto: switch (broken-on-M365 backend send → true Outlook open with PDF+Excel auto-download). Click "Open in Outlook" in modal now: (1) downloads BOTH the PDF and Excel quote files for the rep to attach, (2) opens their default mail client (Outlook on M365) with To/CC/Subject/Body pre-filled from the modal fields, (3) rep attaches the just-downloaded files in Outlook and clicks Send — email truly originates from rep's mailbox, appears in their Sent folder, passes SPF/DKIM/DMARC. dipen.g@cavitak.com forced CC pre-filled (rep can technically remove but instructed not to). Modal subtitle updated to reflect new flow. Backend email_send handler intentionally left in place (dormant, no UI call site) — easy revert if ever needed. No backend deploy required. Pairs with v25.19.0. Previously: v24.44.0 — PDF polish (Excel logo embedding deferred to next session per agreed split). Three small targeted improvements to the Tender Spec / Quote PDF export: (1) NEW: Cavitak-branded footer band added above the version footer line. Mini Cavitak logo (26px) on left + right-aligned attribution "Cavitak Marketing Pvt Ltd" (bold, indigo) over "Authorized BrightSign Distributor · India" (muted slate). Subtle indigo→violet tinted background (rgba 0.04) with 2px solid #4F46E5 top border. Mirrors the header strip treatment for visual cohesion — reads as the official Cavitak signoff before the technical disclaimer. (2) Header title color tightened from #312E81 (dark indigo) → #4F46E5 (indigo, matching the accent strip end + new footer band border). Subtle cohesion win, no layout change. (3) Discovery: the Cavitak logo (635×277 JPEG, ~13KB) was already encoded as CAVITAK_LOGO_DATA_URL constant from v24.20.0 — no re-encoding needed. Reused the same constant for the new footer mini-logo. Backend v25.19.0 unchanged. Excel still uses xlsx-js-style; ExcelJS swap for image embedding is the next focused session.
+const FRONTEND_VERSION = '24.45.9';  // v24.45.9 — NOTIFICATION CLEANUP (C-BS-7): converted all 74 native alert() calls to inline showSync() toasts — no more browser alert popups anywhere in the app. Error/failure/permission messages use type 'error' (toast persists until dismissed, matching old alert behaviour); the 2 success messages use 'success' (auto-fades); 'cancelled' messages use neutral type. Multi-line alert messages (\n\n) collapsed to ' \u00b7 '-separated single-line toasts. showSync() hardened — it is now the universal notification path, so it can never throw: if the toast DOM is not present yet (very early login screen) it falls back to a native alert so the message is never lost. Also fixed 4 dead showToast() calls (showToast was referenced but never defined — those notifications silently no-op'd); they now call showSync() directly. confirm() dialogs (20, blocking yes/no gates) intentionally left as-is. No backend change. Pairs with v25.19.0. Previously: v24.45.8 — CONSISTENCY FIX: corrected the role label "National Product Manager" → "National Product Lead" at all 4 remaining sites — login-screen footer, the offline-fallback USERS constant, the Result-page pricing escalation strip, and the pricing-escalation message string. (The tvONE pricing card was corrected separately in v25.99.27.) No behaviour change. Pairs with v25.19.0. Previously: v24.45.7 — TEST MODE HARDENING: verified Test Mode is permanently gone and unable to re-enable. _initTestMode() now also force-clears any stale per-user localStorage flag (bs-test-mode__<user> + bs-cockpit-include-test) on every boot — previously it only set the flag false without cleaning storage. setTestMode() was already a no-op stub that ignores its argument; confirmed every assignment to window._testModeOn is '= false' (zero '= true' paths anywhere). isTest always written blank on save. Net: Test Mode cannot be turned on by any code path, stale flags self-clean on next login. No backend change. Pairs with v25.19.0. Previously: v24.45.6 — DISCOUNT BUGFIX: the Excel BOQ ignored applied discounts. (1) Both quote builders (_buildQuoteFromGuided + _buildQuoteFromAdvanced) used row.unitPrice / row.lineTotal (LIST price) and ignored row.netUnitPrice / row.netLineTotal — so per-line figures in the Excel were always list price even when a discount was applied. Now the builders use the NET (discounted) unit price + line total when a discount exists, falling back to list price otherwise. (2) The Excel totals block was inconsistent — it showed the LIST subtotal but discounted GST + Grand Total. Now discount-aware: when a discount exists it renders List Subtotal -> Total Discount (red) -> Net Subtotal -> GST -> Grand Total, mirroring the in-app BOM; with no discount it shows a single Subtotal row as before. Per-line totals now reconcile with the net subtotal. No backend change. Pairs with v25.19.0. Previously: v24.45.5 — EXCEL SPACING AUDIT: cell-by-cell pass over the Excel renderer. (1) Date / Valid Until rows given explicit 16px height + vertical-middle alignment (were falling back to default 16 with no v-align, slight imbalance vs the 24px QUOTATION label). (2) Stray "—" placeholder removed from the empty left cell on the 3rd PROJECT DETAILS row (the row that has Location on the right but no matching QUOTED TO field on the left) — left cells now genuinely blank. (3) Unit Price / Line Total table-header cells given the same 1-char right indent as the numeric data cells below them, so the header text lines up directly above its figures. Verified by cell-by-cell openpyxl inspection across all 6 modes — borders, fills, alignment, row heights all consistent. No backend change. Pairs with v25.19.0. Previously: v24.45.4 — EXCEL POLISH: (1) Salesperson + Presales contact blocks now BOTH always render — Presales is optional, so when none is assigned the block shows "Not assigned" instead of being silently skipped (Excel layout now consistent deal-to-deal). (2) Cell/row/column spacing audit: T&C row heights now scale with text length (long entries — Warranty, Cancellation, Forex — no longer clipped at fixed 18px); QUOTED TO / PROJECT DETAILS value cells wrap long venue/location names with height scaling; verdict band wraps long Mixed-config verdict lines; Subtotal/GST/GRAND TOTAL value cells get a 1-char right indent so figures don't sit flush on the cell border. No backend change. Pairs with v25.19.0. Previously: v24.45.3 — UX FIX: "For Better Pricing" contact card moved to the BOTTOM of the Guided Result page (now renders after the BOM card + Project Summary). The Custom BOQ / Advanced path already placed it last since v24.12.6 — the Guided path was missed and still rendered it ABOVE the BOM table. Both paths are now consistent: pricing callout is the final card. No behavior change beyond render order. Pairs with v25.19.0. Previously: v24.45.2 — BUGFIX: Guided + Mixed mode Indoor/Outdoor steppers were clamped at 1 (treated a stale hidden total as the cap); now Indoor and Outdoor are independent counters and the total is derived from their sum. Root cause: adjustMixedQty / onMixedQtyInput treated the split as constrained by a SEPARATE total (the hidden single-mode f-qty input, which defaults to 1). Every +/- click was clamped to that stale total of 1, and the "other side" was auto-balanced to total-minus-thisValue — so Indoor+Outdoor could never exceed 1. Fix: in Mixed mode the TOTAL is now DERIVED from Indoor + Outdoor (the correct model). Indoor and Outdoor are independent counters (each 0..10000); adjusting one never touches the other. _updateMixedStatus + recalcMixedTotal keep the hidden f-qty input AND state.form.qty/qtyIndoor/qtyOutdoor in sync with the running sum so all downstream consumers (BOM, CMS 25-player threshold, backend payload) get the right total. _setMixed now calls recalcMixedTotal directly because the +/- buttons set .value programmatically and do NOT fire the 'input' event recalcMixedTotal was bound to (latent bug, previously masked by the broken clamp). Entering Mixed mode initializes state from the Indoor/Outdoor fields. _onTotalQtyChangedForMixed is now a no-op. Logic verified by simulation. No backend change. Pairs with v25.19.0. Previously: v24.45.1 — Added frontend version label on the login screen (parity with tvONE). Was: xlsx-js-style with old red CAVITAK MARKETING banner header. Now: Cavitak logo top-left + "BrightSign Product Selector" title in deep indigo (#312E81) + tricolor stripe (indigo/violet/red) + gold verdict band + indigo BoM table headers + red GRAND TOTAL banner + 12-row T&C block + salesperson + presales footer with Cavitak branded distributor band. New shared renderer _renderBsQuoteExcel(quote) takes a normalized payload, handles both BoQ (with prices) and BoM (no prices) modes, embeds Cavitak logo from existing CAVITAK_LOGO_DATA_URL constant (no re-encoding). Existing call sites unchanged: same downloadQuoteExcel() and _downloadAdvancedQuoteExcel() signatures preserved. Old xlsx-js-style functions deleted (~930 lines of legacy code removed). ExcelJS CDN added in <head>. ~150 KB lib download (gzipped) on first page load. Smoke-tested with realistic BoQ + BoM + empty-BOM payloads — all 3 render cleanly. Visual verification via LibreOffice headless render confirms the design matches the tvONE reference Excel pixel-for-pixel in structure. Pairs with backend v25.19.0. xlsx-js-style stays loaded for legacy History-tab CSV-style exportXLSX() (different use case, not customer-facing). Previously: v24.44.2 — UX wording sweep matching tvONE neutralized vocabulary.: All mid-action button labels neutralized to "Loading…": 'Saving…' (×7 — main save flow, profile, customer save, c2a/poa, pricing refresh) → 'Loading…'; 'Signing in…' (×2 — submit button + splash) → 'Loading…'; 'Signing in ✓' splash → 'Done ✓'; 'Sending…' (×4 — pre-mailto email modal stragglers) → 'Loading…'. All success toasts unified to 'Done ✓': 'Saved ✓' statusEl text (×3 — profile, settings, status checks) → 'Done ✓'; 'Password updated ✓' → 'Done ✓'; 'Template saved ✓' → 'Done ✓'; 'Template reset to default ✓' → 'Done ✓'; 'Backup deleted ✓' → 'Done ✓'; 'Session extended ✓' → 'Done ✓'; '✓ Prices refreshed — Pricing, Accessories, CMS, Catalog all reloaded' → 'Done ✓'; 'Up to date ✓' → 'Done ✓'; 'All entries uploaded ✓' (×2) → 'Done ✓'; 'History updated ✓' → 'Done ✓'; 'Refreshed ✓' → 'Done ✓'. Sync toast default text 'Saving…' → 'Working…' (was the brief flash before being replaced by the actual status). Net: BS now matches tvONE's neutralized vocabulary — a rep switching between apps sees the same words for the same operations. 23 surgical edits across the file. No backend change. Pairs with v25.19.0. Previously: v24.44.1 — EMAIL FLOW mailto: switch (broken-on-M365 backend send → true Outlook open with PDF+Excel auto-download). Click "Open in Outlook" in modal now: (1) downloads BOTH the PDF and Excel quote files for the rep to attach, (2) opens their default mail client (Outlook on M365) with To/CC/Subject/Body pre-filled from the modal fields, (3) rep attaches the just-downloaded files in Outlook and clicks Send — email truly originates from rep's mailbox, appears in their Sent folder, passes SPF/DKIM/DMARC. dipen.g@cavitak.com forced CC pre-filled (rep can technically remove but instructed not to). Modal subtitle updated to reflect new flow. Backend email_send handler intentionally left in place (dormant, no UI call site) — easy revert if ever needed. No backend deploy required. Pairs with v25.19.0. Previously: v24.44.0 — PDF polish (Excel logo embedding deferred to next session per agreed split). Three small targeted improvements to the Tender Spec / Quote PDF export: (1) NEW: Cavitak-branded footer band added above the version footer line. Mini Cavitak logo (26px) on left + right-aligned attribution "Cavitak Marketing Pvt Ltd" (bold, indigo) over "Authorized BrightSign Distributor · India" (muted slate). Subtle indigo→violet tinted background (rgba 0.04) with 2px solid #4F46E5 top border. Mirrors the header strip treatment for visual cohesion — reads as the official Cavitak signoff before the technical disclaimer. (2) Header title color tightened from #312E81 (dark indigo) → #4F46E5 (indigo, matching the accent strip end + new footer band border). Subtle cohesion win, no layout change. (3) Discovery: the Cavitak logo (635×277 JPEG, ~13KB) was already encoded as CAVITAK_LOGO_DATA_URL constant from v24.20.0 — no re-encoding needed. Reused the same constant for the new footer mini-logo. Backend v25.19.0 unchanged. Excel still uses xlsx-js-style; ExcelJS swap for image embedding is the next focused session.
   // v24.36.3 — Two bugfixes per user feedback. (1) HEADER NAME "—" BUG: On fresh login (sign-in from login page), the user-label-name slot stayed as the HTML default "—" because _applyPostLoginUI() was NEVER actually called in the fresh-login flow despite the v24.20.1 comment claiming it would be called "below". The "below" promise was never fulfilled. Only the rehydrate path (refresh while signed in) called it, which is why the issue only surfaced on cold logins. Now calls _applyPostLoginUI() in the fresh-login flow too — idempotent so safe against duplicate calls in slow login races. (2) NOTIFICATIONS NOT CLEARING DAILY: Notifications had 7-day rolling retention. User wants yesterday's notifications gone at 12:01 AM (daily reset). Changed _loadNotifs_ cutoff from "now - 7 days" to "start of today (00:00:00 local time)". Notifs older than midnight are now filtered out on every load and the cleaned list is persisted so the bell badge count stays accurate. NOTIF_RETENTION_MS constant kept declared (referenced elsewhere) but no longer used as the cutoff in _loadNotifs_. Pairs with backend v25.15.0.
 // v24.36.2 — Label refinement: HDMI input → "HDMI live source input port?" (added "port").
 // v24.36.1 — Card 03 field order refinement: Resolution → Touch → HDMI input → GPIO → HDMI Output port → SSD → Wi-Fi. "How many screens per player?" relabeled to "How many HDMI Output port?".
@@ -11129,7 +11129,7 @@ function renderDirectoryTable(){
 
 /** Delete a customer (super only) */
 async function deleteCustomer(customerId, customerName){
-  if(!state.user || !state.user.isSuper){ alert('Super admin only.'); return; }
+  if(!state.user || !state.user.isSuper){ showSync('Super admin only.', 'error'); return; }
   if(!customerId) return;
   const ok = confirm(
     'Delete customer "' + customerName + '"?\n\n' +
@@ -11163,11 +11163,11 @@ async function deleteCustomer(customerId, customerName){
       }
       refreshCustomers();
     } else {
-      alert('Could not delete: ' + (data.message || 'unknown error'));
+      showSync('Could not delete: ' + (data.message || 'unknown error'), 'error');
     }
   }catch(err){
     console.error('[Directory] deleteCustomer failed:', err);
-    alert('Connection issue — please try again.');
+    showSync('Connection issue — please try again.', 'error');
   }
 }
 
@@ -11274,9 +11274,9 @@ async function submitCustomerForm(){
 
 /** Open Merge modal (Super only) */
 function openMergeModal(sourceId){
-  if(!state.user || !state.user.isSuper){ alert('Super admin only.'); return; }
+  if(!state.user || !state.user.isSuper){ showSync('Super admin only.', 'error'); return; }
   const source = _customersCache.find(function(x){ return x.customerId === sourceId; });
-  if(!source){ alert('Source customer not found.'); return; }
+  if(!source){ showSync('Source customer not found.', 'error'); return; }
   document.getElementById('mergeSourceLabel').value = source.name + ' (' + (source.city || '—') + ')';
   document.getElementById('mergeSourceId').value = sourceId;
   // Populate target dropdown with all customers EXCEPT the source
@@ -12207,7 +12207,7 @@ function updateVersionFooter(){
    handleLogin fetches user record from Sheet on each login. If webhook is unreachable,
    only the super-user can fall back to this hardcoded entry. */
 const USERS = {
-  'dipenkumar': {fullName:'Dipenkumar Gajjar', role:'National Product Manager', password:'cavitak@27052142', isSuper:true}
+  'dipenkumar': {fullName:'Dipenkumar Gajjar', role:'National Product Lead', password:'cavitak@27052142', isSuper:true}
 };
 // v23: In-memory cache of all users, populated after super-user login (used for Team tab)
 window._allUsers = [];
@@ -13418,12 +13418,11 @@ window._onDiscSaveClick = async function(){
   // v24.42.1 — Only fires for edit-existing-deal flow. New deals save discount via Confirm.
   const refId = window._editRefId || '';
   if(!refId) {
-    if(typeof showToast === 'function') showToast('Click Confirm to save the quote — discounts are saved with it.', 'info');
-    else alert('Click Confirm to save the quote — discounts are saved with it.');
+    showSync('Click Confirm to save the quote — discounts are saved with it.', 'error');
     return;
   }
   if(!state.user || !state.user.loginName || !window._sessionPassword){
-    if(typeof showToast === 'function') showToast('Not signed in. Please log in again.', 'error');
+    showSync('Not signed in. Please log in again.', 'error');
     return;
   }
   const btn = document.getElementById('disc-save-btn');
@@ -13449,11 +13448,11 @@ window._onDiscSaveClick = async function(){
       // v24.43.0 — Silent on success. ✓ Saved badge + button-state change is feedback enough.
       if(typeof renderResult === 'function') renderResult();
     } else {
-      if(typeof showToast === 'function') showToast('Save failed: ' + ((data && data.message) || 'unknown error'), 'error');
+      showSync('Save failed: ' + ((data && data.message) || 'unknown error'), 'error');
       if(btn){ btn.disabled = false; btn.textContent = 'Save Discounts'; }
     }
   } catch(err) {
-    if(typeof showToast === 'function') showToast('Network error saving discounts.', 'error');
+    showSync('Network error saving discounts.', 'error');
     if(btn){ btn.disabled = false; btn.textContent = 'Save Discounts'; }
   }
 };
@@ -14986,7 +14985,7 @@ async function saveProfileGate(){
    ===================================================================== */
 function openMyProfileEditorBS() {
   if (!state || !state.user) {
-    alert('Sign in first.');
+    showSync('Sign in first.', 'error');
     return;
   }
   const u = state.user;
@@ -15696,7 +15695,7 @@ async function submitForgotPassword(){
     const data=await resp.json();
     if(data.status==='ok'){
       closeForgotPasswordModal();
-      alert(data.message||'Request submitted. The admin will reset your password shortly.');
+      showSync(data.message||'Request submitted. The admin will reset your password shortly.', 'error');
     } else {
       errEl.textContent=data.message||'Submit failed. Please try again or contact the admin directly.';
       btn.disabled=false;btn.textContent='Submit request';
@@ -15806,12 +15805,12 @@ async function submitPasswordChange(forced){
 
 /* v22.6/v23: Super-user reset flow — prompts for target user + uses requester's own password */
 async function superResetUserPassword(){
-  if(!state.user||!state.user.isSuper){alert('Super-user only.');return;}
+  if(!state.user||!state.user.isSuper){showSync('Super-user only.', 'error');return;}
   if(!(await requireAuth()))return;
   const target=prompt('Enter login name of user to reset (lowercase):');
   if(!target)return;
   const targetLower=target.trim().toLowerCase();
-  if(targetLower===state.user.loginName.toLowerCase()){alert('Cannot reset your own password this way. Use Change Password instead.');return;}
+  if(targetLower===state.user.loginName.toLowerCase()){showSync('Cannot reset your own password this way. Use Change Password instead.', 'error');return;}
 
   // v23: Look up target in _allUsers (cached from users_list) or fetch if missing
   let targetUser=(window._allUsers||[]).find(u=>u.loginName.toLowerCase()===targetLower);
@@ -15822,7 +15821,7 @@ async function superResetUserPassword(){
       if(data.status==='ok')targetUser=data.user;
     }catch(e){console.warn(e);}
   }
-  if(!targetUser){alert(`Unknown user: ${targetLower}\n\n(User not in Sheet. Check the Team tab for exact login names.)`);return;}
+  if(!targetUser){showSync(`Unknown user: ${targetLower} \u00b7 (User not in Sheet. Check the Team tab for exact login names.)`, 'error');return;}
   if(!confirm(`Reset password for ${targetUser.fullName} back to the default "cavitak@123"?\n\nThey will be forced to change it on next login.`))return;
 
   try{
@@ -15838,16 +15837,16 @@ async function superResetUserPassword(){
     });
     const data=await resp.json();
     if(data.status==='ok'){
-      alert(`Password reset successful.\n\n${targetUser.fullName} can now sign in with "cavitak@123" and will be forced to change it immediately.`);
+      showSync(`Password reset successful. \u00b7 ${targetUser.fullName} can now sign in with "cavitak@123" and will be forced to change it immediately.`, 'error');
       showSync(`Reset ${targetLower} ✓`,'success');
       // Refresh Team tab if open
       if(typeof loadTeamTab==='function')loadTeamTab();
     } else {
-      alert(`Reset failed: ${data.message||'Unknown error'}`);
+      showSync(`Reset failed: ${data.message||'Unknown error'}`, 'error');
     }
   }catch(e){
     console.error(e);
-    alert('Reset failed. Check internet connection.');
+    showSync('Reset failed. Check internet connection.', 'error');
   }
 }
 
@@ -16290,11 +16289,11 @@ async function approveResetRequest(requestId,loginName){
       }
       loadResetRequests();
     } else {
-      alert(`Approve failed: ${data.message||'Unknown error'}`);
+      showSync(`Approve failed: ${data.message||'Unknown error'}`, 'error');
     }
   }catch(e){
     console.error(e);
-    alert('Approve failed. Check internet.');
+    showSync('Approve failed. Check internet.', 'error');
   }
 }
 
@@ -16325,11 +16324,11 @@ async function denyResetRequest(requestId,loginName){
       }
       loadResetRequests();
     } else {
-      alert(`Deny failed: ${data.message||'Unknown error'}`);
+      showSync(`Deny failed: ${data.message||'Unknown error'}`, 'error');
     }
   }catch(e){
     console.error(e);
-    alert('Deny failed. Check internet.');
+    showSync('Deny failed. Check internet.', 'error');
   }
 }
 
@@ -16565,7 +16564,7 @@ const TEMPLATE_KNOWN_VARS = {
 
 window.openEmailTemplatesEditor = async function(){
   if(!state.user || !state.user.isSuper){
-    alert('Email templates are Super only.');
+    showSync('Email templates are Super only.', 'error');
     return;
   }
   try { await window._fetchEmailTemplates({force:true}); } catch(_){}
@@ -16721,7 +16720,7 @@ window.resetEmailTemplate = async function(){
     await window._fetchEmailTemplates({force:true});
     loadEmailTemplateForEdit();
   } catch(err){
-    alert('Network error: ' + err.message);
+    showSync('Network error: ' + err.message, 'error');
   }
 };
 
@@ -16881,11 +16880,11 @@ async function softDeleteEntry(refId,projectName){
       showSync(`"${projectName}" moved to trash ✓`,'success');
       refreshLog();  // reload to remove the entry from view
     } else {
-      alert(`Delete failed: ${data.message||'Unknown error'}`);
+      showSync(`Delete failed: ${data.message||'Unknown error'}`, 'error');
     }
   }catch(e){
     console.error(e);
-    alert('Delete failed. Check internet connection.');
+    showSync('Delete failed. Check internet connection.', 'error');
   }
 }
 
@@ -16962,11 +16961,11 @@ async function restoreTrashEntry(refId,projectName){
       loadTrashList();
       refreshLog();
     } else {
-      alert(`Restore failed: ${data.message||'Unknown error'}`);
+      showSync(`Restore failed: ${data.message||'Unknown error'}`, 'error');
     }
   }catch(e){
     console.error(e);
-    alert('Restore failed. Check internet connection.');
+    showSync('Restore failed. Check internet connection.', 'error');
   }
 }
 
@@ -17176,11 +17175,11 @@ async function runManualBackup(){
       showSync(`Backup saved ✓`,'success');
       loadBackupList();
     } else {
-      alert(`Backup failed: ${data.message||'Unknown error'}`);
+      showSync(`Backup failed: ${data.message||'Unknown error'}`, 'error');
     }
   }catch(e){
     console.error(e);
-    alert('Backup failed. Check internet connection.');
+    showSync('Backup failed. Check internet connection.', 'error');
   }
 }
 
@@ -17191,7 +17190,7 @@ async function restoreBackup(backupName,rowCount){
   const msg=`Restore the backup from ${dateLabel}? (${rowCount} entries)\n\nTHIS WILL OVERWRITE your current history. A safety snapshot of the current state will be saved first, so you can recover if needed.\n\nType RESTORE to confirm:`;
   const confirmation=prompt(msg);
   if(confirmation!=='RESTORE'){
-    if(confirmation!==null)alert('Restore cancelled. You must type RESTORE exactly (uppercase).');
+    if(confirmation!==null)showSync('Restore cancelled. You must type RESTORE exactly (uppercase).', '');
     return;
   }
   try{
@@ -17208,15 +17207,15 @@ async function restoreBackup(backupName,rowCount){
     });
     const data=await resp.json();
     if(data.status==='ok'){
-      alert('Restore complete ✓\n\nYour previous state was saved as a safety backup — you can undo this if needed.\n\nRefreshing…');
+      showSync('Restore complete ✓ \u00b7 Your previous state was saved as a safety backup — you can undo this if needed. \u00b7 Refreshing…', 'success');
       refreshLog();
       loadBackupList();
     } else {
-      alert(`Restore failed: ${data.message||'Unknown error'}`);
+      showSync(`Restore failed: ${data.message||'Unknown error'}`, 'error');
     }
   }catch(e){
     console.error(e);
-    alert('Restore failed. Please check your internet connection and try again.');
+    showSync('Restore failed. Please check your internet connection and try again.', 'error');
   }
 }
 
@@ -17241,11 +17240,11 @@ async function deleteBackup(backupName){
       showSync('Done ✓','success');
       loadBackupList();
     } else {
-      alert(`Delete failed: ${data.message||'Unknown error'}`);
+      showSync(`Delete failed: ${data.message||'Unknown error'}`, 'error');
     }
   }catch(e){
     console.error(e);
-    alert('Delete failed. Check internet connection.');
+    showSync('Delete failed. Check internet connection.', 'error');
   }
 }
 
@@ -17422,7 +17421,7 @@ async function submitAddUser(){
 /* Edit user (super only) */
 function editUserInTeam(loginName){
   const u=(window._allUsers||[]).find(x=>x.loginName===loginName);
-  if(!u){alert('User not found in cache. Click Refresh.');return;}
+  if(!u){showSync('User not found in cache. Click Refresh.', 'error');return;}
   const existing=document.getElementById('team-modal');
   if(existing)existing.remove();
   const modal=document.createElement('div');
@@ -17522,17 +17521,17 @@ async function resetUserFromTeam(loginName){
     const data=await resp.json();
     if(data.status==='ok'){
       if(isSelfReset){
-        alert('Your password has been reset to "cavitak@123". You will now be signed out. On your next login you will be prompted to choose a new password.');
+        showSync('Your password has been reset to "cavitak@123". You will now be signed out. On your next login you will be prompted to choose a new password.', 'error');
         handleLogout();
       } else {
         showSync(`Reset ${loginName} ✓`,'success');
       }
     } else {
-      alert(`Reset failed: ${data.message||'Unknown error'}`);
+      showSync(`Reset failed: ${data.message||'Unknown error'}`, 'error');
     }
   }catch(e){
     console.error(e);
-    alert('Reset failed. Check internet.');
+    showSync('Reset failed. Check internet.', 'error');
   }
 }
 
@@ -17555,11 +17554,11 @@ async function deleteUserFromTeam(loginName){
       showSync(`Deleted ${loginName} ✓`,'success');
       loadTeamTab();
     } else {
-      alert(`Delete failed: ${data.message||'Unknown error'}`);
+      showSync(`Delete failed: ${data.message||'Unknown error'}`, 'error');
     }
   }catch(e){
     console.error(e);
-    alert('Delete failed. Check internet.');
+    showSync('Delete failed. Check internet.', 'error');
   }
 }
 
@@ -19257,7 +19256,7 @@ function buildPricingCallout(){
   // escalate. Suppressed when the logged-in user IS Dipenkumar (would be redundant).
   const escalationStrip = !isSuper
     ? `<div class="pricing-callout-escalation" style="margin-top:14px;padding-top:14px;border-top:1px dashed rgba(99,102,241,0.25);font-size:11px;color:var(--ink-muted,#64748B);line-height:1.55;">
-        <strong style="color:var(--indigo,#4F46E5);">Need volume rates or fast quote?</strong> Escalate to Dipenkumar Gajjar (National Product Manager) — <a href="mailto:dipen.g@cavitak.com" style="color:var(--indigo,#4F46E5);text-decoration:none;font-weight:600;">dipen.g@cavitak.com</a> · <a href="tel:+918160756906" style="color:var(--indigo,#4F46E5);text-decoration:none;font-weight:600;">+91 8160 756 906</a>
+        <strong style="color:var(--indigo,#4F46E5);">Need volume rates or fast quote?</strong> Escalate to Dipenkumar Gajjar (National Product Lead) — <a href="mailto:dipen.g@cavitak.com" style="color:var(--indigo,#4F46E5);text-decoration:none;font-weight:600;">dipen.g@cavitak.com</a> · <a href="tel:+918160756906" style="color:var(--indigo,#4F46E5);text-decoration:none;font-weight:600;">+91 8160 756 906</a>
       </div>`
     : '';
 
@@ -20091,7 +20090,18 @@ async function refreshPricesFromSheet(){
  * The isTest column on Sheet1 stays intact (just unread/unwritten). User has
  * been advised to manually delete pre-existing test rows for clean state.
  */
-function _initTestMode(){ window._testModeOn = false; }
+function _initTestMode(){
+  // v24.45.7 — Test Mode is permanently retired. Force _testModeOn false AND
+  // proactively clear any stale localStorage flag from before retirement, so a
+  // user who once had Test Mode on can never silently keep flagging deals.
+  window._testModeOn = false;
+  try {
+    if(state && state.user && state.user.loginName){
+      localStorage.removeItem('bs-test-mode__' + state.user.loginName);
+    }
+    localStorage.removeItem('bs-cockpit-include-test');
+  } catch(e) {}
+}
 function _renderTestModeBanner(){ /* no-op */ }
 function setTestMode(on){
   // Backwards-compat stub. Setting test mode now does nothing.
@@ -20218,9 +20228,18 @@ if(!window._beforeUnloadWired){
 
 /* ===== LOG / SYNC ===== */
 function showSync(msg,type){
+  // v24.45.9 — Hardened: showSync is now the universal notification path (it replaced
+  // every native alert call). It must never throw — if the toast DOM isn't present yet
+  // (e.g. very early on the login screen), fall back to a native alert so the user
+  // still sees the message.
   const el=document.getElementById('sync-status');
+  const msgEl=document.getElementById('sync-msg');
+  if(!el || !msgEl){
+    try { alert(String(msg||'')); } catch(_) {}
+    return;
+  }
   el.className='sync-status show '+(type||'');
-  document.getElementById('sync-msg').textContent=msg;
+  msgEl.textContent=msg;
   if(type!=='error')setTimeout(()=>el.classList.remove('show'),2500);
 }
 
@@ -20340,7 +20359,7 @@ function buildEntryPayload(status){
   if(!u||!u.loginName){
     // No identity available AT ALL (no session, no snapshot) — safest to block silently and prompt login.
     console.error('buildEntryPayload: no user identity available (no state.user, no _formOwner). Entry NOT saved.');
-    alert('Please sign in to save this entry.');
+    showSync('Please sign in to save this entry.', 'error');
     state.user=null;
     window._sessionPasswordHash=null;
     _clearPersistedSession();  // v24.14.11: full reset — don't let refresh restore stale state
@@ -20893,7 +20912,7 @@ async function clearTestData(){
   const msg='⚠️ DANGER: This will DELETE ALL entries from the history.\n\nA safety backup is created automatically first, so you can recover if needed.\n\nType WIPE to confirm:';
   const c=prompt(msg);
   if(c!=='WIPE'){
-    if(c!==null)alert('Wipe cancelled. You must type WIPE exactly (uppercase).');
+    if(c!==null)showSync('Wipe cancelled. You must type WIPE exactly (uppercase).', '');
     return;
   }
   try{
@@ -20910,17 +20929,17 @@ async function clearTestData(){
     });
     const data=await resp.json();
     if(data.status==='ok'){
-      alert(`All clear ✓\n\n${data.rowsWiped} ${data.rowsWiped===1?'entry':'entries'} removed. A safety backup was saved automatically.\n\nRefreshing…`);
+      showSync(`All clear ✓ \u00b7 ${data.rowsWiped} ${data.rowsWiped===1?'entry':'entries'} removed. A safety backup was saved automatically. \u00b7 Refreshing…`, 'success');
       // Clear local cache too
       try{localStorage.removeItem('bs-central-log');localStorage.removeItem('bs-log-v2');}catch(e){}
       refreshLog();
       if(typeof loadBackupList==='function')loadBackupList();
     } else {
-      alert(`Wipe failed: ${data.message||'Unknown error'}`);
+      showSync(`Wipe failed: ${data.message||'Unknown error'}`, 'error');
     }
   }catch(e){
     console.error(e);
-    alert('Wipe failed. Check internet connection.');
+    showSync('Wipe failed. Check internet connection.', 'error');
   }
 }
 
@@ -21736,16 +21755,48 @@ async function _renderBsQuoteExcel(quote) {
   // SUBTOTAL / GST / GRAND TOTAL (only when not BoM mode)
   // ============================================================
   if (!quote.bomMode) {
-    // Subtotal row
+    // v24.45.6 — Discount-aware totals. When a discount was applied, show the full
+    // breakdown (List Subtotal -> Total Discount -> Net Subtotal) so the figures
+    // reconcile with the discounted per-line totals above.
+    const hasDiscount = (quote.totalDiscount || 0) > 0;
+    const netSubtotal = hasDiscount
+      ? (quote.discountedSubtotal || ((quote.subtotal || 0) - (quote.totalDiscount || 0)))
+      : (quote.subtotal || 0);
+
+    if (hasDiscount) {
+      ws.mergeCells('A' + r + ':D' + r);
+      ws.getCell('E' + r).value = 'List Subtotal';
+      ws.getCell('E' + r).font = _bsXlFont({ size: 10, color: { argb: BS_XL_INK_SOFT } });
+      ws.getCell('E' + r).alignment = { horizontal: 'right', vertical: 'middle' };
+      ws.getCell('F' + r).value = quote.subtotal || 0;
+      ws.getCell('F' + r).numFmt = '#,##0.00;[Red]-#,##0.00;""';
+      ws.getCell('F' + r).font = _bsXlFont({ size: 10, color: { argb: BS_XL_INK_SOFT } });
+      ws.getCell('F' + r).alignment = { horizontal: 'right', vertical: 'middle', indent: 1 };
+      ws.getCell('F' + r).border = _bsXlBorders('T', BS_XL_INDIGO_DEEP);
+      ws.getRow(r).height = 20;
+      r++;
+
+      ws.mergeCells('A' + r + ':D' + r);
+      ws.getCell('E' + r).value = 'Total Discount';
+      ws.getCell('E' + r).font = _bsXlFont({ size: 10, bold: true, color: { argb: 'FFB91C1C' } });
+      ws.getCell('E' + r).alignment = { horizontal: 'right', vertical: 'middle' };
+      ws.getCell('F' + r).value = -(quote.totalDiscount || 0);
+      ws.getCell('F' + r).numFmt = '-#,##0.00;-#,##0.00;""';
+      ws.getCell('F' + r).font = _bsXlFont({ size: 10, bold: true, color: { argb: 'FFB91C1C' } });
+      ws.getCell('F' + r).alignment = { horizontal: 'right', vertical: 'middle', indent: 1 };
+      ws.getRow(r).height = 20;
+      r++;
+    }
+
     ws.mergeCells('A' + r + ':D' + r);
-    ws.getCell('E' + r).value = 'Subtotal';
+    ws.getCell('E' + r).value = hasDiscount ? 'Net Subtotal' : 'Subtotal';
     ws.getCell('E' + r).font = _bsXlFont({ size: 10, bold: true, color: { argb: BS_XL_INK_SOFT } });
     ws.getCell('E' + r).alignment = { horizontal: 'right', vertical: 'middle' };
-    ws.getCell('F' + r).value = quote.subtotal || 0;
+    ws.getCell('F' + r).value = netSubtotal;
     ws.getCell('F' + r).numFmt = '#,##0.00;[Red]-#,##0.00;""';
     ws.getCell('F' + r).font = _bsXlFont({ size: 10, bold: true });
-    ws.getCell('F' + r).alignment = { horizontal: 'right', vertical: 'middle', indent: 1 };  // v24.45.4 indent
-    ws.getCell('F' + r).border = _bsXlBorders('T', BS_XL_INDIGO_DEEP);
+    ws.getCell('F' + r).alignment = { horizontal: 'right', vertical: 'middle', indent: 1 };
+    if (!hasDiscount) ws.getCell('F' + r).border = _bsXlBorders('T', BS_XL_INDIGO_DEEP);
     ws.getRow(r).height = 22;
     r++;
 
@@ -21966,13 +22017,19 @@ function _buildQuoteFromGuided() {
       sku: sku,
       name: row.name || '',
       qty: row.qty || 1,
-      unitPrice: row.unitPrice,
-      lineTotal: row.lineTotal != null ? row.lineTotal : ((row.unitPrice != null && row.qty) ? row.unitPrice * row.qty : null),
+      // v24.45.6 — Use the NET (discounted) unit price + line total when a discount
+      // is applied to the row, so the Excel BOQ reflects the discount the user applied.
+      // Falls back to list price when no discount. (Previously always used list price,
+      // so the Excel showed list figures that didn't add up to the discounted total.)
+      unitPrice:  (row.netUnitPrice  != null) ? row.netUnitPrice  : row.unitPrice,
+      lineTotal:  (row.netLineTotal  != null) ? row.netLineTotal
+                  : (row.lineTotal != null ? row.lineTotal
+                     : ((row.unitPrice != null && row.qty) ? row.unitPrice * row.qty : null)),
+      listUnitPrice: row.unitPrice,
+      discPct:    row.discPct || 0,
       note: row.note || ''
     };
   });
-
-  // Resolve salesperson/presales from _allUsers cache
   function _resolveContact(loginName) {
     if (!loginName) return null;
     try {
@@ -22048,13 +22105,16 @@ function _buildQuoteFromAdvanced() {
       sku: sku,
       name: row.name || '',
       qty: row.qty || 1,
-      unitPrice: row.unitPrice,
-      lineTotal: row.lineTotal != null ? row.lineTotal : ((row.unitPrice != null && row.qty) ? row.unitPrice * row.qty : null),
+      // v24.45.6 — Use NET (discounted) values when a discount is applied (see Guided builder).
+      unitPrice:  (row.netUnitPrice  != null) ? row.netUnitPrice  : row.unitPrice,
+      lineTotal:  (row.netLineTotal  != null) ? row.netLineTotal
+                  : (row.lineTotal != null ? row.lineTotal
+                     : ((row.unitPrice != null && row.qty) ? row.unitPrice * row.qty : null)),
+      listUnitPrice: row.unitPrice,
+      discPct:    row.discPct || 0,
       note: row.note || ''
     };
   });
-
-  // Custom BOQ has multiple models — figure out the primary one for the verdict band
   let primaryModel = 'Custom BOQ';
   let verdict = 'BrightSign Custom BoQ · multi-model configuration';
   try {
@@ -22129,11 +22189,11 @@ function _downloadAdvancedQuoteExcel(returnWorkbook){
   // language adapted to BS indigo/violet.)
   if(!state.result || state.result.noRec){
     if(returnWorkbook === true) return null;
-    alert('No recommendation available to export.'); return;
+    showSync('No recommendation available to export.', 'error'); return;
   }
   if(typeof ExcelJS === 'undefined'){
     if(returnWorkbook === true) return null;
-    alert('Excel library not loaded. Check internet connection and reload.'); return;
+    showSync('Excel library not loaded. Check internet connection and reload.', 'error'); return;
   }
 
   const quote = _buildQuoteFromAdvanced();
@@ -22151,7 +22211,7 @@ function _downloadAdvancedQuoteExcel(returnWorkbook){
     })
     .catch(function(err) {
       console.error('[v24.45.0] BS Excel render failed (Advanced):', err);
-      alert('Excel export failed: ' + (err.message || err));
+      showSync('Excel export failed: ' + (err.message || err), 'error');
     });
   // Return null for returnWorkbook callers — they shouldn't exist post-v24.44.1.
   if (returnWorkbook === true) return null;
@@ -22162,11 +22222,11 @@ function downloadQuoteExcel(returnWorkbook){
   // (Previously 497 lines of xlsx-js-style code. Now uses tvONE design adapted to BS.)
   if(!state.result || state.result.noRec){
     if(returnWorkbook === true) return null;
-    alert('No recommendation available to export.'); return;
+    showSync('No recommendation available to export.', 'error'); return;
   }
   if(typeof ExcelJS === 'undefined'){
     if(returnWorkbook === true) return null;
-    alert('Excel library not loaded. Check internet connection and reload.'); return;
+    showSync('Excel library not loaded. Check internet connection and reload.', 'error'); return;
   }
 
   // Advanced mode short-circuit — kept for back-compat with existing call sites.
@@ -22185,7 +22245,7 @@ function downloadQuoteExcel(returnWorkbook){
     })
     .catch(function(err) {
       console.error('[v24.45.0] BS Excel render failed (Guided):', err);
-      alert('Excel export failed: ' + (err.message || err));
+      showSync('Excel export failed: ' + (err.message || err), 'error');
     });
   if (returnWorkbook === true) return null;
 }
@@ -22201,8 +22261,8 @@ function downloadQuoteExcel(returnWorkbook){
    Replaces the legacy mailto: flow. Uses backend `email_send` action which calls
    Apps Script MailApp.sendEmail() with PDF attachment. */
 function openEmailModal(){
-  if(!state.result || state.result.noRec){ alert('No recommendation available to email.'); return; }
-  if(!state._bomTotals){ alert('BOM not built yet. Click Recommend / Generate BOQ first.'); return; }
+  if(!state.result || state.result.noRec){ showSync('No recommendation available to email.', 'error'); return; }
+  if(!state._bomTotals){ showSync('BOM not built yet. Click Recommend / Generate BOQ first.', 'error'); return; }
   const f = state.form, r = state.result;
   const m = r.model;
   const refId = r.refId || 'BS-' + Date.now().toString().slice(-8);
@@ -22409,24 +22469,24 @@ async function sendEmailViaBackend(){
 }
 
 async function emailQuoteToPartner(){
-  if(!state.result||state.result.noRec){alert('No recommendation available to email.');return;}
-  if(typeof XLSX==='undefined'){alert('Excel library not loaded. Check internet and reload.');return;}
+  if(!state.result||state.result.noRec){showSync('No recommendation available to email.', 'error');return;}
+  if(typeof XLSX==='undefined'){showSync('Excel library not loaded. Check internet and reload.', 'error');return;}
   const f=state.form;const r=state.result;const m=r.model;
 
   // Validate partner contact email
   const toEmail=(f.contactemail||'').trim();
   if(!toEmail){
-    alert('Cannot email quote — no partner contact email on file.\n\nPlease add it in the form and try again.');
+    showSync('Cannot email quote — no partner contact email on file. \u00b7 Please add it in the form and try again.', 'error');
     return;
   }
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail)){
-    alert(`The contact email does not look valid: "${toEmail}"\n\nPlease correct it in the form and try again.`);
+    showSync(`The contact email does not look valid: "${toEmail}" \u00b7 Please correct it in the form and try again.`, 'error');
     return;
   }
 
   // Step 1: Download Excel so the user can attach it
   const wbResult=downloadQuoteExcel(true);
-  if(!wbResult||!wbResult.wb){alert('Excel generation failed. Try Download Excel button first.');return;}
+  if(!wbResult||!wbResult.wb){showSync('Excel generation failed. Try Download Excel button first.', 'error');return;}
   XLSX.writeFile(wbResult.wb,wbResult.fname);
 
   // Step 2: Compose email content
@@ -22467,7 +22527,7 @@ async function emailQuoteToPartner(){
     `For commercial terms, volume rates, stock position, or any clarifications, please contact me directly.`,
     ...(isUserSuper ? [] : [
       '',
-      `For pricing escalation: Dipenkumar Gajjar — National Product Manager · dipen.g@cavitak.com`
+      `For pricing escalation: Dipenkumar Gajjar — National Product Lead · dipen.g@cavitak.com`
     ]),
     '',
     '-- IMPORTANT: Please attach the Excel file that just downloaded before sending --',
@@ -22891,8 +22951,8 @@ function openQuickStageMenu(refId, idx, btn){
   document.querySelectorAll('.quick-stage-menu').forEach(function(el){ el.remove(); });
   const entries = window._currentLogEntries || [];
   const entry = entries[idx];
-  if (!entry) { alert('Entry not found.'); return; }
-  if (!state.user) { alert('Please sign in.'); return; }
+  if (!entry) { showSync('Entry not found.', 'error'); return; }
+  if (!state.user) { showSync('Please sign in.', 'error'); return; }
   const STAGES = ['Lead','Opportunity','Proposal','Negotiation','Order'];
   const currentStage = String(entry.stage || '').trim();
 
@@ -23005,8 +23065,8 @@ function editPastEntry(entryIdx){
   // v24.9.1: PoA prefill hook removed — per-deal PoA textarea no longer on form
   const entries=window._currentLogEntries||[];
   const entry=entries[entryIdx];
-  if(!entry){alert('Entry not found.');return;}
-  if(!state.user){alert('Please sign in to edit entries.');return;}
+  if(!entry){showSync('Entry not found.', 'error');return;}
+  if(!state.user){showSync('Please sign in to edit entries.', 'error');return;}
   if(!confirm(`Edit technical fields on "${entry.project}" (${entry.refId})?\n\nProject & contact info will be LOCKED.\nOnly qty, resolution, environment, and other technical choices can be changed.\n\nClick OK to load this entry for editing.`))return;
 
   // v24.19.9 (#11): Fire-and-forget view log — records who opened this deal for editing.
@@ -23549,8 +23609,8 @@ function getExportEntries(){
 /* v24.2.12: Excel (XLSX) export with formatted headers, freeze row, column widths, status color banding */
 function exportXLSX(){
   const entries=getExportEntries();
-  if(!entries.length){alert('No data to export.');return;}
-  if(typeof XLSX==='undefined'){alert('Excel library not loaded. Refresh and try again.');return;}
+  if(!entries.length){showSync('No data to export.', 'error');return;}
+  if(typeof XLSX==='undefined'){showSync('Excel library not loaded. Refresh and try again.', 'error');return;}
   const headers=['Ref ID','Status','Timestamp','User','Role','Project','End-user','Venue','Partner','Consultant','City','Contact name','Contact phone','Contact email','Deal stage','Close month','Qty','Indoor Qty','Outdoor Qty','Model','Outdoor Model','Content type','Resolution','Deployment type','Deployment model','Budget','HDMI in','Touch','Wi-Fi','GPIO','SSD','OS','CMS Vendor','CMS Term','CMS Billing Type'];
   const rows=entries.map(e=>{
     const ts=e.ts?new Date(e.ts):null;
@@ -23652,19 +23712,19 @@ function exportXLSX(){
 async function exportQuotePDF(returnDoc){
   if(!state.result || state.result.noRec){
     if(returnDoc===true) return null;
-    alert('No recommendation available to export.'); return;
+    showSync('No recommendation available to export.', 'error'); return;
   }
   if(!state._bomTotals || !state._bomTotals.rows || !state._bomTotals.rows.length){
     if(returnDoc===true) return null;
-    alert('BOM not built yet. Click Recommend / Generate BOQ first.'); return;
+    showSync('BOM not built yet. Click Recommend / Generate BOQ first.', 'error'); return;
   }
   if(typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF){
     if(returnDoc===true) return null;
-    alert('PDF library not loaded. Refresh and try again.'); return;
+    showSync('PDF library not loaded. Refresh and try again.', 'error'); return;
   }
   if(typeof window.html2canvas !== 'function'){
     if(returnDoc===true) return null;
-    alert('PDF rendering library not loaded. Refresh and try again.'); return;
+    showSync('PDF rendering library not loaded. Refresh and try again.', 'error'); return;
   }
 
   const f = state.form, r = state.result;
@@ -24004,10 +24064,10 @@ async function exportQuotePDF(returnDoc){
    button: anchor-clicks are always allowed, no popup blocker problems. */
 function shareViaWhatsApp(){
   if(!state.result || state.result.noRec){
-    alert('No quote available to share.'); return;
+    showSync('No quote available to share.', 'error'); return;
   }
   if(!state._bomTotals){
-    alert('BOM not built yet. Click Recommend / Generate BOQ first.'); return;
+    showSync('BOM not built yet. Click Recommend / Generate BOQ first.', 'error'); return;
   }
   const f = state.form, r = state.result;
   const refId = r.refId || 'BS-' + Date.now().toString().slice(-8);
@@ -24090,9 +24150,9 @@ function _updateWhatsAppLink(){
 /* v24.2.12: PDF export — summary report with KPIs + tabular data */
 function exportPDF(){
   const entries=getExportEntries();
-  if(!entries.length){alert('No data to export.');return;}
+  if(!entries.length){showSync('No data to export.', 'error');return;}
   if(typeof window.jspdf==='undefined' || !window.jspdf.jsPDF){
-    alert('PDF library not loaded. Refresh and try again.');return;
+    showSync('PDF library not loaded. Refresh and try again.', 'error');return;
   }
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
@@ -24250,7 +24310,7 @@ function exportCSV(){
     });
   }
   if(state.user&&state.user.isSuper&&hasActiveFilters())entries=applyFiltersToEntries(entries);
-  if(!entries.length){alert('No data to export.');return;}
+  if(!entries.length){showSync('No data to export.', 'error');return;}
   // v24.22.0 (#9) — Expand CSV columns to cover all fields shipped since v24.5:
   // leadSource, dealValue, outcome, outcomeReason, outcomeReasonNote, planOfAction,
   // salesPerson, presalesPerson, isTest. Resolves loginNames to fullNames using
@@ -28972,7 +29032,7 @@ if(document.readyState==='loading'){
     const scoped = _scopeForUser(all);
     const f = _readFilterState();
     const filtered = _applyFilters(scoped, f);
-    if(!filtered.length){ alert('No deals to export with current filters.'); return; }
+    if(!filtered.length){ showSync('No deals to export with current filters.', 'error'); return; }
     const headers = ['refId','project','enduser','partner','consultant','stage','dealValue','closemonth','outcome','source','region','salesPerson','daysInStage','timestamp'];
     const rows = filtered.map(function(e){
       return [
@@ -29148,7 +29208,7 @@ if(document.readyState==='loading'){
    ===================================================================== */
 async function sendQuarterlyNowBS() {
   if (!state || !state.user || !state.user.isSuper) {
-    alert('Send Q-review is Super-only.');
+    showSync('Send Q-review is Super-only.', 'error');
     return;
   }
   if (!confirm('Send the quarterly review email to all active team members now?\n\nDefault period: the most recently completed fiscal quarter.\nCC: dipen.g@cavitak.com')) return;
@@ -29187,7 +29247,7 @@ async function sendQuarterlyNowBS() {
 
 async function sendYearlyNowBS() {
   if (!state || !state.user || !state.user.isSuper) {
-    alert('Send Annual review is Super-only.');
+    showSync('Send Annual review is Super-only.', 'error');
     return;
   }
   if (!confirm('Send the ANNUAL review email to all active team members now?\n\nDefault period: the most recently completed fiscal year.\nCC: dipen.g@cavitak.com')) return;
