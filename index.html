@@ -8,6 +8,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<!-- v24.45.0: ExcelJS added for Cavitak-branded Excel exports (logo embedding, fonts, tricolor stripe).
+     xlsx-js-style stays loaded for legacy paths that haven't been ported yet (none after v24.45.0,
+     but the dependency is light to leave in case a future Excel export needs cell-level styling
+     not yet covered by ExcelJS). ExcelJS is ~150KB gzipped; same lib proven in tvONE v25.99.20+. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
 <!-- v24.39.0: Chart.js DROPPED. Both legacy callers (bsC3aRenderVelocity, bsC3dRenderTrend)
      turned out to be zombie code — their DOM targets (bs-c3a-velocity-wrap, bs-c3d-trend-wrap)
      never existed; every getElementById returned null and the functions exited early without
@@ -9322,7 +9327,7 @@ html[data-theme="dark"] .adv-xc-os-btn[data-os="win"]:not(.active):hover {
         <div class="splash-brand-sub">Product Selector</div>
       </div>
     </div>
-    <div class="splash-step" id="splash-step">Signing in…</div>
+    <div class="splash-step" id="splash-step">Loading…</div>
     <div class="splash-progress">
       <div class="splash-progress-bar" id="splash-progress-bar"></div>
     </div>
@@ -10780,7 +10785,7 @@ html[data-theme="dark"] .adv-xc-os-btn[data-os="win"]:not(.active):hover {
   </div>
 </div>
 
-<div class="sync-status" id="sync-status"><span class="sync-dot"></span><span id="sync-msg">Saving…</span></div>
+<div class="sync-status" id="sync-status"><span class="sync-dot"></span><span id="sync-msg">Working…</span></div>
 
 <script>
 /* BrightSign logo as base64 data URI — embedded so app works offline with no external deps */
@@ -10797,7 +10802,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.44.1';  // v24.44.1 — EMAIL FLOW: replaced backend send (broken on M365 — emails went from script-owner@gmail.com "on behalf of" rep, flagged as spoofing by Outlook receivers and dropped/spammed) with true mailto: flow. Click "Open in Outlook" in modal now: (1) downloads BOTH the PDF and Excel quote files for the rep to attach, (2) opens their default mail client (Outlook on M365) with To/CC/Subject/Body pre-filled from the modal fields, (3) rep attaches the just-downloaded files in Outlook and clicks Send — email truly originates from rep's mailbox, appears in their Sent folder, passes SPF/DKIM/DMARC. dipen.g@cavitak.com forced CC pre-filled (rep can technically remove but instructed not to). Modal subtitle updated to reflect new flow. Backend email_send handler intentionally left in place (dormant, no UI call site) — easy revert if ever needed. No backend deploy required. Pairs with v25.19.0. Previously: v24.44.0 — PDF polish (Excel logo embedding deferred to next session per agreed split). Three small targeted improvements to the Tender Spec / Quote PDF export: (1) NEW: Cavitak-branded footer band added above the version footer line. Mini Cavitak logo (26px) on left + right-aligned attribution "Cavitak Marketing Pvt Ltd" (bold, indigo) over "Authorized BrightSign Distributor · India" (muted slate). Subtle indigo→violet tinted background (rgba 0.04) with 2px solid #4F46E5 top border. Mirrors the header strip treatment for visual cohesion — reads as the official Cavitak signoff before the technical disclaimer. (2) Header title color tightened from #312E81 (dark indigo) → #4F46E5 (indigo, matching the accent strip end + new footer band border). Subtle cohesion win, no layout change. (3) Discovery: the Cavitak logo (635×277 JPEG, ~13KB) was already encoded as CAVITAK_LOGO_DATA_URL constant from v24.20.0 — no re-encoding needed. Reused the same constant for the new footer mini-logo. Backend v25.19.0 unchanged. Excel still uses xlsx-js-style; ExcelJS swap for image embedding is the next focused session.
+const FRONTEND_VERSION = '24.45.0';  // v24.45.0 — EXCEL REWRITE: replaced both BS Excel paths (Guided downloadQuoteExcel L21783 + Custom BOQ _downloadAdvancedQuoteExcel L21350) with Cavitak-branded ExcelJS output matching the tvONE v25.99.20 design language (adapted to BS indigo/violet, NOT tvONE forest green — keeps BS brand identity). Was: xlsx-js-style with old red CAVITAK MARKETING banner header. Now: Cavitak logo top-left + "BrightSign Product Selector" title in deep indigo (#312E81) + tricolor stripe (indigo/violet/red) + gold verdict band + indigo BoM table headers + red GRAND TOTAL banner + 12-row T&C block + salesperson + presales footer with Cavitak branded distributor band. New shared renderer _renderBsQuoteExcel(quote) takes a normalized payload, handles both BoQ (with prices) and BoM (no prices) modes, embeds Cavitak logo from existing CAVITAK_LOGO_DATA_URL constant (no re-encoding). Existing call sites unchanged: same downloadQuoteExcel() and _downloadAdvancedQuoteExcel() signatures preserved. Old xlsx-js-style functions deleted (~930 lines of legacy code removed). ExcelJS CDN added in <head>. ~150 KB lib download (gzipped) on first page load. Smoke-tested with realistic BoQ + BoM + empty-BOM payloads — all 3 render cleanly. Visual verification via LibreOffice headless render confirms the design matches the tvONE reference Excel pixel-for-pixel in structure. Pairs with backend v25.19.0. xlsx-js-style stays loaded for legacy History-tab CSV-style exportXLSX() (different use case, not customer-facing). Previously: v24.44.2 — UX wording sweep matching tvONE neutralized vocabulary.: All mid-action button labels neutralized to "Loading…": 'Saving…' (×7 — main save flow, profile, customer save, c2a/poa, pricing refresh) → 'Loading…'; 'Signing in…' (×2 — submit button + splash) → 'Loading…'; 'Signing in ✓' splash → 'Done ✓'; 'Sending…' (×4 — pre-mailto email modal stragglers) → 'Loading…'. All success toasts unified to 'Done ✓': 'Saved ✓' statusEl text (×3 — profile, settings, status checks) → 'Done ✓'; 'Password updated ✓' → 'Done ✓'; 'Template saved ✓' → 'Done ✓'; 'Template reset to default ✓' → 'Done ✓'; 'Backup deleted ✓' → 'Done ✓'; 'Session extended ✓' → 'Done ✓'; '✓ Prices refreshed — Pricing, Accessories, CMS, Catalog all reloaded' → 'Done ✓'; 'Up to date ✓' → 'Done ✓'; 'All entries uploaded ✓' (×2) → 'Done ✓'; 'History updated ✓' → 'Done ✓'; 'Refreshed ✓' → 'Done ✓'. Sync toast default text 'Saving…' → 'Working…' (was the brief flash before being replaced by the actual status). Net: BS now matches tvONE's neutralized vocabulary — a rep switching between apps sees the same words for the same operations. 23 surgical edits across the file. No backend change. Pairs with v25.19.0. Previously: v24.44.1 — EMAIL FLOW mailto: switch (broken-on-M365 backend send → true Outlook open with PDF+Excel auto-download). Click "Open in Outlook" in modal now: (1) downloads BOTH the PDF and Excel quote files for the rep to attach, (2) opens their default mail client (Outlook on M365) with To/CC/Subject/Body pre-filled from the modal fields, (3) rep attaches the just-downloaded files in Outlook and clicks Send — email truly originates from rep's mailbox, appears in their Sent folder, passes SPF/DKIM/DMARC. dipen.g@cavitak.com forced CC pre-filled (rep can technically remove but instructed not to). Modal subtitle updated to reflect new flow. Backend email_send handler intentionally left in place (dormant, no UI call site) — easy revert if ever needed. No backend deploy required. Pairs with v25.19.0. Previously: v24.44.0 — PDF polish (Excel logo embedding deferred to next session per agreed split). Three small targeted improvements to the Tender Spec / Quote PDF export: (1) NEW: Cavitak-branded footer band added above the version footer line. Mini Cavitak logo (26px) on left + right-aligned attribution "Cavitak Marketing Pvt Ltd" (bold, indigo) over "Authorized BrightSign Distributor · India" (muted slate). Subtle indigo→violet tinted background (rgba 0.04) with 2px solid #4F46E5 top border. Mirrors the header strip treatment for visual cohesion — reads as the official Cavitak signoff before the technical disclaimer. (2) Header title color tightened from #312E81 (dark indigo) → #4F46E5 (indigo, matching the accent strip end + new footer band border). Subtle cohesion win, no layout change. (3) Discovery: the Cavitak logo (635×277 JPEG, ~13KB) was already encoded as CAVITAK_LOGO_DATA_URL constant from v24.20.0 — no re-encoding needed. Reused the same constant for the new footer mini-logo. Backend v25.19.0 unchanged. Excel still uses xlsx-js-style; ExcelJS swap for image embedding is the next focused session.
   // v24.36.3 — Two bugfixes per user feedback. (1) HEADER NAME "—" BUG: On fresh login (sign-in from login page), the user-label-name slot stayed as the HTML default "—" because _applyPostLoginUI() was NEVER actually called in the fresh-login flow despite the v24.20.1 comment claiming it would be called "below". The "below" promise was never fulfilled. Only the rehydrate path (refresh while signed in) called it, which is why the issue only surfaced on cold logins. Now calls _applyPostLoginUI() in the fresh-login flow too — idempotent so safe against duplicate calls in slow login races. (2) NOTIFICATIONS NOT CLEARING DAILY: Notifications had 7-day rolling retention. User wants yesterday's notifications gone at 12:01 AM (daily reset). Changed _loadNotifs_ cutoff from "now - 7 days" to "start of today (00:00:00 local time)". Notifs older than midnight are now filtered out on every load and the cleaned list is persisted so the bell badge count stays accurate. NOTIF_RETENTION_MS constant kept declared (referenced elsewhere) but no longer used as the cutoff in _loadNotifs_. Pairs with backend v25.15.0.
 // v24.36.2 — Label refinement: HDMI input → "HDMI live source input port?" (added "port").
 // v24.36.1 — Card 03 field order refinement: Resolution → Touch → HDMI input → GPIO → HDMI Output port → SSD → Wi-Fi. "How many screens per player?" relabeled to "How many HDMI Output port?".
@@ -11232,7 +11237,7 @@ async function submitCustomerForm(){
     notes: document.getElementById('customerFormNotes').value.trim()
   };
 
-  if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Loading…'; }
   try{
     const pwHash = await getCurrentAuthHash();
     const resp = await fetch(WEBHOOK_URL, {
@@ -13401,7 +13406,7 @@ window._onDiscSaveClick = async function(){
     return;
   }
   const btn = document.getElementById('disc-save-btn');
-  if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Loading…'; }
   try {
     const passwordHash = await sha256Hex(window._sessionPassword);
     const payload = {
@@ -14902,7 +14907,7 @@ async function saveProfileGate(){
   }
 
   saveBtn.disabled = true;
-  saveBtn.textContent = 'Saving…';
+  saveBtn.textContent = 'Loading…';
   try {
     const pwHash = await getCurrentAuthHash();
     const resp = await fetch(WEBHOOK_URL, {
@@ -15055,7 +15060,7 @@ async function saveMyProfileBS() {
   }
 
   saveBtn.disabled = true;
-  saveBtn.textContent = 'Saving…';
+  saveBtn.textContent = 'Loading…';
   try {
     const pwHash = await getCurrentAuthHash();
     const resp = await fetch(WEBHOOK_URL, {
@@ -15391,7 +15396,7 @@ async function handleLogin(){
   // Show loading state
   err.classList.remove('show');
   const submitBtn=document.querySelector('#page-login .btn-primary');
-  if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='Signing in…';}
+  if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='Loading…';}
 
   try{
     let authResult=null;
@@ -15505,7 +15510,7 @@ async function handleLogin(){
 
     // v24.2: Branded splash screen — show immediately, progress through steps
     showLoginSplash();
-    updateLoginSplash(20,'Signing in ✓');
+    updateLoginSplash(20,'Done ✓');
 
     // v24.26.25 — Backend version-check on fresh login. Fire-and-forget; renders banner
     // inside #page-app if backend or frontend version is below expected minimum.
@@ -15597,7 +15602,7 @@ function showLoginSplash(){
   // Reset bar
   const bar=document.getElementById('splash-progress-bar');
   if(bar)bar.style.width='0%';
-  updateLoginSplash(10,'Signing in…');
+  updateLoginSplash(10,'Loading…');
 }
 
 function updateLoginSplash(percent,text){
@@ -15759,7 +15764,7 @@ async function submitPasswordChange(forced){
       }
     }catch(_){ /* non-fatal */ }
     closeChangePasswordModal();
-    showSync('Password updated ✓','success');
+    showSync('Done ✓','success');
     // v24.14.6: After a FORCED password change, auto-redirect to login.
     // Without this, the user stays signed in on their old session and has to
     // manually sign out + sign in. New users hit this confusion on first login.
@@ -16059,7 +16064,7 @@ async function saveOwnProfile(){
     statusEl.innerHTML='<span class="profile-err">Email does not look valid.</span>';
     return;
   }
-  statusEl.innerHTML='<span class="profile-info">Saving…</span>';
+  statusEl.innerHTML='<span class="profile-info">Loading…</span>';
   try{
     const pwHash=await getCurrentAuthHash();
     const resp=await fetch(WEBHOOK_URL,{
@@ -16084,7 +16089,7 @@ async function saveOwnProfile(){
         window._sessionUser.phone=phone;
         window._sessionUser.professionalTitle=titleVal;
       }
-      statusEl.innerHTML='<span class="profile-ok">Saved ✓</span>';
+      statusEl.innerHTML='<span class="profile-ok">Done ✓</span>';
       setTimeout(()=>{statusEl.innerHTML='';},2500);
     } else {
       // v24.21.0 — escape backend message before injecting (defensive)
@@ -16638,7 +16643,7 @@ window.saveEmailTemplate = async function(){
     errEl.style.display = 'block';
     return;
   }
-  btn.disabled = true; btn.textContent = 'Saving…';
+  btn.disabled = true; btn.textContent = 'Loading…';
   try {
     const pwHash = await getCurrentAuthHash();
     const resp = await fetch(WEBHOOK_URL, {
@@ -16657,7 +16662,7 @@ window.saveEmailTemplate = async function(){
       errEl.textContent = (data && data.message) || 'Save failed.';
       errEl.style.display = 'block';
     } else {
-      showSync('Template saved ✓', 'success');
+      showSync('Done ✓', 'success');
       await window._fetchEmailTemplates({force:true});
       loadEmailTemplateForEdit();
     }
@@ -16691,7 +16696,7 @@ window.resetEmailTemplate = async function(){
       errEl.style.display = 'block';
       return;
     }
-    showSync('Template reset to default ✓', 'success');
+    showSync('Done ✓', 'success');
     await window._fetchEmailTemplates({force:true});
     loadEmailTemplateForEdit();
   } catch(err){
@@ -17212,7 +17217,7 @@ async function deleteBackup(backupName){
     });
     const data=await resp.json();
     if(data.status==='ok'){
-      showSync('Backup deleted ✓','success');
+      showSync('Done ✓','success');
       loadBackupList();
     } else {
       alert(`Delete failed: ${data.message||'Unknown error'}`);
@@ -17728,7 +17733,7 @@ function sessionExtend(){
   if(window._sessionCountdown){clearInterval(window._sessionCountdown);window._sessionCountdown=null;}
   _idleResetThrottleAt = Date.now();
   _scheduleIdleTimers();
-  showSync('Session extended ✓','success');
+  showSync('Done ✓','success');
   console.log('[session] Idle timer reset at', new Date().toLocaleTimeString());
 }
 
@@ -20027,7 +20032,7 @@ async function refreshPricesFromSheet(){
     ]);
     const failed = results.filter(r=>r.status==='rejected').length;
     if(failed === 0){
-      showSync('✓ Prices refreshed — Pricing, Accessories, CMS, Catalog all reloaded','success');
+      showSync('Done ✓','success');
     } else {
       showSync('Refresh partial: '+(3-failed)+'/3 sources reloaded. Check console.','warn');
       results.forEach((r,i)=>{
@@ -21085,7 +21090,7 @@ async function retryPendingSync(manualTrigger){
   if(!WEBHOOK_URL)return;
   let queue=loadPendingQueue();
   if(!queue.length){
-    if(manualTrigger)showSync('Up to date ✓','success');
+    if(manualTrigger)showSync('Done ✓','success');
     return;
   }
   if(manualTrigger)showSync(`Uploading ${queue.length} saved entr${queue.length===1?'y':'ies'}…`);
@@ -21093,7 +21098,7 @@ async function retryPendingSync(manualTrigger){
   await verifyPendingSync(true);
   queue=loadPendingQueue();
   if(!queue.length){
-    if(manualTrigger)showSync('All entries uploaded ✓','success');
+    if(manualTrigger)showSync('Done ✓','success');
     return;
   }
   // Retry each still-pending entry
@@ -21139,7 +21144,7 @@ async function retryPendingSync(manualTrigger){
     verifyPendingSync(manualTrigger?false:true);
     if(manualTrigger){
       const remaining=loadPendingQueue().length;
-      if(remaining===0)showSync('All entries uploaded ✓','success');
+      if(remaining===0)showSync('Done ✓','success');
       else showSync(`${remaining} entr${remaining===1?'y':'ies'} will upload when connection returns`,'error');
     }
   },4000);
@@ -21253,7 +21258,7 @@ function confirmSelection(){
   if(btn){
     btn.disabled=true;
     const _lbl = btn.querySelector('.ab2-label');
-    if(_lbl) _lbl.textContent='Saving…';
+    if(_lbl) _lbl.textContent='Loading…';
     btn.style.opacity='0.7';
     btn.style.cursor='not-allowed';
   }
@@ -21342,936 +21347,766 @@ function _fmtCloseMonth(raw){
   return s;
 }
 
-function _downloadAdvancedQuoteExcel(returnWorkbook){
+// =================================================================
+// v24.45.0 — Cavitak-branded Excel renderer for BS quotes (ExcelJS)
+// Replaces the old xlsx-js-style implementation (CAVITAK MARKETING red banner) with the
+// tvONE v25.99.20 design language adapted for BS: Cavitak logo, BS indigo title, tricolor
+// stripe (indigo / violet / red), salesperson + presales footer blocks, Cavitak distributor band.
+//
+// Color palette: BS indigo/violet (NOT tvONE forest green — keeps BS brand identity).
+// Logo: existing CAVITAK_LOGO_DATA_URL constant (JPEG, 635×277, ~13KB; encoded since v24.20.0).
+// BrightSign attribution: text-only "Authorized BrightSign Distributor · India" (no fabricated BS logo).
+//
+// Both BS Excel paths (Guided and Custom BOQ) route through _renderBsQuoteExcel().
+// Caller passes a normalized shape so this function never needs to know the BOM source.
+// =================================================================
+
+// --- BS Excel color tokens (8-char ARGB) ---
+const BS_XL_INDIGO_DEEP   = 'FF312E81';  // header title + section banners
+const BS_XL_INDIGO        = 'FF4F46E5';  // accent / tricolor left
+const BS_XL_VIOLET        = 'FF7C3AED';  // tricolor middle
+const BS_XL_CAVITAK_RED   = 'FFC8102E';  // GRAND TOTAL + tricolor right
+const BS_XL_GOLD          = 'FFFEF3C7';  // verdict highlight band (pale gold like tvONE)
+const BS_XL_CREAM         = 'FFF5F3FF';  // alt row tint (pale lavender)
+const BS_XL_INK           = 'FF1E1B4B';  // primary text
+const BS_XL_INK_SOFT      = 'FF475569';  // muted text
+const BS_XL_LINE          = 'FFE0E7FF';  // subtle border
+const BS_XL_YELLOW_SOFT   = 'FFFFF4D6';  // "please fill" price cells
+const BS_XL_WHITE         = 'FFFFFFFF';
+
+function _bsXlThinBorder(color) {
+  return { style: 'thin', color: { argb: color || BS_XL_LINE } };
+}
+function _bsXlBorders(sides, color) {
+  const b = _bsXlThinBorder(color);
+  const out = {};
+  sides.split('').forEach(function(s) {
+    if (s === 'T') out.top = b;
+    if (s === 'B') out.bottom = b;
+    if (s === 'L') out.left = b;
+    if (s === 'R') out.right = b;
+  });
+  return out;
+}
+function _bsXlFill(color) {
+  return { type: 'pattern', pattern: 'solid', fgColor: { argb: color } };
+}
+function _bsXlFont(opts) {
+  return Object.assign({ name: 'Calibri', size: 11, color: { argb: BS_XL_INK } }, opts || {});
+}
+
+/**
+ * Render a Cavitak-branded BS quote Excel.
+ * @param {Object} quote - normalized quote payload:
+ *   {
+ *     refId:            String,
+ *     project:          String,
+ *     endUser:          String,
+ *     venue:            String,
+ *     location:         String,   // "City, State"
+ *     partner:          String,
+ *     dateStr:          String,   // "15 May 2026"
+ *     validUntil:       String,   // "30 May 2026"
+ *     quoteNo:          String,   // human-readable, defaults to refId
+ *     verdict:          String,   // e.g. "BrightSign LS445 · Indoor Standard configuration"
+ *     primaryModel:     String,   // e.g. "LS445"
+ *     bomRows:          [{ sku, name, qty, unitPrice, lineTotal, note }],  // ordered
+ *     subtotal:         Number,
+ *     gst:              Number,
+ *     grandTotal:       Number,
+ *     totalDiscount:    Number,   // optional (for v24.42 discount feature)
+ *     discountedSubtotal: Number, // optional
+ *     bomMode:          Boolean,  // true = BoM mode (no prices) / false = BoQ (with prices)
+ *     salesperson:      { name, role, phone, email } | null,
+ *     presales:         { name, role, phone, email } | null,
+ *   }
+ * @returns {Promise<ArrayBuffer>}  the xlsx buffer (use writeBuffer at call site)
+ */
+async function _renderBsQuoteExcel(quote) {
+  if (typeof ExcelJS === 'undefined') {
+    throw new Error('ExcelJS library not loaded');
+  }
+
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Cavitak Marketing — BrightSign Selector';
+  workbook.created = new Date();
+
+  const ws = workbook.addWorksheet('Quote', {
+    pageSetup: { paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
+    properties: { defaultRowHeight: 16 }
+  });
+
+  // Column widths match tvONE pattern (A..G, total ~140 chars across)
+  ws.columns = [
+    { width: 18 },   // A: row labels / # / sku / T&C label
+    { width: 16 },   // B: value half / SKU
+    { width: 36 },   // C: description / value full
+    { width: 18 },   // D: qty / value
+    { width: 14 },   // E: unit price label / subtotal label
+    { width: 16 },   // F: line total / amount
+    { width: 24 }    // G: notes
+  ];
+
+  let r = 1;
+
+  // ============================================================
+  // ROW 1-2: HEADER BAND (Cavitak logo + BS title + subtitle)
+  // ============================================================
+  ws.mergeCells('A1:B2');
+  ws.getCell('A1').fill = _bsXlFill(BS_XL_WHITE);
+  try {
+    // CAVITAK_LOGO_DATA_URL is a global JPEG constant (encoded in BS since v24.20.0)
+    const logoBase64 = CAVITAK_LOGO_DATA_URL.split(',')[1];  // strip "data:image/jpeg;base64,"
+    const imgId = workbook.addImage({ base64: logoBase64, extension: 'jpeg' });
+    ws.addImage(imgId, {
+      tl: { col: 0.3, row: 0.25 },
+      ext: { width: 145, height: 41 },
+      editAs: 'oneCell'
+    });
+  } catch (_imgErr) {
+    // Graceful fallback: leave the cell blank if logo embedding fails
+  }
+
+  ws.mergeCells('C1:G1');
+  const titleCell = ws.getCell('C1');
+  titleCell.value = 'BrightSign Product Selector';
+  titleCell.font = _bsXlFont({ size: 20, bold: true, color: { argb: BS_XL_INDIGO_DEEP } });
+  titleCell.fill = _bsXlFill(BS_XL_WHITE);
+  titleCell.alignment = { horizontal: 'left', vertical: 'bottom', indent: 1 };
+  ws.getRow(1).height = 26;
+
+  ws.mergeCells('C2:G2');
+  const tagCell = ws.getCell('C2');
+  tagCell.value = 'Signage that performs, effortlessly — sized right, validated BoM';
+  tagCell.font = _bsXlFont({ size: 10, italic: true, color: { argb: BS_XL_INK_SOFT } });
+  tagCell.fill = _bsXlFill(BS_XL_WHITE);
+  tagCell.alignment = { horizontal: 'left', vertical: 'top', indent: 1 };
+  ws.getRow(2).height = 18;
+  r = 3;
+
+  // ============================================================
+  // ROW 3: TRICOLOR ACCENT STRIPE (indigo / violet / red)
+  // ============================================================
+  ws.mergeCells('A3:C3');  ws.getCell('A3').fill = _bsXlFill(BS_XL_INDIGO_DEEP);
+  ws.mergeCells('D3:E3');  ws.getCell('D3').fill = _bsXlFill(BS_XL_VIOLET);
+  ws.mergeCells('F3:G3');  ws.getCell('F3').fill = _bsXlFill(BS_XL_CAVITAK_RED);
+  ws.getRow(3).height = 4;
+  r = 4;
+
+  // ============================================================
+  // ROW 4-6: QUOTATION label + Quote No / Date / Valid Until
+  // ============================================================
+  ws.mergeCells('A4:D4');
+  const quotLabel = ws.getCell('A4');
+  quotLabel.value = quote.bomMode ? 'BILL OF MATERIALS' : 'QUOTATION';
+  quotLabel.font = _bsXlFont({ size: 14, bold: true, color: { argb: BS_XL_INDIGO_DEEP } });
+  quotLabel.alignment = { horizontal: 'left', vertical: 'bottom' };
+  ws.getRow(4).height = 24;
+
+  ws.mergeCells('E4:G4');
+  const quoteNoCell = ws.getCell('E4');
+  quoteNoCell.value = 'Quote No.: ' + (quote.quoteNo || quote.refId);
+  quoteNoCell.font = _bsXlFont({ size: 10, bold: true, color: { argb: BS_XL_INDIGO_DEEP } });
+  quoteNoCell.alignment = { horizontal: 'right', vertical: 'bottom' };
+
+  ws.mergeCells('E5:G5');
+  ws.getCell('E5').value = 'Date: ' + quote.dateStr;
+  ws.getCell('E5').font = _bsXlFont({ size: 10, color: { argb: BS_XL_INK_SOFT } });
+  ws.getCell('E5').alignment = { horizontal: 'right' };
+
+  ws.mergeCells('E6:G6');
+  ws.getCell('E6').value = 'Valid Until: ' + quote.validUntil;
+  ws.getCell('E6').font = _bsXlFont({ size: 10, color: { argb: BS_XL_INK_SOFT } });
+  ws.getCell('E6').alignment = { horizontal: 'right' };
+  ws.getRow(7).height = 10;
+  r = 8;
+
+  // ============================================================
+  // ROW 8: SECTION HEADERS — QUOTED TO + PROJECT DETAILS (forest-bg style)
+  // ============================================================
+  ws.mergeCells('A8:C8');
+  const qtoLbl = ws.getCell('A8');
+  qtoLbl.value = 'QUOTED TO';
+  qtoLbl.font = _bsXlFont({ size: 10, bold: true, color: { argb: BS_XL_WHITE } });
+  qtoLbl.fill = _bsXlFill(BS_XL_INDIGO_DEEP);
+  qtoLbl.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+  ws.mergeCells('D8:G8');
+  const pdLbl = ws.getCell('D8');
+  pdLbl.value = 'PROJECT DETAILS';
+  pdLbl.font = _bsXlFont({ size: 10, bold: true, color: { argb: BS_XL_WHITE } });
+  pdLbl.fill = _bsXlFill(BS_XL_INDIGO_DEEP);
+  pdLbl.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+  ws.getRow(8).height = 20;
+
+  // Rows 9-12: paired QUOTED TO (cols A-C) and PROJECT DETAILS (cols D-G)
+  function _fillKVRow(rowNum, leftLbl, leftVal, rightLbl, rightVal) {
+    ws.getCell('A' + rowNum).value = leftLbl;
+    ws.getCell('A' + rowNum).font = _bsXlFont({ size: 10, color: { argb: BS_XL_INK_SOFT } });
+    ws.getCell('A' + rowNum).alignment = { horizontal: 'left', indent: 1 };
+    ws.mergeCells('B' + rowNum + ':C' + rowNum);
+    ws.getCell('B' + rowNum).value = leftVal || '—';
+    ws.getCell('B' + rowNum).font = _bsXlFont({ size: 10, bold: true, color: { argb: BS_XL_INK } });
+
+    if (rightLbl) {
+      ws.getCell('D' + rowNum).value = rightLbl;
+      ws.getCell('D' + rowNum).font = _bsXlFont({ size: 10, color: { argb: BS_XL_INK_SOFT } });
+      ws.getCell('D' + rowNum).alignment = { horizontal: 'left', indent: 1 };
+      ws.mergeCells('E' + rowNum + ':G' + rowNum);
+      ws.getCell('E' + rowNum).value = rightVal || '—';
+      ws.getCell('E' + rowNum).font = _bsXlFont({ size: 10, bold: true, color: { argb: BS_XL_INK } });
+    }
+    ws.getRow(rowNum).height = 18;
+  }
+  _fillKVRow(9,  'Partner / SI',    quote.partner,   'Project Name', quote.project);
+  _fillKVRow(10, 'End-user / Client', quote.endUser, 'Venue',         quote.venue);
+  _fillKVRow(11, '',                 '',             'Location',      quote.location);
+  ws.getRow(12).height = 8;
+  ws.getRow(13).height = 12;
+  r = 14;
+
+  // ============================================================
+  // ROW 14-15: RECOMMENDED SOLUTION header + verdict band
+  // ============================================================
+  ws.mergeCells('A14:G14');
+  const recoLbl = ws.getCell('A14');
+  recoLbl.value = 'RECOMMENDED SOLUTION';
+  recoLbl.font = _bsXlFont({ size: 10, bold: true, color: { argb: BS_XL_WHITE } });
+  recoLbl.fill = _bsXlFill(BS_XL_INDIGO_DEEP);
+  recoLbl.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+  ws.getRow(14).height = 20;
+
+  ws.mergeCells('A15:B15');
+  const modelCell = ws.getCell('A15');
+  modelCell.value = quote.primaryModel || '—';
+  modelCell.font = _bsXlFont({ size: 16, bold: true, color: { argb: BS_XL_INDIGO_DEEP }, name: 'Consolas' });
+  modelCell.fill = _bsXlFill(BS_XL_GOLD);
+  modelCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+  modelCell.border = _bsXlBorders('TB', BS_XL_GOLD);
+
+  ws.mergeCells('C15:G15');
+  const verdictCell = ws.getCell('C15');
+  verdictCell.value = quote.verdict || '';
+  verdictCell.font = _bsXlFont({ size: 11, italic: true, color: { argb: BS_XL_INK_SOFT } });
+  verdictCell.fill = _bsXlFill(BS_XL_GOLD);
+  verdictCell.alignment = { horizontal: 'left', vertical: 'middle' };
+  verdictCell.border = _bsXlBorders('TB', BS_XL_GOLD);
+  ws.getRow(15).height = 26;
+  ws.getRow(16).height = 14;
+  r = 17;
+
+  // ============================================================
+  // ROW 17-18: BILL OF MATERIALS header + table column header
+  // ============================================================
+  ws.mergeCells('A17:G17');
+  const bomLbl = ws.getCell('A17');
+  bomLbl.value = 'BILL OF MATERIALS';
+  bomLbl.font = _bsXlFont({ size: 10, bold: true, color: { argb: BS_XL_WHITE } });
+  bomLbl.fill = _bsXlFill(BS_XL_INDIGO_DEEP);
+  bomLbl.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+  ws.getRow(17).height = 20;
+
+  // Table header row
+  const headerRow = ws.getRow(18);
+  const tableHeaders = quote.bomMode
+    ? ['#', 'SKU', 'Description', 'Qty', '', '', 'Notes']
+    : ['#', 'SKU', 'Description', 'Qty', 'Unit Price (₹)', 'Line Total (₹)', 'Notes'];
+  tableHeaders.forEach(function(h, i) {
+    const cell = headerRow.getCell(i + 1);
+    cell.value = h;
+    cell.font = _bsXlFont({ size: 10, bold: true, color: { argb: BS_XL_WHITE } });
+    cell.fill = _bsXlFill(BS_XL_INDIGO_DEEP);
+    cell.alignment = { horizontal: (i === 0 || i === 3) ? 'center' : (i === 4 || i === 5 ? 'right' : 'left'), vertical: 'middle' };
+    cell.border = _bsXlBorders('TBLR', BS_XL_INDIGO_DEEP);
+  });
+  headerRow.height = 22;
+  r = 19;
+
+  // BOM rows
+  const rows = quote.bomRows || [];
+  let firstBomRow = r;
+  rows.forEach(function(row, idx) {
+    const rowRef = ws.getRow(r);
+    const isAlt = idx % 2 === 1;
+    const fillColor = isAlt ? BS_XL_CREAM : BS_XL_WHITE;
+    const cells = [
+      { v: idx + 1, align: 'center' },
+      { v: row.sku || '', align: 'left', font: { name: 'Consolas', size: 10, bold: true } },
+      { v: row.name || row.description || '', align: 'left' },
+      { v: row.qty || 1, align: 'center', format: '#,##0' }
+    ];
+    if (!quote.bomMode) {
+      cells.push({ v: row.unitPrice, align: 'right', format: '#,##0.00;[Red]-#,##0.00;""' });
+      cells.push({ v: (row.lineTotal != null) ? row.lineTotal : (row.unitPrice && row.qty ? row.unitPrice * row.qty : null), align: 'right', format: '#,##0.00;[Red]-#,##0.00;""' });
+    } else {
+      cells.push({ v: '', align: 'right' });
+      cells.push({ v: '', align: 'right' });
+    }
+    cells.push({ v: row.note || '', align: 'left' });
+
+    cells.forEach(function(c, i) {
+      const cell = rowRef.getCell(i + 1);
+      cell.value = c.v != null ? c.v : '';
+      cell.font = _bsXlFont(c.font || { size: 10 });
+      cell.alignment = { horizontal: c.align, vertical: 'middle', wrapText: i === 2 || i === 6 };
+      cell.fill = _bsXlFill(fillColor);
+      cell.border = _bsXlBorders('TBLR', BS_XL_LINE);
+      if (c.format) cell.numFmt = c.format;
+    });
+    rowRef.height = 24;
+    r++;
+  });
+
+  if (rows.length === 0) {
+    // BOM is empty — show a placeholder
+    ws.mergeCells('A' + r + ':G' + r);
+    const empty = ws.getCell('A' + r);
+    empty.value = '— No items —';
+    empty.font = _bsXlFont({ size: 10, italic: true, color: { argb: BS_XL_INK_SOFT } });
+    empty.alignment = { horizontal: 'center', vertical: 'middle' };
+    empty.fill = _bsXlFill(BS_XL_WHITE);
+    r++;
+  }
+
+  ws.getRow(r).height = 6;
+  r++;
+
+  // ============================================================
+  // SUBTOTAL / GST / GRAND TOTAL (only when not BoM mode)
+  // ============================================================
+  if (!quote.bomMode) {
+    // Subtotal row
+    ws.mergeCells('A' + r + ':D' + r);
+    ws.getCell('E' + r).value = 'Subtotal';
+    ws.getCell('E' + r).font = _bsXlFont({ size: 10, bold: true, color: { argb: BS_XL_INK_SOFT } });
+    ws.getCell('E' + r).alignment = { horizontal: 'right', vertical: 'middle' };
+    ws.getCell('F' + r).value = quote.subtotal || 0;
+    ws.getCell('F' + r).numFmt = '#,##0.00;[Red]-#,##0.00;""';
+    ws.getCell('F' + r).font = _bsXlFont({ size: 10, bold: true });
+    ws.getCell('F' + r).alignment = { horizontal: 'right' };
+    ws.getCell('F' + r).border = _bsXlBorders('T', BS_XL_INDIGO_DEEP);
+    ws.getRow(r).height = 22;
+    r++;
+
+    // GST row
+    ws.mergeCells('A' + r + ':D' + r);
+    ws.getCell('E' + r).value = 'GST @ 18%';
+    ws.getCell('E' + r).font = _bsXlFont({ size: 10, bold: true, color: { argb: BS_XL_INK_SOFT } });
+    ws.getCell('E' + r).alignment = { horizontal: 'right', vertical: 'middle' };
+    ws.getCell('F' + r).value = quote.gst || 0;
+    ws.getCell('F' + r).numFmt = '#,##0.00;[Red]-#,##0.00;""';
+    ws.getCell('F' + r).font = _bsXlFont({ size: 10, bold: true });
+    ws.getCell('F' + r).alignment = { horizontal: 'right' };
+    ws.getRow(r).height = 20;
+    r++;
+
+    // GRAND TOTAL row
+    ws.mergeCells('A' + r + ':E' + r);
+    const gtLbl = ws.getCell('A' + r);
+    gtLbl.value = 'GRAND TOTAL (₹)';
+    gtLbl.font = _bsXlFont({ size: 14, bold: true, color: { argb: BS_XL_WHITE } });
+    gtLbl.fill = _bsXlFill(BS_XL_CAVITAK_RED);
+    gtLbl.alignment = { horizontal: 'right', vertical: 'middle' };
+    const gtVal = ws.getCell('F' + r);
+    gtVal.value = quote.grandTotal || 0;
+    gtVal.numFmt = '#,##0.00;[Red]-#,##0.00;""';
+    gtVal.font = _bsXlFont({ size: 14, bold: true, color: { argb: BS_XL_WHITE } });
+    gtVal.fill = _bsXlFill(BS_XL_CAVITAK_RED);
+    gtVal.alignment = { horizontal: 'right', vertical: 'middle' };
+    const gtPad = ws.getCell('G' + r);
+    gtPad.fill = _bsXlFill(BS_XL_CAVITAK_RED);
+    ws.getRow(r).height = 32;
+    r++;
+  }
+
+  ws.getRow(r).height = 14;
+  r++;
+
+  // ============================================================
+  // TERMS & CONDITIONS
+  // ============================================================
+  ws.mergeCells('A' + r + ':G' + r);
+  const tcLbl = ws.getCell('A' + r);
+  tcLbl.value = 'TERMS & CONDITIONS';
+  tcLbl.font = _bsXlFont({ size: 10, bold: true, color: { argb: BS_XL_WHITE } });
+  tcLbl.fill = _bsXlFill(BS_XL_INDIGO_DEEP);
+  tcLbl.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+  ws.getRow(r).height = 20;
+  r++;
+
+  const tcRows = [
+    ['Payment Terms',  '100% advance along with purchase order'],
+    ['Lead Time',      'Standard 4–5 weeks from receipt of confirmed PO & advance payment, subject to stock availability'],
+    ['Delivery',       'Ex-warehouse Ahmedabad. Outbound freight & in-transit insurance extra at actuals.'],
+    ['Warranty',       'Standard OEM warranty on BrightSign products. Faulty units must be returned to Cavitak\'s Ahmedabad office for warranty processing; outbound logistics are at the customer\'s cost.'],
+    ['Validity',       '15 days from quote date (' + quote.dateStr + '). Pricing subject to revision thereafter.'],
+    ['Taxes',          'GST @ 18% included above. Any additional levies, cess or local duties extra at actuals.'],
+    ['Forex',          'Pricing based on prevailing INR–USD rate on quote date. Material forex movement (>3%) before PO may revise pricing.'],
+    ['Stock Validity', 'Stock subject to prior sale. Confirmation of availability at the time of PO placement.'],
+    ['Installation',   'Partner\'s scope.'],
+    ['Support',        'Onsite / Online support charges quoted extra on request.'],
+    ['Cancellation',   'Orders once placed are non-cancellable. Advance payment is non-refundable for despatched/in-transit goods.'],
+    ['Jurisdiction',   'All disputes subject to Ahmedabad jurisdiction. Indian law applies.']
+  ];
+  tcRows.forEach(function(tc, idx) {
+    const isAlt = idx % 2 === 1;
+    ws.getCell('A' + r).value = tc[0];
+    ws.getCell('A' + r).font = _bsXlFont({ size: 10, bold: true, color: { argb: BS_XL_INDIGO_DEEP } });
+    ws.getCell('A' + r).alignment = { horizontal: 'left', vertical: 'top', indent: 1, wrapText: true };
+    ws.getCell('A' + r).fill = _bsXlFill(isAlt ? BS_XL_CREAM : BS_XL_WHITE);
+    ws.mergeCells('B' + r + ':G' + r);
+    ws.getCell('B' + r).value = tc[1];
+    ws.getCell('B' + r).font = _bsXlFont({ size: 10, color: { argb: BS_XL_INK } });
+    ws.getCell('B' + r).alignment = { horizontal: 'left', vertical: 'top', wrapText: true };
+    ws.getCell('B' + r).fill = _bsXlFill(isAlt ? BS_XL_CREAM : BS_XL_WHITE);
+    ws.getRow(r).height = 18;
+    r++;
+  });
+
+  ws.getRow(r).height = 14;
+  r++;
+
+  // ============================================================
+  // SALESPERSON + PRESALES CONTACTS
+  // ============================================================
+  function _renderContactBlock(label, contact) {
+    ws.mergeCells('A' + r + ':G' + r);
+    const lbl = ws.getCell('A' + r);
+    lbl.value = label;
+    lbl.font = _bsXlFont({ size: 10, bold: true, color: { argb: BS_XL_WHITE } });
+    lbl.fill = _bsXlFill(BS_XL_INDIGO_DEEP);
+    lbl.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+    ws.getRow(r).height = 20;
+    r++;
+    const fields = [
+      ['Name',  contact && contact.name  || '—'],
+      ['Role',  contact && contact.role  || '—'],
+      ['Phone', contact && contact.phone || '—'],
+      ['Email', contact && contact.email || '—']
+    ];
+    fields.forEach(function(f) {
+      ws.getCell('A' + r).value = f[0];
+      ws.getCell('A' + r).font = _bsXlFont({ size: 10, color: { argb: BS_XL_INK_SOFT } });
+      ws.getCell('A' + r).alignment = { horizontal: 'left', indent: 1 };
+      ws.mergeCells('B' + r + ':G' + r);
+      ws.getCell('B' + r).value = f[1];
+      ws.getCell('B' + r).font = _bsXlFont({ size: 10, bold: true });
+      ws.getRow(r).height = 18;
+      r++;
+    });
+    ws.getRow(r).height = 8;
+    r++;
+  }
+
+  if (quote.salesperson) _renderContactBlock('SALESPERSON CONTACT', quote.salesperson);
+  if (quote.presales)    _renderContactBlock('PRESALES CONTACT',     quote.presales);
+
+  // ============================================================
+  // FOOTER BAND — Cavitak attribution + distributor line
+  // ============================================================
+  ws.getRow(r).height = 3;
+  r++;
+
+  // Cavitak footer band with mini-logo + distributor attribution
+  ws.mergeCells('A' + r + ':B' + r);
+  const footerLogoCell = ws.getCell('A' + r);
+  footerLogoCell.fill = _bsXlFill(BS_XL_WHITE);
+  try {
+    const logoBase64 = CAVITAK_LOGO_DATA_URL.split(',')[1];
+    const imgIdFooter = workbook.addImage({ base64: logoBase64, extension: 'jpeg' });
+    ws.addImage(imgIdFooter, {
+      tl: { col: 0.3, row: r - 1 + 0.2 },
+      ext: { width: 90, height: 26 },
+      editAs: 'oneCell'
+    });
+  } catch (_imgErr) { /* graceful fallback */ }
+
+  ws.mergeCells('C' + r + ':G' + r);
+  const attrCell = ws.getCell('C' + r);
+  attrCell.value = 'Cavitak Marketing Pvt Ltd\nAuthorized BrightSign Distributor · India';
+  attrCell.font = _bsXlFont({ size: 10, color: { argb: BS_XL_INK_SOFT } });
+  attrCell.alignment = { horizontal: 'right', vertical: 'middle', wrapText: true };
+  attrCell.fill = _bsXlFill(BS_XL_WHITE);
+  ws.getRow(r).height = 32;
+
+  // Generate the buffer and return
+  return await workbook.xlsx.writeBuffer();
+}
+
+/**
+ * Trigger the download of a blob as an .xlsx file.
+ */
+function _downloadXlsxBuffer(buffer, filename) {
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+}
+
+/**
+ * Build the normalized `quote` payload from Guided mode state.
+ */
+function _buildQuoteFromGuided() {
   const f = state.form;
   const r = state.result;
-  const refId = r.refId || ('BS-'+Date.now().toString().slice(-8));
-  const dateStr = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
-  const validUntil = new Date(Date.now()+15*24*60*60*1000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
-  const totals = state._bomTotals || { subtotal:0, gst:0, grandTotal:0, rows:[] };
-  const rows = Array.isArray(totals.rows) ? totals.rows : [];
-  const selections = Array.isArray(r.advancedSelections) ? r.advancedSelections : [];
-  const totalUnits = selections.reduce((acc,s) => acc + (parseInt(s.qty,10)||0), 0);
+  const m = r.model;
+  const refId = r.refId || ('BS-' + Date.now().toString().slice(-8));
+  const dateStr = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const validUntil = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const isMixed = f.environment === 'mixed';
+  const om = (isMixed && r.outdoorVariant && r.outdoorVariant.id !== m.id) ? r.outdoorVariant : null;
 
-  const C = {
-    deepIndigo:'1E1B4B', medViolet:'312E81', indigoText:'C7D2FE',
-    labelBg:'EEF2FF', modelHighlightBg:'F5F3FF', white:'FFFFFF',
-    ink:'1E1B4B', inkSoft:'475569', violetAccent:'7C3AED', palePastel:'EDE9FE'
-  };
-  const wb = XLSX.utils.book_new();
-  function css(ws,ref,styleObj){
-    if(!ws[ref]) ws[ref] = { v:'', t:'s' };
-    ws[ref].s = Object.assign({}, ws[ref].s||{}, styleObj);
-  }
+  // Verdict line: "BrightSign LS445 · Indoor Standard configuration"
+  const envLabel = ({ indoor: 'Indoor', outdoor: 'Outdoor', mixed: 'Mixed Indoor/Outdoor' })[f.environment] || 'Standard';
+  let verdict = 'BrightSign ' + (m.id || m.name || 'Player') + ' · ' + envLabel + ' configuration';
+  if (om) verdict += ' (with ' + om.id + ' for outdoor)';
 
-  // === SHEET 1: SUMMARY ===
-  // v24.34.9: helper — user-name resolver (date formatter is now global, see top of file)
-  function _resolveUserName(loginName){
-    if(!loginName) return '—';
-    try {
-      const list = Array.isArray(window._allUsers) ? window._allUsers : [];
-      const u = list.find(function(x){ return String(x.loginName||'').toLowerCase() === String(loginName).toLowerCase(); });
-      if(u && u.fullName) return u.fullName + ' (' + loginName + ')';
-    } catch(_){}
-    return loginName;
-  }
-  // v24.37.0: full-detail resolver for footer SALESPERSON/PRESALES CONTACT blocks
-  function _resolveUserDetails(loginName){
-    if(!loginName) return null;
-    try {
-      const list = Array.isArray(window._allUsers) ? window._allUsers : [];
-      const u = list.find(function(x){ return String(x.loginName||'').toLowerCase() === String(loginName).toLowerCase(); });
-      if(u) return {
-        fullName: u.fullName || loginName,
-        role: u.professionalTitle || u.role || '—',
-        phone: u.phone || '—',
-        email: u.email || '—'
-      };
-    } catch(_){}
-    return { fullName: loginName, role: '—', phone: '—', email: '—' };
-  }
-
-  const sAoa = [];
-  sAoa.push(['CAVITAK MARKETING — BrightSign Custom BOQ']);
-  sAoa.push(['Authorized BrightSign distributor · India · Signage that performs, effortlessly']);
-  sAoa.push([(f.project||'Project')+' · '+dateStr]);
-  sAoa.push([]);
-  // v24.37.0: PROJECT CONTEXT trimmed to 5 fields per user spec.
-  // Removed: Consultant, Sales Person, Presales Person, Stage, Expected Close.
-  // Sales/Presales moved to SALESPERSON CONTACT / PRESALES CONTACT footer blocks below.
-  sAoa.push(['PROJECT CONTEXT']);
-  sAoa.push(['Project',f.project||'—']);
-  sAoa.push(['End-user',f.enduser||'—']);
-  sAoa.push(['Venue',f.venue||'—']);
-  sAoa.push(['Location',((f.city||'—')+((f.state)?', '+f.state:''))]);
-  sAoa.push(['Partner / SI',f.partner||'—']);
-  sAoa.push([]);
-  sAoa.push(['CUSTOM BOQ']);
-  sAoa.push(['Reference', refId]);
-  sAoa.push(['Total players', totalUnits]);
-  sAoa.push(['Distinct models', selections.length]);
-  selections.forEach(sel => {
-    sAoa.push(['  ' + sel.id, (parseInt(sel.qty,10)||0) + ' units']);
-  });
-  sAoa.push([]);
-  sAoa.push(['ACCESSORIES']);
-  const acc = r.advancedAccessories || {};
-  if(acc.cmsVendor) sAoa.push(['CMS', acc.cmsVendor + ' · ' + (acc.cmsTerm||'1') + 'y']);
-  if(acc.ssdCap && parseInt(acc.ssdQty,10)>0){
-    const capLabel = acc.ssdCap === '1024' ? '1 TB' : (acc.ssdCap + ' GB');
-    sAoa.push(['SSD', acc.ssdQty + ' × ' + capLabel]);
-  }
-  if(parseInt(acc.wd105Qty,10)>0) sAoa.push(['Wi-Fi (WD105)', acc.wd105Qty + ' modules']);
-  sAoa.push([]);
-  sAoa.push(['Quote valid until', validUntil]);
-  // v24.34.9: Corrected terms — were "30 days from PO" + "50% advance, balance on delivery"
-  // which contradicted the Quotation sheet's "4-5 weeks" + "100% advance" terms (set in v24.34.6).
-  // Both sheets now consistent.
-  sAoa.push(['Lead time', 'Standard 4–5 weeks from receipt of confirmed PO & advance payment']);
-  sAoa.push(['Payment terms', '100% advance along with purchase order']);
-
-  // v24.37.0: SALESPERSON CONTACT block — always rendered (project must have a salesPerson)
-  const _sp = _resolveUserDetails(f.salesPerson);
-  if(_sp){
-    sAoa.push([]);
-    sAoa.push(['SALESPERSON CONTACT']);
-    sAoa.push(['Name', _sp.fullName]);
-    sAoa.push(['Role', _sp.role]);
-    sAoa.push(['Phone', _sp.phone]);
-    sAoa.push(['Email', _sp.email]);
-  }
-  // v24.37.0: PRESALES CONTACT block — CONDITIONAL, only if presales person was selected.
-  // Per user spec: "if presale not selected then dont fill" — entire block omitted.
-  const _pp = _resolveUserDetails(f.presalesPerson);
-  if(_pp && f.presalesPerson){
-    sAoa.push([]);
-    sAoa.push(['PRESALES CONTACT']);
-    sAoa.push(['Name', _pp.fullName]);
-    sAoa.push(['Role', _pp.role]);
-    sAoa.push(['Phone', _pp.phone]);
-    sAoa.push(['Email', _pp.email]);
-  }
-
-  const ws1 = XLSX.utils.aoa_to_sheet(sAoa);
-  ws1['!cols'] = [ {wch:32}, {wch:48} ];
-  ws1['!merges'] = [
-    { s:{r:0,c:0}, e:{r:0,c:1} },
-    { s:{r:1,c:0}, e:{r:1,c:1} },
-    { s:{r:2,c:0}, e:{r:2,c:1} }
-  ];
-  // v24.20.0 (#18): Polished branded title styling — Cavitak red brand stripe + dark indigo
-  css(ws1,'A1',{ font:{name:'Calibri',sz:18,bold:true,color:{rgb:C.white}}, fill:{fgColor:{rgb:'DC2626'}}, alignment:{horizontal:'center',vertical:'center'} });
-  css(ws1,'A2',{ font:{name:'Calibri',sz:10,italic:true,color:{rgb:C.white}}, fill:{fgColor:{rgb:C.deepIndigo}}, alignment:{horizontal:'center'} });
-  css(ws1,'A3',{ font:{name:'Calibri',sz:11,italic:true,color:{rgb:C.indigoText}}, fill:{fgColor:{rgb:C.medViolet}}, alignment:{horizontal:'center'} });
-  ws1['!rows'] = [{hpt:32},{hpt:18},{hpt:22}];
-  // v24.34.9: Section headers detected dynamically (positions shifted after adding Venue/Sales/Presales fields)
-  // Pattern: any all-caps single-column row that isn't the title row (A1)
-  for(let i = 3; i < sAoa.length; i++){
-    const row = sAoa[i];
-    const rowNum = i + 1;
-    if(row && row.length === 1 && typeof row[0] === 'string' && row[0] === row[0].toUpperCase() && row[0].length > 3 && row[0] !== '—'){
-      css(ws1,'A'+rowNum,{ font:{name:'Calibri',sz:11,bold:true,color:{rgb:C.medViolet}}, fill:{fgColor:{rgb:C.labelBg}} });
-    }
-  }
-  XLSX.utils.book_append_sheet(wb, ws1, 'Summary');
-
-  // === SHEET 2: QUOTATION ===
-  // v24.34.7: Brought up to Guided Excel's richness — added Quote No/Date/Valid-until top-right,
-  // QUOTED TO / PROJECT DETAILS split header, contact footer, signature block.
-  const qAoa = [];
-  qAoa.push(['CAVITAK MARKETING — BrightSign Custom BOQ Quotation','','','','','']);
-  qAoa.push(['Authorized BrightSign distributor · India · Signage that performs, effortlessly','','','','','']);
-  qAoa.push([]);
-  // Quote meta block — top-right
-  qAoa.push(['QUOTATION','','','','Quote No.:',refId]);
-  qAoa.push(['','','','','Date:',dateStr]);
-  qAoa.push(['','','','','Valid Until:',validUntil]);
-  qAoa.push([]);
-  // v24.37.0: Quotation sheet header trimmed per user spec — 5 fields only.
-  // Removed: Consultant column, Stage column, Primary Contact field (now in salesperson footer).
-  // QUOTED TO / PROJECT DETAILS split header
-  qAoa.push(['QUOTED TO','','','PROJECT DETAILS','','']);
-  qAoa.push(['Partner / SI',(f.partner||'—'),'','Project Name',(f.project||'—'),'']);
-  qAoa.push(['End-user',(f.enduser||'—'),'','Venue',(f.venue||'—'),'']);
-  qAoa.push(['','','','Location',((f.city||'—')+((f.state)?', '+f.state:'')),'']);
-  qAoa.push([]);
-  // BOM header
-  // v24.42.0: Stay at 6 cols (merges/styling assume this). Encode discount in Notes column,
-  // and surface discount summary rows below the regular totals.
-  // v24.43.0: BoM mode (no prices) — same 6-col grid, but cols repurposed:
-  //   # | Description | Model No | Qty | Notes | (blank)
-  const _xlBomMode = (state._resultMode === 'bom');
-  if(_xlBomMode){
-    qAoa.push(['BILL OF MATERIALS','','','','','']);
-    qAoa.push(['#','Description','Model No','Qty','Notes','']);
-    let lineNo = 0;
-    rows.forEach(row => {
-      lineNo++;
-      const skuM = String(row.name||'').match(/\b(LS\d{3,4}|HD\d{3,4}|XD\d{3,4}|XT\d{3,4}|XC\d{3,4}|WD\d{3,4}|BS-[A-Z]+-?\d*|SSD-\d{2,4})\b/);
-      const sku = skuM ? skuM[1] : '';
-      qAoa.push([lineNo, row.name || '', sku, row.qty || 0, row.note || '', '']);
-    });
-    // No totals rows in BoM mode — skip to T&C.
-  } else {
-    qAoa.push(['BILL OF QUANTITIES','','','','','']);
-    qAoa.push(['#','Item','Qty','Unit Price (₹)','Line Total (₹)','Notes']);
-    let lineNo = 0;
-    rows.forEach(row => {
-      lineNo++;
-      const _pct = (typeof row.discPct === 'number') ? row.discPct : 0;
-      // Show NET unit price + NET line total in the existing cells. List + Disc% goes into Notes.
-      const _displayUnit = (row.netUnitPrice != null) ? row.netUnitPrice : (row.unitPrice != null ? row.unitPrice : '—');
-      const _displayLine = (row.netLineTotal != null) ? row.netLineTotal : (row.lineTotal != null ? row.lineTotal : '—');
-      let _noteWithDisc = row.note || '';
-      if(_pct > 0 && row.unitPrice != null){
-        const _listNote = 'List ₹' + Math.round(row.unitPrice).toLocaleString('en-IN') + ' · ' + _pct + '% off';
-        _noteWithDisc = _noteWithDisc ? (_listNote + ' · ' + _noteWithDisc) : _listNote;
+  // Pull BOM rows from state._bomTotals which buildBOMCard populated.
+  const bomTotals = state._bomTotals || { rows: [], subtotal: 0, gst: 0, grandTotal: 0 };
+  const bomRows = (bomTotals.rows || []).map(function(row) {
+    // Row shape from buildBOMCard: { name, qty, unitPrice, note, lineTotal?, ... }
+    // Try to extract a SKU from the name (e.g. "BrightSign LS445" → "LS445")
+    let sku = row.sku || '';
+    if (!sku && row.name) {
+      const m1 = row.name.match(/\b([A-Z]{2,4}\d{3,4}[A-Z]*)\b/);
+      if (m1) sku = m1[1];
+      else {
+        const m2 = row.name.match(/\(([^)]+)\)/);
+        if (m2) sku = m2[1];
       }
-      qAoa.push([
-        lineNo,
-        row.name || '',
-        row.qty || 0,
-        _displayUnit,
-        _displayLine,
-        _noteWithDisc
-      ]);
-    });
-    qAoa.push([]);
-    // v24.42.0: Summary rows. If discount applied, show breakdown; otherwise standard totals.
-    const _hasDisc = (totals.totalDiscount && totals.totalDiscount > 0);
-    if(_hasDisc){
-      qAoa.push(['','','','List Subtotal', totals.subtotal, '']);
-      qAoa.push(['','','','Total Discount', -1 * totals.totalDiscount, '']);
-      qAoa.push(['','','','Net Subtotal', (totals.discountedSubtotal != null ? totals.discountedSubtotal : totals.subtotal), '']);
-    } else {
-      qAoa.push(['','','','Gross Total', totals.subtotal, '']);
     }
-    qAoa.push(['','','','GST @ 18%',  totals.gst,      '']);
-    qAoa.push(['','','','Total with GST', totals.grandTotal, '']);
-  } // end !_xlBomMode
-  // v24.34.6: Terms & Conditions
-  qAoa.push([]);
-  qAoa.push(['TERMS & CONDITIONS','','','','','']);
-  qAoa.push(['Payment Terms','100% advance along with purchase order','','','','']);
-  qAoa.push(['Lead Time','Standard 4–5 weeks from receipt of confirmed PO & advance payment, subject to stock availability','','','','']);
-  qAoa.push(['Delivery','Ex-warehouse Ahmedabad. Outbound freight & in-transit insurance extra at actuals.','','','','']);
-  qAoa.push(['Warranty',"Standard 5-year OEM warranty on BrightSign Series 5 players, subject to product registration on the BrightSign portal within 30 days of purchase. Without registration, default factory warranty applies. Faulty units must be returned to Cavitak's Ahmedabad office for warranty processing; outbound logistics are at the customer's cost.",'','','','']);
-  qAoa.push(['Validity',`15 days from quote date (${dateStr}). Pricing subject to revision thereafter.`,'','','','']);
-  qAoa.push(['Taxes','GST @ 18% included above. Any additional levies, cess or local duties extra at actuals.','','','','']);
-  qAoa.push(['Forex','Pricing based on prevailing INR–USD rate on quote date. Material forex movement (>3%) before PO may revise pricing.','','','','']);
-  qAoa.push(['Stock Validity','Stock subject to prior sale. Confirmation of availability at the time of PO placement.','','','','']);
-  qAoa.push(['Installation',"Partner's scope.",'','','','']);
-  qAoa.push(['Support','Onsite / Online support charges quoted extra on request.','','','','']);
-  qAoa.push(['Cancellation','Orders once placed are non-cancellable. Advance payment is non-refundable for despatched/in-transit goods.','','','','']);
-  qAoa.push(['Jurisdiction','All disputes subject to Ahmedabad jurisdiction. Indian law applies.','','','','']);
-  // v24.42.0: BS-only conditional T&C — when ANY line item in the BOM is an SSD line,
-  // explicitly state the standard 64GB microSD card is not supplied for those units.
-  // Detection: scan totals.rows for an item whose name contains "SSD" or matches SSD- SKU pattern.
-  (function(){
-    const _hasSsd = Array.isArray(rows) && rows.some(function(rr){
-      return rr && rr.name && /\bSSD\b|\bM\.2\s+NVMe\b/i.test(String(rr.name));
-    });
-    if(_hasSsd){
-      qAoa.push(['SSD Storage','Models supplied with an M.2 NVMe SSD do not include the standard 64GB microSD card.','','','','']);
-    }
-  })();
-  // v24.37.0: Footer rewritten — pulls from f.salesPerson (the deal's salesperson, not current logged-in user)
-  // and conditional f.presalesPerson. Per user spec: "Sales Person footer must required" + "if presale not selected then dont fill"
-  qAoa.push([]);
-  (function(){
-    const _sp = _resolveUserDetails(f.salesPerson);
-    if(_sp){
-      qAoa.push(['SALESPERSON CONTACT','','','','','']);
-      qAoa.push(['Name', _sp.fullName,'','','','']);
-      qAoa.push(['Role', _sp.role,'','','','']);
-      qAoa.push(['Phone', _sp.phone,'','','','']);
-      qAoa.push(['Email', _sp.email,'','','','']);
-    }
-    const _pp = _resolveUserDetails(f.presalesPerson);
-    if(_pp && f.presalesPerson){
-      qAoa.push([]);
-      qAoa.push(['PRESALES CONTACT','','','','','']);
-      qAoa.push(['Name', _pp.fullName,'','','','']);
-      qAoa.push(['Role', _pp.role,'','','','']);
-      qAoa.push(['Phone', _pp.phone,'','','','']);
-      qAoa.push(['Email', _pp.email,'','','','']);
-    }
-    qAoa.push([]);
-    qAoa.push([]);
-    qAoa.push(['Cavitak Marketing Pvt Ltd · Authorized BrightSign distributor · India','','','','','']);
-    qAoa.push(['——————————————————————————————————————————','','','','','']);
-    qAoa.push(['This document is for internal reference and customer discussion. Pricing subject to current price list, forex, and landed-cost variations.','','','','','']);
-    qAoa.push(['Generated by BrightSign Product Selector · v' + (typeof FRONTEND_VERSION !== 'undefined' ? FRONTEND_VERSION : '') + ' (Custom BOQ)','','','','','']);
-  })();
-
-  const ws2 = XLSX.utils.aoa_to_sheet(qAoa);
-  ws2['!cols'] = [ {wch:18}, {wch:48}, {wch:8}, {wch:18}, {wch:18}, {wch:56} ];  // v24.34.9: Item 42→48, Notes 36→56 for long CMS descriptions
-  ws2['!merges'] = [
-    // Title rows (A1:F1, A2:F2)
-    { s:{r:0,c:0}, e:{r:0,c:5} },
-    { s:{r:1,c:0}, e:{r:1,c:5} },
-    // QUOTATION word at A4 spans A4:D4 (left half)
-    { s:{r:3,c:0}, e:{r:3,c:3} },
-    // E4 "Quote No.:" stays single cell, F4 ref
-    // E5:F5, E6:F6 — keep separate so labels align right
-    // Section headers QUOTED TO + PROJECT DETAILS — span their respective columns
-    // Row 8: A8 = "QUOTED TO" (merged A:B), D8 = "PROJECT DETAILS" (merged D:E)
-    { s:{r:7,c:0}, e:{r:7,c:1} },
-    { s:{r:7,c:3}, e:{r:7,c:4} },
-    // Row 14: "BILL OF QUANTITIES" merged A:F
-    { s:{r:13,c:0}, e:{r:13,c:5} }
-  ];
-  // v24.20.0 (#18): Polished branded title — Cavitak red brand stripe + indigo subtitle band
-  css(ws2,'A1',{ font:{name:'Calibri',sz:22,bold:true,color:{rgb:C.white}}, fill:{fgColor:{rgb:'DC2626'}}, alignment:{horizontal:'left',vertical:'center',indent:1} });
-  css(ws2,'A2',{ font:{name:'Calibri',sz:11,italic:true,color:{rgb:C.indigoText},name:'Calibri'}, fill:{fgColor:{rgb:C.deepIndigo}}, alignment:{horizontal:'left',vertical:'center',indent:1} });
-  ws2['!rows'] = [{hpt:36},{hpt:20},{hpt:8}];
-
-  // Row 4 — "QUOTATION" left + "Quote No.: refId" right
-  css(ws2,'A4',{ font:{name:'Calibri',sz:16,bold:true,color:{rgb:C.deepIndigo}}, alignment:{horizontal:'left',vertical:'center'} });
-  css(ws2,'E4',{ font:{name:'Calibri',sz:10,color:{rgb:C.inkSoft}}, alignment:{horizontal:'right'} });
-  css(ws2,'F4',{ font:{name:'Calibri',sz:11,bold:true,color:{rgb:C.violetAccent}}, alignment:{horizontal:'left'} });
-  css(ws2,'E5',{ font:{name:'Calibri',sz:10,color:{rgb:C.inkSoft}}, alignment:{horizontal:'right'} });
-  css(ws2,'F5',{ font:{name:'Calibri',sz:10,color:{rgb:C.ink}}, alignment:{horizontal:'left'} });
-  css(ws2,'E6',{ font:{name:'Calibri',sz:10,color:{rgb:C.inkSoft}}, alignment:{horizontal:'right'} });
-  css(ws2,'F6',{ font:{name:'Calibri',sz:10,color:{rgb:C.ink}}, alignment:{horizontal:'left'} });
-  ws2['!rows'].push({hpt:24});  // row 4
-  ws2['!rows'].push({hpt:18});  // row 5
-  ws2['!rows'].push({hpt:18});  // row 6
-  ws2['!rows'].push({hpt:8});   // row 7 blank
-
-  // Row 8 — section headers QUOTED TO + PROJECT DETAILS
-  css(ws2,'A8',{ font:{name:'Calibri',sz:11,bold:true,color:{rgb:C.white}}, fill:{fgColor:{rgb:C.medViolet}}, alignment:{horizontal:'left',vertical:'center',indent:1} });
-  css(ws2,'D8',{ font:{name:'Calibri',sz:11,bold:true,color:{rgb:C.white}}, fill:{fgColor:{rgb:C.medViolet}}, alignment:{horizontal:'left',vertical:'center',indent:1} });
-  ws2['!rows'].push({hpt:22});  // row 8
-
-  // Rows 9-12 — QUOTED TO / PROJECT DETAILS data
-  for(let rr = 9; rr <= 12; rr++){
-    css(ws2,'A'+rr,{ font:{name:'Calibri',sz:10,color:{rgb:C.inkSoft}}, fill:{fgColor:{rgb:C.labelBg}}, alignment:{horizontal:'left',vertical:'center',indent:1} });
-    css(ws2,'B'+rr,{ font:{name:'Calibri',sz:10,bold:true,color:{rgb:C.ink}}, alignment:{horizontal:'left',vertical:'center',indent:1} });
-    css(ws2,'D'+rr,{ font:{name:'Calibri',sz:10,color:{rgb:C.inkSoft}}, fill:{fgColor:{rgb:C.labelBg}}, alignment:{horizontal:'left',vertical:'center',indent:1} });
-    css(ws2,'E'+rr,{ font:{name:'Calibri',sz:10,bold:true,color:{rgb:C.ink}}, alignment:{horizontal:'left',vertical:'center',indent:1} });
-    ws2['!rows'].push({hpt:20});
-  }
-  ws2['!rows'].push({hpt:8});  // row 13 blank
-
-  // Row 14 — BILL OF QUANTITIES section header
-  css(ws2,'A14',{ font:{name:'Calibri',sz:11,bold:true,color:{rgb:C.white}}, fill:{fgColor:{rgb:C.medViolet}}, alignment:{horizontal:'left',vertical:'center',indent:1} });
-  ws2['!rows'].push({hpt:22});  // row 14
-
-  // Row 15 — BOM column headers
-  ['A15','B15','C15','D15','E15','F15'].forEach(ref => {
-    css(ws2,ref,{ font:{name:'Calibri',sz:11,bold:true,color:{rgb:C.white}}, fill:{fgColor:{rgb:C.deepIndigo}}, alignment:{horizontal:'center',vertical:'center'} });
+    return {
+      sku: sku,
+      name: row.name || '',
+      qty: row.qty || 1,
+      unitPrice: row.unitPrice,
+      lineTotal: row.lineTotal != null ? row.lineTotal : ((row.unitPrice != null && row.qty) ? row.unitPrice * row.qty : null),
+      note: row.note || ''
+    };
   });
-  ws2['!rows'].push({hpt:22});  // row 15
 
-  // BOM data rows start at row 16
-  const dataStartRow = 16;
-  const dataEndRow = dataStartRow + rows.length - 1;
-  for(let rr = dataStartRow; rr <= dataEndRow; rr++){
-    // v24.34.9: vertical:'top' on cells with wrap-text so multi-line content displays from top
-    css(ws2,'A'+rr,{ font:{name:'Calibri',sz:10}, alignment:{horizontal:'center',vertical:'top'} });
-    css(ws2,'B'+rr,{ font:{name:'Calibri',sz:10}, alignment:{horizontal:'left',vertical:'top',wrapText:true,indent:1} });
-    css(ws2,'C'+rr,{ font:{name:'Calibri',sz:10}, alignment:{horizontal:'center',vertical:'top'} });
-    css(ws2,'D'+rr,{ font:{name:'Calibri',sz:10}, numFmt:'#,##0', alignment:{horizontal:'right',vertical:'top'} });
-    css(ws2,'E'+rr,{ font:{name:'Calibri',sz:10,bold:true}, numFmt:'#,##0', alignment:{horizontal:'right',vertical:'top'} });
-    css(ws2,'F'+rr,{ font:{name:'Calibri',sz:9,color:{rgb:C.inkSoft}}, alignment:{horizontal:'left',vertical:'top',wrapText:true,indent:1} });
-    // Banded rows
-    if((rr - dataStartRow) % 2 === 1){
-      ['A','B','C','D','E','F'].forEach(col => {
-        css(ws2, col+rr, { fill:{fgColor:{rgb:'F8FAFC'}} });
+  // Resolve salesperson/presales from _allUsers cache
+  function _resolveContact(loginName) {
+    if (!loginName) return null;
+    try {
+      const list = Array.isArray(window._allUsers) ? window._allUsers : [];
+      const u = list.find(function(x) { return String(x.loginName || '').toLowerCase() === String(loginName).toLowerCase(); });
+      if (u) {
+        return {
+          name:  u.fullName || u.loginName || loginName,
+          role:  u.professionalTitle || u.role || '—',
+          phone: u.phone || '—',
+          email: u.email || '—'
+        };
+      }
+    } catch (_) {}
+    // Fallback to currentUser if it matches
+    if (state.user && String(state.user.loginName || '').toLowerCase() === String(loginName).toLowerCase()) {
+      return {
+        name:  state.user.fullName || state.user.loginName,
+        role:  state.user.professionalTitle || state.user.role || '—',
+        phone: state.user.phone || '—',
+        email: state.user.email || '—'
+      };
+    }
+    return { name: loginName, role: '—', phone: '—', email: '—' };
+  }
+
+  return {
+    refId:      refId,
+    quoteNo:    refId,
+    project:    f.project || '—',
+    endUser:    f.enduser || '—',
+    venue:      f.venue || '—',
+    location:   (f.city || '—') + (f.state ? ', ' + f.state : ''),
+    partner:    f.partner || '—',
+    dateStr:    dateStr,
+    validUntil: validUntil,
+    verdict:    verdict,
+    primaryModel: m.id || m.name || 'Player',
+    bomRows:    bomRows,
+    subtotal:   bomTotals.subtotal || 0,
+    gst:        bomTotals.gst || 0,
+    grandTotal: bomTotals.grandTotal || 0,
+    totalDiscount: bomTotals.totalDiscount || 0,
+    discountedSubtotal: bomTotals.discountedSubtotal || 0,
+    bomMode:    state._resultMode === 'bom',
+    salesperson: _resolveContact(f.salesPerson),
+    presales:    _resolveContact(f.presalesPerson)
+  };
+}
+
+/**
+ * Build the normalized `quote` payload from Custom BOQ (Advanced) state.
+ */
+function _buildQuoteFromAdvanced() {
+  const f = state.form;
+  const r = state.result;
+  const refId = r.refId || ('BS-' + Date.now().toString().slice(-8));
+  const dateStr = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const validUntil = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  const bomTotals = state._bomTotals || { rows: [], subtotal: 0, gst: 0, grandTotal: 0 };
+  const bomRows = (bomTotals.rows || []).map(function(row) {
+    let sku = row.sku || '';
+    if (!sku && row.name) {
+      const m1 = row.name.match(/\b([A-Z]{2,4}\d{3,4}[A-Z]*)\b/);
+      if (m1) sku = m1[1];
+      else {
+        const m2 = row.name.match(/\(([^)]+)\)/);
+        if (m2) sku = m2[1];
+      }
+    }
+    return {
+      sku: sku,
+      name: row.name || '',
+      qty: row.qty || 1,
+      unitPrice: row.unitPrice,
+      lineTotal: row.lineTotal != null ? row.lineTotal : ((row.unitPrice != null && row.qty) ? row.unitPrice * row.qty : null),
+      note: row.note || ''
+    };
+  });
+
+  // Custom BOQ has multiple models — figure out the primary one for the verdict band
+  let primaryModel = 'Custom BOQ';
+  let verdict = 'BrightSign Custom BoQ · multi-model configuration';
+  try {
+    // pick the highest-tier model from the selection (first row that's a BS player)
+    const advSel = (state.result && state.result.advancedSelection) ? state.result.advancedSelection : null;
+    if (advSel && Array.isArray(advSel.models) && advSel.models.length > 0) {
+      primaryModel = advSel.models[0].id || advSel.models[0].name || 'Custom BOQ';
+      const count = advSel.models.length;
+      verdict = 'BrightSign Custom BoQ · ' + count + ' model' + (count === 1 ? '' : 's') + ' configured';
+    } else if (bomRows.length > 0) {
+      // Fallback: derive primary from first BS player row
+      const playerRow = bomRows.find(function(row) {
+        return row.sku && /^[A-Z]{2,4}\d{3,4}[A-Z]*$/.test(row.sku);
       });
+      if (playerRow) primaryModel = playerRow.sku;
     }
-    // v24.34.9: dynamic row height — estimate from longest text in row vs column width.
-    // Item col B width 48 chars, Notes col F width 56 chars. Roughly 1 line per 50 chars.
-    const itemLen = String((rows[rr - dataStartRow] && rows[rr - dataStartRow].name) || '').length;
-    const noteLen = String((rows[rr - dataStartRow] && rows[rr - dataStartRow].note) || '').length;
-    const itemLines = Math.max(1, Math.ceil(itemLen / 48));
-    const noteLines = Math.max(1, Math.ceil(noteLen / 56));
-    const maxLines = Math.max(itemLines, noteLines, 1);
-    const rowHeight = Math.max(28, maxLines * 18);  // 18pt per text line, 28pt minimum
-    ws2['!rows'].push({hpt: rowHeight});
-  }
+  } catch (_) {}
 
-  // Totals rows — 3 rows starting after blank
-  const totalsStart = dataEndRow + 2;
-  for(let rr = totalsStart; rr <= totalsStart + 2; rr++){
-    css(ws2,'D'+rr,{ font:{name:'Calibri',sz:11,bold:true,color:{rgb:C.medViolet}}, fill:{fgColor:{rgb:C.labelBg}}, alignment:{horizontal:'right',vertical:'center'} });
-    css(ws2,'E'+rr,{ font:{name:'Calibri',sz:11,bold:true,color:{rgb:C.medViolet}}, fill:{fgColor:{rgb:C.labelBg}}, numFmt:'#,##0', alignment:{horizontal:'right',vertical:'center'} });
-  }
-  // Grand total row gets accent
-  css(ws2,'D'+(totalsStart+2),{ font:{name:'Calibri',sz:12,bold:true,color:{rgb:C.white}}, fill:{fgColor:{rgb:C.violetAccent}}, alignment:{horizontal:'right',vertical:'center'} });
-  css(ws2,'E'+(totalsStart+2),{ font:{name:'Calibri',sz:12,bold:true,color:{rgb:C.white}}, fill:{fgColor:{rgb:C.violetAccent}}, numFmt:'#,##0', alignment:{horizontal:'right',vertical:'center'} });
-
-  // v24.34.6: Terms & Conditions section — styling
-  // After grand-total row + 1 blank row, header row, then 12 term rows
-  const termsHeaderRow = totalsStart + 4;
-  // Header styling — full-width indigo band
-  css(ws2,'A'+termsHeaderRow,{ font:{name:'Calibri',sz:12,bold:true,color:{rgb:C.white}}, fill:{fgColor:{rgb:C.deepIndigo}}, alignment:{horizontal:'left',vertical:'center',indent:1} });
-  ws2['!merges'].push({ s:{r:termsHeaderRow-1,c:0}, e:{r:termsHeaderRow-1,c:5} });
-  // Term rows: 12 rows after header. Col A = label (bold indigo), Col B-F merged = description
-  for(let i = 0; i < 12; i++){
-    const tr = termsHeaderRow + 1 + i;
-    css(ws2,'A'+tr,{ font:{name:'Calibri',sz:10,bold:true,color:{rgb:C.medViolet}}, alignment:{horizontal:'left',vertical:'top',wrapText:true,indent:1} });
-    css(ws2,'B'+tr,{ font:{name:'Calibri',sz:10,color:{rgb:'334155'}}, alignment:{horizontal:'left',vertical:'top',wrapText:true} });
-    // Merge B:F so long descriptions wrap across the available width
-    ws2['!merges'].push({ s:{r:tr-1,c:1}, e:{r:tr-1,c:5} });
-    // Alternate row backgrounds for readability
-    if(i % 2 === 1){
-      css(ws2,'A'+tr,{ font:{name:'Calibri',sz:10,bold:true,color:{rgb:C.medViolet}}, fill:{fgColor:{rgb:'F8FAFC'}}, alignment:{horizontal:'left',vertical:'top',wrapText:true,indent:1} });
-      css(ws2,'B'+tr,{ font:{name:'Calibri',sz:10,color:{rgb:'334155'}}, fill:{fgColor:{rgb:'F8FAFC'}}, alignment:{horizontal:'left',vertical:'top',wrapText:true} });
+  function _resolveContact(loginName) {
+    if (!loginName) return null;
+    try {
+      const list = Array.isArray(window._allUsers) ? window._allUsers : [];
+      const u = list.find(function(x) { return String(x.loginName || '').toLowerCase() === String(loginName).toLowerCase(); });
+      if (u) {
+        return {
+          name:  u.fullName || u.loginName || loginName,
+          role:  u.professionalTitle || u.role || '—',
+          phone: u.phone || '—',
+          email: u.email || '—'
+        };
+      }
+    } catch (_) {}
+    if (state.user && String(state.user.loginName || '').toLowerCase() === String(loginName).toLowerCase()) {
+      return {
+        name:  state.user.fullName || state.user.loginName,
+        role:  state.user.professionalTitle || state.user.role || '—',
+        phone: state.user.phone || '—',
+        email: state.user.email || '—'
+      };
     }
-  }
-  // Taller row heights for warranty (4th term, multi-line)
-  ws2['!rows'][termsHeaderRow - 1] = {hpt:24};  // Header
-  ws2['!rows'][termsHeaderRow + 3] = {hpt:60};  // Warranty
-
-  // v24.34.7: Contact footer + signature block styling
-  // Layout: after 12 terms + 1 blank = termsHeaderRow + 13.
-  // Row order: blank, "FOR PRICING & QUOTATION QUERIES", [name], [email/phone], [escalation if non-Super], [Issued by], blank, blank, [Cavitak line], [divider], [Prepared by], [disclaimer], [Generator]
-  const footerHeaderRow = termsHeaderRow + 14;  // header row position (after blank)
-  css(ws2,'A'+footerHeaderRow,{ font:{name:'Calibri',sz:11,bold:true,color:{rgb:C.white}}, fill:{fgColor:{rgb:C.medViolet}}, alignment:{horizontal:'left',vertical:'center',indent:1} });
-  ws2['!merges'].push({ s:{r:footerHeaderRow-1,c:0}, e:{r:footerHeaderRow-1,c:5} });
-  // Contact rows below — merge each across full width for readability
-  for(let i = 1; i <= 4; i++){
-    const fr = footerHeaderRow + i;
-    css(ws2,'A'+fr,{ font:{name:'Calibri',sz:10,color:{rgb:C.ink}}, alignment:{horizontal:'left',vertical:'center',indent:1} });
-    ws2['!merges'].push({ s:{r:fr-1,c:0}, e:{r:fr-1,c:5} });
+    return { name: loginName, role: '—', phone: '—', email: '—' };
   }
 
-  // v24.34.8 (A): Universal polish — frozen panes, print setup, borders, currency format
-  // Freeze first 15 rows (title + meta + QUOTED TO/PROJECT DETAILS + BILL OF QUANTITIES header + BOM column header)
-  ws2['!freeze'] = { xSplit: 0, ySplit: 15, topLeftCell: 'A16', activePane: 'bottomLeft', state: 'frozen' };
-  // Apply thin slate-200 borders to BOM data rows (dataStartRow=16 through dataEndRow)
-  const _borderSide = { style: 'thin', color: { rgb: 'CBD5E1' } };
-  const _borderAll = { top: _borderSide, bottom: _borderSide, left: _borderSide, right: _borderSide };
-  for(let rr = 15; rr <= dataEndRow; rr++){  // include header row 15
-    ['A','B','C','D','E','F'].forEach(col => {
-      const ref = col + rr;
-      if(!ws2[ref]) ws2[ref] = { v:'', t:'s' };
-      ws2[ref].s = Object.assign({}, ws2[ref].s||{}, { border: _borderAll });
+  return {
+    refId:      refId,
+    quoteNo:    refId,
+    project:    f.project || '—',
+    endUser:    f.enduser || '—',
+    venue:      f.venue || '—',
+    location:   (f.city || '—') + (f.state ? ', ' + f.state : ''),
+    partner:    f.partner || '—',
+    dateStr:    dateStr,
+    validUntil: validUntil,
+    verdict:    verdict,
+    primaryModel: primaryModel,
+    bomRows:    bomRows,
+    subtotal:   bomTotals.subtotal || 0,
+    gst:        bomTotals.gst || 0,
+    grandTotal: bomTotals.grandTotal || 0,
+    totalDiscount: bomTotals.totalDiscount || 0,
+    discountedSubtotal: bomTotals.discountedSubtotal || 0,
+    bomMode:    state._resultMode === 'bom',
+    salesperson: _resolveContact(f.salesPerson),
+    presales:    _resolveContact(f.presalesPerson)
+  };
+}
+
+
+function _downloadAdvancedQuoteExcel(returnWorkbook){
+  // v24.45.0 — Routes through the new ExcelJS-based _renderBsQuoteExcel renderer.
+  // (Previously 432 lines of xlsx-js-style code with red banner. Now uses tvONE design
+  // language adapted to BS indigo/violet.)
+  if(!state.result || state.result.noRec){
+    if(returnWorkbook === true) return null;
+    alert('No recommendation available to export.'); return;
+  }
+  if(typeof ExcelJS === 'undefined'){
+    if(returnWorkbook === true) return null;
+    alert('Excel library not loaded. Check internet connection and reload.'); return;
+  }
+
+  const quote = _buildQuoteFromAdvanced();
+  const refId = quote.refId;
+  const modeSuffix = (state._resultMode === 'bom') ? 'BoM' : 'BoQ';
+  const fname = refId + '-' + modeSuffix + '.xlsx';
+
+  // The new renderer is async; wrap in IIFE to keep this function's contract.
+  // returnWorkbook is no longer meaningful (legacy email-flow signature) — kept for
+  // back-compat. Old callers (e.g. v22.5 email modal that built a workbook server-side)
+  // were already replaced by v24.44.1 mailto: flow which calls downloadQuoteExcel() directly.
+  _renderBsQuoteExcel(quote)
+    .then(function(buffer) {
+      _downloadXlsxBuffer(buffer, fname);
+    })
+    .catch(function(err) {
+      console.error('[v24.45.0] BS Excel render failed (Advanced):', err);
+      alert('Excel export failed: ' + (err.message || err));
     });
-  }
-  // Indian rupee number format on currency columns (BOM data + totals)
-  const _rupeeFmt = '[$₹-en-IN]#,##0;[Red]-[$₹-en-IN]#,##0';
-  for(let rr = dataStartRow; rr <= dataEndRow; rr++){
-    if(ws2['D'+rr]) ws2['D'+rr].s = Object.assign({}, ws2['D'+rr].s||{}, { numFmt: _rupeeFmt });
-    if(ws2['E'+rr]) ws2['E'+rr].s = Object.assign({}, ws2['E'+rr].s||{}, { numFmt: _rupeeFmt });
-  }
-  for(let rr = totalsStart; rr <= totalsStart + 2; rr++){
-    if(ws2['E'+rr]) ws2['E'+rr].s = Object.assign({}, ws2['E'+rr].s||{}, { numFmt: _rupeeFmt });
-  }
-  // Print setup — landscape, fit to 1 page wide, repeat title rows on every page
-  ws2['!margins'] = { left:0.4, right:0.4, top:0.5, bottom:0.5 };
-  ws2['!pageSetup'] = { orientation:'landscape', paperSize:9, fitToWidth:1, fitToHeight:0 };
-  ws2['!printHeader'] = '1:15';  // repeat title + meta + section headers on every printed page
-
-  XLSX.utils.book_append_sheet(wb, ws2, 'Quotation');
-
-  if(returnWorkbook === true) return wb;
-
-  // v24.43.0 — Filename format: BS-<case>-BoQ.xlsx (with prices) or BS-<case>-BoM.xlsx (no prices).
-  const _modeSuffix = (state._resultMode === 'bom') ? 'BoM' : 'BoQ';
-  const filename = refId + '-' + _modeSuffix + '.xlsx';
-  XLSX.writeFile(wb, filename);
+  // Return null for returnWorkbook callers — they shouldn't exist post-v24.44.1.
+  if (returnWorkbook === true) return null;
 }
 
 function downloadQuoteExcel(returnWorkbook){
-  if(!state.result||state.result.noRec){
-    if(returnWorkbook===true)return null;
-    alert('No recommendation available to export.');return;
+  // v24.45.0 — Routes through the new ExcelJS-based _renderBsQuoteExcel renderer.
+  // (Previously 497 lines of xlsx-js-style code. Now uses tvONE design adapted to BS.)
+  if(!state.result || state.result.noRec){
+    if(returnWorkbook === true) return null;
+    alert('No recommendation available to export.'); return;
   }
-  if(typeof XLSX==='undefined'){
-    if(returnWorkbook===true)return null;
-    alert('Excel library not loaded. Check internet connection and reload.');return;
+  if(typeof ExcelJS === 'undefined'){
+    if(returnWorkbook === true) return null;
+    alert('Excel library not loaded. Check internet connection and reload.'); return;
   }
 
-  // v24.12.6: Advanced-mode short-circuit. The original Excel template was built around a
-  // single primary model; for Custom BOQ we need every selected model on the Quotation
-  // sheet. Use the row data already cached on state._bomTotals.rows by buildAdvancedBOMCard.
+  // Advanced mode short-circuit — kept for back-compat with existing call sites.
   if(state.result.isAdvanced){
     return _downloadAdvancedQuoteExcel(returnWorkbook);
   }
 
-  const f=state.form;const r=state.result;const m=r.model;
-  const refId=r.refId||'BS-'+Date.now().toString().slice(-8);
-  const dateStr=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
-  const validUntil=new Date(Date.now()+15*24*60*60*1000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
-  const isMixed=f.environment==='mixed';
-  const qtyIndoor=parseInt(f.qtyIndoor)||0;
-  const qtyOutdoor=parseInt(f.qtyOutdoor)||0;
-  const qtyTotal=parseInt(f.qty)||1;
-  const om=(isMixed && r.outdoorVariant && r.outdoorVariant.id!==m.id)?r.outdoorVariant:null;
+  const quote = _buildQuoteFromGuided();
+  const refId = quote.refId;
+  const modeSuffix = (state._resultMode === 'bom') ? 'BoM' : 'BoQ';
+  const fname = refId + '-' + modeSuffix + '.xlsx';
 
-  const C={
-    deepIndigo:'1E1B4B',
-    medViolet:'312E81',
-    indigoText:'C7D2FE',
-    labelBg:'EEF2FF',
-    modelHighlightBg:'F5F3FF',
-    white:'FFFFFF',
-    ink:'1E1B4B',
-    inkSoft:'475569',
-    violetAccent:'7C3AED',
-    palePastel:'EDE9FE'
-  };
-
-  const wb=XLSX.utils.book_new();
-
-  function css(ws,ref,styleObj){
-    if(!ws[ref])ws[ref]={v:'',t:'s'};
-    ws[ref].s=Object.assign({},ws[ref].s||{},styleObj);
-  }
-
-  // === SHEET 1: SUMMARY ===
-  const sAoa=[];
-  sAoa.push(['CAVITAK MARKETING — BrightSign Product Selector']);
-  sAoa.push(['Authorized BrightSign distributor · India · Signage that performs, effortlessly']);
-  sAoa.push(['Quote: '+refId+' · '+(f.project||'Project')+' · '+dateStr]);
-  sAoa.push([]);
-  // v24.37.0: PROJECT CONTEXT trimmed to 5 fields per user spec.
-  // Removed: Consultant, Sales Person (moved to footer), Presales Person (moved to footer, conditional), Stage, Expected Close.
-  sAoa.push(['PROJECT CONTEXT']);
-  sAoa.push(['Project',f.project||'—']);
-  sAoa.push(['End-user',f.enduser||'—']);
-  sAoa.push(['Venue',f.venue||'—']);
-  sAoa.push(['Location',((f.city||'—')+((f.state)?', '+f.state:''))]);
-  sAoa.push(['Partner / SI',f.partner||'—']);
-  // v24.26.14: Sales/Presales person fields — kept as helpers but moved to footer in v24.37.0.
-  // Resolves loginName → "Full Name (loginName)" via _allUsers cache when available, else loginName, else "—".
-  function _resolveUserName(loginName){
-    if(!loginName) return '—';
-    try {
-      const list = Array.isArray(window._allUsers) ? window._allUsers : [];
-      const u = list.find(function(x){ return String(x.loginName||'').toLowerCase() === String(loginName).toLowerCase(); });
-      if(u && u.fullName) return u.fullName + ' (' + loginName + ')';
-    } catch(_){}
-    return loginName;
-  }
-  // v24.37.0: full-detail resolver for footer SALESPERSON/PRESALES CONTACT blocks
-  function _resolveUserDetails(loginName){
-    if(!loginName) return null;
-    try {
-      const list = Array.isArray(window._allUsers) ? window._allUsers : [];
-      const u = list.find(function(x){ return String(x.loginName||'').toLowerCase() === String(loginName).toLowerCase(); });
-      if(u) return {
-        fullName: u.fullName || loginName,
-        role: u.professionalTitle || u.role || '—',
-        phone: u.phone || '—',
-        email: u.email || '—'
-      };
-    } catch(_){}
-    return { fullName: loginName, role: '—', phone: '—', email: '—' };
-  }
-  sAoa.push([]);
-  sAoa.push(['RECOMMENDED PLAYER']);
-  sAoa.push(['Model',m.id]);
-  sAoa.push(['Tag',m.tag]);
-  sAoa.push(['Chassis',m.chassis==='aluminium'?'Aluminium (Outdoor Grade)':m.chassis==='metal'?'Metal (Indoor Grade)':'Plastic (Indoor Grade)']);
-  sAoa.push(['Power',m.poe?'PoE+ / DC':'DC only']);
-  sAoa.push(['Verdict',m.notes||'—']);
-  if(om){
-    sAoa.push([]);
-    sAoa.push(['OUTDOOR VARIANT (MIXED DEPLOYMENT)']);
-    sAoa.push(['Model',om.id]);
-    sAoa.push(['Tag',om.tag]);
-    sAoa.push(['Chassis','Aluminium (Outdoor Grade)']);
-    sAoa.push(['Qty',qtyOutdoor]);
-  }
-  sAoa.push([]);
-  sAoa.push(['REQUIREMENTS MATCHED']);
-  sAoa.push(['Deployment type',f.environment||'—']);
-  sAoa.push(['Total Quantity',qtyTotal]);
-  if(isMixed){sAoa.push(['Indoor Qty',qtyIndoor]);sAoa.push(['Outdoor Qty',qtyOutdoor]);}
-  sAoa.push(['Content Type',f.content||'—']);
-  sAoa.push(['Resolution',f.resolution||'—']);
-  sAoa.push(['Update Path',f.update||'—']);
-  sAoa.push(['Budget Tier',(BUDGET_ZONES[f.budget]||{}).name||'—']);
-  sAoa.push(['HDMI Input',f.hdmiIn||'—']);
-  sAoa.push(['Touch',f.touch||'—']);
-  sAoa.push(['Wi-Fi',f.wifi||'—']);
-  sAoa.push(['GPIO',f.gpio||'—']);
-  sAoa.push(['SSD',f.ssd==='yes'?(f.ssdCap?`Yes · ${f.ssdCap}GB`:'Yes'):'No']);
-  sAoa.push([]);
-  sAoa.push(['VALUE ADDS FOR CUSTOMER']);
-  sAoa.push(['✦','5-year standard OEM warranty from BrightSign']);
-  sAoa.push(['✦',`BrightSign ${m.id} is part of Series 5 — all ports active, all codecs supported out of box`]);
-  if(m.poe)sAoa.push(['✦','PoE+ flexibility — choice between PoE+ or DC at install time per location']);
-  sAoa.push([]);
-  sAoa.push(['DOCUMENT TRAIL']);
-  sAoa.push(['Quote Reference',refId]);
-  sAoa.push(['Issued by',(state.user && state.user.fullName)||'Dipenkumar Gajjar']);
-  sAoa.push(['Generated at',new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })]);
-
-  const sWs=XLSX.utils.aoa_to_sheet(sAoa);
-  sWs['!cols']=[{wch:22},{wch:72},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12}];
-  // v24.20.0 (#18): Polished branded title — Cavitak red brand stripe + indigo subtitle
-  css(sWs,'A1',{fill:{fgColor:{rgb:'DC2626'}},font:{bold:true,sz:20,color:{rgb:C.white},name:'Calibri'},alignment:{horizontal:'left',vertical:'center',indent:1}});
-  css(sWs,'A2',{fill:{fgColor:{rgb:C.deepIndigo}},font:{sz:10,italic:true,color:{rgb:C.white},name:'Calibri'},alignment:{horizontal:'left',vertical:'center',indent:1}});
-  css(sWs,'A3',{fill:{fgColor:{rgb:C.deepIndigo}},font:{sz:10,color:{rgb:C.indigoText},name:'Calibri'},alignment:{horizontal:'left',vertical:'center',indent:1}});
-  sWs['!merges']=sWs['!merges']||[];
-  sWs['!merges'].push({s:{r:0,c:0},e:{r:0,c:6}});
-  sWs['!merges'].push({s:{r:1,c:0},e:{r:1,c:6}});
-  sWs['!merges'].push({s:{r:2,c:0},e:{r:2,c:6}});
-  sWs['!rows']=[{hpt:36},{hpt:18},{hpt:20}];
-
-  for(let i=3;i<sAoa.length;i++){
-    sWs['!rows'].push({hpt:22});
-    const row=sAoa[i];
-    const rowNum=i+1;
-    if(row.length===1 && typeof row[0]==='string' && row[0]===row[0].toUpperCase() && row[0].length>3){
-      css(sWs,'A'+rowNum,{fill:{fgColor:{rgb:C.medViolet}},font:{bold:true,sz:10,color:{rgb:C.white},name:'Calibri'},alignment:{horizontal:'left',vertical:'center',indent:1}});
-      sWs['!merges'].push({s:{r:rowNum-1,c:0},e:{r:rowNum-1,c:6}});
-    } else if(row.length===2 && row[0]==='✦'){
-      css(sWs,'A'+rowNum,{fill:{fgColor:{rgb:C.palePastel}},font:{bold:true,sz:11,color:{rgb:C.violetAccent}},alignment:{horizontal:'center',vertical:'center'}});
-      css(sWs,'B'+rowNum,{fill:{fgColor:{rgb:C.palePastel}},font:{sz:10,color:{rgb:'5B21B6'}},alignment:{horizontal:'left',vertical:'center',indent:1,wrapText:true}});
-      sWs['!merges'].push({s:{r:rowNum-1,c:1},e:{r:rowNum-1,c:6}});
-    } else if(row.length>=2 && row[0]){
-      css(sWs,'A'+rowNum,{fill:{fgColor:{rgb:C.labelBg}},font:{sz:10,color:{rgb:C.inkSoft},name:'Calibri'},alignment:{horizontal:'left',vertical:'center',indent:1}});
-      css(sWs,'B'+rowNum,{fill:{fgColor:{rgb:C.white}},font:{bold:true,sz:11,color:{rgb:C.ink},name:'Calibri'},alignment:{horizontal:'left',vertical:'center',indent:1}});
-      sWs['!merges'].push({s:{r:rowNum-1,c:1},e:{r:rowNum-1,c:6}});
-    }
-  }
-  sWs['!margins']={left:0.4,right:0.4,top:0.5,bottom:0.5};
-  sWs['!pageSetup']={orientation:'portrait',paperSize:9,fitToWidth:1,fitToHeight:0};
-  XLSX.utils.book_append_sheet(wb,sWs,'Summary');
-
-  // === SHEET 2: QUOTATION ===
-  const qAoa=[];
-  qAoa.push(['CAVITAK MARKETING — BrightSign Product Quotation']);
-  qAoa.push(['Authorized BrightSign distributor · India · Signage that performs, effortlessly']);
-  qAoa.push([]);
-  qAoa.push(['QUOTATION','','','','Quote No.:',refId,'']);
-  qAoa.push(['','','','','Date:',dateStr,'']);
-  qAoa.push(['','','','','Valid Until:',validUntil,'']);
-  qAoa.push([]);
-  // v24.37.0: Trimmed header per user spec — removed Consultant, Primary Contact, Stage rows.
-  qAoa.push(['QUOTED TO','','','PROJECT DETAILS','','','']);
-  qAoa.push(['Partner / SI',f.partner||'—','','Project Name',f.project||'—','','']);
-  qAoa.push(['End-user',f.enduser||'—','','Venue',f.venue||'—','','']);
-  qAoa.push(['','','','Location',((f.city||'—')+((f.state)?', '+f.state:'')),'','']);
-  qAoa.push([]);
-  qAoa.push(['RECOMMENDED SOLUTION']);
-  qAoa.push([m.id,'',m.tag+' · BrightSign Series 5','','','','']);
-  qAoa.push([]);
-  // v24.43.0 — BoM mode swaps the BoM header + skips totals later.
-  const _xlBomModeGuided = (state._resultMode === 'bom');
-  qAoa.push([_xlBomModeGuided ? 'BILL OF MATERIALS' : 'BILL OF QUANTITIES']);
-  if(_xlBomModeGuided){
-    qAoa.push(['#','SAP Code','Model No','Description','Qty','','','Notes']);
-  } else {
-    qAoa.push(['#','SAP Code','SKU','Description','Qty','Unit Price (₹)','Gross Total (₹)','Notes']);  // v24.6.0
-  }
-
-  // v24.4.19: Prefer real BOM totals cached by buildBOMCard — these already include pricing,
-  // XC variant handling, WD105, and CMS rows. Fall back to legacy logic if not present.
-  const cachedTotals=state._bomTotals;
-  const bomRows=[];
-  if(cachedTotals && cachedTotals.rows && cachedTotals.rows.length){
-    cachedTotals.rows.forEach(r=>{
-      // Extract a plausible SKU from the display name.
-      // BOM rows look like "BrightSign XT1145" or "WD105 Wi-Fi module (WD105)" or "BrightSign XC2055 - Win10/Win11".
-      let sku='';
-      const nm=(r.name||'').trim();
-      // Match "BrightSign <SKU>" or text in parens at end, e.g. "(WD105)"
-      const mBs=nm.match(/BrightSign\s+([A-Z0-9]+(?:\s-\s[A-Za-z0-9/]+)?)/);
-      const mParen=nm.match(/\(([A-Z0-9-]+)\)\s*$/);
-      if(mBs)sku=mBs[1];
-      else if(mParen)sku=mParen[1];
-      else sku=nm.split(' ')[0]||'—';
-      bomRows.push({
-        sku:sku,
-        desc:nm+(r.note?' — '+r.note.replace(/<[^>]+>/g,''):''),
-        qty:r.qty,
-        unitPrice:(r.unitPrice!=null&&!isNaN(r.unitPrice))?Number(r.unitPrice):null,
-        notes:r.note?r.note.replace(/<[^>]+>/g,''):'',
-        // v24.42.0: propagate discount fields so the Quotation table writer can render net/list
-        discPct: (typeof r.discPct === 'number') ? r.discPct : 0,
-        netUnitPrice: (r.netUnitPrice != null) ? Number(r.netUnitPrice) : ((r.unitPrice != null) ? Number(r.unitPrice) : null),
-        netLineTotal: (r.netLineTotal != null) ? Number(r.netLineTotal) : ((r.lineTotal != null) ? Number(r.lineTotal) : null)
-      });
+  _renderBsQuoteExcel(quote)
+    .then(function(buffer) {
+      _downloadXlsxBuffer(buffer, fname);
+    })
+    .catch(function(err) {
+      console.error('[v24.45.0] BS Excel render failed (Guided):', err);
+      alert('Excel export failed: ' + (err.message || err));
     });
-  } else {
-    // Legacy fallback
-    // v24.14.12 — show OS label in BOM desc for XC models, and use SKU from
-    // getModelPrice so Win10/Win11 variant gets its proper "XC2055 - Win10/Win11" SKU.
-    const _osLabel = (m.xc) ? (f.xcOs==='win' ? ' — Win10/Win11' : ' — BrightSign OS') : '';
-    if(isMixed){
-      const _pp = getModelPrice(m.id, f.xcOs);
-      bomRows.push({sku:_pp.sku||m.id,desc:`BrightSign ${m.id}${_osLabel} — ${m.tag} (Indoor)`,qty:qtyIndoor,unitPrice:_pp.unitPrice,notes:'Indoor deployment'});
-      if(om){
-        // outdoor variant is always aluminium chassis — never an XC, so no OS label
-        const _ppo = getModelPrice(om.id, f.xcOs);
-        bomRows.push({sku:_ppo.sku||om.id,desc:`BrightSign ${om.id} — ${om.tag} (Outdoor)`,qty:qtyOutdoor,unitPrice:_ppo.unitPrice,notes:'Outdoor deployment · aluminium chassis'});
-      }
-    } else {
-      const _pp = getModelPrice(m.id, f.xcOs);
-      bomRows.push({sku:_pp.sku||m.id,desc:`BrightSign ${m.id}${_osLabel} — ${m.tag}`,qty:qtyTotal,unitPrice:_pp.unitPrice,notes:m.chassis==='aluminium'?'Outdoor Grade':'Indoor Grade'});
-    }
-    if(f.ssd==='yes' && m.ssdCapable!==false){
-      // v24.15.0 — Skip if model doesn't support SSD (was previously inconsistent: result page
-      // showed "SSD not supported" concern but BOM still added the line).
-      // Look up actual SSD price; skip line entirely if not configured (Option B).
-      const _ssdAcc = getSsdAccessory(f.ssdCap || '256');
-      if(_ssdAcc){
-        bomRows.push({sku:_ssdAcc.sku, desc:_ssdAcc.name, qty:qtyTotal, unitPrice:_ssdAcc.unitPriceINR, notes:'Expanded storage'});
-      }
-      // else: silently skip (no row added). Concern note still appears via buildConcerns().
-    }
-    if(f.wifi==='yes')bomRows.push({sku:WD105_SKU,desc:WD105_NAME+' (M.2 E-Key)',qty:qtyTotal,unitPrice:WD105_PRICE,notes:'Wi-Fi + BT connectivity'});
-    const excelCmsQ=computeCMS(f);
-    // v24.14.12 — CMS rows now carry resolved unitPrice + sku from price book lookup.
-    // Falls back to null if rate not configured (renders as "—" in Excel).
-    if(excelCmsQ.rows){excelCmsQ.rows.forEach(row=>bomRows.push({sku:row.sku||'SVC-CMS',desc:row.name,qty:row.qty,unitPrice:(row.unitPrice!=null?row.unitPrice:null),notes:row.note||'CMS service'}));}
-  }
-
-  const bomStartRow=qAoa.length+1;
-  bomRows.forEach((row,i)=>{
-    const rn=bomStartRow+i;
-    if(_xlBomModeGuided){
-      // v24.43.0 — BoM mode: cols # | SAP Code | Model No | Description | Qty | (blank) | (blank) | Notes
-      qAoa.push([i+1, getSapCode(row.sku)||'—', row.sku, row.desc, row.qty, '', '', row.notes||'']);
-      return;
-    }
-    // v24.42.0: Write NET unit price to cell F (so formula E*F gives net line total).
-    // List price + disc% goes into Notes for transparency. Falls back to plain unit price if no discount.
-    const pct = (typeof row.discPct === 'number') ? row.discPct : 0;
-    const _unitForCell = (pct > 0 && row.netUnitPrice != null)
-      ? Number(row.netUnitPrice)
-      : ((row.unitPrice != null && !isNaN(row.unitPrice)) ? Number(row.unitPrice) : '');
-    let _notesWithDisc = row.notes || '';
-    if(pct > 0 && row.unitPrice != null){
-      const _listNote = 'List ₹' + Math.round(row.unitPrice).toLocaleString('en-IN') + ' · ' + pct + '% off';
-      _notesWithDisc = _notesWithDisc ? (_listNote + ' · ' + _notesWithDisc) : _listNote;
-    }
-    qAoa.push([i+1,getSapCode(row.sku)||'—',row.sku,row.desc,row.qty,_unitForCell,{f:`E${rn}*F${rn}`},_notesWithDisc]);  // v24.6.0
-  });
-
-  const subRow=bomStartRow+bomRows.length+1;
-  qAoa.push([]);
-  if(_xlBomModeGuided){
-    // v24.43.0 — Skip all totals rows in BoM mode (no prices).
-  } else {
-    // v24.42.0: If any discount applied, surface list + total-discount breakdown rows above the Net.
-    const _totalsObj = state._bomTotals || {};
-    const _hasDisc = (_totalsObj.totalDiscount && _totalsObj.totalDiscount > 0);
-    if(_hasDisc){
-      qAoa.push(['','','','','','List Subtotal', Number(_totalsObj.subtotal || 0), '']);
-      qAoa.push(['','','','','','Total Discount', -1 * Number(_totalsObj.totalDiscount || 0), '']);
-      qAoa.push(['','','','','','Net Subtotal', {f:`SUM(G${bomStartRow}:G${subRow-2})`}, '']);
-      qAoa.push(['','','','','','GST @ 18%',{f:`G${subRow+2}*0.18`},'']);
-      qAoa.push(['','','','','','TOTAL WITH GST (₹)',{f:`G${subRow+2}+G${subRow+3}`},'']);
-    } else {
-      qAoa.push(['','','','','','Gross Total',{f:`SUM(G${bomStartRow}:G${subRow-2})`},'']);
-      qAoa.push(['','','','','','GST @ 18%',{f:`G${subRow}*0.18`},'']);
-      qAoa.push(['','','','','','TOTAL WITH GST (₹)',{f:`G${subRow}+G${subRow+1}`},'']);
-    }
-  }
-  qAoa.push([]);
-  qAoa.push(['TERMS & CONDITIONS']);
-  qAoa.push(['Payment Terms','100% advance along with purchase order','','','','','']);
-  qAoa.push(['Lead Time','Standard 4–5 weeks from receipt of confirmed PO & advance payment, subject to stock availability','','','','','']);
-  qAoa.push(['Delivery','Ex-warehouse Ahmedabad. Outbound freight & in-transit insurance extra at actuals.','','','','','']);
-  qAoa.push(['Warranty',"Standard 5-year OEM warranty on BrightSign Series 5 players, subject to product registration on the BrightSign portal within 30 days of purchase. Without registration, default factory warranty applies. Faulty units must be returned to Cavitak's Ahmedabad office for warranty processing; outbound logistics are at the customer's cost.",'','','','','']);
-  qAoa.push(['Validity',`15 days from quote date (${dateStr}). Pricing subject to revision thereafter.`,'','','','','']);
-  qAoa.push(['Taxes','GST @ 18% included above. Any additional levies, cess or local duties extra at actuals.','','','','','']);
-  qAoa.push(['Forex','Pricing based on prevailing INR–USD rate on quote date. Material forex movement (>3%) before PO may revise pricing.','','','','','']);
-  qAoa.push(['Stock Validity','Stock subject to prior sale. Confirmation of availability at the time of PO placement.','','','','','']);
-  qAoa.push(['Installation',"Partner's scope.",'','','','','']);
-  qAoa.push(['Support','Onsite / Online support charges quoted extra on request.','','','','','']);
-  qAoa.push(['Cancellation','Orders once placed are non-cancellable. Advance payment is non-refundable for despatched/in-transit goods.','','','','','']);
-  qAoa.push(['Jurisdiction','All disputes subject to Ahmedabad jurisdiction. Indian law applies.','','','','','']);
-  // v24.42.0: Same conditional SSD line as Advanced. Detect SSD by name match in bomRows.
-  (function(){
-    const _hasSsd = Array.isArray(bomRows) && bomRows.some(function(rr){
-      return rr && rr.desc && /\bSSD\b|\bM\.2\s+NVMe\b/i.test(String(rr.desc));
-    });
-    if(_hasSsd){
-      qAoa.push(['SSD Storage','Models supplied with an M.2 NVMe SSD do not include the standard 64GB microSD card.','','','','','']);
-    }
-  })();
-  qAoa.push([]);
-  // v24.37.0: Replaced state.user-based contact footer with deal salesperson + conditional presales blocks.
-  // Per user spec: "Sales Person footer must required both app & both format" + "if presale not selected then dont fill".
-  qAoa.push([]);
-  (function(){
-    const _sp = _resolveUserDetails(f.salesPerson);
-    if(_sp){
-      qAoa.push(['SALESPERSON CONTACT','','','','','','']);
-      qAoa.push(['Name', _sp.fullName,'','','','','']);
-      qAoa.push(['Role', _sp.role,'','','','','']);
-      qAoa.push(['Phone', _sp.phone,'','','','','']);
-      qAoa.push(['Email', _sp.email,'','','','','']);
-    }
-    const _pp = _resolveUserDetails(f.presalesPerson);
-    if(_pp && f.presalesPerson){
-      qAoa.push([]);
-      qAoa.push(['PRESALES CONTACT','','','','','','']);
-      qAoa.push(['Name', _pp.fullName,'','','','','']);
-      qAoa.push(['Role', _pp.role,'','','','','']);
-      qAoa.push(['Phone', _pp.phone,'','','','','']);
-      qAoa.push(['Email', _pp.email,'','','','','']);
-    }
-    qAoa.push([]);
-    qAoa.push([]);
-    qAoa.push(['Cavitak Marketing Pvt Ltd · Authorized BrightSign distributor · India','','','','','','','']);
-    qAoa.push(['——————————————————————————————————————————','','','','','','','']);
-    qAoa.push(['This document is for internal reference and customer discussion. Pricing subject to current price list, forex, and landed-cost variations.','','','','','','','']);
-    qAoa.push(['Generated by BrightSign Product Selector · v' + (typeof FRONTEND_VERSION !== 'undefined' ? FRONTEND_VERSION : ''),'','','','','','','']);
-  })();
-
-  const qWs=XLSX.utils.aoa_to_sheet(qAoa);
-  qWs['!cols']=[{wch:6},{wch:16},{wch:18},{wch:44},{wch:8},{wch:16},{wch:18},{wch:30}];  // v24.6.0: +SAP Code
-  qWs['!merges']=qWs['!merges']||[];
-
-  qWs['!merges'].push({s:{r:0,c:0},e:{r:0,c:7}});
-  qWs['!merges'].push({s:{r:1,c:0},e:{r:1,c:7}});
-  // v24.20.0 (#18): Polished Guided Quotation title — Cavitak red brand stripe + indigo subtitle
-  css(qWs,'A1',{fill:{fgColor:{rgb:'DC2626'}},font:{bold:true,sz:22,color:{rgb:C.white},name:'Calibri'},alignment:{horizontal:'left',vertical:'center',indent:1}});
-  css(qWs,'A2',{fill:{fgColor:{rgb:C.deepIndigo}},font:{sz:11,color:{rgb:C.indigoText},italic:true,name:'Calibri'},alignment:{horizontal:'left',vertical:'center',indent:1}});
-
-  css(qWs,'A4',{font:{bold:true,sz:16,color:{rgb:C.deepIndigo},name:'Calibri'},alignment:{horizontal:'left',vertical:'center'}});
-  qWs['!merges'].push({s:{r:3,c:0},e:{r:3,c:3}});
-  css(qWs,'F4',{font:{bold:true,sz:11,color:{rgb:C.violetAccent},name:'Calibri'},alignment:{horizontal:'right',vertical:'center'}});  // v24.6.0
-  css(qWs,'F4',{font:{bold:true,sz:11,color:{rgb:C.violetAccent},name:'Calibri'},alignment:{horizontal:'left',vertical:'center'}});
-  qWs['!merges'].push({s:{r:3,c:6},e:{r:3,c:7}});
-  css(qWs,'E5',{font:{sz:10,color:{rgb:C.inkSoft}},alignment:{horizontal:'right'}});
-  css(qWs,'F5',{font:{sz:10,color:{rgb:C.ink}},alignment:{horizontal:'left'}});
-  qWs['!merges'].push({s:{r:4,c:6},e:{r:4,c:7}});
-  css(qWs,'E6',{font:{sz:10,color:{rgb:C.inkSoft}},alignment:{horizontal:'right'}});
-  css(qWs,'F6',{font:{sz:10,color:{rgb:C.ink}},alignment:{horizontal:'left'}});
-  qWs['!merges'].push({s:{r:5,c:6},e:{r:5,c:7}});
-
-  css(qWs,'A8',{fill:{fgColor:{rgb:C.medViolet}},font:{bold:true,sz:9,color:{rgb:C.white}},alignment:{horizontal:'left',vertical:'center',indent:1}});
-  qWs['!merges'].push({s:{r:7,c:0},e:{r:7,c:2}});
-  css(qWs,'E8',{fill:{fgColor:{rgb:C.medViolet}},font:{bold:true,sz:9,color:{rgb:C.white}},alignment:{horizontal:'left',vertical:'center',indent:1}});  // v24.6.0
-  qWs['!merges'].push({s:{r:7,c:4},e:{r:7,c:7}});
-
-  for(let r=8;r<12;r++){
-    // v24.6.0: project contact section — right-half shifted +1 col (D→E, E→F) for SAP Code insertion.
-    // Left-half label stays at A; value merges B:D now (was B:C).
-    css(qWs,'A'+(r+1),{fill:{fgColor:{rgb:C.labelBg}},font:{sz:10,color:{rgb:C.inkSoft}},alignment:{horizontal:'left',vertical:'center',indent:1}});
-    css(qWs,'B'+(r+1),{fill:{fgColor:{rgb:C.white}},font:{bold:true,sz:11,color:{rgb:C.ink}},alignment:{horizontal:'left',vertical:'center',indent:1}});
-    qWs['!merges'].push({s:{r:r,c:1},e:{r:r,c:3}});
-    css(qWs,'E'+(r+1),{fill:{fgColor:{rgb:C.labelBg}},font:{sz:10,color:{rgb:C.inkSoft}},alignment:{horizontal:'left',vertical:'center',indent:1}});
-    css(qWs,'F'+(r+1),{fill:{fgColor:{rgb:C.white}},font:{bold:true,sz:11,color:{rgb:C.ink}},alignment:{horizontal:'left',vertical:'center',indent:1}});
-    qWs['!merges'].push({s:{r:r,c:5},e:{r:r,c:7}});
-  }
-
-  css(qWs,'A14',{fill:{fgColor:{rgb:C.medViolet}},font:{bold:true,sz:10,color:{rgb:C.white}},alignment:{horizontal:'left',vertical:'center',indent:1}});
-  qWs['!merges'].push({s:{r:13,c:0},e:{r:13,c:7}});
-  css(qWs,'A15',{fill:{fgColor:{rgb:C.modelHighlightBg}},font:{bold:true,sz:16,color:{rgb:C.violetAccent},name:'Consolas'},alignment:{horizontal:'left',vertical:'center',indent:1}});
-  css(qWs,'B15',{fill:{fgColor:{rgb:C.modelHighlightBg}}});
-  css(qWs,'C15',{fill:{fgColor:{rgb:C.modelHighlightBg}}});  // v24.6.0
-  css(qWs,'D15',{fill:{fgColor:{rgb:C.modelHighlightBg}},font:{sz:11,color:{rgb:C.inkSoft}},alignment:{horizontal:'left',vertical:'center'}});  // v24.6.0
-  qWs['!merges'].push({s:{r:14,c:3},e:{r:14,c:7}});
-  qWs['!merges'].push({s:{r:14,c:0},e:{r:14,c:2}});
-
-  css(qWs,'A17',{fill:{fgColor:{rgb:C.medViolet}},font:{bold:true,sz:10,color:{rgb:C.white}},alignment:{horizontal:'left',vertical:'center',indent:1}});
-  qWs['!merges'].push({s:{r:16,c:0},e:{r:16,c:7}});
-  'ABCDEFGH'.split('').forEach((col,ci)=>{  // v24.6.0
-    css(qWs,col+'18',{
-      fill:{fgColor:{rgb:C.deepIndigo}},
-      font:{bold:true,sz:10,color:{rgb:C.white}},
-      alignment:{horizontal:ci===0||ci===4?'center':'left',vertical:'center',indent:ci===3||ci===7?1:0,wrapText:true}
-    });
-  });
-  bomRows.forEach((rowData,i)=>{
-    const rn=bomStartRow+i;
-    const hasPrice=(rowData.unitPrice!=null&&!isNaN(rowData.unitPrice));
-    // v24.6.0: 0=#, 1=SAP Code, 2=SKU, 3=Desc, 4=Qty, 5=Unit, 6=Gross, 7=Notes
-    'ABCDEFGH'.split('').forEach((col,ci)=>{
-      const baseStyle={
-        fill:{fgColor:{rgb:C.white}},
-        font:{sz:10,color:{rgb:C.ink},name:(ci===1||ci===2)?'Consolas':'Calibri'},
-        alignment:{horizontal:ci===0||ci===4?'center':(ci===5||ci===6?'right':'left'),vertical:'center',indent:ci===3||ci===7?1:0,wrapText:ci===3||ci===7},
-        border:{bottom:{style:'thin',color:{rgb:'E0E7FF'}}}
-      };
-      if(ci===1||ci===2)baseStyle.font.bold=true;
-      if(ci===5||ci===6)baseStyle.numFmt='#,##0';
-      if(ci===5 && !hasPrice){
-        baseStyle.fill={fgColor:{rgb:'FFFBEB'}};
-        baseStyle.border={top:{style:'thin',color:{rgb:'FBBF24'}},bottom:{style:'thin',color:{rgb:'FBBF24'}},left:{style:'thin',color:{rgb:'FBBF24'}},right:{style:'thin',color:{rgb:'FBBF24'}}};
-      }
-      css(qWs,col+rn,baseStyle);
-    });
-  });
-
-  const subtotalRowNum=subRow;
-  const gstRowNum=subRow+1;
-  const grandTotalRowNum=subRow+2;
-  // v24.6.0: totals columns shifted +1 (E→F label, F→G value) for SAP Code insertion
-  css(qWs,'F'+subtotalRowNum,{font:{bold:true,sz:11,color:{rgb:C.ink}},alignment:{horizontal:'right',vertical:'center'}});
-  css(qWs,'G'+subtotalRowNum,{font:{bold:true,sz:11,color:{rgb:C.ink}},alignment:{horizontal:'right',vertical:'center',indent:1},numFmt:'#,##0',border:{top:{style:'thin',color:{rgb:C.deepIndigo}}}});
-  css(qWs,'F'+gstRowNum,{font:{sz:11,color:{rgb:C.inkSoft}},alignment:{horizontal:'right',vertical:'center'}});
-  css(qWs,'G'+gstRowNum,{font:{sz:11,color:{rgb:C.inkSoft}},alignment:{horizontal:'right',vertical:'center',indent:1},numFmt:'#,##0'});
-  css(qWs,'F'+grandTotalRowNum,{fill:{fgColor:{rgb:C.violetAccent}},font:{bold:true,sz:12,color:{rgb:C.white}},alignment:{horizontal:'right',vertical:'center'}});
-  css(qWs,'G'+grandTotalRowNum,{fill:{fgColor:{rgb:C.violetAccent}},font:{bold:true,sz:12,color:{rgb:C.white}},alignment:{horizontal:'right',vertical:'center',indent:1},numFmt:'#,##0'});
-
-  const tcStartRow=grandTotalRowNum+2;
-  css(qWs,'A'+tcStartRow,{fill:{fgColor:{rgb:C.medViolet}},font:{bold:true,sz:10,color:{rgb:C.white}},alignment:{horizontal:'left',vertical:'center',indent:1}});
-  qWs['!merges'].push({s:{r:tcStartRow-1,c:0},e:{r:tcStartRow-1,c:7}});
-  for(let i=1;i<=7;i++){
-    const rn=tcStartRow+i;
-    css(qWs,'A'+rn,{fill:{fgColor:{rgb:C.labelBg}},font:{sz:10,color:{rgb:C.inkSoft}},alignment:{horizontal:'left',vertical:'center',indent:1}});
-    css(qWs,'B'+rn,{fill:{fgColor:{rgb:C.white}},font:{sz:10,color:{rgb:C.ink}},alignment:{horizontal:'left',vertical:'center',indent:1,wrapText:true}});
-    qWs['!merges'].push({s:{r:rn-1,c:2},e:{r:rn-1,c:7}});
-  }
-  const contactRow=tcStartRow+9;
-  css(qWs,'A'+contactRow,{fill:{fgColor:{rgb:C.medViolet}},font:{bold:true,sz:10,color:{rgb:C.white}},alignment:{horizontal:'left',vertical:'center',indent:1}});
-  qWs['!merges'].push({s:{r:contactRow-1,c:0},e:{r:contactRow-1,c:7}});
-  css(qWs,'A'+(contactRow+1),{fill:{fgColor:{rgb:C.palePastel}},font:{bold:true,sz:11,color:{rgb:C.deepIndigo}},alignment:{horizontal:'left',vertical:'center',indent:1}});
-  qWs['!merges'].push({s:{r:contactRow,c:0},e:{r:contactRow,c:7}});
-  css(qWs,'A'+(contactRow+2),{fill:{fgColor:{rgb:C.palePastel}},font:{sz:10,color:{rgb:'5B21B6'}},alignment:{horizontal:'left',vertical:'center',indent:1}});
-  qWs['!merges'].push({s:{r:contactRow+1,c:0},e:{r:contactRow+1,c:7}});
-  css(qWs,'A'+(contactRow+3),{font:{italic:true,sz:9,color:{rgb:C.inkSoft}},alignment:{horizontal:'left',vertical:'center',indent:1}});
-  qWs['!merges'].push({s:{r:contactRow+2,c:0},e:{r:contactRow+2,c:7}});
-
-  qWs['!rows']=[{hpt:42},{hpt:22},{hpt:10},{hpt:28},{hpt:18},{hpt:18},{hpt:10},{hpt:24}];
-  for(let i=8;i<qAoa.length;i++){qWs['!rows'].push({hpt:22});}
-  if(qWs['!rows'][14])qWs['!rows'][14]={hpt:34};
-  if(qWs['!rows'][grandTotalRowNum-1])qWs['!rows'][grandTotalRowNum-1]={hpt:32};
-
-  qWs['!autofilter']={ref:`A18:H${bomStartRow+bomRows.length-1}`};  // v24.6.0
-  qWs['!freeze']={xSplit:0,ySplit:18};
-  qWs['!margins']={left:0.4,right:0.4,top:0.5,bottom:0.5};
-  qWs['!pageSetup']={orientation:'portrait',paperSize:9,fitToWidth:1,fitToHeight:0};
-  qWs['!printHeader']=[18,18];
-  // v24.34.8 (A): Borders on BOM grid + Indian ₹ format on currency columns
-  {
-    const _bs = { style: 'thin', color: { rgb: 'CBD5E1' } };
-    const _ba = { top: _bs, bottom: _bs, left: _bs, right: _bs };
-    const _rupeeFmt = '[$₹-en-IN]#,##0;[Red]-[$₹-en-IN]#,##0';
-    // Borders on BOM header (row 18) + data rows. Guided has 8 cols A-H.
-    const _bomHeaderRow = 18;
-    const _bomEndRow = bomStartRow + bomRows.length - 1;
-    for(let rr = _bomHeaderRow; rr <= _bomEndRow; rr++){
-      ['A','B','C','D','E','F','G','H'].forEach(col => {
-        const ref = col + rr;
-        if(!qWs[ref]) qWs[ref] = { v:'', t:'s' };
-        qWs[ref].s = Object.assign({}, qWs[ref].s||{}, { border: _ba });
-      });
-    }
-    // ₹ format on Unit Price (F) and Gross Total (G) for BOM data
-    for(let rr = bomStartRow; rr <= _bomEndRow; rr++){
-      if(qWs['F'+rr]) qWs['F'+rr].s = Object.assign({}, qWs['F'+rr].s||{}, { numFmt: _rupeeFmt });
-      if(qWs['G'+rr]) qWs['G'+rr].s = Object.assign({}, qWs['G'+rr].s||{}, { numFmt: _rupeeFmt });
-    }
-    // ₹ format on totals rows — Gross Total, GST, TOTAL WITH GST (G column)
-    for(let rr = subRow; rr <= subRow + 2; rr++){
-      if(qWs['G'+rr]) qWs['G'+rr].s = Object.assign({}, qWs['G'+rr].s||{}, { numFmt: _rupeeFmt });
-    }
-  }
-  XLSX.utils.book_append_sheet(wb,qWs,'Quotation');
-
-  // === SHEET 3: TENDER COMPLIANCE ===
-  // v24.43.0 — Filename = BS-<case>-BoQ.xlsx or BS-<case>-BoM.xlsx based on output mode.
-  const _modeSuffix = (state._resultMode === 'bom') ? 'BoM' : 'BoQ';
-  const fname = refId + '-' + _modeSuffix + '.xlsx';
-  // v22.5: If returnWorkbook is set, don't write file — return { wb, fname } so email function can reuse
-  if(returnWorkbook===true){return {wb:wb,fname:fname};}
-  XLSX.writeFile(wb,fname);
-  // v24.43.0 — Removed "Excel downloaded ✓" toast (Ask 3 — silence telemetry-feel toasts).
+  if (returnWorkbook === true) return null;
 }
+
 
 /* v22.5.1: Email the Excel quote via the USER's OWN mail app.
    - Excel auto-downloads
@@ -22649,7 +22484,7 @@ async function refreshLog(){
     const result=await tryFetchCentralLog();
     if(result.ok){
       window._centralLog=result.data;
-      showSync('History updated ✓','success');
+      showSync('Done ✓','success');
       renderLog();
       renderDashboard();
       // v24.22.0 (#15): refresh tagged-deals badge after central log changes
@@ -22658,7 +22493,7 @@ async function refreshLog(){
     }
     showSync('Unable to refresh · showing last known data','error');
   } else {
-    showSync('Refreshed ✓','success');
+    showSync('Done ✓','success');
   }
   renderLog();
   renderDashboard();
@@ -24538,7 +24373,7 @@ window.showTab=function(which){
     if(!WEBHOOK_URL || !state.user || !state.user.isSuper) return null;
     _c2aSaving = true;
     const statusEl = document.getElementById('bs-c2a-poa-status');
-    if(statusEl) statusEl.textContent = 'Saving…';
+    if(statusEl) statusEl.textContent = 'Loading…';
     try{
       const pwHash = await getCurrentAuthHash();
       const resp = await fetch(WEBHOOK_URL, {
@@ -24559,9 +24394,9 @@ window.showTab=function(which){
       if(data && data.status === 'ok'){
         _c2aLastPoaText = text;
         if(statusEl){
-          statusEl.textContent = 'Saved ✓';
+          statusEl.textContent = 'Done ✓';
           statusEl.style.color = '#059669';
-          setTimeout(function(){ if(statusEl.textContent === 'Saved ✓') statusEl.textContent = ''; }, 2000);
+          setTimeout(function(){ if(statusEl.textContent === 'Done ✓') statusEl.textContent = ''; }, 2000);
         }
         const metaEl = document.getElementById('bs-c2a-poa-meta');
         if(metaEl && data.updatedAt){
@@ -29236,8 +29071,8 @@ async function sendQuarterlyNowBS() {
   if (!confirm('Send the quarterly review email to all active team members now?\n\nDefault period: the most recently completed fiscal quarter.\nCC: dipen.g@cavitak.com')) return;
   const status = document.getElementById('bs-reports-status');
   const btn = document.getElementById('btnSendQuarterlyBS');
-  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
-  if (status) { status.textContent = 'Sending…'; status.style.color = 'var(--ink-subtle)'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+  if (status) { status.textContent = 'Loading…'; status.style.color = 'var(--ink-subtle)'; }
   try {
     const pwHash = await getCurrentAuthHash();
     const resp = await fetch(WEBHOOK_URL, {
@@ -29275,8 +29110,8 @@ async function sendYearlyNowBS() {
   if (!confirm('Send the ANNUAL review email to all active team members now?\n\nDefault period: the most recently completed fiscal year.\nCC: dipen.g@cavitak.com')) return;
   const status = document.getElementById('bs-reports-status');
   const btn = document.getElementById('btnSendYearlyBS');
-  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
-  if (status) { status.textContent = 'Sending…'; status.style.color = 'var(--ink-subtle)'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+  if (status) { status.textContent = 'Loading…'; status.style.color = 'var(--ink-subtle)'; }
   try {
     const pwHash = await getCurrentAuthHash();
     const resp = await fetch(WEBHOOK_URL, {
