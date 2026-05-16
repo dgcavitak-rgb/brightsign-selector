@@ -9300,6 +9300,12 @@ html[data-theme="dark"] .adv-xc-os-btn[data-os="win"]:not(.active):hover {
     <button class="btn-primary" onclick="handleLogin()">Sign in →</button>
     <div id="login-error" class="error-msg"></div>
     <div class="login-forgot"><a href="#" onclick="event.preventDefault();showForgotPasswordModal();">Forgot password?</a></div>
+    <!-- v24.45.1: Frontend version display on login screen — parity with tvONE.
+         Stale fallback text is overwritten by updateVersionFooter() with the real
+         FRONTEND_VERSION constant once the page script runs. -->
+    <div id="login-version-wrap" style="text-align:center;margin-top:14px;font-size:11px;color:var(--ink-subtle,#94A3B8);font-family:var(--mono,monospace);letter-spacing:0.05em;">
+      <span id="login-version">v24.45.3</span>
+    </div>
   </div>
   <div class="login-footer">Dipenkumar Gajjar · National Product Manager · +91 8160 756 906 · dipen.g@cavitak.com</div>
   <!-- v24.14.10 P3-6 fix: version footer element. updateVersionFooter() populates this on load. -->
@@ -10802,7 +10808,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.45.0';  // v24.45.0 — EXCEL REWRITE: replaced both BS Excel paths (Guided downloadQuoteExcel L21783 + Custom BOQ _downloadAdvancedQuoteExcel L21350) with Cavitak-branded ExcelJS output matching the tvONE v25.99.20 design language (adapted to BS indigo/violet, NOT tvONE forest green — keeps BS brand identity). Was: xlsx-js-style with old red CAVITAK MARKETING banner header. Now: Cavitak logo top-left + "BrightSign Product Selector" title in deep indigo (#312E81) + tricolor stripe (indigo/violet/red) + gold verdict band + indigo BoM table headers + red GRAND TOTAL banner + 12-row T&C block + salesperson + presales footer with Cavitak branded distributor band. New shared renderer _renderBsQuoteExcel(quote) takes a normalized payload, handles both BoQ (with prices) and BoM (no prices) modes, embeds Cavitak logo from existing CAVITAK_LOGO_DATA_URL constant (no re-encoding). Existing call sites unchanged: same downloadQuoteExcel() and _downloadAdvancedQuoteExcel() signatures preserved. Old xlsx-js-style functions deleted (~930 lines of legacy code removed). ExcelJS CDN added in <head>. ~150 KB lib download (gzipped) on first page load. Smoke-tested with realistic BoQ + BoM + empty-BOM payloads — all 3 render cleanly. Visual verification via LibreOffice headless render confirms the design matches the tvONE reference Excel pixel-for-pixel in structure. Pairs with backend v25.19.0. xlsx-js-style stays loaded for legacy History-tab CSV-style exportXLSX() (different use case, not customer-facing). Previously: v24.44.2 — UX wording sweep matching tvONE neutralized vocabulary.: All mid-action button labels neutralized to "Loading…": 'Saving…' (×7 — main save flow, profile, customer save, c2a/poa, pricing refresh) → 'Loading…'; 'Signing in…' (×2 — submit button + splash) → 'Loading…'; 'Signing in ✓' splash → 'Done ✓'; 'Sending…' (×4 — pre-mailto email modal stragglers) → 'Loading…'. All success toasts unified to 'Done ✓': 'Saved ✓' statusEl text (×3 — profile, settings, status checks) → 'Done ✓'; 'Password updated ✓' → 'Done ✓'; 'Template saved ✓' → 'Done ✓'; 'Template reset to default ✓' → 'Done ✓'; 'Backup deleted ✓' → 'Done ✓'; 'Session extended ✓' → 'Done ✓'; '✓ Prices refreshed — Pricing, Accessories, CMS, Catalog all reloaded' → 'Done ✓'; 'Up to date ✓' → 'Done ✓'; 'All entries uploaded ✓' (×2) → 'Done ✓'; 'History updated ✓' → 'Done ✓'; 'Refreshed ✓' → 'Done ✓'. Sync toast default text 'Saving…' → 'Working…' (was the brief flash before being replaced by the actual status). Net: BS now matches tvONE's neutralized vocabulary — a rep switching between apps sees the same words for the same operations. 23 surgical edits across the file. No backend change. Pairs with v25.19.0. Previously: v24.44.1 — EMAIL FLOW mailto: switch (broken-on-M365 backend send → true Outlook open with PDF+Excel auto-download). Click "Open in Outlook" in modal now: (1) downloads BOTH the PDF and Excel quote files for the rep to attach, (2) opens their default mail client (Outlook on M365) with To/CC/Subject/Body pre-filled from the modal fields, (3) rep attaches the just-downloaded files in Outlook and clicks Send — email truly originates from rep's mailbox, appears in their Sent folder, passes SPF/DKIM/DMARC. dipen.g@cavitak.com forced CC pre-filled (rep can technically remove but instructed not to). Modal subtitle updated to reflect new flow. Backend email_send handler intentionally left in place (dormant, no UI call site) — easy revert if ever needed. No backend deploy required. Pairs with v25.19.0. Previously: v24.44.0 — PDF polish (Excel logo embedding deferred to next session per agreed split). Three small targeted improvements to the Tender Spec / Quote PDF export: (1) NEW: Cavitak-branded footer band added above the version footer line. Mini Cavitak logo (26px) on left + right-aligned attribution "Cavitak Marketing Pvt Ltd" (bold, indigo) over "Authorized BrightSign Distributor · India" (muted slate). Subtle indigo→violet tinted background (rgba 0.04) with 2px solid #4F46E5 top border. Mirrors the header strip treatment for visual cohesion — reads as the official Cavitak signoff before the technical disclaimer. (2) Header title color tightened from #312E81 (dark indigo) → #4F46E5 (indigo, matching the accent strip end + new footer band border). Subtle cohesion win, no layout change. (3) Discovery: the Cavitak logo (635×277 JPEG, ~13KB) was already encoded as CAVITAK_LOGO_DATA_URL constant from v24.20.0 — no re-encoding needed. Reused the same constant for the new footer mini-logo. Backend v25.19.0 unchanged. Excel still uses xlsx-js-style; ExcelJS swap for image embedding is the next focused session.
+const FRONTEND_VERSION = '24.45.3';  // v24.45.3 — UX FIX: "For Better Pricing" contact card moved to the BOTTOM of the Guided Result page (now renders after the BOM card + Project Summary). The Custom BOQ / Advanced path already placed it last since v24.12.6 — the Guided path was missed and still rendered it ABOVE the BOM table. Both paths are now consistent: pricing callout is the final card. No behavior change beyond render order. Pairs with v25.19.0. Previously: v24.45.2 — BUGFIX: Guided + Mixed mode Indoor/Outdoor steppers were clamped at 1 (treated a stale hidden total as the cap); now Indoor and Outdoor are independent counters and the total is derived from their sum. Root cause: adjustMixedQty / onMixedQtyInput treated the split as constrained by a SEPARATE total (the hidden single-mode f-qty input, which defaults to 1). Every +/- click was clamped to that stale total of 1, and the "other side" was auto-balanced to total-minus-thisValue — so Indoor+Outdoor could never exceed 1. Fix: in Mixed mode the TOTAL is now DERIVED from Indoor + Outdoor (the correct model). Indoor and Outdoor are independent counters (each 0..10000); adjusting one never touches the other. _updateMixedStatus + recalcMixedTotal keep the hidden f-qty input AND state.form.qty/qtyIndoor/qtyOutdoor in sync with the running sum so all downstream consumers (BOM, CMS 25-player threshold, backend payload) get the right total. _setMixed now calls recalcMixedTotal directly because the +/- buttons set .value programmatically and do NOT fire the 'input' event recalcMixedTotal was bound to (latent bug, previously masked by the broken clamp). Entering Mixed mode initializes state from the Indoor/Outdoor fields. _onTotalQtyChangedForMixed is now a no-op. Logic verified by simulation. No backend change. Pairs with v25.19.0. Previously: v24.45.1 — Added frontend version label on the login screen (parity with tvONE). Was: xlsx-js-style with old red CAVITAK MARKETING banner header. Now: Cavitak logo top-left + "BrightSign Product Selector" title in deep indigo (#312E81) + tricolor stripe (indigo/violet/red) + gold verdict band + indigo BoM table headers + red GRAND TOTAL banner + 12-row T&C block + salesperson + presales footer with Cavitak branded distributor band. New shared renderer _renderBsQuoteExcel(quote) takes a normalized payload, handles both BoQ (with prices) and BoM (no prices) modes, embeds Cavitak logo from existing CAVITAK_LOGO_DATA_URL constant (no re-encoding). Existing call sites unchanged: same downloadQuoteExcel() and _downloadAdvancedQuoteExcel() signatures preserved. Old xlsx-js-style functions deleted (~930 lines of legacy code removed). ExcelJS CDN added in <head>. ~150 KB lib download (gzipped) on first page load. Smoke-tested with realistic BoQ + BoM + empty-BOM payloads — all 3 render cleanly. Visual verification via LibreOffice headless render confirms the design matches the tvONE reference Excel pixel-for-pixel in structure. Pairs with backend v25.19.0. xlsx-js-style stays loaded for legacy History-tab CSV-style exportXLSX() (different use case, not customer-facing). Previously: v24.44.2 — UX wording sweep matching tvONE neutralized vocabulary.: All mid-action button labels neutralized to "Loading…": 'Saving…' (×7 — main save flow, profile, customer save, c2a/poa, pricing refresh) → 'Loading…'; 'Signing in…' (×2 — submit button + splash) → 'Loading…'; 'Signing in ✓' splash → 'Done ✓'; 'Sending…' (×4 — pre-mailto email modal stragglers) → 'Loading…'. All success toasts unified to 'Done ✓': 'Saved ✓' statusEl text (×3 — profile, settings, status checks) → 'Done ✓'; 'Password updated ✓' → 'Done ✓'; 'Template saved ✓' → 'Done ✓'; 'Template reset to default ✓' → 'Done ✓'; 'Backup deleted ✓' → 'Done ✓'; 'Session extended ✓' → 'Done ✓'; '✓ Prices refreshed — Pricing, Accessories, CMS, Catalog all reloaded' → 'Done ✓'; 'Up to date ✓' → 'Done ✓'; 'All entries uploaded ✓' (×2) → 'Done ✓'; 'History updated ✓' → 'Done ✓'; 'Refreshed ✓' → 'Done ✓'. Sync toast default text 'Saving…' → 'Working…' (was the brief flash before being replaced by the actual status). Net: BS now matches tvONE's neutralized vocabulary — a rep switching between apps sees the same words for the same operations. 23 surgical edits across the file. No backend change. Pairs with v25.19.0. Previously: v24.44.1 — EMAIL FLOW mailto: switch (broken-on-M365 backend send → true Outlook open with PDF+Excel auto-download). Click "Open in Outlook" in modal now: (1) downloads BOTH the PDF and Excel quote files for the rep to attach, (2) opens their default mail client (Outlook on M365) with To/CC/Subject/Body pre-filled from the modal fields, (3) rep attaches the just-downloaded files in Outlook and clicks Send — email truly originates from rep's mailbox, appears in their Sent folder, passes SPF/DKIM/DMARC. dipen.g@cavitak.com forced CC pre-filled (rep can technically remove but instructed not to). Modal subtitle updated to reflect new flow. Backend email_send handler intentionally left in place (dormant, no UI call site) — easy revert if ever needed. No backend deploy required. Pairs with v25.19.0. Previously: v24.44.0 — PDF polish (Excel logo embedding deferred to next session per agreed split). Three small targeted improvements to the Tender Spec / Quote PDF export: (1) NEW: Cavitak-branded footer band added above the version footer line. Mini Cavitak logo (26px) on left + right-aligned attribution "Cavitak Marketing Pvt Ltd" (bold, indigo) over "Authorized BrightSign Distributor · India" (muted slate). Subtle indigo→violet tinted background (rgba 0.04) with 2px solid #4F46E5 top border. Mirrors the header strip treatment for visual cohesion — reads as the official Cavitak signoff before the technical disclaimer. (2) Header title color tightened from #312E81 (dark indigo) → #4F46E5 (indigo, matching the accent strip end + new footer band border). Subtle cohesion win, no layout change. (3) Discovery: the Cavitak logo (635×277 JPEG, ~13KB) was already encoded as CAVITAK_LOGO_DATA_URL constant from v24.20.0 — no re-encoding needed. Reused the same constant for the new footer mini-logo. Backend v25.19.0 unchanged. Excel still uses xlsx-js-style; ExcelJS swap for image embedding is the next focused session.
   // v24.36.3 — Two bugfixes per user feedback. (1) HEADER NAME "—" BUG: On fresh login (sign-in from login page), the user-label-name slot stayed as the HTML default "—" because _applyPostLoginUI() was NEVER actually called in the fresh-login flow despite the v24.20.1 comment claiming it would be called "below". The "below" promise was never fulfilled. Only the rehydrate path (refresh while signed in) called it, which is why the issue only surfaced on cold logins. Now calls _applyPostLoginUI() in the fresh-login flow too — idempotent so safe against duplicate calls in slow login races. (2) NOTIFICATIONS NOT CLEARING DAILY: Notifications had 7-day rolling retention. User wants yesterday's notifications gone at 12:01 AM (daily reset). Changed _loadNotifs_ cutoff from "now - 7 days" to "start of today (00:00:00 local time)". Notifs older than midnight are now filtered out on every load and the cleaned list is persisted so the bell badge count stays accurate. NOTIF_RETENTION_MS constant kept declared (referenced elsewhere) but no longer used as the cutoff in _loadNotifs_. Pairs with backend v25.15.0.
 // v24.36.2 — Label refinement: HDMI input → "HDMI live source input port?" (added "port").
 // v24.36.1 — Card 03 field order refinement: Resolution → Touch → HDMI input → GPIO → HDMI Output port → SSD → Wi-Fi. "How many screens per player?" relabeled to "How many HDMI Output port?".
@@ -11404,6 +11410,18 @@ function autoFillStateFromCity(){
 const SHOW_PRICING = true;
 window.FRONTEND_VERSION = FRONTEND_VERSION;
 
+// v24.45.1 — Stamp the login-screen version label as soon as the DOM is ready,
+// so the real FRONTEND_VERSION shows even before login (parity with tvONE).
+// updateVersionFooter() (called later, post-ping) also covers the in-app footer.
+try {
+  document.addEventListener('DOMContentLoaded', function(){
+    var lv = document.getElementById('login-version');
+    if (lv) lv.textContent = 'v' + FRONTEND_VERSION;
+    var af = document.getElementById('app-version-footer');
+    if (af) af.textContent = 'v' + FRONTEND_VERSION;
+  });
+} catch(e) { /* never block boot for a label */ }
+
 /* v24.25.0 — Pipeline data cutoff. Pre-cutoff rows in Sheet1 are legacy SAP/billed
    records, not active pipeline. Every client-side aggregator filters by this date.
    Mirror of backend PIPELINE_DATA_START. To restore YoY (April 2027+), set to null. */
@@ -11917,10 +11935,13 @@ function showVersionMismatchBanner(requiredVersion){
 }
 
 /* v24.3.0: Update version display in footer */
+/* v24.45.1: Also stamps the login-screen version label (parity with tvONE). */
 function updateVersionFooter(){
   const el = document.getElementById('app-version-footer');
-  if(!el)return;
-  el.textContent = `v${FRONTEND_VERSION}`;
+  if(el) el.textContent = `v${FRONTEND_VERSION}`;
+  // Login-screen version label — single source of truth is FRONTEND_VERSION.
+  const loginEl = document.getElementById('login-version');
+  if(loginEl) loginEl.textContent = `v${FRONTEND_VERSION}`;
 }
 
 /* ================================================================
@@ -17971,6 +17992,11 @@ document.querySelectorAll('.choice-grid').forEach(group=>{
           if(iEl) iEl.value='0';
           if(oEl) oEl.value='0';
           state.form.qtyIndoor=0;state.form.qtyOutdoor=0;
+        } else {
+          // v24.45.2 — Entering Mixed mode: sync state from the Indoor/Outdoor
+          // fields and set the total = their sum. The HTML defaults (Indoor 1 /
+          // Outdoor 0) give a sensible starting point; the user freely adjusts both.
+          if(typeof recalcMixedTotal==='function') recalcMixedTotal();
         }
       }
       // v20: Toggle CMS section based on update + qty rules
@@ -18008,18 +18034,22 @@ document.getElementById('f-qty').addEventListener('input',e=>{
   toggleCmsSection();  // v20: qty change may cross 25-player threshold
   if(typeof updateGuidedCmsAvailability==='function')updateGuidedCmsAvailability();  // v24.19.3
 });
-// v24.30.5: Legacy v17 "total = indoor + outdoor" auto-calc replaced.
-// New behavior: Total stays editable as the source of truth, Indoor+Outdoor
-// auto-balance against it (handled by v24.28.1 inline `onMixedQtyInput` →
-// `adjustMixedQty` defined in window scope at bottom of file). Here we only
-// keep the state-sync for backend compatibility (writes qtyIndoor/qtyOutdoor).
+// v24.45.2 — In Mixed mode the TOTAL is the sum of Indoor + Outdoor.
+// recalcMixedTotal keeps state.form.qty AND the hidden f-qty input in sync with
+// that sum, so every downstream consumer (BOM, CMS threshold, backend payload)
+// sees the correct total. (Previous v24.30.5 model — "Total is the editable
+// source of truth, Indoor/Outdoor auto-balance against it" — is replaced:
+// it made the steppers un-incrementable past the stale f-qty value of 1.)
 function recalcMixedTotal(){
   const indoor=parseInt(document.getElementById('f-qty-indoor').value)||0;
   const outdoor=parseInt(document.getElementById('f-qty-outdoor').value)||0;
   state.form.qtyIndoor=indoor;
   state.form.qtyOutdoor=outdoor;
-  // NOTE: do NOT overwrite state.form.qty or f-qty.value — Total is editable.
-  toggleCmsSection();  // v20
+  const sum=indoor+outdoor;
+  state.form.qty=sum;
+  const fqty=document.getElementById('f-qty');
+  if(fqty && String(fqty.value)!==String(sum)) fqty.value=String(sum);
+  toggleCmsSection();  // v20 — sum may cross the 25-player CMS threshold
   if(typeof updateGuidedCmsAvailability==='function')updateGuidedCmsAvailability();  // v24.19.3
 }
 document.getElementById('f-qty-indoor').addEventListener('input',recalcMixedTotal);
@@ -18922,13 +18952,16 @@ function renderResult(){
     html+=`<ul class="concerns-list">${concerns.map(c=>`<li>${c}</li>`).join('')}</ul></div>`;
   }
 
-  // v21.7: Pricing callout card — directs partner/SI to contact Dipenkumar for quote
-  html+=buildPricingCallout();
-
   // BOM card, Project summary (Tender spec removed in v24.12.12)
   html+=buildBOMCard(m,f,cms);
   // v24.43.1 — Discount Controls card removed.
   html+=buildProjectCardV21();
+
+  // v24.45.3 — Pricing callout moved to the BOTTOM of the Result page (after the
+  // BOM card and Project Summary), matching the Custom BOQ / Advanced path which
+  // already rendered it last. Previously the Guided path placed it ABOVE the BOM
+  // table — the two paths were inconsistent. Now both end with the pricing card.
+  html+=buildPricingCallout();
 
   host.innerHTML=html;
   // v21: Wire up cursor-follow glow + 3D tilt + sparkle burst after DOM is painted
@@ -21436,15 +21469,17 @@ async function _renderBsQuoteExcel(quote) {
     properties: { defaultRowHeight: 16 }
   });
 
-  // Column widths match tvONE pattern (A..G, total ~140 chars across)
+  // v24.45.0 column widths (tuned via stress test 2026-05-15):
+  // Cols F (Line Total) and G (Notes) widened so crore-level rupee values
+  // (e.g. 4,62,50,000.00) fit without overlapping the Notes column.
   ws.columns = [
-    { width: 18 },   // A: row labels / # / sku / T&C label
-    { width: 16 },   // B: value half / SKU
-    { width: 36 },   // C: description / value full
-    { width: 18 },   // D: qty / value
-    { width: 14 },   // E: unit price label / subtotal label
-    { width: 16 },   // F: line total / amount
-    { width: 24 }    // G: notes
+    { width: 18 },   // A: row labels / # / sku / T&C label / section headers
+    { width: 16 },   // B: SKU / value half
+    { width: 36 },   // C: Description / value full
+    { width: 18 },   // D: Qty
+    { width: 16 },   // E: Unit Price (₹) — widened from 14 → 16
+    { width: 20 },   // F: Line Total (₹) — widened from 16 → 20 (fits crore-level values)
+    { width: 28 }    // G: Notes — widened from 24 → 28 (separated cleanly from line total)
   ];
 
   let r = 1;
@@ -21647,7 +21682,15 @@ async function _renderBsQuoteExcel(quote) {
       const cell = rowRef.getCell(i + 1);
       cell.value = c.v != null ? c.v : '';
       cell.font = _bsXlFont(c.font || { size: 10 });
-      cell.alignment = { horizontal: c.align, vertical: 'middle', wrapText: i === 2 || i === 6 };
+      // v24.45.3 — right-aligned numeric cells (Unit Price col E=4, Line Total col F=5)
+      // get a 1-char indent so the value doesn't sit flush against the Notes column.
+      const isNumericCol = (i === 4 || i === 5);
+      cell.alignment = {
+        horizontal: c.align,
+        vertical: 'middle',
+        wrapText: i === 2 || i === 6,
+        indent: isNumericCol ? 1 : 0
+      };
       cell.fill = _bsXlFill(fillColor);
       cell.border = _bsXlBorders('TBLR', BS_XL_LINE);
       if (c.format) cell.numFmt = c.format;
@@ -29343,69 +29386,62 @@ async function _renderPipelineTrendBS() {
     if (i) i.value = String(Math.max(0, indoor));
     if (o) o.value = String(Math.max(0, outdoor));
     _updateMixedStatus();
-  }
-  function _updateMixedStatus() {
-    const { indoor, outdoor } = _readMixed();
-    const total = _getTotalQty();
-    const sum = indoor + outdoor;
-    const lbl = document.getElementById('mixed-total-label');
-    if (lbl) lbl.textContent = String(total);
-    const st = document.getElementById('mixed-balance-status');
-    if (!st) return;
-    if (sum === total) {
-      st.className = 'mixed-splitter-status is-ok';
-      st.textContent = '✓ adds up to ' + total;
-    } else if (sum < total) {
-      st.className = 'mixed-splitter-status is-bad';
-      st.textContent = '✗ short by ' + (total - sum) + ' — increase Indoor or Outdoor';
-    } else {
-      st.className = 'mixed-splitter-status is-bad';
-      st.textContent = '✗ over by ' + (sum - total) + ' — reduce Indoor or Outdoor';
+    // v24.45.2 — The +/\u2212 stepper buttons set .value programmatically, which does
+    // NOT fire the 'input' event that recalcMixedTotal is bound to. Call it directly
+    // so state.form.qtyIndoor / qtyOutdoor / qty stay in sync with the visible fields.
+    if (typeof recalcMixedTotal === 'function') {
+      try { recalcMixedTotal(); } catch (_) {}
     }
   }
-  // +/− button on Indoor/Outdoor stepper
+  function _updateMixedStatus() {
+    // v24.45.2 — In Mixed mode the TOTAL is derived from Indoor + Outdoor (not the
+    // other way round). Keep the hidden f-qty input in sync with the sum so the
+    // backend / BOM logic that reads f-qty still gets the correct total.
+    const { indoor, outdoor } = _readMixed();
+    const sum = indoor + outdoor;
+    const fqty = document.getElementById('f-qty');
+    if (fqty && String(fqty.value) !== String(sum)) {
+      fqty.value = String(sum);
+    }
+    const lbl = document.getElementById('mixed-total-label');
+    if (lbl) lbl.textContent = String(sum);
+    const st = document.getElementById('mixed-balance-status');
+    if (!st) return;
+    // The split always "adds up" by definition now — show the running total.
+    st.className = 'mixed-splitter-status is-ok';
+    st.textContent = '\u2713 adds up to ' + sum;
+  }
+  // +/\u2212 button on Indoor/Outdoor stepper.
+  // v24.45.2 — Indoor and Outdoor are INDEPENDENT counters. Adjusting one never
+  // changes the other. Each is free to go 0..10000. Total = indoor + outdoor.
   window.adjustMixedQty = function(which, delta) {
-    const total = _getTotalQty();
     const cur = _readMixed();
     let newVal = (which === 'indoor' ? cur.indoor : cur.outdoor) + delta;
     if (newVal < 0) newVal = 0;
-    if (newVal > total) newVal = total;
+    if (newVal > 10000) newVal = 10000;
     if (which === 'indoor') {
-      _setMixed(newVal, Math.max(0, total - newVal));
+      _setMixed(newVal, cur.outdoor);
     } else {
-      _setMixed(Math.max(0, total - newVal), newVal);
+      _setMixed(cur.indoor, newVal);
     }
   };
-  // Typing into Indoor or Outdoor input — auto-balance the other side
+  // Typing into Indoor or Outdoor input — the other side is left untouched.
+  // v24.45.2 — No auto-balance. Each field is independent; total = the sum.
   window.onMixedQtyInput = function(which) {
-    const total = _getTotalQty();
     const cur = _readMixed();
     let val = which === 'indoor' ? cur.indoor : cur.outdoor;
-    if (val > total) val = total;
+    if (val < 0) val = 0;
+    if (val > 10000) val = 10000;
     if (which === 'indoor') {
-      _setMixed(val, Math.max(0, total - val));
+      _setMixed(val, cur.outdoor);
     } else {
-      _setMixed(Math.max(0, total - val), val);
+      _setMixed(cur.indoor, val);
     }
   };
-  // When total qty changes and Mixed is active, redistribute proportionally
-  window._onTotalQtyChangedForMixed = function() {
-    const wrap = document.getElementById('mixed-qty-wrap');
-    if (!wrap || wrap.style.display === 'none') return;
-    const total = _getTotalQty();
-    const cur = _readMixed();
-    const sum = cur.indoor + cur.outdoor;
-    if (sum === 0) {
-      // Initial split — 50/50 (favouring indoor on odd numbers)
-      const indoor = Math.ceil(total / 2);
-      _setMixed(indoor, total - indoor);
-      return;
-    }
-    // Proportional redistribution if user has already set values
-    const indoorRatio = cur.indoor / sum;
-    const newIndoor = Math.round(total * indoorRatio);
-    _setMixed(newIndoor, Math.max(0, total - newIndoor));
-  };
+  // v24.45.2 — Mixed mode no longer derives the split from a separate total,
+  // so there is nothing to redistribute when f-qty changes externally. Kept as
+  // a no-op so any legacy call site is harmless.
+  window._onTotalQtyChangedForMixed = function() { /* no-op — see v24.45.2 */ };
   // Hook the total qty stepper so it triggers redistribute when Mixed active
   document.addEventListener('DOMContentLoaded', function() {
     const totalInput = document.getElementById('f-qty');
