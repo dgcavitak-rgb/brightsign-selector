@@ -9304,7 +9304,7 @@ html[data-theme="dark"] .adv-xc-os-btn[data-os="win"]:not(.active):hover {
          Stale fallback text is overwritten by updateVersionFooter() with the real
          FRONTEND_VERSION constant once the page script runs. -->
     <div id="login-version-wrap" style="text-align:center;margin-top:14px;font-size:11px;color:var(--ink-subtle,#94A3B8);font-family:var(--mono,monospace);letter-spacing:0.05em;">
-      <span id="login-version">v24.45.9</span>
+      <span id="login-version">v24.45.11</span>
     </div>
   </div>
   <div class="login-footer">Dipenkumar Gajjar · National Product Lead · +91 8160 756 906 · dipen.g@cavitak.com</div>
@@ -10808,7 +10808,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.45.9';  // v24.45.9 — NOTIFICATION CLEANUP (C-BS-7): converted all 74 native alert() calls to inline showSync() toasts — no more browser alert popups anywhere in the app. Error/failure/permission messages use type 'error' (toast persists until dismissed, matching old alert behaviour); the 2 success messages use 'success' (auto-fades); 'cancelled' messages use neutral type. Multi-line alert messages (\n\n) collapsed to ' \u00b7 '-separated single-line toasts. showSync() hardened — it is now the universal notification path, so it can never throw: if the toast DOM is not present yet (very early login screen) it falls back to a native alert so the message is never lost. Also fixed 4 dead showToast() calls (showToast was referenced but never defined — those notifications silently no-op'd); they now call showSync() directly. confirm() dialogs (20, blocking yes/no gates) intentionally left as-is. No backend change. Pairs with v25.19.0. Previously: v24.45.8 — CONSISTENCY FIX: corrected the role label "National Product Manager" → "National Product Lead" at all 4 remaining sites — login-screen footer, the offline-fallback USERS constant, the Result-page pricing escalation strip, and the pricing-escalation message string. (The tvONE pricing card was corrected separately in v25.99.27.) No behaviour change. Pairs with v25.19.0. Previously: v24.45.7 — TEST MODE HARDENING: verified Test Mode is permanently gone and unable to re-enable. _initTestMode() now also force-clears any stale per-user localStorage flag (bs-test-mode__<user> + bs-cockpit-include-test) on every boot — previously it only set the flag false without cleaning storage. setTestMode() was already a no-op stub that ignores its argument; confirmed every assignment to window._testModeOn is '= false' (zero '= true' paths anywhere). isTest always written blank on save. Net: Test Mode cannot be turned on by any code path, stale flags self-clean on next login. No backend change. Pairs with v25.19.0. Previously: v24.45.6 — DISCOUNT BUGFIX: the Excel BOQ ignored applied discounts. (1) Both quote builders (_buildQuoteFromGuided + _buildQuoteFromAdvanced) used row.unitPrice / row.lineTotal (LIST price) and ignored row.netUnitPrice / row.netLineTotal — so per-line figures in the Excel were always list price even when a discount was applied. Now the builders use the NET (discounted) unit price + line total when a discount exists, falling back to list price otherwise. (2) The Excel totals block was inconsistent — it showed the LIST subtotal but discounted GST + Grand Total. Now discount-aware: when a discount exists it renders List Subtotal -> Total Discount (red) -> Net Subtotal -> GST -> Grand Total, mirroring the in-app BOM; with no discount it shows a single Subtotal row as before. Per-line totals now reconcile with the net subtotal. No backend change. Pairs with v25.19.0. Previously: v24.45.5 — EXCEL SPACING AUDIT: cell-by-cell pass over the Excel renderer. (1) Date / Valid Until rows given explicit 16px height + vertical-middle alignment (were falling back to default 16 with no v-align, slight imbalance vs the 24px QUOTATION label). (2) Stray "—" placeholder removed from the empty left cell on the 3rd PROJECT DETAILS row (the row that has Location on the right but no matching QUOTED TO field on the left) — left cells now genuinely blank. (3) Unit Price / Line Total table-header cells given the same 1-char right indent as the numeric data cells below them, so the header text lines up directly above its figures. Verified by cell-by-cell openpyxl inspection across all 6 modes — borders, fills, alignment, row heights all consistent. No backend change. Pairs with v25.19.0. Previously: v24.45.4 — EXCEL POLISH: (1) Salesperson + Presales contact blocks now BOTH always render — Presales is optional, so when none is assigned the block shows "Not assigned" instead of being silently skipped (Excel layout now consistent deal-to-deal). (2) Cell/row/column spacing audit: T&C row heights now scale with text length (long entries — Warranty, Cancellation, Forex — no longer clipped at fixed 18px); QUOTED TO / PROJECT DETAILS value cells wrap long venue/location names with height scaling; verdict band wraps long Mixed-config verdict lines; Subtotal/GST/GRAND TOTAL value cells get a 1-char right indent so figures don't sit flush on the cell border. No backend change. Pairs with v25.19.0. Previously: v24.45.3 — UX FIX: "For Better Pricing" contact card moved to the BOTTOM of the Guided Result page (now renders after the BOM card + Project Summary). The Custom BOQ / Advanced path already placed it last since v24.12.6 — the Guided path was missed and still rendered it ABOVE the BOM table. Both paths are now consistent: pricing callout is the final card. No behavior change beyond render order. Pairs with v25.19.0. Previously: v24.45.2 — BUGFIX: Guided + Mixed mode Indoor/Outdoor steppers were clamped at 1 (treated a stale hidden total as the cap); now Indoor and Outdoor are independent counters and the total is derived from their sum. Root cause: adjustMixedQty / onMixedQtyInput treated the split as constrained by a SEPARATE total (the hidden single-mode f-qty input, which defaults to 1). Every +/- click was clamped to that stale total of 1, and the "other side" was auto-balanced to total-minus-thisValue — so Indoor+Outdoor could never exceed 1. Fix: in Mixed mode the TOTAL is now DERIVED from Indoor + Outdoor (the correct model). Indoor and Outdoor are independent counters (each 0..10000); adjusting one never touches the other. _updateMixedStatus + recalcMixedTotal keep the hidden f-qty input AND state.form.qty/qtyIndoor/qtyOutdoor in sync with the running sum so all downstream consumers (BOM, CMS 25-player threshold, backend payload) get the right total. _setMixed now calls recalcMixedTotal directly because the +/- buttons set .value programmatically and do NOT fire the 'input' event recalcMixedTotal was bound to (latent bug, previously masked by the broken clamp). Entering Mixed mode initializes state from the Indoor/Outdoor fields. _onTotalQtyChangedForMixed is now a no-op. Logic verified by simulation. No backend change. Pairs with v25.19.0. Previously: v24.45.1 — Added frontend version label on the login screen (parity with tvONE). Was: xlsx-js-style with old red CAVITAK MARKETING banner header. Now: Cavitak logo top-left + "BrightSign Product Selector" title in deep indigo (#312E81) + tricolor stripe (indigo/violet/red) + gold verdict band + indigo BoM table headers + red GRAND TOTAL banner + 12-row T&C block + salesperson + presales footer with Cavitak branded distributor band. New shared renderer _renderBsQuoteExcel(quote) takes a normalized payload, handles both BoQ (with prices) and BoM (no prices) modes, embeds Cavitak logo from existing CAVITAK_LOGO_DATA_URL constant (no re-encoding). Existing call sites unchanged: same downloadQuoteExcel() and _downloadAdvancedQuoteExcel() signatures preserved. Old xlsx-js-style functions deleted (~930 lines of legacy code removed). ExcelJS CDN added in <head>. ~150 KB lib download (gzipped) on first page load. Smoke-tested with realistic BoQ + BoM + empty-BOM payloads — all 3 render cleanly. Visual verification via LibreOffice headless render confirms the design matches the tvONE reference Excel pixel-for-pixel in structure. Pairs with backend v25.19.0. xlsx-js-style stays loaded for legacy History-tab CSV-style exportXLSX() (different use case, not customer-facing). Previously: v24.44.2 — UX wording sweep matching tvONE neutralized vocabulary.: All mid-action button labels neutralized to "Loading…": 'Saving…' (×7 — main save flow, profile, customer save, c2a/poa, pricing refresh) → 'Loading…'; 'Signing in…' (×2 — submit button + splash) → 'Loading…'; 'Signing in ✓' splash → 'Done ✓'; 'Sending…' (×4 — pre-mailto email modal stragglers) → 'Loading…'. All success toasts unified to 'Done ✓': 'Saved ✓' statusEl text (×3 — profile, settings, status checks) → 'Done ✓'; 'Password updated ✓' → 'Done ✓'; 'Template saved ✓' → 'Done ✓'; 'Template reset to default ✓' → 'Done ✓'; 'Backup deleted ✓' → 'Done ✓'; 'Session extended ✓' → 'Done ✓'; '✓ Prices refreshed — Pricing, Accessories, CMS, Catalog all reloaded' → 'Done ✓'; 'Up to date ✓' → 'Done ✓'; 'All entries uploaded ✓' (×2) → 'Done ✓'; 'History updated ✓' → 'Done ✓'; 'Refreshed ✓' → 'Done ✓'. Sync toast default text 'Saving…' → 'Working…' (was the brief flash before being replaced by the actual status). Net: BS now matches tvONE's neutralized vocabulary — a rep switching between apps sees the same words for the same operations. 23 surgical edits across the file. No backend change. Pairs with v25.19.0. Previously: v24.44.1 — EMAIL FLOW mailto: switch (broken-on-M365 backend send → true Outlook open with PDF+Excel auto-download). Click "Open in Outlook" in modal now: (1) downloads BOTH the PDF and Excel quote files for the rep to attach, (2) opens their default mail client (Outlook on M365) with To/CC/Subject/Body pre-filled from the modal fields, (3) rep attaches the just-downloaded files in Outlook and clicks Send — email truly originates from rep's mailbox, appears in their Sent folder, passes SPF/DKIM/DMARC. dipen.g@cavitak.com forced CC pre-filled (rep can technically remove but instructed not to). Modal subtitle updated to reflect new flow. Backend email_send handler intentionally left in place (dormant, no UI call site) — easy revert if ever needed. No backend deploy required. Pairs with v25.19.0. Previously: v24.44.0 — PDF polish (Excel logo embedding deferred to next session per agreed split). Three small targeted improvements to the Tender Spec / Quote PDF export: (1) NEW: Cavitak-branded footer band added above the version footer line. Mini Cavitak logo (26px) on left + right-aligned attribution "Cavitak Marketing Pvt Ltd" (bold, indigo) over "Authorized BrightSign Distributor · India" (muted slate). Subtle indigo→violet tinted background (rgba 0.04) with 2px solid #4F46E5 top border. Mirrors the header strip treatment for visual cohesion — reads as the official Cavitak signoff before the technical disclaimer. (2) Header title color tightened from #312E81 (dark indigo) → #4F46E5 (indigo, matching the accent strip end + new footer band border). Subtle cohesion win, no layout change. (3) Discovery: the Cavitak logo (635×277 JPEG, ~13KB) was already encoded as CAVITAK_LOGO_DATA_URL constant from v24.20.0 — no re-encoding needed. Reused the same constant for the new footer mini-logo. Backend v25.19.0 unchanged. Excel still uses xlsx-js-style; ExcelJS swap for image embedding is the next focused session.
+const FRONTEND_VERSION = '24.45.11';  // v24.45.11 — SHEET-DRIVEN PRICING RULES: GST rate and the max discount cap can now be changed by editing a cell in the Sheet's new Settings tab — no code change, no redeploy. fetchPriceBook now captures a `settings` block from pricing_get (backend v25.20.0) into window.PRICING_SETTINGS. New helpers _cfgGstRate() / _cfgMaxDiscount() / _cfgGstLabel() expose the values with HARDCODED FALLBACKS (0.18 / 20) plus sane-range guards (GST 0-40%, discount 0-100%) — a missing, blank, or wildly-typo'd cell can never miscalculate a quote. Wired: 2 GST calculations (both BOM builders), 5 discount-cap sites (_discValidatePct, _discEffectivePct, 3 validation guards), and 8 GST display-text sites (2 BOM table rows, Excel cell + T&C, PDF row + T&C, 2 message templates) — so a rate change updates both the math and every label consistently. Verified by simulation across 5 scenarios incl. fallback + typo cases. Backend: v25.19.0 -> v25.20.0 (additive only). Previously: v24.45.10 — STALE-CACHE FIX (parity with tvONE v25.99.32): saveProfileGate() mirrored the freshly-entered professionalTitle/email/phone to state.user + _sessionUser but never refreshed window._allUsers. If the team list was loaded earlier in the session, a quote Excel/PDF referencing that rep would show the stale (pre-update, blank-title) row. saveProfileGate() now re-fetches _allUsers via _fetchAllUsersForDropdowns() after a successful save so exports use the current title. No backend change. Pairs with v25.19.0. Previously: v24.45.9 — NOTIFICATION CLEANUP (C-BS-7): converted all 74 native alert() calls to inline showSync() toasts — no more browser alert popups anywhere in the app. Error/failure/permission messages use type 'error' (toast persists until dismissed, matching old alert behaviour); the 2 success messages use 'success' (auto-fades); 'cancelled' messages use neutral type. Multi-line alert messages (\n\n) collapsed to ' \u00b7 '-separated single-line toasts. showSync() hardened — it is now the universal notification path, so it can never throw: if the toast DOM is not present yet (very early login screen) it falls back to a native alert so the message is never lost. Also fixed 4 dead showToast() calls (showToast was referenced but never defined — those notifications silently no-op'd); they now call showSync() directly. confirm() dialogs (20, blocking yes/no gates) intentionally left as-is. No backend change. Pairs with v25.19.0. Previously: v24.45.8 — CONSISTENCY FIX: corrected the role label "National Product Manager" → "National Product Lead" at all 4 remaining sites — login-screen footer, the offline-fallback USERS constant, the Result-page pricing escalation strip, and the pricing-escalation message string. (The tvONE pricing card was corrected separately in v25.99.27.) No behaviour change. Pairs with v25.19.0. Previously: v24.45.7 — TEST MODE HARDENING: verified Test Mode is permanently gone and unable to re-enable. _initTestMode() now also force-clears any stale per-user localStorage flag (bs-test-mode__<user> + bs-cockpit-include-test) on every boot — previously it only set the flag false without cleaning storage. setTestMode() was already a no-op stub that ignores its argument; confirmed every assignment to window._testModeOn is '= false' (zero '= true' paths anywhere). isTest always written blank on save. Net: Test Mode cannot be turned on by any code path, stale flags self-clean on next login. No backend change. Pairs with v25.19.0. Previously: v24.45.6 — DISCOUNT BUGFIX: the Excel BOQ ignored applied discounts. (1) Both quote builders (_buildQuoteFromGuided + _buildQuoteFromAdvanced) used row.unitPrice / row.lineTotal (LIST price) and ignored row.netUnitPrice / row.netLineTotal — so per-line figures in the Excel were always list price even when a discount was applied. Now the builders use the NET (discounted) unit price + line total when a discount exists, falling back to list price otherwise. (2) The Excel totals block was inconsistent — it showed the LIST subtotal but discounted GST + Grand Total. Now discount-aware: when a discount exists it renders List Subtotal -> Total Discount (red) -> Net Subtotal -> GST -> Grand Total, mirroring the in-app BOM; with no discount it shows a single Subtotal row as before. Per-line totals now reconcile with the net subtotal. No backend change. Pairs with v25.19.0. Previously: v24.45.5 — EXCEL SPACING AUDIT: cell-by-cell pass over the Excel renderer. (1) Date / Valid Until rows given explicit 16px height + vertical-middle alignment (were falling back to default 16 with no v-align, slight imbalance vs the 24px QUOTATION label). (2) Stray "—" placeholder removed from the empty left cell on the 3rd PROJECT DETAILS row (the row that has Location on the right but no matching QUOTED TO field on the left) — left cells now genuinely blank. (3) Unit Price / Line Total table-header cells given the same 1-char right indent as the numeric data cells below them, so the header text lines up directly above its figures. Verified by cell-by-cell openpyxl inspection across all 6 modes — borders, fills, alignment, row heights all consistent. No backend change. Pairs with v25.19.0. Previously: v24.45.4 — EXCEL POLISH: (1) Salesperson + Presales contact blocks now BOTH always render — Presales is optional, so when none is assigned the block shows "Not assigned" instead of being silently skipped (Excel layout now consistent deal-to-deal). (2) Cell/row/column spacing audit: T&C row heights now scale with text length (long entries — Warranty, Cancellation, Forex — no longer clipped at fixed 18px); QUOTED TO / PROJECT DETAILS value cells wrap long venue/location names with height scaling; verdict band wraps long Mixed-config verdict lines; Subtotal/GST/GRAND TOTAL value cells get a 1-char right indent so figures don't sit flush on the cell border. No backend change. Pairs with v25.19.0. Previously: v24.45.3 — UX FIX: "For Better Pricing" contact card moved to the BOTTOM of the Guided Result page (now renders after the BOM card + Project Summary). The Custom BOQ / Advanced path already placed it last since v24.12.6 — the Guided path was missed and still rendered it ABOVE the BOM table. Both paths are now consistent: pricing callout is the final card. No behavior change beyond render order. Pairs with v25.19.0. Previously: v24.45.2 — BUGFIX: Guided + Mixed mode Indoor/Outdoor steppers were clamped at 1 (treated a stale hidden total as the cap); now Indoor and Outdoor are independent counters and the total is derived from their sum. Root cause: adjustMixedQty / onMixedQtyInput treated the split as constrained by a SEPARATE total (the hidden single-mode f-qty input, which defaults to 1). Every +/- click was clamped to that stale total of 1, and the "other side" was auto-balanced to total-minus-thisValue — so Indoor+Outdoor could never exceed 1. Fix: in Mixed mode the TOTAL is now DERIVED from Indoor + Outdoor (the correct model). Indoor and Outdoor are independent counters (each 0..10000); adjusting one never touches the other. _updateMixedStatus + recalcMixedTotal keep the hidden f-qty input AND state.form.qty/qtyIndoor/qtyOutdoor in sync with the running sum so all downstream consumers (BOM, CMS 25-player threshold, backend payload) get the right total. _setMixed now calls recalcMixedTotal directly because the +/- buttons set .value programmatically and do NOT fire the 'input' event recalcMixedTotal was bound to (latent bug, previously masked by the broken clamp). Entering Mixed mode initializes state from the Indoor/Outdoor fields. _onTotalQtyChangedForMixed is now a no-op. Logic verified by simulation. No backend change. Pairs with v25.19.0. Previously: v24.45.1 — Added frontend version label on the login screen (parity with tvONE). Was: xlsx-js-style with old red CAVITAK MARKETING banner header. Now: Cavitak logo top-left + "BrightSign Product Selector" title in deep indigo (#312E81) + tricolor stripe (indigo/violet/red) + gold verdict band + indigo BoM table headers + red GRAND TOTAL banner + 12-row T&C block + salesperson + presales footer with Cavitak branded distributor band. New shared renderer _renderBsQuoteExcel(quote) takes a normalized payload, handles both BoQ (with prices) and BoM (no prices) modes, embeds Cavitak logo from existing CAVITAK_LOGO_DATA_URL constant (no re-encoding). Existing call sites unchanged: same downloadQuoteExcel() and _downloadAdvancedQuoteExcel() signatures preserved. Old xlsx-js-style functions deleted (~930 lines of legacy code removed). ExcelJS CDN added in <head>. ~150 KB lib download (gzipped) on first page load. Smoke-tested with realistic BoQ + BoM + empty-BOM payloads — all 3 render cleanly. Visual verification via LibreOffice headless render confirms the design matches the tvONE reference Excel pixel-for-pixel in structure. Pairs with backend v25.19.0. xlsx-js-style stays loaded for legacy History-tab CSV-style exportXLSX() (different use case, not customer-facing). Previously: v24.44.2 — UX wording sweep matching tvONE neutralized vocabulary.: All mid-action button labels neutralized to "Loading…": 'Saving…' (×7 — main save flow, profile, customer save, c2a/poa, pricing refresh) → 'Loading…'; 'Signing in…' (×2 — submit button + splash) → 'Loading…'; 'Signing in ✓' splash → 'Done ✓'; 'Sending…' (×4 — pre-mailto email modal stragglers) → 'Loading…'. All success toasts unified to 'Done ✓': 'Saved ✓' statusEl text (×3 — profile, settings, status checks) → 'Done ✓'; 'Password updated ✓' → 'Done ✓'; 'Template saved ✓' → 'Done ✓'; 'Template reset to default ✓' → 'Done ✓'; 'Backup deleted ✓' → 'Done ✓'; 'Session extended ✓' → 'Done ✓'; '✓ Prices refreshed — Pricing, Accessories, CMS, Catalog all reloaded' → 'Done ✓'; 'Up to date ✓' → 'Done ✓'; 'All entries uploaded ✓' (×2) → 'Done ✓'; 'History updated ✓' → 'Done ✓'; 'Refreshed ✓' → 'Done ✓'. Sync toast default text 'Saving…' → 'Working…' (was the brief flash before being replaced by the actual status). Net: BS now matches tvONE's neutralized vocabulary — a rep switching between apps sees the same words for the same operations. 23 surgical edits across the file. No backend change. Pairs with v25.19.0. Previously: v24.44.1 — EMAIL FLOW mailto: switch (broken-on-M365 backend send → true Outlook open with PDF+Excel auto-download). Click "Open in Outlook" in modal now: (1) downloads BOTH the PDF and Excel quote files for the rep to attach, (2) opens their default mail client (Outlook on M365) with To/CC/Subject/Body pre-filled from the modal fields, (3) rep attaches the just-downloaded files in Outlook and clicks Send — email truly originates from rep's mailbox, appears in their Sent folder, passes SPF/DKIM/DMARC. dipen.g@cavitak.com forced CC pre-filled (rep can technically remove but instructed not to). Modal subtitle updated to reflect new flow. Backend email_send handler intentionally left in place (dormant, no UI call site) — easy revert if ever needed. No backend deploy required. Pairs with v25.19.0. Previously: v24.44.0 — PDF polish (Excel logo embedding deferred to next session per agreed split). Three small targeted improvements to the Tender Spec / Quote PDF export: (1) NEW: Cavitak-branded footer band added above the version footer line. Mini Cavitak logo (26px) on left + right-aligned attribution "Cavitak Marketing Pvt Ltd" (bold, indigo) over "Authorized BrightSign Distributor · India" (muted slate). Subtle indigo→violet tinted background (rgba 0.04) with 2px solid #4F46E5 top border. Mirrors the header strip treatment for visual cohesion — reads as the official Cavitak signoff before the technical disclaimer. (2) Header title color tightened from #312E81 (dark indigo) → #4F46E5 (indigo, matching the accent strip end + new footer band border). Subtle cohesion win, no layout change. (3) Discovery: the Cavitak logo (635×277 JPEG, ~13KB) was already encoded as CAVITAK_LOGO_DATA_URL constant from v24.20.0 — no re-encoding needed. Reused the same constant for the new footer mini-logo. Backend v25.19.0 unchanged. Excel still uses xlsx-js-style; ExcelJS swap for image embedding is the next focused session.
   // v24.36.3 — Two bugfixes per user feedback. (1) HEADER NAME "—" BUG: On fresh login (sign-in from login page), the user-label-name slot stayed as the HTML default "—" because _applyPostLoginUI() was NEVER actually called in the fresh-login flow despite the v24.20.1 comment claiming it would be called "below". The "below" promise was never fulfilled. Only the rehydrate path (refresh while signed in) called it, which is why the issue only surfaced on cold logins. Now calls _applyPostLoginUI() in the fresh-login flow too — idempotent so safe against duplicate calls in slow login races. (2) NOTIFICATIONS NOT CLEARING DAILY: Notifications had 7-day rolling retention. User wants yesterday's notifications gone at 12:01 AM (daily reset). Changed _loadNotifs_ cutoff from "now - 7 days" to "start of today (00:00:00 local time)". Notifs older than midnight are now filtered out on every load and the cleaned list is persisted so the bell badge count stays accurate. NOTIF_RETENTION_MS constant kept declared (referenced elsewhere) but no longer used as the cutoff in _loadNotifs_. Pairs with backend v25.15.0.
 // v24.36.2 — Label refinement: HDMI input → "HDMI live source input port?" (added "port").
 // v24.36.1 — Card 03 field order refinement: Resolution → Touch → HDMI input → GPIO → HDMI Output port → SSD → Wi-Fi. "How many screens per player?" relabeled to "How many HDMI Output port?".
@@ -12343,6 +12343,17 @@ async function fetchPriceBook(loginName, passwordHash){
                    '— keeping fallback prices', data && data.hint ? '· ' + data.hint : '');
       return null;
     }
+    // v24.45.11 — Capture the Settings block (gstRatePct, maxDiscountPct, …) from the
+    // backend. These are pricing RULE parameters that can now be changed by editing
+    // a cell in the Sheet's Settings tab. Stored on window.PRICING_SETTINGS; every
+    // consumer reads via _cfgGstRate() / _cfgMaxDiscount() which fall back to the
+    // hardcoded defaults (0.18 / 20) if a value is missing — so a blank/typo'd cell
+    // can never break a quote. Captured BEFORE the modelCount guard so settings load
+    // even if the price book itself is somehow empty.
+    if(data.settings && typeof data.settings === 'object'){
+      window.PRICING_SETTINGS = data.settings;
+      console.log('[fetchPriceBook] settings:', JSON.stringify(data.settings));
+    }
     if(!data.models || data.modelCount === 0){
       console.warn('[fetchPriceBook] empty price book — Super needs to run pricing_seed_ONESHOT() in Apps Script. Keeping fallback prices.');
       return null;
@@ -13215,6 +13226,50 @@ window._renderEmailTemplate = function(templateId, vars){
   };
 };
 
+/* ===== v24.45.11 — Sheet-driven pricing rule parameters ======================
+ * GST rate and the max discount cap are read from the Sheet's Settings tab
+ * (delivered via pricing_get → window.PRICING_SETTINGS). These helpers expose
+ * them with HARDCODED FALLBACKS — if the Settings tab is missing, a value is
+ * blank, or the fetch failed, the app uses the long-standing defaults so a quote
+ * is never miscalculated. To change GST or the discount cap: edit the cell in the
+ * Settings tab; no code change, no redeploy.
+ *
+ *   _cfgGstRate()     -> fraction, e.g. 0.18  (Settings key: gstRatePct, a percent)
+ *   _cfgMaxDiscount() -> percent,  e.g. 20    (Settings key: maxDiscountPct)
+ *   _cfgGstLabel()    -> display string, e.g. "GST @ 18%"
+ * ============================================================================ */
+var GST_RATE_FALLBACK = 0.18;     // 18% — India standard, used if Settings absent
+var MAX_DISCOUNT_FALLBACK = 20;   // 20% — used if Settings absent
+function _cfgGstRate(){
+  try {
+    var s = window.PRICING_SETTINGS;
+    if(s && s.gstRatePct != null){
+      var p = parseFloat(s.gstRatePct);
+      // Sane-range guard: 0-40%. Anything outside -> fall back (protects against a
+      // wild typo like 1800 instead of 18).
+      if(isFinite(p) && p >= 0 && p <= 40) return p / 100;
+    }
+  } catch(e){}
+  return GST_RATE_FALLBACK;
+}
+function _cfgMaxDiscount(){
+  try {
+    var s = window.PRICING_SETTINGS;
+    if(s && s.maxDiscountPct != null){
+      var p = parseFloat(s.maxDiscountPct);
+      // Sane-range guard: 0-100%.
+      if(isFinite(p) && p >= 0 && p <= 100) return p;
+    }
+  } catch(e){}
+  return MAX_DISCOUNT_FALLBACK;
+}
+function _cfgGstLabel(){
+  // e.g. "GST @ 18%" — drops trailing .0 so 18.0 shows as "18".
+  var pct = _cfgGstRate() * 100;
+  var txt = (Math.round(pct * 100) / 100).toString();
+  return 'GST @ ' + txt + '%';
+}
+
 /* ===== v24.42.0 — Discount helpers ===========================================
  * Per-line + project-level discount, range 0-20%.
  * `lineKey` is a stable string identifier for each BOM row, so the discount map
@@ -13238,7 +13293,7 @@ function _discEffectivePct(row){
   const lineSpecific = parseFloat(state._lineDiscounts && state._lineDiscounts[lineKey]) || 0;
   const project = parseFloat(state._projectDiscount) || 0;
   const eff = Math.max(lineSpecific, project);
-  return Math.min(20, Math.max(0, eff));
+  return Math.min(_cfgMaxDiscount(), Math.max(0, eff));
 }
 function _discNet(row){
   if(row.unitPrice == null || isNaN(row.unitPrice)) return null;
@@ -13252,10 +13307,11 @@ function _discAnyApplied(){
   return Object.keys(state._lineDiscounts).some(function(k){ return parseFloat(state._lineDiscounts[k]) > 0; });
 }
 function _discValidatePct(input){
-  // Clamp typed/pasted value to 0-20 range, integer or decimal
+  // Clamp typed/pasted value to 0-max range (max from Settings tab; default 20)
   let v = parseFloat(input);
   if(!isFinite(v) || v < 0) v = 0;
-  if(v > 20) v = 20;
+  const cap = _cfgMaxDiscount();
+  if(v > cap) v = cap;
   return Math.round(v * 10) / 10;  // 1 decimal max
 }
 function _discApplyLinePct(lineKey, pct){
@@ -14957,6 +15013,17 @@ async function saveProfileGate(){
       window._sessionUser.email = email;
       window._sessionUser.phone = phone;
     }
+    // v24.45.10 — Re-fetch the _allUsers cache so the Excel/PDF salesperson +
+    // presales lookup uses the freshly-saved professional title. Without this, a
+    // team list loaded earlier this session still holds the pre-update (blank-title)
+    // row, and a quote referencing this rep would show a stale/blank title.
+    // _fetchAllUsersForDropdowns always re-fetches (no early-return), so calling it
+    // repopulates _allUsers with current data. (Parity with tvONE v25.99.32.)
+    try {
+      if (typeof _fetchAllUsersForDropdowns === 'function' && state.user && state.user.loginName) {
+        _fetchAllUsersForDropdowns(state.user.loginName, pwHash);
+      }
+    } catch(_) {}
     _hideProfileGate();
     if(typeof showSync === 'function'){
       showSync('Profile saved — welcome ' + (String(state.user.fullName || '')).split(' ')[0] + '!', 'success');
@@ -19599,7 +19666,7 @@ function buildAdvancedBOMCard(r, f){
       totalDiscount += (row.lineTotal - row.netLineTotal);
     }
   });
-  const gst = Math.round(discountedSubtotal * 0.18);
+  const gst = Math.round(discountedSubtotal * _cfgGstRate());  // v24.45.11 rate from Settings
   const grandTotal = discountedSubtotal + gst;
 
   // 6. Render — same template as buildBOMCard so styling is identical
@@ -19630,7 +19697,7 @@ function buildAdvancedBOMCard(r, f){
     html += `<tr style="background:var(--surface-2,rgba(0,0,0,0.02));"><td colspan="5" style="text-align:right;font-weight:600;color:#B91C1C;">Total Discount</td><td class="num" style="font-weight:700;white-space:nowrap;color:#B91C1C;">− ${formatINR(totalDiscount)}</td></tr>`;
   }
   html += `<tr style="background:var(--surface-2,rgba(0,0,0,0.02));"><td colspan="5" style="text-align:right;font-weight:600;">Net Subtotal (after discount)</td><td class="num" style="font-weight:700;white-space:nowrap;">${formatINR(discountedSubtotal)}</td></tr>`;
-  html += `<tr style="background:var(--surface-2,rgba(0,0,0,0.02));"><td colspan="5" style="text-align:right;font-weight:600;">GST @ 18%</td><td class="num" style="font-weight:700;white-space:nowrap;">${formatINR(gst)}</td></tr>`;
+  html += `<tr style="background:var(--surface-2,rgba(0,0,0,0.02));"><td colspan="5" style="text-align:right;font-weight:600;">${_cfgGstLabel()}</td><td class="num" style="font-weight:700;white-space:nowrap;">${formatINR(gst)}</td></tr>`;
   html += `<tr style="background:linear-gradient(135deg,rgba(79,70,229,0.08) 0%,rgba(99,102,241,0.12) 100%);"><td colspan="5" style="text-align:right;font-weight:700;font-size:14px;color:var(--indigo);">Total with GST</td><td class="num" style="font-weight:800;font-size:15px;color:var(--indigo);white-space:nowrap;">${formatINR(grandTotal)}</td></tr>`;
   html += `</tbody></table></div>`;
 
@@ -19698,7 +19765,7 @@ function buildBOMCard(m,f,cms){
       totalDiscount += (row.lineTotal - row.netLineTotal);
     }
   });
-  const gst=Math.round(discountedSubtotal*0.18);
+  const gst=Math.round(discountedSubtotal*_cfgGstRate());  // v24.45.11 rate from Settings
   const grandTotal=discountedSubtotal+gst;
   const showDiscCol = true;  // always show; column is compact, default 0%
   let html=`<div class="glass-card"><div class="glass-card-title"><span class="glass-card-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M9 3v18"/></svg></span>Bill of Quantities<span style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-subtle);font-weight:500;letter-spacing:0.04em;text-transform:uppercase;">${rows.length} line item${rows.length===1?'':'s'}</span></div><div class="glass-card-divider"></div><table class="bom-table-v21"><thead><tr><th>Item</th><th class="num" style="width:60px;">Qty</th><th class="num" style="width:130px;white-space:nowrap;">List Price</th><th class="num" style="width:80px;">Disc %</th><th class="num" style="width:140px;white-space:nowrap;">Net Unit</th><th class="num" style="width:150px;white-space:nowrap;">Line Total</th></tr></thead><tbody>`;
@@ -19727,7 +19794,7 @@ function buildBOMCard(m,f,cms){
     html+=`<tr style="background:var(--surface-2,rgba(0,0,0,0.02));"><td colspan="5" style="text-align:right;font-weight:600;color:#B91C1C;">Total Discount</td><td class="num" style="font-weight:700;white-space:nowrap;color:#B91C1C;">− ${formatINR(totalDiscount)}</td></tr>`;
   }
   html+=`<tr style="background:var(--surface-2,rgba(0,0,0,0.02));"><td colspan="5" style="text-align:right;font-weight:600;">Net Subtotal (after discount)</td><td class="num" style="font-weight:700;white-space:nowrap;">${formatINR(discountedSubtotal)}</td></tr>`;
-  html+=`<tr style="background:var(--surface-2,rgba(0,0,0,0.02));"><td colspan="5" style="text-align:right;font-weight:600;">GST @ 18%</td><td class="num" style="font-weight:700;white-space:nowrap;">${formatINR(gst)}</td></tr>`;
+  html+=`<tr style="background:var(--surface-2,rgba(0,0,0,0.02));"><td colspan="5" style="text-align:right;font-weight:600;">${_cfgGstLabel()}</td><td class="num" style="font-weight:700;white-space:nowrap;">${formatINR(gst)}</td></tr>`;
   html+=`<tr style="background:linear-gradient(135deg,rgba(79,70,229,0.08) 0%,rgba(99,102,241,0.12) 100%);"><td colspan="5" style="text-align:right;font-weight:700;font-size:14px;color:var(--indigo);">Total with GST</td><td class="num" style="font-weight:800;font-size:15px;color:var(--indigo);white-space:nowrap;">${formatINR(grandTotal)}</td></tr>`;
   html+=`</tbody></table></div>`;
   // Cache totals on state for Excel + email to reuse (v24.42.0: now includes discount data)
@@ -20439,7 +20506,7 @@ function buildEntryPayload(status){
     // state automatically — no need for a separate "Save Discounts" call when the user
     // confirms the deal. lineDiscounts is stringified JSON; projectDiscount is a number.
     lineDiscounts:   JSON.stringify(state._lineDiscounts || {}),
-    projectDiscount: (function(){ const n = parseFloat(state._projectDiscount); return (isFinite(n) && n >= 0 && n <= 20) ? n : 0; })()
+    projectDiscount: (function(){ const n = parseFloat(state._projectDiscount); const cap = _cfgMaxDiscount(); return (isFinite(n) && n >= 0 && n <= cap) ? n : 0; })()  // v24.45.11 cap from Settings
   };
 }
 
@@ -21802,7 +21869,7 @@ async function _renderBsQuoteExcel(quote) {
 
     // GST row
     ws.mergeCells('A' + r + ':D' + r);
-    ws.getCell('E' + r).value = 'GST @ 18%';
+    ws.getCell('E' + r).value = _cfgGstLabel();  // v24.45.11 label from Settings
     ws.getCell('E' + r).font = _bsXlFont({ size: 10, bold: true, color: { argb: BS_XL_INK_SOFT } });
     ws.getCell('E' + r).alignment = { horizontal: 'right', vertical: 'middle' };
     ws.getCell('F' + r).value = quote.gst || 0;
@@ -21852,7 +21919,7 @@ async function _renderBsQuoteExcel(quote) {
     ['Delivery',       'Ex-warehouse Ahmedabad. Outbound freight & in-transit insurance extra at actuals.'],
     ['Warranty',       'Standard OEM warranty on BrightSign products. Faulty units must be returned to Cavitak\'s Ahmedabad office for warranty processing; outbound logistics are at the customer\'s cost.'],
     ['Validity',       '15 days from quote date (' + quote.dateStr + '). Pricing subject to revision thereafter.'],
-    ['Taxes',          'GST @ 18% included above. Any additional levies, cess or local duties extra at actuals.'],
+    ['Taxes',          _cfgGstLabel() + ' included above. Any additional levies, cess or local duties extra at actuals.'],
     ['Forex',          'Pricing based on prevailing INR–USD rate on quote date. Material forex movement (>3%) before PO may revise pricing.'],
     ['Stock Validity', 'Stock subject to prior sale. Confirmation of availability at the time of PO placement.'],
     ['Installation',   'Partner\'s scope.'],
@@ -22313,7 +22380,7 @@ function openEmailModal(){
       'Quote ref: ' + vars.quoteNumber,
       'Player: ' + vars.playerLine,
       'Quantity: ' + vars.quantity,
-      'Indicative quotation: ' + vars.totalValue + ' (incl. GST @ 18%)',
+      'Indicative quotation: ' + vars.totalValue + ' (incl. ' + _cfgGstLabel() + ')',
       'Valid until: ' + vars.validUntil,
       '',
       'For commercial terms, volume rates, stock position, or any clarifications, please reach out anytime.',
@@ -22518,7 +22585,7 @@ async function emailQuoteToPartner(){
     `Resolution: ${resStr}`,
     ...((state._bomTotals && state._bomTotals.grandTotal)?[
       '',
-      `Indicative quotation: ${formatINR(state._bomTotals.grandTotal)} (incl. GST @ 18%)`,
+      `Indicative quotation: ${formatINR(state._bomTotals.grandTotal)} (incl. ${_cfgGstLabel()})`,
       `(Gross Total ${formatINR(state._bomTotals.subtotal)} + GST ${formatINR(state._bomTotals.gst)})`
     ]:[]),
     '',
@@ -23180,12 +23247,12 @@ function editPastEntry(entryIdx){
       if (parsed && typeof parsed === 'object') {
         Object.keys(parsed).forEach(function(k){
           const v = parseFloat(parsed[k]);
-          if (isFinite(v) && v >= 0 && v <= 20) state._lineDiscounts[String(k)] = v;
+          if (isFinite(v) && v >= 0 && v <= _cfgMaxDiscount()) state._lineDiscounts[String(k)] = v;  // v24.45.11 cap from Settings
         });
       }
     }
     const pd = parseFloat(entry.projectDiscount);
-    state._projectDiscount = (isFinite(pd) && pd >= 0 && pd <= 20) ? pd : 0;
+    state._projectDiscount = (isFinite(pd) && pd >= 0 && pd <= _cfgMaxDiscount()) ? pd : 0;  // v24.45.11 cap from Settings
     state._discountSaved = true;  // matches server
   } catch (e) {
     state._lineDiscounts = {};
@@ -23895,7 +23962,7 @@ async function exportQuotePDF(returnDoc){
               <td style="padding:9px 16px 9px 0;color:#0F172A;font-size:12px;font-weight:600;text-align:right;min-width:140px;background:#F1F5F9;">${formatINR(subtotal)}</td>
             </tr>
             <tr>
-              <td style="padding:7px 18px 7px 16px;color:#92400E;font-size:11px;text-align:right;background:#FEF3C7;">GST @ 18%</td>
+              <td style="padding:7px 18px 7px 16px;color:#92400E;font-size:11px;text-align:right;background:#FEF3C7;">${_cfgGstLabel()}</td>
               <td style="padding:7px 16px 7px 0;color:#92400E;font-size:12px;font-weight:600;text-align:right;background:#FEF3C7;">${formatINR(gst)}</td>
             </tr>
             <tr>
@@ -23917,7 +23984,7 @@ async function exportQuotePDF(returnDoc){
             <tr><td style="padding:6px 12px 6px 0;font-weight:700;color:#312E81;vertical-align:top;white-space:nowrap;">Delivery</td><td style="padding:6px 0;color:#334155;vertical-align:top;">Ex-warehouse Ahmedabad. Outbound freight &amp; in-transit insurance extra at actuals.</td></tr>
             <tr style="background:#F8FAFC;"><td style="padding:6px 12px 6px 6px;font-weight:700;color:#312E81;vertical-align:top;white-space:nowrap;">Warranty</td><td style="padding:6px 6px 6px 0;color:#334155;vertical-align:top;">Standard 5-year OEM warranty on BrightSign Series 5 players, subject to product registration on the BrightSign portal within 30 days of purchase. Without registration, default factory warranty applies. Faulty units must be returned to Cavitak's Ahmedabad office for warranty processing; outbound logistics are at the customer's cost.</td></tr>
             <tr><td style="padding:6px 12px 6px 0;font-weight:700;color:#312E81;vertical-align:top;white-space:nowrap;">Validity</td><td style="padding:6px 0;color:#334155;vertical-align:top;">15 days from quote date (${dateStr}). Pricing subject to revision thereafter.</td></tr>
-            <tr style="background:#F8FAFC;"><td style="padding:6px 12px 6px 6px;font-weight:700;color:#312E81;vertical-align:top;white-space:nowrap;">Taxes</td><td style="padding:6px 6px 6px 0;color:#334155;vertical-align:top;">GST @ 18% included above. Any additional levies, cess or local duties extra at actuals.</td></tr>
+            <tr style="background:#F8FAFC;"><td style="padding:6px 12px 6px 6px;font-weight:700;color:#312E81;vertical-align:top;white-space:nowrap;">Taxes</td><td style="padding:6px 6px 6px 0;color:#334155;vertical-align:top;">${_cfgGstLabel()} included above. Any additional levies, cess or local duties extra at actuals.</td></tr>
             <tr><td style="padding:6px 12px 6px 0;font-weight:700;color:#312E81;vertical-align:top;white-space:nowrap;">Forex</td><td style="padding:6px 0;color:#334155;vertical-align:top;">Pricing based on prevailing INR–USD rate on quote date. Material forex movement (&gt;3%) before PO may revise pricing.</td></tr>
             <tr style="background:#F8FAFC;"><td style="padding:6px 12px 6px 6px;font-weight:700;color:#312E81;vertical-align:top;white-space:nowrap;">Stock Validity</td><td style="padding:6px 6px 6px 0;color:#334155;vertical-align:top;">Stock subject to prior sale. Confirmation of availability at the time of PO placement.</td></tr>
             <tr><td style="padding:6px 12px 6px 0;font-weight:700;color:#312E81;vertical-align:top;white-space:nowrap;">Installation</td><td style="padding:6px 0;color:#334155;vertical-align:top;">Partner's scope.</td></tr>
