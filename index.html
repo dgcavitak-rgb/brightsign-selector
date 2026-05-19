@@ -10828,7 +10828,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.50.0';  // v24.50.0 — BUNDLE 3b · DEAL READ + EDIT-RESTORE → SUPABASE (Cavitak Restructure) — completes the deal cutover. History/dashboard READ is repointed off the Apps Script webhook onto the deal_list RPC: tryFetchCentralLog now calls _sbFetchBsLog (paginated deal_list, p_app:'brightsign'); the {ok,data,attempts} contract is preserved so refreshLog and all its callers are untouched. New _sbDealRowToEntry maps a Postgres deal row → the BS-shaped entry the History list / dashboard / edit-restore consume — header fields from columns, and when the row carries raw_submission the whole blob is merged in as the lossless base (tvONE's _sbMergeRestore pattern: blob is the base, a column value overrides only when non-empty). EDIT-RESTORE: editPastEntry is now async and fetches the lossless deal via bs_deal_get(p_display_ref) — which returns the deal + bs_deal_specs + project_lines + raw_submission in ONE call — falling back to the lean History-list row if the fetch fails. THE CUTOVER COMPLETES HERE: logEntry no longer routes edits to .gs — BOTH new and edited deals write to Supabase deal_save (an edit is an UPDATE, keyed by the id _sbDealRowToEntry registers into _sbDealIdByRef on every list-load and on restore). logEntry_LEGACY_GS now has NO caller — kept solely as the revert reference. The per-field AuditLog diff (sendAuditLogDiff) and the Revisions modal stay on the .gs AuditLog sheet — a bundle-4 peripheral; the diff is fired from the main logEntry path for edit-saves. verifyPendingSync no longer overwrites the (now Supabase-sourced) _centralLog and skips entirely when the queue holds no legacy 'gs' items — none are queued post-3a/3b. bsNormalizeEntries still runs at the load boundary. FRONTEND-ONLY DEPLOY: deal_list (shipped with the tvONE pilot, app-agnostic via p_app) and bs_deal_get (bs-rpc-v1.sql) are already applied in Supabase — no SQL, no Apps Script change. The Apps Script deal handlers (?action=read, handleLogPost) stay DORMANT as the revert path. After 3b the only BS subsystems still on .gs are the bundle-4 peripherals (audit/revisions, notifications, reset requests, error log, stage transitions, customer directory). Previously: v24.49.0 — BUNDLE 3a · DEAL WRITE → SUPABASE (Cavitak Restructure). The BrightSign deal WRITE path is repointed off the Apps Script webhook onto the Supabase deal_save RPC. logEntry() now SPLITS: NEW deals → deal_save (a confirmed RPC write — deals + bs_deal_specs + project_lines in one atomic call); EDIT-saves → logEntry_LEGACY_GS (the pre-3a webhook path, kept LIVE for the 3a→3b window because History reads are still .gs and an edited deal must stay visible there; the audit diff is a bundle-4 peripheral and also stays on .gs). New mapper _sbEntryToDealSave() translates buildEntryPayload's flat ~52-field object into the nested deal_save payload, verified field-for-field against bs-rpc-v1.sql (header / block-2d bs_specs / project_lines). Supporting helpers: _sbLoginToUserId (loginName→user UUID via bundle-1's _sbUsers cache — sales/presales person ids; actor is _sbCurrentUserId), _sbCloseMonth ('YYYY-MM'→'YYYY-MM-01' so ::DATE casts), _sbInt/_sbBool/_sbYesNoToInt/_sbText (sanitise the form's '—' placeholder so the RPC's INTEGER/BOOLEAN/DATE casts never throw — note hdmi_in is a yes/no toggle in the form but an INTEGER column, so it maps to 1/0), _sbDeriveSku (same model-code regex the Excel quote builder uses). _sbDealIdByRef is a session map that remembers each deal's Postgres id from the deal_save response, so the create flow's TWO logEntry calls — logEntry('viewed') on Generate BOQ then logEntry('saved') on Confirm, both NOT in edit mode — upsert one row instead of double-INSERTing on display_ref. buildEntryPayload is unchanged except ONE appended field: venueType (silently dropped before — same loss pattern as the v24.12.4 state / v24.12.5 outputs fixes — now mapped to deals.venue_type). Offline queue rewired: queuePendingEntry tags each item with a backend ('sb'|'gs'; defaults 'gs' so pre-3a queued items still retry the legacy way); retryPendingSync routes PER ITEM — sb items retry via deal_save and are spliced from the queue on a confirmed response, gs items retry the webhook and are cleared by verifyPendingSync as before. raw_submission carries the whole entry blob verbatim for lossless 3b edit-restore. The Apps Script deal handlers stay DORMANT as the revert path; logEntry_LEGACY_GS doubles as the in-file revert reference. Requires bs-pricebook-v1.sql + bs-deal-extension-v1.sql + bs-rpc-v1.sql + bs-pricebook-seed-v1.sql applied in Supabase (already done). pipeline_stages verified to hold all 8 BS_STAGES strings verbatim (incl. 'Commit to forcast') — no stage seed needed. Bundle 3b (deal READ + edit-restore) is next; until it ships, a deal created post-3a is in Postgres but not yet in the .gs-backed History. Previously: v24.48.2 — UI: the app version badge (#app-version-footer) now shows on EVERY page. It was nested inside #page-login, so it hid the moment login's page lost the .active class — visible only on the login screen. Moved the <div> out to body level (after #page-app closes); the CSS is already position:fixed bottom-right, so it now floats over login + all in-app tabs. No JS change — updateVersionFooter() still targets the same id. Previously: v24.48.1 —  // v24.48.1 — HOTFIX (bundle 2 regression). _sbAdaptCatalog emitted the model key as `modelId`, but the entire app reads MODELS rows as `m.id` / `p.id` (25+ sites). So every MODELS.find() missed: _advReadSelections could not match any Custom BOQ qty row back to a model, returned [], and Generate BOQ falsely reported "Pick at least one player" — the form silently blocked submit. FIX: _sbAdaptCatalog now emits `id` (matching the app + the old Apps Script catalog_get shape). The other three adapters (_sbAdaptPricing/Accessories/Cms) were audited against their consumers and are correct — no change. One-field fix. Previously: v24.48.0 —  // v24.48.0 — PRICE BOOK ON SUPABASE (Cavitak Restructure, bundle 2). The three price-book fetches (fetchPriceBook / fetchCmsPriceBook / fetchCatalog) are repointed from the Apps Script webhook (pricing_get / cms_pricing_get / catalog_get) to a SINGLE Supabase RPC, bs_pricebook_get. New _sbFetchPriceBook() makes ONE round trip per login session and memoises it (window._sbPriceBookRaw); the three public fetchers share that one result. Four adapters (_sbAdaptPricing/Accessories/Cms/Catalog) reshape the RPC's flat snake_case arrays into the nested camelCase shapes the existing PRICING / SAP_CODES / XC-surcharge / _accessoriesMap / _cmsPriceBookRows / MODELS builders already consume — so the proven price-book-building logic is byte-unchanged. The ensureFresh* cache-expiry checkers and the Super 'refresh prices' action clear the memo first so a refresh is a genuine re-fetch. Hardcoded fallback prices are kept: an RPC failure logs and continues, never blocks login. Requires bs-pricebook-v1.sql + bs-rpc-v1.sql + bs-pricebook-seed-v1.sql applied in Supabase. The Apps Script pricing_get/cms_pricing_get/catalog_get handlers stay dormant as the revert path. Previously: v24.47.1 —  // v24.47.1 — SPLASH TRIM: login splash padding cut to 100ms-stepped (was 1500/3000/3500ms). The setTimeout-paced steps were tuned for the slow Apps Script backend; with Supabase login they were pure padding. Real work inside those timers (checkWebhookHealth, refreshLog, offline-queue retry) is unchanged — only the splash delay was trimmed. Parity: tvONE gets the same trim in v25.109.2. Previously: v24.47.0 —  // v24.46.0 — ZOHO STAGE REDESIGN. The deal pipeline is realigned to the Zoho Deals "Stage" picklist (8 stages, verbatim incl. Zoho's "Commit to forcast" spelling): Pre-Qualified, Qualified, Proposal, Negotiation/Review, Awarded, Commit to forcast, Closed Won, Closed Lost. First 6 are open, last 2 terminal. The separate `outcome` field is RETIRED — won/lost/open is now DERIVED from stage via bsDealOutcome(). New canonical stage block (BS_STAGES / BS_STAGES_OPEN / BS_STAGE_WON / BS_STAGE_LOST / BS_STAGES_OPEN_SET / BS_LEGACY_STAGE_MAP / bsDealOutcome / bsIsClosedStage / bsNormalizeEntry / bsNormalizeEntries) is the single source of truth. Every deal is normalized AT THE LOAD BOUNDARY (loadLocalLog + both window._centralLog server writes wrapped in bsNormalizeEntries): legacy 5-stage values are remapped (Lead→Pre-Qualified, Opportunity→Qualified, Proposal→Proposal, Negotiation→Negotiation/Review, Order→Commit to forcast), legacy won/lost outcome overrides the mapped stage, and entry.outcome is re-derived — so all ~200 downstream entry.outcome reads stay correct without per-site edits. Entry form: f-stage select now lists the 8 Zoho stages; the retired f-outcome select is removed; the Closed-Lost reason capture (f-outcome-reason) is now a FREE-TEXT textarea (mirrors Zoho "Reason For Lost", optional) revealed only when stage==='Closed Lost'; the categorized OUTCOME_REASONS map is deleted. Dashboard: the Outcome filter (v26-f-outcome) is removed entirely — Won/Lost filtering is via the Stage filter (now 8 options); the Outcome-scorecard tiles drop the retired "On hold" bucket and Won/Lost tiles drill into the Stage filter. Quick-stage menu offers all 8 stages. cust360 stage/outcome breakdowns, 1-on-1 briefing chips, cockpit funnel/strip + STAGE_COLORS, pipeline-by-stage card, v26 STAGE_WEIGHTS (Pre-Qualified .10 → Commit to forcast .95 → Closed Won 1.0 / Closed Lost 0) and stage charts all re-pointed to the canonical block. Commit/Early KPI split re-mapped to the new late tier (Negotiation/Review + Awarded + Commit to forcast). Case Count tile sub repurposed from retired on-hold count to closed-deal count. Validation no longer requires outcome; payload still writes a derived outcome for pre-migration back-compat (harmless once the Outcome column is dropped by the migration ONESHOT). No backend change in this frontend cut — the per-sheet migration ONESHOT (legacy stage remap + outcome→stage override + Outcome column drop) is a separate step. Previously: v24.45.17 — SAP-CODE FOLLOW-UP FIXES (from first live quote test). (1) SSD SKU BLANK: the SSD BOM row was pushed with only `name`, no `sku`, so the quote builder's name-regex (which looks for a MODEL-code pattern) could not derive a SKU from "256 GB M.2 NVMe SSD" and the Excel SKU cell showed "—". Both SSD push sites (buildAdvancedBOMCard + buildBOMCard) now set sku from getSsdAccessory().sku (e.g. "BS-SSD-256"). (2) FABRICATED CMS SKUs: CMS rows were assigned invented placeholder SKUs ('CMS-INSTALL' / 'CMS-ONPREM-SUB' / 'CMS-CLOUD-SUB') — harmless before v24.45.16 but wrong once the SKU column went onto the customer quote. CMS line items are subscriptions / services, not BrightSign hardware: they have no product SKU and no SAP code. CMS rows now carry sku:'' (+ isService:true), and _bsXlSkuRich() returns a plain empty string for a row with no SKU — so CMS rows show a blank SKU cell, no "—", no "SAP:" line. Hardware rows are unchanged. No backend change. Previously: v24.45.16 — SAP CODE ON EXCEL QUOTE. The Excel BOM table's SKU cell is now two lines: the SKU (bold) on line 1, the SAP code ("SAP: <code>", small grey) on line 2 — procurement convenience for reorders. EXCEL-ONLY: the customer PDF deliberately carries NO SAP codes (internal data, must not reach the client). Both quote builders (_buildQuoteFromGuided + _buildQuoteFromAdvanced) now resolve row.sapCode via the existing getSapCode(sku) helper, which reads the SAP_CODES map that fetchPriceBook rebuilds from the Pricing + Accessories sheets on login. All 12 players + XC Win variants are already populated; SSD rows show "SAP: —" until their sapCode cell in the Accessories sheet is filled (then they resolve automatically, no code change). New _bsXlSkuRich() helper builds the ExcelJS richText value; SKU column added to wrapText; BOM row height 24 -> 32 to fit two lines (still a minimum — long notes auto-expand). No backend change. Previously: v24.45.15 — ECHARTS LAZY-LOAD (parity with tvONE v25.99.29). (1) echarts-gl deleted from <head> — it was dead foundation code added in v24.26.8 'for a 3D India map' that was never built (zero registerMap/geo3D/3D-series usage in the file); ~600 KB removed. (2) echarts@5.4.3 (~1 MB) removed from <head> — it is used ONLY by the Team Analytics dashboard (10 chart renderers + the pipeline-trend chart). New window._ensureEchartsLoadedBS() loads it on demand the first time a chart renders; the ~22 non-dashboard page loads (login, New Selection, History, Result) never download it. Hooked at both entry points: _renderTeamCharts (kicks the load + re-runs on resolve) and _renderPipelineTrendBS (awaits the load before render). The loader is window-attached because _renderPipelineTrendBS is a top-level function OUTSIDE the v26 dashboard-module IIFE where the helper is defined — one <script> tag, one in-flight promise, never a double-load. Existing 'typeof echarts === undefined' guards retained as the CDN-failure safety net (shows 'Chart library unavailable'). All chart calls are gated behind _activeTab==='team' so nothing renders at login. Net: ~1.6 MB off every non-dashboard first paint. No JS logic change to the charts themselves, no backend change. Previously: v24.45.14 — LAUNCH HYGIENE: <head> now has robots noindex,nofollow (internal tool must not be web-indexed), a Cavitak-mark SVG favicon + apple-touch-icon (ends the blank-tab-icon 'unfinished' tell), theme-color #4F46E5, and a description meta. A <noscript> fallback card was added after <body> so a JS failure shows a branded 'JavaScript is required' message instead of a blank white page. No JS/logic change, no backend change. Audit note: CDN-failure resilience for ExcelJS/jsPDF/html2canvas was reviewed and is already correct — every export path throws-and-catches into a user-visible showSync error toast. Previously: v24.45.13 — SSD MIXED-BOQ FIX. Custom BOQ buildAdvancedBOMCard no longer kills the whole SSD line when a single entry-level model (AU/LS, ssdCapable=false) is in the BOQ. The old binary anyNoSsd flag flipped to true on any one such model and routed the SSD line into a no-price "Not supported on selected entry-level models" warning — even when SSD-capable players (HD/XD/XT/XC) were also selected. Now: ssdCapablePlayers counts the players that actually accept an SSD (ssdCapable !== false); the SSD line is priced for those, qty capped at ssdCapablePlayers (not totalPlayers); a mixed BOQ gets a clarifying note ("fits the N SSD-capable players (HD/XD/XT/XC); not the LS/AU entry-level units"); the "not supported" warning now shows ONLY when ssdCapablePlayers === 0 (every selected player is entry-level — the genuinely-correct case). Single-site fix: the Excel _buildQuoteFromAdvanced path has no independent anyNoSsd logic (verified), so it inherits the corrected rows. NOTE: the SSD still needs a non-zero SSD-256/512/etc price in the Accessories sheet — getSsdAccessory() returns null for ₹0 rows and the line is silently skipped. NOTE 2: clampAccessoryQty now caps the SSD input (adv-ssd-qty) at the SSD-capable player count too — input box and BOM agree; WD105 still caps at total players. If no SSD-capable player is selected the SSD input resets to 0. No backend change. Pairs with backend v25.20.0. Previously: v24.45.12 — QUOTE FILENAME STANDARDISATION: Excel + PDF downloads now follow BS_<ProjectName>_<CaseID>[_<Mode>].<ext> (was <refId>-<Mode>.<ext>). New _buildQuoteFilename() helper sanitises the project name (non-alphanumerics → '_', trimmed, 40-char cap; falls back to 'Quote' if empty) and appends the refId as CaseID. The BoQ/BoM mode suffix is kept (meaningful distinction). Applied at all 3 sites: 2 Excel builders + the PDF. Parity with tvONE v25.99.36 (tvONE_<ProjectName>_<CaseID>). No backend change. Previously: v24.45.11 — SHEET-DRIVEN PRICING RULES: GST rate and the max discount cap can now be changed by editing a cell in the Sheet's new Settings tab — no code change, no redeploy. fetchPriceBook now captures a `settings` block from pricing_get (backend v25.20.0) into window.PRICING_SETTINGS. New helpers _cfgGstRate() / _cfgMaxDiscount() / _cfgGstLabel() expose the values with HARDCODED FALLBACKS (0.18 / 20) plus sane-range guards (GST 0-40%, discount 0-100%) — a missing, blank, or wildly-typo'd cell can never miscalculate a quote. Wired: 2 GST calculations (both BOM builders), 5 discount-cap sites (_discValidatePct, _discEffectivePct, 3 validation guards), and 8 GST display-text sites (2 BOM table rows, Excel cell + T&C, PDF row + T&C, 2 message templates) — so a rate change updates both the math and every label consistently. Verified by simulation across 5 scenarios incl. fallback + typo cases. Backend: v25.19.0 -> v25.20.0 (additive only). Previously: v24.45.10 — STALE-CACHE FIX (parity with tvONE v25.99.32): saveProfileGate() mirrored the freshly-entered professionalTitle/email/phone to state.user + _sessionUser but never refreshed window._allUsers. If the team list was loaded earlier in the session, a quote Excel/PDF referencing that rep would show the stale (pre-update, blank-title) row. saveProfileGate() now re-fetches _allUsers via _fetchAllUsersForDropdowns() after a successful save so exports use the current title. No backend change. Pairs with v25.19.0. Previously: v24.45.9 — NOTIFICATION CLEANUP (C-BS-7): converted all 74 native alert() calls to inline showSync() toasts — no more browser alert popups anywhere in the app. Error/failure/permission messages use type 'error' (toast persists until dismissed, matching old alert behaviour); the 2 success messages use 'success' (auto-fades); 'cancelled' messages use neutral type. Multi-line alert messages (\n\n) collapsed to ' \u00b7 '-separated single-line toasts. showSync() hardened — it is now the universal notification path, so it can never throw: if the toast DOM is not present yet (very early login screen) it falls back to a native alert so the message is never lost. Also fixed 4 dead showToast() calls (showToast was referenced but never defined — those notifications silently no-op'd); they now call showSync() directly. confirm() dialogs (20, blocking yes/no gates) intentionally left as-is. No backend change. Pairs with v25.19.0. Previously: v24.45.8 — CONSISTENCY FIX: corrected the role label "National Product Manager" → "National Product Lead" at all 4 remaining sites — login-screen footer, the offline-fallback USERS constant, the Result-page pricing escalation strip, and the pricing-escalation message string. (The tvONE pricing card was corrected separately in v25.99.27.) No behaviour change. Pairs with v25.19.0. Previously: v24.45.7 — TEST MODE HARDENING: verified Test Mode is permanently gone and unable to re-enable. _initTestMode() now also force-clears any stale per-user localStorage flag (bs-test-mode__<user> + bs-cockpit-include-test) on every boot — previously it only set the flag false without cleaning storage. setTestMode() was already a no-op stub that ignores its argument; confirmed every assignment to window._testModeOn is '= false' (zero '= true' paths anywhere). isTest always written blank on save. Net: Test Mode cannot be turned on by any code path, stale flags self-clean on next login. No backend change. Pairs with v25.19.0. Previously: v24.45.6 — DISCOUNT BUGFIX: the Excel BOQ ignored applied discounts. (1) Both quote builders (_buildQuoteFromGuided + _buildQuoteFromAdvanced) used row.unitPrice / row.lineTotal (LIST price) and ignored row.netUnitPrice / row.netLineTotal — so per-line figures in the Excel were always list price even when a discount was applied. Now the builders use the NET (discounted) unit price + line total when a discount exists, falling back to list price otherwise. (2) The Excel totals block was inconsistent — it showed the LIST subtotal but discounted GST + Grand Total. Now discount-aware: when a discount exists it renders List Subtotal -> Total Discount (red) -> Net Subtotal -> GST -> Grand Total, mirroring the in-app BOM; with no discount it shows a single Subtotal row as before. Per-line totals now reconcile with the net subtotal. No backend change. Pairs with v25.19.0. Previously: v24.45.5 — EXCEL SPACING AUDIT: cell-by-cell pass over the Excel renderer. (1) Date / Valid Until rows given explicit 16px height + vertical-middle alignment (were falling back to default 16 with no v-align, slight imbalance vs the 24px QUOTATION label). (2) Stray "—" placeholder removed from the empty left cell on the 3rd PROJECT DETAILS row (the row that has Location on the right but no matching QUOTED TO field on the left) — left cells now genuinely blank. (3) Unit Price / Line Total table-header cells given the same 1-char right indent as the numeric data cells below them, so the header text lines up directly above its figures. Verified by cell-by-cell openpyxl inspection across all 6 modes — borders, fills, alignment, row heights all consistent. No backend change. Pairs with v25.19.0. Previously: v24.45.4 — EXCEL POLISH: (1) Salesperson + Presales contact blocks now BOTH always render — Presales is optional, so when none is assigned the block shows "Not assigned" instead of being silently skipped (Excel layout now consistent deal-to-deal). (2) Cell/row/column spacing audit: T&C row heights now scale with text length (long entries — Warranty, Cancellation, Forex — no longer clipped at fixed 18px); QUOTED TO / PROJECT DETAILS value cells wrap long venue/location names with height scaling; verdict band wraps long Mixed-config verdict lines; Subtotal/GST/GRAND TOTAL value cells get a 1-char right indent so figures don't sit flush on the cell border. No backend change. Pairs with v25.19.0. Previously: v24.45.3 — UX FIX: "For Better Pricing" contact card moved to the BOTTOM of the Guided Result page (now renders after the BOM card + Project Summary). The Custom BOQ / Advanced path already placed it last since v24.12.6 — the Guided path was missed and still rendered it ABOVE the BOM table. Both paths are now consistent: pricing callout is the final card. No behavior change beyond render order. Pairs with v25.19.0. Previously: v24.45.2 — BUGFIX: Guided + Mixed mode Indoor/Outdoor steppers were clamped at 1 (treated a stale hidden total as the cap); now Indoor and Outdoor are independent counters and the total is derived from their sum. Root cause: adjustMixedQty / onMixedQtyInput treated the split as constrained by a SEPARATE total (the hidden single-mode f-qty input, which defaults to 1). Every +/- click was clamped to that stale total of 1, and the "other side" was auto-balanced to total-minus-thisValue — so Indoor+Outdoor could never exceed 1. Fix: in Mixed mode the TOTAL is now DERIVED from Indoor + Outdoor (the correct model). Indoor and Outdoor are independent counters (each 0..10000); adjusting one never touches the other. _updateMixedStatus + recalcMixedTotal keep the hidden f-qty input AND state.form.qty/qtyIndoor/qtyOutdoor in sync with the running sum so all downstream consumers (BOM, CMS 25-player threshold, backend payload) get the right total. _setMixed now calls recalcMixedTotal directly because the +/- buttons set .value programmatically and do NOT fire the 'input' event recalcMixedTotal was bound to (latent bug, previously masked by the broken clamp). Entering Mixed mode initializes state from the Indoor/Outdoor fields. _onTotalQtyChangedForMixed is now a no-op. Logic verified by simulation. No backend change. Pairs with v25.19.0. Previously: v24.45.1 — Added frontend version label on the login screen (parity with tvONE). Was: xlsx-js-style with old red CAVITAK MARKETING banner header. Now: Cavitak logo top-left + "BrightSign Product Selector" title in deep indigo (#312E81) + tricolor stripe (indigo/violet/red) + gold verdict band + indigo BoM table headers + red GRAND TOTAL banner + 12-row T&C block + salesperson + presales footer with Cavitak branded distributor band. New shared renderer _renderBsQuoteExcel(quote) takes a normalized payload, handles both BoQ (with prices) and BoM (no prices) modes, embeds Cavitak logo from existing CAVITAK_LOGO_DATA_URL constant (no re-encoding). Existing call sites unchanged: same downloadQuoteExcel() and _downloadAdvancedQuoteExcel() signatures preserved. Old xlsx-js-style functions deleted (~930 lines of legacy code removed). ExcelJS CDN added in <head>. ~150 KB lib download (gzipped) on first page load. Smoke-tested with realistic BoQ + BoM + empty-BOM payloads — all 3 render cleanly. Visual verification via LibreOffice headless render confirms the design matches the tvONE reference Excel pixel-for-pixel in structure. Pairs with backend v25.19.0. xlsx-js-style stays loaded for legacy History-tab CSV-style exportXLSX() (different use case, not customer-facing). Previously: v24.44.2 — UX wording sweep matching tvONE neutralized vocabulary.: All mid-action button labels neutralized to "Loading…": 'Saving…' (×7 — main save flow, profile, customer save, c2a/poa, pricing refresh) → 'Loading…'; 'Signing in…' (×2 — submit button + splash) → 'Loading…'; 'Signing in ✓' splash → 'Done ✓'; 'Sending…' (×4 — pre-mailto email modal stragglers) → 'Loading…'. All success toasts unified to 'Done ✓': 'Saved ✓' statusEl text (×3 — profile, settings, status checks) → 'Done ✓'; 'Password updated ✓' → 'Done ✓'; 'Template saved ✓' → 'Done ✓'; 'Template reset to default ✓' → 'Done ✓'; 'Backup deleted ✓' → 'Done ✓'; 'Session extended ✓' → 'Done ✓'; '✓ Prices refreshed — Pricing, Accessories, CMS, Catalog all reloaded' → 'Done ✓'; 'Up to date ✓' → 'Done ✓'; 'All entries uploaded ✓' (×2) → 'Done ✓'; 'History updated ✓' → 'Done ✓'; 'Refreshed ✓' → 'Done ✓'. Sync toast default text 'Saving…' → 'Working…' (was the brief flash before being replaced by the actual status). Net: BS now matches tvONE's neutralized vocabulary — a rep switching between apps sees the same words for the same operations. 23 surgical edits across the file. No backend change. Pairs with v25.19.0. Previously: v24.44.1 — EMAIL FLOW mailto: switch (broken-on-M365 backend send → true Outlook open with PDF+Excel auto-download). Click "Open in Outlook" in modal now: (1) downloads BOTH the PDF and Excel quote files for the rep to attach, (2) opens their default mail client (Outlook on M365) with To/CC/Subject/Body pre-filled from the modal fields, (3) rep attaches the just-downloaded files in Outlook and clicks Send — email truly originates from rep's mailbox, appears in their Sent folder, passes SPF/DKIM/DMARC. dipen.g@cavitak.com forced CC pre-filled (rep can technically remove but instructed not to). Modal subtitle updated to reflect new flow. Backend email_send handler intentionally left in place (dormant, no UI call site) — easy revert if ever needed. No backend deploy required. Pairs with v25.19.0. Previously: v24.44.0 — PDF polish (Excel logo embedding deferred to next session per agreed split). Three small targeted improvements to the Tender Spec / Quote PDF export: (1) NEW: Cavitak-branded footer band added above the version footer line. Mini Cavitak logo (26px) on left + right-aligned attribution "Cavitak Marketing Pvt Ltd" (bold, indigo) over "Authorized BrightSign Distributor · India" (muted slate). Subtle indigo→violet tinted background (rgba 0.04) with 2px solid #4F46E5 top border. Mirrors the header strip treatment for visual cohesion — reads as the official Cavitak signoff before the technical disclaimer. (2) Header title color tightened from #312E81 (dark indigo) → #4F46E5 (indigo, matching the accent strip end + new footer band border). Subtle cohesion win, no layout change. (3) Discovery: the Cavitak logo (635×277 JPEG, ~13KB) was already encoded as CAVITAK_LOGO_DATA_URL constant from v24.20.0 — no re-encoding needed. Reused the same constant for the new footer mini-logo. Backend v25.19.0 unchanged. Excel still uses xlsx-js-style; ExcelJS swap for image embedding is the next focused session.
+const FRONTEND_VERSION = '24.51.0';  // v24.51.0 — BUNDLE 4 · PERIPHERALS → SUPABASE (Cavitak Restructure). Six remaining .gs subsystems repointed off the Apps Script webhook onto their Postgres RPCs — contracts verified against the live function defs. (1) TRASH/SOFT-DELETE: softDeleteEntry→entry_soft_delete, restoreTrashEntry→entry_restore, loadTrashList→trash_list; renderTrashList remapped to the RPC's fields (refId/project/endUser/dealValueINR/userFullName/deletedAt — the qty-model/venue/city line is dropped, not in the RPC payload). (2) ERROR LOG: loadErrorLogList→error_log_list, clearErrorLog→error_log_clear. (3) AUDIT + REVISIONS READ: toggleHistoryPanel→deal_audit_get (keyed by Postgres UUID — resolved from refId via _sbDealIdByRef, which bundle 3b's deal_list load populates for every deal; rows grouped by edited_at, fields remapped to snake_case), openRevisionsModal→revision_list (render field dealValue→dealValueINR). (4) STAGE TRANSITIONS: _bsC2bFetchTransitions→stage_transition_list (latestByRefId map unchanged). (5) RESET REQUESTS: submitForgotPassword→reset_request_create, loadResetRequests→reset_request_list (RPC returns `username` — mirrored to `loginName` for the renderer/notifications), approve/denyResetRequest→reset_request_resolve. (6) TEAM/USER MGMT: loadTeamTab + _fetchAllUsersForDropdowns→user_list (via _sbFetchTeam + _sbUserRowToBs adapter — maps the Postgres row to the legacy BS camelCase user shape so no consumer site changes), submitAddUser→user_create, submitEditUser→user_update, the profile self-save→profile_update (NOT user_update — that's Super-only; profile_update is the correct self-edit RPC), superResetUserPassword + resetUserFromTeam→user_admin_reset. KEY BEHAVIOUR CHANGES: 🗑 Delete is now ⊘ DEACTIVATE via user_set_active(false) — there is no hard-delete RPC by design (a destroyed user row would orphan audit/created_by refs); a deactivated user drops off the roster and cannot log in, reversible via Edit. Password reset/create now generate the credential CLIENT-SIDE: _sbMakeCred() makes a fresh 32-hex salt + the two-stage salted hash of cavitak@123 (the RPCs do not generate credentials). professionalTitle is SET-ON-CREATE only (option-a decision — user_update does not accept it); an "add-professionalTitle" field was added to the Add User modal. The redundant audit_log_append .gs write is RETIRED — deal_save writes the per-field audit delta server-side; sendAuditLogDiff is now a no-op stub and logEntry no longer calls it (_editSnapshot is just discarded). STILL ON .gs (bucket C, next — v24.52.0): the frontend error reporter error_log_append (errors still WRITE to the .gs Errors sheet but the viewer now reads Postgres — known split until 4c), plus the backup UI, health-check ping and email_templates_list which are slated for retirement. The Apps Script handlers stay dormant as the revert path. Previously: v24.50.0 — BUNDLE 3b · DEAL READ + EDIT-RESTORE → SUPABASE (Cavitak Restructure) — completes the deal cutover. History/dashboard READ is repointed off the Apps Script webhook onto the deal_list RPC: tryFetchCentralLog now calls _sbFetchBsLog (paginated deal_list, p_app:'brightsign'); the {ok,data,attempts} contract is preserved so refreshLog and all its callers are untouched. New _sbDealRowToEntry maps a Postgres deal row → the BS-shaped entry the History list / dashboard / edit-restore consume — header fields from columns, and when the row carries raw_submission the whole blob is merged in as the lossless base (tvONE's _sbMergeRestore pattern: blob is the base, a column value overrides only when non-empty). EDIT-RESTORE: editPastEntry is now async and fetches the lossless deal via bs_deal_get(p_display_ref) — which returns the deal + bs_deal_specs + project_lines + raw_submission in ONE call — falling back to the lean History-list row if the fetch fails. THE CUTOVER COMPLETES HERE: logEntry no longer routes edits to .gs — BOTH new and edited deals write to Supabase deal_save (an edit is an UPDATE, keyed by the id _sbDealRowToEntry registers into _sbDealIdByRef on every list-load and on restore). logEntry_LEGACY_GS now has NO caller — kept solely as the revert reference. The per-field AuditLog diff (sendAuditLogDiff) and the Revisions modal stay on the .gs AuditLog sheet — a bundle-4 peripheral; the diff is fired from the main logEntry path for edit-saves. verifyPendingSync no longer overwrites the (now Supabase-sourced) _centralLog and skips entirely when the queue holds no legacy 'gs' items — none are queued post-3a/3b. bsNormalizeEntries still runs at the load boundary. FRONTEND-ONLY DEPLOY: deal_list (shipped with the tvONE pilot, app-agnostic via p_app) and bs_deal_get (bs-rpc-v1.sql) are already applied in Supabase — no SQL, no Apps Script change. The Apps Script deal handlers (?action=read, handleLogPost) stay DORMANT as the revert path. After 3b the only BS subsystems still on .gs are the bundle-4 peripherals (audit/revisions, notifications, reset requests, error log, stage transitions, customer directory). Previously: v24.49.0 — BUNDLE 3a · DEAL WRITE → SUPABASE (Cavitak Restructure). The BrightSign deal WRITE path is repointed off the Apps Script webhook onto the Supabase deal_save RPC. logEntry() now SPLITS: NEW deals → deal_save (a confirmed RPC write — deals + bs_deal_specs + project_lines in one atomic call); EDIT-saves → logEntry_LEGACY_GS (the pre-3a webhook path, kept LIVE for the 3a→3b window because History reads are still .gs and an edited deal must stay visible there; the audit diff is a bundle-4 peripheral and also stays on .gs). New mapper _sbEntryToDealSave() translates buildEntryPayload's flat ~52-field object into the nested deal_save payload, verified field-for-field against bs-rpc-v1.sql (header / block-2d bs_specs / project_lines). Supporting helpers: _sbLoginToUserId (loginName→user UUID via bundle-1's _sbUsers cache — sales/presales person ids; actor is _sbCurrentUserId), _sbCloseMonth ('YYYY-MM'→'YYYY-MM-01' so ::DATE casts), _sbInt/_sbBool/_sbYesNoToInt/_sbText (sanitise the form's '—' placeholder so the RPC's INTEGER/BOOLEAN/DATE casts never throw — note hdmi_in is a yes/no toggle in the form but an INTEGER column, so it maps to 1/0), _sbDeriveSku (same model-code regex the Excel quote builder uses). _sbDealIdByRef is a session map that remembers each deal's Postgres id from the deal_save response, so the create flow's TWO logEntry calls — logEntry('viewed') on Generate BOQ then logEntry('saved') on Confirm, both NOT in edit mode — upsert one row instead of double-INSERTing on display_ref. buildEntryPayload is unchanged except ONE appended field: venueType (silently dropped before — same loss pattern as the v24.12.4 state / v24.12.5 outputs fixes — now mapped to deals.venue_type). Offline queue rewired: queuePendingEntry tags each item with a backend ('sb'|'gs'; defaults 'gs' so pre-3a queued items still retry the legacy way); retryPendingSync routes PER ITEM — sb items retry via deal_save and are spliced from the queue on a confirmed response, gs items retry the webhook and are cleared by verifyPendingSync as before. raw_submission carries the whole entry blob verbatim for lossless 3b edit-restore. The Apps Script deal handlers stay DORMANT as the revert path; logEntry_LEGACY_GS doubles as the in-file revert reference. Requires bs-pricebook-v1.sql + bs-deal-extension-v1.sql + bs-rpc-v1.sql + bs-pricebook-seed-v1.sql applied in Supabase (already done). pipeline_stages verified to hold all 8 BS_STAGES strings verbatim (incl. 'Commit to forcast') — no stage seed needed. Bundle 3b (deal READ + edit-restore) is next; until it ships, a deal created post-3a is in Postgres but not yet in the .gs-backed History. Previously: v24.48.2 — UI: the app version badge (#app-version-footer) now shows on EVERY page. It was nested inside #page-login, so it hid the moment login's page lost the .active class — visible only on the login screen. Moved the <div> out to body level (after #page-app closes); the CSS is already position:fixed bottom-right, so it now floats over login + all in-app tabs. No JS change — updateVersionFooter() still targets the same id. Previously: v24.48.1 —  // v24.48.1 — HOTFIX (bundle 2 regression). _sbAdaptCatalog emitted the model key as `modelId`, but the entire app reads MODELS rows as `m.id` / `p.id` (25+ sites). So every MODELS.find() missed: _advReadSelections could not match any Custom BOQ qty row back to a model, returned [], and Generate BOQ falsely reported "Pick at least one player" — the form silently blocked submit. FIX: _sbAdaptCatalog now emits `id` (matching the app + the old Apps Script catalog_get shape). The other three adapters (_sbAdaptPricing/Accessories/Cms) were audited against their consumers and are correct — no change. One-field fix. Previously: v24.48.0 —  // v24.48.0 — PRICE BOOK ON SUPABASE (Cavitak Restructure, bundle 2). The three price-book fetches (fetchPriceBook / fetchCmsPriceBook / fetchCatalog) are repointed from the Apps Script webhook (pricing_get / cms_pricing_get / catalog_get) to a SINGLE Supabase RPC, bs_pricebook_get. New _sbFetchPriceBook() makes ONE round trip per login session and memoises it (window._sbPriceBookRaw); the three public fetchers share that one result. Four adapters (_sbAdaptPricing/Accessories/Cms/Catalog) reshape the RPC's flat snake_case arrays into the nested camelCase shapes the existing PRICING / SAP_CODES / XC-surcharge / _accessoriesMap / _cmsPriceBookRows / MODELS builders already consume — so the proven price-book-building logic is byte-unchanged. The ensureFresh* cache-expiry checkers and the Super 'refresh prices' action clear the memo first so a refresh is a genuine re-fetch. Hardcoded fallback prices are kept: an RPC failure logs and continues, never blocks login. Requires bs-pricebook-v1.sql + bs-rpc-v1.sql + bs-pricebook-seed-v1.sql applied in Supabase. The Apps Script pricing_get/cms_pricing_get/catalog_get handlers stay dormant as the revert path. Previously: v24.47.1 —  // v24.47.1 — SPLASH TRIM: login splash padding cut to 100ms-stepped (was 1500/3000/3500ms). The setTimeout-paced steps were tuned for the slow Apps Script backend; with Supabase login they were pure padding. Real work inside those timers (checkWebhookHealth, refreshLog, offline-queue retry) is unchanged — only the splash delay was trimmed. Parity: tvONE gets the same trim in v25.109.2. Previously: v24.47.0 —  // v24.46.0 — ZOHO STAGE REDESIGN. The deal pipeline is realigned to the Zoho Deals "Stage" picklist (8 stages, verbatim incl. Zoho's "Commit to forcast" spelling): Pre-Qualified, Qualified, Proposal, Negotiation/Review, Awarded, Commit to forcast, Closed Won, Closed Lost. First 6 are open, last 2 terminal. The separate `outcome` field is RETIRED — won/lost/open is now DERIVED from stage via bsDealOutcome(). New canonical stage block (BS_STAGES / BS_STAGES_OPEN / BS_STAGE_WON / BS_STAGE_LOST / BS_STAGES_OPEN_SET / BS_LEGACY_STAGE_MAP / bsDealOutcome / bsIsClosedStage / bsNormalizeEntry / bsNormalizeEntries) is the single source of truth. Every deal is normalized AT THE LOAD BOUNDARY (loadLocalLog + both window._centralLog server writes wrapped in bsNormalizeEntries): legacy 5-stage values are remapped (Lead→Pre-Qualified, Opportunity→Qualified, Proposal→Proposal, Negotiation→Negotiation/Review, Order→Commit to forcast), legacy won/lost outcome overrides the mapped stage, and entry.outcome is re-derived — so all ~200 downstream entry.outcome reads stay correct without per-site edits. Entry form: f-stage select now lists the 8 Zoho stages; the retired f-outcome select is removed; the Closed-Lost reason capture (f-outcome-reason) is now a FREE-TEXT textarea (mirrors Zoho "Reason For Lost", optional) revealed only when stage==='Closed Lost'; the categorized OUTCOME_REASONS map is deleted. Dashboard: the Outcome filter (v26-f-outcome) is removed entirely — Won/Lost filtering is via the Stage filter (now 8 options); the Outcome-scorecard tiles drop the retired "On hold" bucket and Won/Lost tiles drill into the Stage filter. Quick-stage menu offers all 8 stages. cust360 stage/outcome breakdowns, 1-on-1 briefing chips, cockpit funnel/strip + STAGE_COLORS, pipeline-by-stage card, v26 STAGE_WEIGHTS (Pre-Qualified .10 → Commit to forcast .95 → Closed Won 1.0 / Closed Lost 0) and stage charts all re-pointed to the canonical block. Commit/Early KPI split re-mapped to the new late tier (Negotiation/Review + Awarded + Commit to forcast). Case Count tile sub repurposed from retired on-hold count to closed-deal count. Validation no longer requires outcome; payload still writes a derived outcome for pre-migration back-compat (harmless once the Outcome column is dropped by the migration ONESHOT). No backend change in this frontend cut — the per-sheet migration ONESHOT (legacy stage remap + outcome→stage override + Outcome column drop) is a separate step. Previously: v24.45.17 — SAP-CODE FOLLOW-UP FIXES (from first live quote test). (1) SSD SKU BLANK: the SSD BOM row was pushed with only `name`, no `sku`, so the quote builder's name-regex (which looks for a MODEL-code pattern) could not derive a SKU from "256 GB M.2 NVMe SSD" and the Excel SKU cell showed "—". Both SSD push sites (buildAdvancedBOMCard + buildBOMCard) now set sku from getSsdAccessory().sku (e.g. "BS-SSD-256"). (2) FABRICATED CMS SKUs: CMS rows were assigned invented placeholder SKUs ('CMS-INSTALL' / 'CMS-ONPREM-SUB' / 'CMS-CLOUD-SUB') — harmless before v24.45.16 but wrong once the SKU column went onto the customer quote. CMS line items are subscriptions / services, not BrightSign hardware: they have no product SKU and no SAP code. CMS rows now carry sku:'' (+ isService:true), and _bsXlSkuRich() returns a plain empty string for a row with no SKU — so CMS rows show a blank SKU cell, no "—", no "SAP:" line. Hardware rows are unchanged. No backend change. Previously: v24.45.16 — SAP CODE ON EXCEL QUOTE. The Excel BOM table's SKU cell is now two lines: the SKU (bold) on line 1, the SAP code ("SAP: <code>", small grey) on line 2 — procurement convenience for reorders. EXCEL-ONLY: the customer PDF deliberately carries NO SAP codes (internal data, must not reach the client). Both quote builders (_buildQuoteFromGuided + _buildQuoteFromAdvanced) now resolve row.sapCode via the existing getSapCode(sku) helper, which reads the SAP_CODES map that fetchPriceBook rebuilds from the Pricing + Accessories sheets on login. All 12 players + XC Win variants are already populated; SSD rows show "SAP: —" until their sapCode cell in the Accessories sheet is filled (then they resolve automatically, no code change). New _bsXlSkuRich() helper builds the ExcelJS richText value; SKU column added to wrapText; BOM row height 24 -> 32 to fit two lines (still a minimum — long notes auto-expand). No backend change. Previously: v24.45.15 — ECHARTS LAZY-LOAD (parity with tvONE v25.99.29). (1) echarts-gl deleted from <head> — it was dead foundation code added in v24.26.8 'for a 3D India map' that was never built (zero registerMap/geo3D/3D-series usage in the file); ~600 KB removed. (2) echarts@5.4.3 (~1 MB) removed from <head> — it is used ONLY by the Team Analytics dashboard (10 chart renderers + the pipeline-trend chart). New window._ensureEchartsLoadedBS() loads it on demand the first time a chart renders; the ~22 non-dashboard page loads (login, New Selection, History, Result) never download it. Hooked at both entry points: _renderTeamCharts (kicks the load + re-runs on resolve) and _renderPipelineTrendBS (awaits the load before render). The loader is window-attached because _renderPipelineTrendBS is a top-level function OUTSIDE the v26 dashboard-module IIFE where the helper is defined — one <script> tag, one in-flight promise, never a double-load. Existing 'typeof echarts === undefined' guards retained as the CDN-failure safety net (shows 'Chart library unavailable'). All chart calls are gated behind _activeTab==='team' so nothing renders at login. Net: ~1.6 MB off every non-dashboard first paint. No JS logic change to the charts themselves, no backend change. Previously: v24.45.14 — LAUNCH HYGIENE: <head> now has robots noindex,nofollow (internal tool must not be web-indexed), a Cavitak-mark SVG favicon + apple-touch-icon (ends the blank-tab-icon 'unfinished' tell), theme-color #4F46E5, and a description meta. A <noscript> fallback card was added after <body> so a JS failure shows a branded 'JavaScript is required' message instead of a blank white page. No JS/logic change, no backend change. Audit note: CDN-failure resilience for ExcelJS/jsPDF/html2canvas was reviewed and is already correct — every export path throws-and-catches into a user-visible showSync error toast. Previously: v24.45.13 — SSD MIXED-BOQ FIX. Custom BOQ buildAdvancedBOMCard no longer kills the whole SSD line when a single entry-level model (AU/LS, ssdCapable=false) is in the BOQ. The old binary anyNoSsd flag flipped to true on any one such model and routed the SSD line into a no-price "Not supported on selected entry-level models" warning — even when SSD-capable players (HD/XD/XT/XC) were also selected. Now: ssdCapablePlayers counts the players that actually accept an SSD (ssdCapable !== false); the SSD line is priced for those, qty capped at ssdCapablePlayers (not totalPlayers); a mixed BOQ gets a clarifying note ("fits the N SSD-capable players (HD/XD/XT/XC); not the LS/AU entry-level units"); the "not supported" warning now shows ONLY when ssdCapablePlayers === 0 (every selected player is entry-level — the genuinely-correct case). Single-site fix: the Excel _buildQuoteFromAdvanced path has no independent anyNoSsd logic (verified), so it inherits the corrected rows. NOTE: the SSD still needs a non-zero SSD-256/512/etc price in the Accessories sheet — getSsdAccessory() returns null for ₹0 rows and the line is silently skipped. NOTE 2: clampAccessoryQty now caps the SSD input (adv-ssd-qty) at the SSD-capable player count too — input box and BOM agree; WD105 still caps at total players. If no SSD-capable player is selected the SSD input resets to 0. No backend change. Pairs with backend v25.20.0. Previously: v24.45.12 — QUOTE FILENAME STANDARDISATION: Excel + PDF downloads now follow BS_<ProjectName>_<CaseID>[_<Mode>].<ext> (was <refId>-<Mode>.<ext>). New _buildQuoteFilename() helper sanitises the project name (non-alphanumerics → '_', trimmed, 40-char cap; falls back to 'Quote' if empty) and appends the refId as CaseID. The BoQ/BoM mode suffix is kept (meaningful distinction). Applied at all 3 sites: 2 Excel builders + the PDF. Parity with tvONE v25.99.36 (tvONE_<ProjectName>_<CaseID>). No backend change. Previously: v24.45.11 — SHEET-DRIVEN PRICING RULES: GST rate and the max discount cap can now be changed by editing a cell in the Sheet's new Settings tab — no code change, no redeploy. fetchPriceBook now captures a `settings` block from pricing_get (backend v25.20.0) into window.PRICING_SETTINGS. New helpers _cfgGstRate() / _cfgMaxDiscount() / _cfgGstLabel() expose the values with HARDCODED FALLBACKS (0.18 / 20) plus sane-range guards (GST 0-40%, discount 0-100%) — a missing, blank, or wildly-typo'd cell can never miscalculate a quote. Wired: 2 GST calculations (both BOM builders), 5 discount-cap sites (_discValidatePct, _discEffectivePct, 3 validation guards), and 8 GST display-text sites (2 BOM table rows, Excel cell + T&C, PDF row + T&C, 2 message templates) — so a rate change updates both the math and every label consistently. Verified by simulation across 5 scenarios incl. fallback + typo cases. Backend: v25.19.0 -> v25.20.0 (additive only). Previously: v24.45.10 — STALE-CACHE FIX (parity with tvONE v25.99.32): saveProfileGate() mirrored the freshly-entered professionalTitle/email/phone to state.user + _sessionUser but never refreshed window._allUsers. If the team list was loaded earlier in the session, a quote Excel/PDF referencing that rep would show the stale (pre-update, blank-title) row. saveProfileGate() now re-fetches _allUsers via _fetchAllUsersForDropdowns() after a successful save so exports use the current title. No backend change. Pairs with v25.19.0. Previously: v24.45.9 — NOTIFICATION CLEANUP (C-BS-7): converted all 74 native alert() calls to inline showSync() toasts — no more browser alert popups anywhere in the app. Error/failure/permission messages use type 'error' (toast persists until dismissed, matching old alert behaviour); the 2 success messages use 'success' (auto-fades); 'cancelled' messages use neutral type. Multi-line alert messages (\n\n) collapsed to ' \u00b7 '-separated single-line toasts. showSync() hardened — it is now the universal notification path, so it can never throw: if the toast DOM is not present yet (very early login screen) it falls back to a native alert so the message is never lost. Also fixed 4 dead showToast() calls (showToast was referenced but never defined — those notifications silently no-op'd); they now call showSync() directly. confirm() dialogs (20, blocking yes/no gates) intentionally left as-is. No backend change. Pairs with v25.19.0. Previously: v24.45.8 — CONSISTENCY FIX: corrected the role label "National Product Manager" → "National Product Lead" at all 4 remaining sites — login-screen footer, the offline-fallback USERS constant, the Result-page pricing escalation strip, and the pricing-escalation message string. (The tvONE pricing card was corrected separately in v25.99.27.) No behaviour change. Pairs with v25.19.0. Previously: v24.45.7 — TEST MODE HARDENING: verified Test Mode is permanently gone and unable to re-enable. _initTestMode() now also force-clears any stale per-user localStorage flag (bs-test-mode__<user> + bs-cockpit-include-test) on every boot — previously it only set the flag false without cleaning storage. setTestMode() was already a no-op stub that ignores its argument; confirmed every assignment to window._testModeOn is '= false' (zero '= true' paths anywhere). isTest always written blank on save. Net: Test Mode cannot be turned on by any code path, stale flags self-clean on next login. No backend change. Pairs with v25.19.0. Previously: v24.45.6 — DISCOUNT BUGFIX: the Excel BOQ ignored applied discounts. (1) Both quote builders (_buildQuoteFromGuided + _buildQuoteFromAdvanced) used row.unitPrice / row.lineTotal (LIST price) and ignored row.netUnitPrice / row.netLineTotal — so per-line figures in the Excel were always list price even when a discount was applied. Now the builders use the NET (discounted) unit price + line total when a discount exists, falling back to list price otherwise. (2) The Excel totals block was inconsistent — it showed the LIST subtotal but discounted GST + Grand Total. Now discount-aware: when a discount exists it renders List Subtotal -> Total Discount (red) -> Net Subtotal -> GST -> Grand Total, mirroring the in-app BOM; with no discount it shows a single Subtotal row as before. Per-line totals now reconcile with the net subtotal. No backend change. Pairs with v25.19.0. Previously: v24.45.5 — EXCEL SPACING AUDIT: cell-by-cell pass over the Excel renderer. (1) Date / Valid Until rows given explicit 16px height + vertical-middle alignment (were falling back to default 16 with no v-align, slight imbalance vs the 24px QUOTATION label). (2) Stray "—" placeholder removed from the empty left cell on the 3rd PROJECT DETAILS row (the row that has Location on the right but no matching QUOTED TO field on the left) — left cells now genuinely blank. (3) Unit Price / Line Total table-header cells given the same 1-char right indent as the numeric data cells below them, so the header text lines up directly above its figures. Verified by cell-by-cell openpyxl inspection across all 6 modes — borders, fills, alignment, row heights all consistent. No backend change. Pairs with v25.19.0. Previously: v24.45.4 — EXCEL POLISH: (1) Salesperson + Presales contact blocks now BOTH always render — Presales is optional, so when none is assigned the block shows "Not assigned" instead of being silently skipped (Excel layout now consistent deal-to-deal). (2) Cell/row/column spacing audit: T&C row heights now scale with text length (long entries — Warranty, Cancellation, Forex — no longer clipped at fixed 18px); QUOTED TO / PROJECT DETAILS value cells wrap long venue/location names with height scaling; verdict band wraps long Mixed-config verdict lines; Subtotal/GST/GRAND TOTAL value cells get a 1-char right indent so figures don't sit flush on the cell border. No backend change. Pairs with v25.19.0. Previously: v24.45.3 — UX FIX: "For Better Pricing" contact card moved to the BOTTOM of the Guided Result page (now renders after the BOM card + Project Summary). The Custom BOQ / Advanced path already placed it last since v24.12.6 — the Guided path was missed and still rendered it ABOVE the BOM table. Both paths are now consistent: pricing callout is the final card. No behavior change beyond render order. Pairs with v25.19.0. Previously: v24.45.2 — BUGFIX: Guided + Mixed mode Indoor/Outdoor steppers were clamped at 1 (treated a stale hidden total as the cap); now Indoor and Outdoor are independent counters and the total is derived from their sum. Root cause: adjustMixedQty / onMixedQtyInput treated the split as constrained by a SEPARATE total (the hidden single-mode f-qty input, which defaults to 1). Every +/- click was clamped to that stale total of 1, and the "other side" was auto-balanced to total-minus-thisValue — so Indoor+Outdoor could never exceed 1. Fix: in Mixed mode the TOTAL is now DERIVED from Indoor + Outdoor (the correct model). Indoor and Outdoor are independent counters (each 0..10000); adjusting one never touches the other. _updateMixedStatus + recalcMixedTotal keep the hidden f-qty input AND state.form.qty/qtyIndoor/qtyOutdoor in sync with the running sum so all downstream consumers (BOM, CMS 25-player threshold, backend payload) get the right total. _setMixed now calls recalcMixedTotal directly because the +/- buttons set .value programmatically and do NOT fire the 'input' event recalcMixedTotal was bound to (latent bug, previously masked by the broken clamp). Entering Mixed mode initializes state from the Indoor/Outdoor fields. _onTotalQtyChangedForMixed is now a no-op. Logic verified by simulation. No backend change. Pairs with v25.19.0. Previously: v24.45.1 — Added frontend version label on the login screen (parity with tvONE). Was: xlsx-js-style with old red CAVITAK MARKETING banner header. Now: Cavitak logo top-left + "BrightSign Product Selector" title in deep indigo (#312E81) + tricolor stripe (indigo/violet/red) + gold verdict band + indigo BoM table headers + red GRAND TOTAL banner + 12-row T&C block + salesperson + presales footer with Cavitak branded distributor band. New shared renderer _renderBsQuoteExcel(quote) takes a normalized payload, handles both BoQ (with prices) and BoM (no prices) modes, embeds Cavitak logo from existing CAVITAK_LOGO_DATA_URL constant (no re-encoding). Existing call sites unchanged: same downloadQuoteExcel() and _downloadAdvancedQuoteExcel() signatures preserved. Old xlsx-js-style functions deleted (~930 lines of legacy code removed). ExcelJS CDN added in <head>. ~150 KB lib download (gzipped) on first page load. Smoke-tested with realistic BoQ + BoM + empty-BOM payloads — all 3 render cleanly. Visual verification via LibreOffice headless render confirms the design matches the tvONE reference Excel pixel-for-pixel in structure. Pairs with backend v25.19.0. xlsx-js-style stays loaded for legacy History-tab CSV-style exportXLSX() (different use case, not customer-facing). Previously: v24.44.2 — UX wording sweep matching tvONE neutralized vocabulary.: All mid-action button labels neutralized to "Loading…": 'Saving…' (×7 — main save flow, profile, customer save, c2a/poa, pricing refresh) → 'Loading…'; 'Signing in…' (×2 — submit button + splash) → 'Loading…'; 'Signing in ✓' splash → 'Done ✓'; 'Sending…' (×4 — pre-mailto email modal stragglers) → 'Loading…'. All success toasts unified to 'Done ✓': 'Saved ✓' statusEl text (×3 — profile, settings, status checks) → 'Done ✓'; 'Password updated ✓' → 'Done ✓'; 'Template saved ✓' → 'Done ✓'; 'Template reset to default ✓' → 'Done ✓'; 'Backup deleted ✓' → 'Done ✓'; 'Session extended ✓' → 'Done ✓'; '✓ Prices refreshed — Pricing, Accessories, CMS, Catalog all reloaded' → 'Done ✓'; 'Up to date ✓' → 'Done ✓'; 'All entries uploaded ✓' (×2) → 'Done ✓'; 'History updated ✓' → 'Done ✓'; 'Refreshed ✓' → 'Done ✓'. Sync toast default text 'Saving…' → 'Working…' (was the brief flash before being replaced by the actual status). Net: BS now matches tvONE's neutralized vocabulary — a rep switching between apps sees the same words for the same operations. 23 surgical edits across the file. No backend change. Pairs with v25.19.0. Previously: v24.44.1 — EMAIL FLOW mailto: switch (broken-on-M365 backend send → true Outlook open with PDF+Excel auto-download). Click "Open in Outlook" in modal now: (1) downloads BOTH the PDF and Excel quote files for the rep to attach, (2) opens their default mail client (Outlook on M365) with To/CC/Subject/Body pre-filled from the modal fields, (3) rep attaches the just-downloaded files in Outlook and clicks Send — email truly originates from rep's mailbox, appears in their Sent folder, passes SPF/DKIM/DMARC. dipen.g@cavitak.com forced CC pre-filled (rep can technically remove but instructed not to). Modal subtitle updated to reflect new flow. Backend email_send handler intentionally left in place (dormant, no UI call site) — easy revert if ever needed. No backend deploy required. Pairs with v25.19.0. Previously: v24.44.0 — PDF polish (Excel logo embedding deferred to next session per agreed split). Three small targeted improvements to the Tender Spec / Quote PDF export: (1) NEW: Cavitak-branded footer band added above the version footer line. Mini Cavitak logo (26px) on left + right-aligned attribution "Cavitak Marketing Pvt Ltd" (bold, indigo) over "Authorized BrightSign Distributor · India" (muted slate). Subtle indigo→violet tinted background (rgba 0.04) with 2px solid #4F46E5 top border. Mirrors the header strip treatment for visual cohesion — reads as the official Cavitak signoff before the technical disclaimer. (2) Header title color tightened from #312E81 (dark indigo) → #4F46E5 (indigo, matching the accent strip end + new footer band border). Subtle cohesion win, no layout change. (3) Discovery: the Cavitak logo (635×277 JPEG, ~13KB) was already encoded as CAVITAK_LOGO_DATA_URL constant from v24.20.0 — no re-encoding needed. Reused the same constant for the new footer mini-logo. Backend v25.19.0 unchanged. Excel still uses xlsx-js-style; ExcelJS swap for image embedding is the next focused session.
   // v24.36.3 — Two bugfixes per user feedback. (1) HEADER NAME "—" BUG: On fresh login (sign-in from login page), the user-label-name slot stayed as the HTML default "—" because _applyPostLoginUI() was NEVER actually called in the fresh-login flow despite the v24.20.1 comment claiming it would be called "below". The "below" promise was never fulfilled. Only the rehydrate path (refresh while signed in) called it, which is why the issue only surfaced on cold logins. Now calls _applyPostLoginUI() in the fresh-login flow too — idempotent so safe against duplicate calls in slow login races. (2) NOTIFICATIONS NOT CLEARING DAILY: Notifications had 7-day rolling retention. User wants yesterday's notifications gone at 12:01 AM (daily reset). Changed _loadNotifs_ cutoff from "now - 7 days" to "start of today (00:00:00 local time)". Notifs older than midnight are now filtered out on every load and the cleaned list is persisted so the bell badge count stays accurate. NOTIF_RETENTION_MS constant kept declared (referenced elsewhere) but no longer used as the cutoff in _loadNotifs_. Pairs with backend v25.15.0.
 // v24.36.2 — Label refinement: HDMI input → "HDMI live source input port?" (added "port").
 // v24.36.1 — Card 03 field order refinement: Resolution → Touch → HDMI input → GPIO → HDMI Output port → SSD → Wi-Fi. "How many screens per player?" relabeled to "How many HDMI Output port?".
@@ -12727,25 +12727,13 @@ async function fetchCatalog(loginName, passwordHash, force){
    Super. This helper hits users_list (which is allowed for any authenticated user since
    it returns sanitized user data) and caches in the same window._allUsers slot. */
 async function _fetchAllUsersForDropdowns(loginName, passwordHash){
-  if(!WEBHOOK_URL || !loginName) return;
+  // v24.51.0 — repointed to the user_list RPC (via _sbFetchTeam). loginName /
+  // passwordHash params kept for call-site compatibility but no longer used.
+  if(!_sbCurrentUserId) return;
   try{
-    const resp = await fetch(WEBHOOK_URL, {
-      method:'POST', mode:'cors', headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({
-        action:'users_list',
-        requesterLoginName:loginName,
-        requesterPasswordHash:passwordHash
-      })
-    });
-    const data = await resp.json();
-    if(data && data.status === 'ok' && Array.isArray(data.users)){
-      window._allUsers = data.users;
-      console.log('[fetchAllUsers] ✓ Cached', data.users.length, 'users for handoff dropdowns');
-      // Re-populate dropdowns if form is currently rendered
-      try { _populateSalesPresalesDropdowns(); } catch(_){}
-    } else {
-      console.warn('[fetchAllUsers] backend returned not-ok:', data && data.message);
-    }
+    window._allUsers = await _sbFetchTeam(true);
+    console.log('[fetchAllUsers] ✓ Cached', window._allUsers.length, 'users for handoff dropdowns');
+    try { _populateSalesPresalesDropdowns(); } catch(_){}
   }catch(err){
     console.warn('[fetchAllUsers] fetch failed:', err && err.message ? err.message : err);
   }
@@ -15625,6 +15613,56 @@ function _sbRandomSalt(){
   return Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join('');
 }
 
+/* ============================================================================
+   v24.51.0 · BUNDLE 4 — PERIPHERALS → SUPABASE
+   ----------------------------------------------------------------------------
+   Trash / soft-delete, reset requests, error log, stage transitions, team/user
+   management and the audit + revisions READ all repoint off the Apps Script
+   webhook onto their RPCs (contracts verified against the live function defs).
+   The Apps Script handlers stay dormant as the revert path.
+   ============================================================================ */
+
+/* A fresh reset/create credential pair. Salt is 32 hex chars (RPC requires
+   length >= 16); the hash is the SAME two-stage salted scheme login uses —
+   sha256(salt + sha256(password)) — so the reset password verifies on next
+   login. Used by Super reset, the 🔑 Reset button, and reset-request approve. */
+async function _sbMakeCred(plainPassword){
+  const salt = _sbRandomSalt();
+  const hash = await sha256Hex(salt + (await sha256Hex(String(plainPassword||''))));
+  return { salt:salt, hash:hash };
+}
+
+/* Postgres user row (user_list shape) → the BS camelCase user object the Team
+   list, dropdowns and edit modal already consume. One adapter so no consumer
+   site needs touching. is_active maps to BOTH isActive and (its negation is)
+   implied; lastLogin has no column in the tvONE schema — left '' so
+   formatRelativeTime renders the existing em-dash. */
+function _sbUserRowToBs(u){
+  if(!u) return null;
+  const isSuper = (u.permission_tier === 'super');
+  return {
+    id:                u.id || '',
+    loginName:         String(u.username||'').trim(),
+    fullName:          String(u.full_name||'').trim(),
+    role:              isSuper ? 'Super' : String(u.org_function||'Sales').trim(),
+    isSuper:           isSuper,
+    email:             String(u.email||'').trim(),
+    phone:             String(u.phone||'').trim(),
+    professionalTitle: String(u.professional_title||'').trim(),
+    region:            String(u.region||'').trim(),
+    isActive:          (u.is_active !== false),
+    lastLogin:         ''
+  };
+}
+
+/* Fetch the roster via user_list and return it in BS shape. p_include_inactive
+   defaults true so the Team tab shows deactivated users (they render with the
+   INACTIVE chip); the dropdown populator filters them out itself. */
+async function _sbFetchTeam(includeInactive){
+  const r = await _sbRpc('user_list', { p_include_inactive: includeInactive !== false });
+  return ((r && r.users) || []).map(_sbUserRowToBs);
+}
+
 // ---- session-scoped Supabase state ----
 let _sbCurrentUserId = null;     // logged-in user's Postgres UUID
 let _sbCurrentFullHash = null;   // the final SALTED hash — the Supabase credential
@@ -16043,20 +16081,13 @@ async function submitForgotPassword(){
   if(!/^[a-z0-9_]+$/.test(login)){errEl.textContent='Login must be lowercase letters/numbers/underscore only.';return;}
   btn.disabled=true;btn.textContent='Submitting…';
   try{
-    const resp=await fetch(WEBHOOK_URL,{
-      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({
-        action:'reset_request_create',
-        loginName:login,
-        reason:reason
-      })
-    });
-    const data=await resp.json();
-    if(data.status==='ok'){
+    // v24.51.0 — repointed to the reset_request_create RPC.
+    const data=await _sbRpc('reset_request_create',{ p_username:login, p_reason:reason });
+    if(data && data.ok){
       closeForgotPasswordModal();
       showSync(data.message||'Request submitted. The admin will reset your password shortly.', 'error');
     } else {
-      errEl.textContent=data.message||'Submit failed. Please try again or contact the admin directly.';
+      errEl.textContent=(data&&data.error)||'Submit failed. Please try again or contact the admin directly.';
       btn.disabled=false;btn.textContent='Submit request';
     }
   }catch(e){
@@ -16162,7 +16193,8 @@ async function submitPasswordChange(forced){
   }
 }
 
-/* v22.6/v23: Super-user reset flow — prompts for target user + uses requester's own password */
+/* v22.6/v23: Super-user reset flow — prompts for target user
+   v24.51.0 — repointed to the user_admin_reset RPC (client-generated credential). */
 async function superResetUserPassword(){
   if(!state.user||!state.user.isSuper){showSync('Super-user only.', 'error');return;}
   if(!(await requireAuth()))return;
@@ -16171,37 +16203,25 @@ async function superResetUserPassword(){
   const targetLower=target.trim().toLowerCase();
   if(targetLower===state.user.loginName.toLowerCase()){showSync('Cannot reset your own password this way. Use Change Password instead.', 'error');return;}
 
-  // v23: Look up target in _allUsers (cached from users_list) or fetch if missing
-  let targetUser=(window._allUsers||[]).find(u=>u.loginName.toLowerCase()===targetLower);
-  if(!targetUser){
-    try{
-      const resp=await fetch(WEBHOOK_URL,{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'users_get',targetLoginName:targetLower})});
-      const data=await resp.json();
-      if(data.status==='ok')targetUser=data.user;
-    }catch(e){console.warn(e);}
-  }
-  if(!targetUser){showSync(`Unknown user: ${targetLower} \u00b7 (User not in Sheet. Check the Team tab for exact login names.)`, 'error');return;}
+  let targetUser=(window._allUsers||[]).find(u=>String(u.loginName||'').toLowerCase()===targetLower);
+  if(!targetUser){showSync(`Unknown user: ${targetLower} \u00b7 (Not in the team roster. Check the Team tab for exact login names.)`, 'error');return;}
   if(!confirm(`Reset password for ${targetUser.fullName} back to the default "cavitak@123"?\n\nThey will be forced to change it on next login.`))return;
 
   try{
-    const requesterHash=await getCurrentAuthHash();
-    const resp=await fetch(WEBHOOK_URL,{
-      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({
-        action:'auth_reset',
-        requesterLoginName:state.user.loginName,
-        requesterPasswordHash:requesterHash,
-        targetLoginName:targetLower
-      })
+    const cred=await _sbMakeCred('cavitak@123');
+    const data=await _sbRpc('user_admin_reset',{
+      p_target:targetLower,
+      p_actor:_sbCurrentUserId,
+      p_new_salt:cred.salt,
+      p_new_password_hash:cred.hash
     });
-    const data=await resp.json();
-    if(data.status==='ok'){
+    if(data && data.ok){
       showSync(`Password reset successful. \u00b7 ${targetUser.fullName} can now sign in with "cavitak@123" and will be forced to change it immediately.`, 'error');
       showSync(`Reset ${targetLower} ✓`,'success');
       // Refresh Team tab if open
       if(typeof loadTeamTab==='function')loadTeamTab();
     } else {
-      showSync(`Reset failed: ${data.message||'Unknown error'}`, 'error');
+      showSync(`Reset failed: ${(data&&data.error)||'Unknown error'}`, 'error');
     }
   }catch(e){
     console.error(e);
@@ -16445,21 +16465,14 @@ async function saveOwnProfile(){
   }
   statusEl.innerHTML='<span class="profile-info">Loading…</span>';
   try{
-    const pwHash=await getCurrentAuthHash();
-    const resp=await fetch(WEBHOOK_URL,{
-      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({
-        action:'users_update',
-        requesterLoginName:state.user.loginName,
-        requesterPasswordHash:pwHash,
-        targetLoginName:state.user.loginName,
-        email:email,
-        phone:phone,
-        professionalTitle:titleVal  // v25.7.0
-      })
+    // v24.51.0 — repointed to the profile_update RPC. This is a SELF edit (the
+    // logged-in user updating their own profile) — user_update is Super-only and
+    // would reject a standard user; profile_update exists for exactly this.
+    const data=await _sbRpc('profile_update',{
+      p_actor:_sbCurrentUserId,
+      p_payload:{ professional_title:titleVal, email:email, phone:phone }
     });
-    const data=await resp.json();
-    if(data.status==='ok'){
+    if(data && data.ok){
       state.user.email=email;
       state.user.phone=phone;
       state.user.professionalTitle=titleVal;  // v25.7.0
@@ -16471,8 +16484,7 @@ async function saveOwnProfile(){
       statusEl.innerHTML='<span class="profile-ok">Done ✓</span>';
       setTimeout(()=>{statusEl.innerHTML='';},2500);
     } else {
-      // v24.21.0 — escape backend message before injecting (defensive)
-      statusEl.innerHTML=`<span class="profile-err">${escapeHtml(String(data.message||'Save failed'))}</span>`;
+      statusEl.innerHTML=`<span class="profile-err">${escapeHtml(String((data&&data.error)||'Save failed'))}</span>`;
     }
   }catch(e){
     console.error(e);
@@ -16512,27 +16524,22 @@ async function loadResetRequests(){
   const host=document.getElementById('reset-requests-host');
   if(!host)return;
   try{
-    const pwHash=await getCurrentAuthHash();
-    const resp=await fetch(WEBHOOK_URL,{
-      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({
-        action:'reset_request_list',
-        requesterLoginName:state.user.loginName,
-        requesterPasswordHash:pwHash
-      })
-    });
-    const data=await resp.json();
-    if(data.status!=='ok'){
+    // v24.51.0 — repointed to the reset_request_list RPC (Super-only, server-enforced).
+    const data=await _sbRpc('reset_request_list',{ p_actor:_sbCurrentUserId });
+    if(!data || !data.ok){
       host.innerHTML='';
       return;
     }
-    window._resetRequests=data.requests||[];
+    // RPC returns `username`; the renderer + notifications expect `loginName` — mirror it.
+    window._resetRequests=(data.requests||[]).map(function(r){
+      return Object.assign({}, r, { loginName: r.loginName || r.username || '' });
+    });
     // v24.16.0 — notify Super of any fresh (not previously seen) reset requests
     try {
       if (state.user && state.user.isSuper && typeof pushNotification === 'function') {
         const seenKey = 'bs-seen-reset-reqs__' + state.user.loginName;
         const seen = JSON.parse(localStorage.getItem(seenKey) || '[]');
-        const pending = (data.requests || []).filter(function(r){ return r.status === 'pending'; });
+        const pending = window._resetRequests.filter(function(r){ return r.status === 'pending'; });
         const fresh = pending.filter(function(r){ return seen.indexOf(r.requestId) === -1; });
         fresh.forEach(function(r) {
           pushNotification({
@@ -16625,20 +16632,19 @@ async function approveResetRequest(requestId,loginName){
   if(!(await requireAuth()))return;
   if(!confirm(`Approve password reset for @${loginName}?\n\nTheir password will be reset to "cavitak@123" and they'll be forced to change it on next login.`))return;
   try{
-    const pwHash=await getCurrentAuthHash();
-    const resp=await fetch(WEBHOOK_URL,{
-      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({
-        action:'reset_request_approve',
-        requesterLoginName:state.user.loginName,
-        requesterPasswordHash:pwHash,
-        requestId:requestId
-      })
+    // v24.51.0 — repointed to reset_request_resolve. The RPC does NOT generate the
+    // credential — the client must supply a fresh salt + the salted hash of the
+    // default password (same two-stage scheme login verifies against).
+    const cred=await _sbMakeCred('cavitak@123');
+    const data=await _sbRpc('reset_request_resolve',{
+      p_request_id:requestId,
+      p_actor:_sbCurrentUserId,
+      p_action:'approve',
+      p_new_salt:cred.salt,
+      p_new_password_hash:cred.hash
     });
-    const data=await resp.json();
-    if(data.status==='ok'){
+    if(data && data.ok){
       showSync(`Approved ${loginName} ✓`,'success');
-      // v24.16.0 — notification confirms approval action
       if(typeof pushNotification === 'function'){
         pushNotification({
           title: 'Password reset approved',
@@ -16648,7 +16654,7 @@ async function approveResetRequest(requestId,loginName){
       }
       loadResetRequests();
     } else {
-      showSync(`Approve failed: ${data.message||'Unknown error'}`, 'error');
+      showSync(`Approve failed: ${(data&&data.error)||'Unknown error'}`, 'error');
     }
   }catch(e){
     console.error(e);
@@ -16660,20 +16666,16 @@ async function denyResetRequest(requestId,loginName){
   if(!(await requireAuth()))return;
   if(!confirm(`Deny password reset request from @${loginName}?`))return;
   try{
-    const pwHash=await getCurrentAuthHash();
-    const resp=await fetch(WEBHOOK_URL,{
-      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({
-        action:'reset_request_deny',
-        requesterLoginName:state.user.loginName,
-        requesterPasswordHash:pwHash,
-        requestId:requestId
-      })
+    // v24.51.0 — repointed to reset_request_resolve (deny needs no credential).
+    const data=await _sbRpc('reset_request_resolve',{
+      p_request_id:requestId,
+      p_actor:_sbCurrentUserId,
+      p_action:'deny',
+      p_new_salt:null,
+      p_new_password_hash:null
     });
-    const data=await resp.json();
-    if(data.status==='ok'){
+    if(data && data.ok){
       showSync(`Denied ${loginName} ✓`,'success');
-      // v24.16.0 — notification confirms deny action
       if(typeof pushNotification === 'function'){
         pushNotification({
           title: 'Password reset denied',
@@ -16683,7 +16685,7 @@ async function denyResetRequest(requestId,loginName){
       }
       loadResetRequests();
     } else {
-      showSync(`Deny failed: ${data.message||'Unknown error'}`, 'error');
+      showSync(`Deny failed: ${(data&&data.error)||'Unknown error'}`, 'error');
     }
   }catch(e){
     console.error(e);
@@ -17110,19 +17112,12 @@ async function openRevisionsModal(refId){
   document.getElementById('revisions-modal-ref').textContent = '· ' + refId;
   document.getElementById('revisions-modal-body').innerHTML = '<div style="padding:24px;text-align:center;color:var(--ink-subtle);">Loading revisions…</div>';
 
-  if(!WEBHOOK_URL){
-    document.getElementById('revisions-modal-body').innerHTML = '<div style="padding:24px;text-align:center;color:var(--ink-subtle);">Offline — revisions unavailable.</div>';
-    return;
-  }
   try{
-    const resp = await fetch(WEBHOOK_URL, {
-      method:'POST', mode:'cors', headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify({ action:'revisions_list', refId: refId })
-    });
-    const data = await resp.json();
-    if(data.status !== 'ok'){
+    // v24.51.0 — repointed to the revision_list RPC.
+    const data = await _sbRpc('revision_list', { p_ref_id: refId });
+    if(!data || !data.ok){
       document.getElementById('revisions-modal-body').innerHTML =
-        '<div style="padding:24px;text-align:center;color:#DC2626;">Failed to load: ' + escapeHtml(data.message || 'unknown error') + '</div>';
+        '<div style="padding:24px;text-align:center;color:#DC2626;">Failed to load: ' + escapeHtml((data&&data.error) || 'unknown error') + '</div>';
       return;
     }
     const revs = (data.revisions || []).slice().reverse();  // newest first
@@ -17133,7 +17128,7 @@ async function openRevisionsModal(refId){
     }
     document.getElementById('revisions-modal-body').innerHTML = revs.map(function(r, i){
       const archivedAt = r.archivedAt ? new Date(r.archivedAt).toLocaleString('en-IN',{day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone: 'Asia/Kolkata'}) : '—';
-      const dealVal = r.dealValue ? formatINR(r.dealValue) : '—';
+      const dealVal = r.dealValueINR ? formatINR(r.dealValueINR) : '—';
       const outcomeBadge = r.outcome ? `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:${
         r.outcome==='won'?'var(--emerald-light)':(r.outcome==='lost'?'#FEE2E2':(r.outcome==='on-hold'?'#FEF3C7':'var(--surface-2)'))
       };color:${
@@ -17174,45 +17169,38 @@ async function toggleHistoryPanel(refId,idx){
   }
   panel.style.display='block';
   panel.innerHTML='<div class="log-history-loading">Loading change history…</div>';
-  if(!WEBHOOK_URL){
-    panel.innerHTML='<div class="log-history-empty">No audit log available (offline).</div>';
+  // v24.51.0 — repointed to the deal_audit_get RPC. The RPC keys audit by the
+  // deal's Postgres UUID, not refId — resolve via _sbDealIdByRef (populated for
+  // every deal by the deal_list load in bundle 3b).
+  const _dealUuid = _sbDealIdByRef && _sbDealIdByRef[refId];
+  if(!_dealUuid){
+    panel.innerHTML='<div class="log-history-empty">Change history unavailable — reload History and retry.</div>';
     return;
   }
   try{
-    // v24.21.0 — backend (v25.9.0+) now requires auth on audit_log_list
-    const _pwHash = await getCurrentAuthHash();
-    const _login  = (state.user && state.user.loginName) || '';
-    const resp=await fetch(WEBHOOK_URL,{
-      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({
-        action:'audit_log_list',
-        refId:refId,
-        requesterLoginName: _login,
-        requesterPasswordHash: _pwHash
-      })
-    });
-    const data=await resp.json();
-    if(data.status!=='ok'||!data.entries||!data.entries.length){
+    const data=await _sbRpc('deal_audit_get',{ p_deal_id:_dealUuid });
+    const hist=(data && data.history) || [];
+    if(!hist.length){
       panel.innerHTML='<div class="log-history-empty">No edits recorded for this entry yet.</div>';
       return;
     }
-    // Group entries by logId prefix (same edit session = same AUD-timestamp)
+    // Group by edit timestamp — one deal_save edit writes several field rows all
+    // sharing the same edited_at, so that timestamp is the natural session key.
     const sessions={};
-    data.entries.forEach(e=>{
-      const sessionKey=(e.logId||'').split('-').slice(0,2).join('-');
-      if(!sessions[sessionKey])sessions[sessionKey]={editedBy:e.editedBy,editedAt:e.editedAt,changes:[]};
+    hist.forEach(e=>{
+      const sessionKey=String(e.edited_at||'');
+      if(!sessions[sessionKey])sessions[sessionKey]={editedBy:e.edited_by,editedAt:e.edited_at,changes:[]};
       sessions[sessionKey].changes.push(e);
     });
     const sessionArr=Object.values(sessions).sort((a,b)=>new Date(b.editedAt)-new Date(a.editedAt));
-    panel.innerHTML=`<div class="log-history-head">📋 Change history (${data.entries.length} field changes across ${sessionArr.length} edit${sessionArr.length===1?'':'s'})</div>`+
+    panel.innerHTML=`<div class="log-history-head">📋 Change history (${hist.length} field changes across ${sessionArr.length} edit${sessionArr.length===1?'':'s'})</div>`+
       sessionArr.map(s=>{
         const d=new Date(s.editedAt);
         const when=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
         const changesList=s.changes.map(c=>{
-          // Don't show unchanged or empty-to-empty
-          return `<div class="log-history-change"><span class="log-history-field">${escapeHtml(prettifyFieldName(c.fieldName))}</span><span class="log-history-old">${escapeHtml(prettifyAuditValue(c.oldValue))}</span> <span class="log-history-arrow">→</span> <span class="log-history-new">${escapeHtml(prettifyAuditValue(c.newValue))}</span></div>`;
+          return `<div class="log-history-change"><span class="log-history-field">${escapeHtml(prettifyFieldName(c.field_name))}</span><span class="log-history-old">${escapeHtml(prettifyAuditValue(c.old_value))}</span> <span class="log-history-arrow">→</span> <span class="log-history-new">${escapeHtml(prettifyAuditValue(c.new_value))}</span></div>`;
         }).join('');
-        return `<div class="log-history-session"><div class="log-history-session-head">${escapeHtml(s.editedBy)} · ${when}</div>${changesList}</div>`;
+        return `<div class="log-history-session"><div class="log-history-session-head">${escapeHtml(s.editedBy||'unknown')} · ${when}</div>${changesList}</div>`;
       }).join('');
   }catch(e){
     console.error('audit log fetch failed:',e);
@@ -17220,27 +17208,18 @@ async function toggleHistoryPanel(refId,idx){
   }
 }
 
-/* v24.2.12: Soft-delete an entry (super only) — flips status in Sheet to "deleted" */
+/* v24.2.12: Soft-delete an entry (super only) — flips status in Sheet to "deleted"
+   v24.51.0 — repointed to the entry_soft_delete RPC (sets deals.deleted_at). */
 async function softDeleteEntry(refId,projectName){
   if(!(await requireAuth()))return;
-  if(!confirm(`Move "${projectName}" (${refId}) to Trash?\n\nIt will be hidden from History but kept in the Sheet with status=deleted. You can restore it from Team → Trash.`))return;
+  if(!confirm(`Move "${projectName}" (${refId}) to Trash?\n\nIt will be hidden from History but kept with status=deleted. You can restore it from Team → Trash.`))return;
   try{
-    const pwHash=await getCurrentAuthHash();
-    const resp=await fetch(WEBHOOK_URL,{
-      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({
-        action:'entry_soft_delete',
-        refId:refId,
-        requesterLoginName:state.user.loginName,
-        requesterPasswordHash:pwHash
-      })
-    });
-    const data=await resp.json();
-    if(data.status==='ok'){
+    const data=await _sbRpc('entry_soft_delete',{ p_ref_id:refId, p_actor:_sbCurrentUserId });
+    if(data && data.ok){
       showSync(`"${projectName}" moved to trash ✓`,'success');
       refreshLog();  // reload to remove the entry from view
     } else {
-      showSync(`Delete failed: ${data.message||'Unknown error'}`, 'error');
+      showSync(`Delete failed: ${(data&&data.error)||'Unknown error'}`, 'error');
     }
   }catch(e){
     console.error(e);
@@ -17248,28 +17227,19 @@ async function softDeleteEntry(refId,projectName){
   }
 }
 
-/* v24.2.12: Load trash entries into the Team tab trash section (super only) */
+/* v24.2.12: Load trash entries into the Team tab trash section (super only)
+   v24.51.0 — repointed to the trash_list RPC. */
 async function loadTrashList(){
   const host=document.getElementById('trash-host');
   if(!host)return;
   host.innerHTML='<div class="trash-loading">Loading trash…</div>';
   try{
-    const pwHash=await getCurrentAuthHash();
-    const resp=await fetch(WEBHOOK_URL,{
-      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({
-        action:'trash_list',
-        requesterLoginName:state.user.loginName,
-        requesterPasswordHash:pwHash
-      })
-    });
-    const data=await resp.json();
-    if(data.status!=='ok'){
+    const data=await _sbRpc('trash_list',{});
+    if(!data || !data.ok){
       host.innerHTML='';
       return;
     }
-    const entries=data.entries||[];
-    renderTrashList(host,entries);
+    renderTrashList(host,data.entries||[]);
   }catch(e){
     console.warn('loadTrashList failed:',e);
     host.innerHTML='';
@@ -17286,12 +17256,14 @@ function renderTrashList(host,entries){
     const d=new Date(iso);
     return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
   };
+  // v24.51.0 — fields come straight from the trash_list RPC:
+  // refId / project / endUser / dealValueINR / userFullName / deletedAt.
   host.innerHTML=`<div class="trash-head">🗑 Trash (${entries.length} deleted entr${entries.length===1?'y':'ies'})</div>`+
     entries.map(e=>`<div class="trash-row">
       <div class="trash-body">
         <div class="trash-project">${escapeHtml(e.project||'(unnamed)')}</div>
-        <div class="trash-meta">${escapeHtml(e.enduser||'—')} · ${escapeHtml(e.venue||'—')} · ${escapeHtml(e.city||'—')}</div>
-        <div class="trash-meta">${escapeHtml(_formatQtyModelDisplay(e))} · by ${escapeHtml(e.user||'—')} · ${fmt(e.ts)}</div>
+        <div class="trash-meta">${escapeHtml(e.endUser||'—')}${(e.dealValueINR)?(' · '+escapeHtml(formatINR(e.dealValueINR))):''}</div>
+        <div class="trash-meta">deleted by ${escapeHtml(e.userFullName||'—')} · ${fmt(e.deletedAt)}</div>
         <div class="trash-meta" style="color:var(--ink-subtle);">${escapeHtml(e.refId||'')}</div>
       </div>
       <div class="trash-actions">
@@ -17300,28 +17272,18 @@ function renderTrashList(host,entries){
     </div>`).join('');
 }
 
+/* v24.51.0 — repointed to the entry_restore RPC (clears deals.deleted_at). */
 async function restoreTrashEntry(refId,projectName){
   if(!(await requireAuth()))return;
-  if(!confirm(`Restore "${projectName}" (${refId}) from trash?\n\nIt will return to History with status=viewed.`))return;
+  if(!confirm(`Restore "${projectName}" (${refId}) from trash?\n\nIt will return to History.`))return;
   try{
-    const pwHash=await getCurrentAuthHash();
-    const resp=await fetch(WEBHOOK_URL,{
-      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({
-        action:'entry_restore',
-        refId:refId,
-        requesterLoginName:state.user.loginName,
-        requesterPasswordHash:pwHash,
-        restoreToStatus:'viewed'
-      })
-    });
-    const data=await resp.json();
-    if(data.status==='ok'){
+    const data=await _sbRpc('entry_restore',{ p_ref_id:refId, p_actor:_sbCurrentUserId });
+    if(data && data.ok){
       showSync(`"${projectName}" restored ✓`,'success');
       loadTrashList();
       refreshLog();
     } else {
-      showSync(`Restore failed: ${data.message||'Unknown error'}`, 'error');
+      showSync(`Restore failed: ${(data&&data.error)||'Unknown error'}`, 'error');
     }
   }catch(e){
     console.error(e);
@@ -17329,24 +17291,15 @@ async function restoreTrashEntry(refId,projectName){
   }
 }
 
-/* v24.3.0: Load error log — super only, shown in Team tab */
+/* v24.3.0: Load error log — super only, shown in Team tab
+   v24.51.0 — repointed to the error_log_list RPC. */
 async function loadErrorLogList(){
   const host=document.getElementById('errors-host');
   if(!host)return;
   host.innerHTML='<div class="errors-section"><div class="errors-head"><div class="errors-title">⚠️ Error log</div></div><div class="errors-loading">Loading recent errors…</div></div>';
   try{
-    const pwHash=await getCurrentAuthHash();
-    const resp=await fetch(WEBHOOK_URL,{
-      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({
-        action:'error_log_list',
-        requesterLoginName:state.user.loginName,
-        requesterPasswordHash:pwHash,
-        limit:50, hoursBack:168
-      })
-    });
-    const data=await resp.json();
-    if(data.status!=='ok'){
+    const data=await _sbRpc('error_log_list',{ p_hours_back:168, p_limit:50 });
+    if(!data || !data.ok){
       host.innerHTML='<div class="errors-section"><div class="errors-head"><div class="errors-title">⚠️ Error log</div></div><div class="errors-empty">Could not load error log.</div></div>';
       return;
     }
@@ -17357,7 +17310,8 @@ async function loadErrorLogList(){
   }
 }
 
-/* v24.14.1: Wipe all entries from the Errors sheet (super-only). Confirms first. */
+/* v24.14.1: Wipe all entries from the Errors store (super-only). Confirms first.
+   v24.51.0 — repointed to the error_log_clear RPC. */
 async function clearErrorLog(){
   if(!state.user || !state.user.isSuper){
     showSync('Super admin only','warn');
@@ -17365,21 +17319,12 @@ async function clearErrorLog(){
   }
   if(!confirm('Wipe ALL error log entries? This cannot be undone.\n\nUseful when stale errors from older versions are noisy and you want a clean slate to monitor v' + FRONTEND_VERSION + ' going forward.')) return;
   try{
-    const pwHash=await getCurrentAuthHash();
-    const resp=await fetch(WEBHOOK_URL,{
-      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({
-        action:'error_log_clear',
-        requesterLoginName:state.user.loginName,
-        requesterPasswordHash:pwHash
-      })
-    });
-    const data=await resp.json();
-    if(data.status==='ok'){
+    const data=await _sbRpc('error_log_clear',{});
+    if(data && data.ok){
       showSync('Error log cleared ✓ (' + (data.cleared||0) + ' entries wiped)','success');
       loadErrorLogList();  // refresh
     } else {
-      showSync('Could not clear: ' + (data.message||'unknown error'),'warn');
+      showSync('Could not clear: ' + ((data&&data.error)||'unknown error'),'warn');
     }
   }catch(e){
     console.warn('clearErrorLog failed:',e);
@@ -17612,22 +17557,8 @@ async function loadTeamTab(){
   const listHost=document.getElementById('team-list-host');
   if(!listHost)return;
   try{
-    const pwHash=await getCurrentAuthHash();
-    const resp=await fetch(WEBHOOK_URL,{
-      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({
-        action:'users_list',
-        requesterLoginName:state.user.loginName,
-        requesterPasswordHash:pwHash
-      })
-    });
-    const data=await resp.json();
-    if(data.status!=='ok'){
-      // v24.21.0 — escape backend message before injecting (defensive)
-      listHost.innerHTML=`<div class="team-err">Failed to load: ${escapeHtml(String(data.message||'Unknown error'))}</div>`;
-      return;
-    }
-    window._allUsers=data.users||[];
+    // v24.51.0 — repointed to the user_list RPC (via _sbFetchTeam).
+    window._allUsers=await _sbFetchTeam(true);
     renderTeamList(listHost,window._allUsers);
   }catch(e){
     console.error(e);
@@ -17674,7 +17605,7 @@ function renderTeamList(host,users){
         ${statusChip}
         <button class="team-btn" onclick="editUserInTeam('${_safeLoginAttr}')" title="Edit details">✎ Edit</button>
         <button class="team-btn" onclick="resetUserFromTeam('${_safeLoginAttr}')" title="Reset password to default 'cavitak@123'">🔑 Reset</button>
-        ${u.isSuper?'':`<button class="team-btn danger" onclick="deleteUserFromTeam('${_safeLoginAttr}')" title="Delete this user">🗑 Delete</button>`}
+        ${u.isSuper?'':`<button class="team-btn danger" onclick="deleteUserFromTeam('${_safeLoginAttr}')" title="Deactivate this user (reversible)">⊘ Deactivate</button>`}
       </div>
     </div>`;
   }).join('');
@@ -17720,6 +17651,7 @@ function showAddUserModal(){
       <div class="pwd-field"><label>Login name · lowercase, no spaces</label><input type="text" id="add-loginName" placeholder="lowercase, e.g. firstname or firstname1" pattern="[a-z0-9_]+"></div>
       <div class="pwd-field"><label>Full name</label><input type="text" id="add-fullName" placeholder="First and last name"></div>
       <div class="pwd-field"><label>Role</label><select id="add-role"><option value="">— Choose role —</option>${roleOptions}</select></div>
+      <div class="pwd-field"><label>Professional title (optional)</label><input type="text" id="add-professionalTitle" placeholder="e.g. National Product Lead"></div>
       <div class="pwd-field"><label>Email (optional)</label><input type="email" id="add-email" placeholder="name@cavitak.com"></div>
       <div class="pwd-field"><label>Phone (optional)</label><input type="tel" id="add-phone" placeholder="+91 98765 43210"></div>
       <div class="pwd-modal-error" id="add-user-error"></div>
@@ -17754,23 +17686,30 @@ async function submitAddUser(){
   if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){errEl.textContent='Email does not look valid.';return;}
 
   try{
-    const pwHash=await getCurrentAuthHash();
-    const resp=await fetch(WEBHOOK_URL,{
-      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({
-        action:'users_add',
-        requesterLoginName:state.user.loginName,
-        requesterPasswordHash:pwHash,
-        loginName:login,fullName:fullName,role:role,email:email,phone:phone
-      })
+    // v24.51.0 — repointed to the user_create RPC. New users get the default
+    // password cavitak@123 (must_change=true server-side); the client generates
+    // the salt + salted hash. role is sent as-is; the RPC maps it to
+    // permission_tier/org_function. professionalTitle is set-on-create here
+    // (per the option-a decision — user_update does not accept it).
+    const titleEl=document.getElementById('add-professionalTitle');
+    const cred=await _sbMakeCred('cavitak@123');
+    const data=await _sbRpc('user_create',{
+      p_payload:{
+        username:login, full_name:fullName, role:role,
+        email:email, phone:phone,
+        professional_title:(titleEl?titleEl.value.trim():''),
+        active:'true'
+      },
+      p_actor:_sbCurrentUserId,
+      p_salt:cred.salt,
+      p_password_hash:cred.hash
     });
-    const data=await resp.json();
-    if(data.status==='ok'){
+    if(data && data.ok){
       closeTeamModal();
       showSync(`Added ${login} ✓ · Default password: cavitak@123`,'success');
       loadTeamTab();
     } else {
-      errEl.textContent=data.message||'Add failed';
+      errEl.textContent=(data&&data.error)||'Add failed';
     }
   }catch(e){
     console.error(e);
@@ -17830,28 +17769,20 @@ async function submitEditUser(targetLogin){
   if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){errEl.textContent='Email does not look valid.';return;}
 
   try{
-    const pwHash=await getCurrentAuthHash();
-    const payload={
-      action:'users_update',
-      requesterLoginName:state.user.loginName,
-      requesterPasswordHash:pwHash,
-      targetLoginName:targetLogin,
-      fullName:fullName,
-      email:email,
-      phone:phone
-    };
-    if(role)payload.role=role;  // only send role if we have a valid one
-    if(isActiveEl){payload.isActive=isActiveEl.value==='true';}
-    const resp=await fetch(WEBHOOK_URL,{
-      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)
-    });
-    const data=await resp.json();
-    if(data.status==='ok'){
+    // v24.51.0 — repointed to the user_update RPC. Per the option-a decision the
+    // payload is scoped to what user_update accepts (full_name/email/phone/role/
+    // active); professional_title is set-on-create only. role maps server-side to
+    // permission_tier/org_function. A locked (Super) role field sends no role.
+    const payload={ username:targetLogin, full_name:fullName, email:email, phone:phone };
+    if(role)payload.role=role;
+    if(isActiveEl){payload.active=(isActiveEl.value==='true')?'true':'false';}
+    const data=await _sbRpc('user_update',{ p_payload:payload, p_actor:_sbCurrentUserId });
+    if(data && data.ok){
       closeTeamModal();
       showSync(`Updated ${targetLogin} ✓`,'success');
       loadTeamTab();
     } else {
-      errEl.textContent=data.message||'Update failed';
+      errEl.textContent=(data&&data.error)||'Update failed';
     }
   }catch(e){
     console.error(e);
@@ -17868,18 +17799,15 @@ async function resetUserFromTeam(loginName){
     : `Reset password for @${loginName} to the default "cavitak@123"?\n\nThey will be forced to change it on next login.`;
   if(!confirm(confirmMsg))return;
   try{
-    const pwHash=await getCurrentAuthHash();
-    const resp=await fetch(WEBHOOK_URL,{
-      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({
-        action:'auth_reset',
-        requesterLoginName:state.user.loginName,
-        requesterPasswordHash:pwHash,
-        targetLoginName:loginName
-      })
+    // v24.51.0 — repointed to the user_admin_reset RPC (client-generated credential).
+    const cred=await _sbMakeCred('cavitak@123');
+    const data=await _sbRpc('user_admin_reset',{
+      p_target:loginName,
+      p_actor:_sbCurrentUserId,
+      p_new_salt:cred.salt,
+      p_new_password_hash:cred.hash
     });
-    const data=await resp.json();
-    if(data.status==='ok'){
+    if(data && data.ok){
       if(isSelfReset){
         showSync('Your password has been reset to "cavitak@123". You will now be signed out. On your next login you will be prompted to choose a new password.', 'error');
         handleLogout();
@@ -17887,7 +17815,7 @@ async function resetUserFromTeam(loginName){
         showSync(`Reset ${loginName} ✓`,'success');
       }
     } else {
-      showSync(`Reset failed: ${data.message||'Unknown error'}`, 'error');
+      showSync(`Reset failed: ${(data&&data.error)||'Unknown error'}`, 'error');
     }
   }catch(e){
     console.error(e);
@@ -17897,28 +17825,26 @@ async function resetUserFromTeam(loginName){
 
 async function deleteUserFromTeam(loginName){
   if(!(await requireAuth()))return;
-  if(!confirm(`DELETE user @${loginName}?\n\nThis cannot be undone. Their past selections in the History tab are preserved (attributed to their login name).\n\nProceed?`))return;
+  // v24.51.0 — "Delete" is now DEACTIVATION via user_set_active(false). There is no
+  // hard-delete RPC by design — destroying a user row would orphan its audit /
+  // created_by references. A deactivated user drops out of the roster (user_list
+  // defaults to active-only) and can no longer log in; reactivate via Edit if needed.
+  if(!confirm(`Deactivate user @${loginName}?\n\nThey will no longer be able to sign in and will drop off the team roster. Their past selections in History are preserved. You can reactivate them later via Edit.\n\nProceed?`))return;
   try{
-    const pwHash=await getCurrentAuthHash();
-    const resp=await fetch(WEBHOOK_URL,{
-      method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({
-        action:'users_delete',
-        requesterLoginName:state.user.loginName,
-        requesterPasswordHash:pwHash,
-        targetLoginName:loginName
-      })
+    const data=await _sbRpc('user_set_active',{
+      p_target:loginName,
+      p_active:false,
+      p_actor:_sbCurrentUserId
     });
-    const data=await resp.json();
-    if(data.status==='ok'){
-      showSync(`Deleted ${loginName} ✓`,'success');
+    if(data && data.ok){
+      showSync(`Deactivated ${loginName} ✓`,'success');
       loadTeamTab();
     } else {
-      showSync(`Delete failed: ${data.message||'Unknown error'}`, 'error');
+      showSync(`Deactivate failed: ${(data&&data.error)||'Unknown error'}`, 'error');
     }
   }catch(e){
     console.error(e);
-    showSync('Delete failed. Check internet.', 'error');
+    showSync('Deactivate failed. Check internet.', 'error');
   }
 }
 
@@ -21501,12 +21427,10 @@ async function logEntry(status,onDone){
   // edits to .gs — BOTH new and edited deals are written to Supabase deal_save
   // below (an edit is an UPDATE, via the id _sbDealRowToEntry registered into
   // _sbDealIdByRef on restore). logEntry_LEGACY_GS is now fully dead — kept only
-  // as the revert reference. The per-field AuditLog diff still posts to the .gs
-  // AuditLog sheet (a bundle-4 peripheral) — fire it here for edit-saves.
-  if(window._editMode && window._editSnapshot && WEBHOOK_URL && state.user){
-    try{ sendAuditLogDiff(entry,window._editSnapshot); }catch(_){}
-    window._editSnapshot=null;  // one-shot
-  }
+  // as the revert reference.
+  // v24.51.0 — Bundle 4: the per-field audit delta is now written server-side by
+  // the deal_save RPC; the old sendAuditLogDiff .gs call has been retired.
+  if(window._editMode){ window._editSnapshot=null; }  // snapshot no longer needed (audit is server-side)
 
   // ---- DEAL WRITE → Supabase deal_save (confirmed RPC write) ----
   if(!_sbCurrentUserId){
@@ -21641,43 +21565,13 @@ async function logEntry_LEGACY_GS(entry,status,onDone){
 }
 
 /* v24.2.12: Compute diff between snapshot and current entry, send audit log to webhook */
+/* v24.51.0 — RETIRED. The per-field audit delta is now written SERVER-SIDE by
+   the deal_save RPC (_audit_field calls inside the RPC, on every edit). This
+   .gs audit_log_append path was a redundant second write — kept as a no-op
+   stub so any missed caller is harmless. deal_audit_get reads the Postgres
+   audit_log; the .gs AuditLog sheet is frozen as-is (historical record only). */
 async function sendAuditLogDiff(current,snapshot){
-  if(!current||!snapshot)return;
-  const fieldsToTrack=[
-    'project','enduser','venue','partner','consultant','city',
-    'contactname','contactphone','contactemail','stage','closemonth',
-    'qty','qtyIndoor','qtyOutdoor','model','outdoorModel',
-    'content','resolution','environment','update','budget',
-    'hdmiIn','touch','wifi','gpio','ssd','os',
-    'cmsVendor','cmsTerm','cmsBillingType',
-    'notes'  // v24.26.19: general internal notes (free-text per opportunity)
-  ];
-  const changes=[];
-  fieldsToTrack.forEach(f=>{
-    const oldV=(snapshot[f]||'').toString();
-    const newV=(current[f]||'').toString();
-    if(oldV!==newV){
-      changes.push({fieldName:f,oldValue:oldV,newValue:newV});
-    }
-  });
-  if(!changes.length)return;  // nothing changed, don't bother
-  // v24.12.1 fix: include auth fields — backend's audit_log_append requires them
-  let pwHash='';
-  try{ pwHash=await getCurrentAuthHash(); }catch(_){}
-  // Fire and forget — audit log failing shouldn't block the save
-  fetch(WEBHOOK_URL,{
-    method:'POST',
-    mode:'no-cors',
-    headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({
-      action:'audit_log_append',
-      requesterLoginName:state.user.loginName,
-      requesterPasswordHash:pwHash,
-      refId:current.refId,
-      editedBy:state.user.loginName,
-      changes:changes
-    })
-  }).catch(e=>console.warn('Audit log send failed:',e));
+  return;  // no-op — see comment above
 }
 
 /* ========== v22.4: LOCAL ENTRY RE-SYNC ==========
@@ -25461,25 +25355,20 @@ window.showTab=function(which){
     return '₹' + Math.round(v);
   }
 
-  // v24.12 Cycle 3A: fetch stage transitions from backend. Populates _bsC2bTransitions cache.
+  // v24.12 Cycle 3A: fetch stage transitions. Populates _bsC2bTransitions cache.
   // Called from renderReview hook. Silent on error — drilldown just falls back to createdAt marker.
+  // v24.51.0 — repointed to the stage_transition_list RPC (latestByRefId map unchanged).
   async function _bsC2bFetchTransitions(){
     try {
-      if(!WEBHOOK_URL || !state.user) return;
-      const resp = await fetch(WEBHOOK_URL, {
-        method:'POST',
-        mode:'cors',
-        headers:{'Content-Type':'text/plain'},
-        body: JSON.stringify({ action:'stage_transitions_list' })
-      });
-      const data = await resp.json();
-      if(data && data.status === 'ok' && data.latestByRefId){
+      if(!_sbCurrentUserId) return;
+      const data = await _sbRpc('stage_transition_list', { p_ref_ids:null });
+      if(data && data.ok && data.latestByRefId){
         _bsC2bTransitions = data.latestByRefId;
       } else {
         _bsC2bTransitions = {};
       }
     } catch(err){
-      console.warn('[bsC2b stage_transitions_list] failed:', err);
+      console.warn('[bsC2b stage_transition_list] failed:', err);
       _bsC2bTransitions = {};  // mark as fetched-but-empty so we don't retry on every render
     }
   }
