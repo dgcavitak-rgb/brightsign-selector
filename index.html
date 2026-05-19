@@ -10659,7 +10659,7 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw6ClTccpUaEWwJ6Wl7
 /* ================================================================
    v24.3.0: VERSION + OBSERVABILITY
 ================================================================ */
-const FRONTEND_VERSION = '24.60.0';  // v24.60.0 — HISTORY-CARD + EDIT-RESTORE FIX (v24.50.0 migration read-path gaps). Two related bugs from the deal-READ cutover, both rooted in raw_submission not reaching the frontend. (1) HISTORY 'undefined' / missing model: the deal_list RPC (History list + dashboard source) returned a lean 15-column row with NO raw_submission, so _sbDealRowToEntry's lossless-restore branch never fired for list rows — it returned the bare header and the History card's e.environment / e.update / e.user / model / qty reads rendered the literal string 'undefined'. FIX (backend): deal_list now includes 'raw_submission' in its row_obj — additive; the RPC is shared with tvONE, additive and safe for both. _sbDealRowToEntry's existing _sbMergeRestore path lights up automatically (zero frontend mapper change) so the History card + dashboard analytics get model/qty/environment/user back. (2) EDIT-RESTORE failure + DATA CORRUPTION: editPastEntry fetches the lossless deal via bs_deal_get; its catch block silently fell back to the lean History-list row, comment-labelled 'degrades gracefully'. It does NOT — a lean entry loaded into the edit form, once saved, writes the 28-key lean header shape back as raw_submission via _sbEntryToDealSave, permanently DESTROYING the deal's deep fields. Proven in production: BS-14878908's raw_submission in the DB was exactly the 28-key lean header shape. FIX (frontend): editPastEntry now ABORTS on any bs_deal_get failure or empty result — shows an error toast and returns, never opening the edit form on partial data. Edit either fully restores or cleanly refuses; it can no longer corrupt a deal. NOTE: bs_deal_specs is deliberately NOT used as a restore fallback — it is a lossy boolean/int projection (a boolean touch column cannot distinguish 'no' from unset); raw_submission, stored verbatim, is the single lossless restore source, so the correct fix is to DELIVER it (deal_list) and PROTECT it (editPastEntry abort), not add a lossy secondary path. Backend: deal_list RPC updated in Supabase (one additive field) — no other SQL. Previously: v24.59.0 — DEAL-SAVE PRODUCTION FIX (Bug A + Bug B). BUG A — every BrightSign deal_save was rejected, so the deals table had 0 app='brightsign' rows. ROOT CAUSE (found by reading the live deal_save RPC + bs_deal_specs schema, NOT the stage theory in the handoff): _sbEntryToDealSave wrote entry.cmsBillingType — a DISPLAY LABEL built by buildEntryPayload ('Cloud' / 'On-premise' / 'On-premise (opted in)' / 'Standalone (no CMS)' / '—') — straight into bs_deal_specs.cms_deployment_mode, whose CHECK constraint allows only 'local' / 'cloud' (or NULL). Every BS deal therefore violated bs_deal_specs_cms_deployment_mode_check (even 'Cloud' fails — capital C); the bs_specs INSERT threw; deal_save's `EXCEPTION WHEN OTHERS` re-raised it as 'deal_save failed: …'; logEntry's catch queued the deal. FIX: new helper _sbCmsMode() normalizes the label to the DB enum — 'Cloud'→'cloud', 'On-premise'/'On-premise (opted in)'→'local', 'Standalone (no CMS)'/'—'→'' (→NULL; a standalone deal genuinely has no CMS deployment, and the CHECK allows NULL). The constraint is correct DB hygiene and is NOT relaxed. The other two CHECK-constrained bs_deal_specs columns — ssd (buildEntryPayload line already emits 'no'/'128GB'/'256GB'/'512GB'/'1TB') and environment ('indoor'/'outdoor'/'mixed') — were verified already-correct, no change. NOTE: the deal already sitting in a user's offline queue self-heals — retryPendingSync re-maps it through the fixed _sbEntryToDealSave on its next retry (or the 'Retry offline saves' button). BUG B — false 'saved to history'. logEntry's onDone callback fired on ALL FIVE code paths, including the three failure paths (no Supabase session → queued; payload-mapping throw → queued; deal_save rejection catch → queued). confirmSelection's onDone callback then UNCONDITIONALLY showed 'Confirmed ✓', reset the form, switched tabs, and fired a pushNotification 'Deal registered · saved to history' — so a rejected/queued deal looked fully saved and a salesperson would walk away from a deal that never landed. FIX: logEntry now passes an `ok` boolean to onDone — true ONLY after a confirmed deal_save RPC response, false on every failure/queue path. confirmSelection's callback shows the success UI (Confirmed ✓ + reset + 'saved to history' notification) only when ok===true; on failure it restores the Confirm button to its original label, keeps the form + result on screen, clears _confirmBusy, and re-enables Confirm so the user can genuinely retry (logEntry has already queued the deal and shown an error toast). The two logEntry('viewed') callers (Generate BOQ, Guided + Custom) declare no callback param and are unaffected by the new arg. FRONTEND-ONLY — no SQL, no migration, no Apps Script, no backend change. Previously: v24.58.0 — BUNDLE 5d-final — APPS SCRIPT ELIMINATED FROM BRIGHTSIGN (Cavitak Restructure). The last four .gs touchpoints are gone. (1) clear_test_data RETIRED: the Team-tab Danger Zone "Clear all test data" card is removed and clearTestData() is now a safe no-op stub — Test Mode was retired long ago so the button meant 'delete all real deals', a pure footgun. (2) error_summary_test → client-side: sendErrorSummaryTest now reads error_log_list and builds a 24h digest as a mailto: draft to dipen.g@cavitak.com — no server send. (3)(4) send_quarterly_now / send_yearly_now → client-side: both now open a pre-filled mailto: draft to the team (CC dipen.g), computing the fiscal Q / FY label locally. NOTE: the quarterly/yearly PERFORMANCE FIGURES were aggregated in the .gs backend; the drafts name the period and leave a placeholder line for the sender to paste Dashboard figures until that aggregation is ported to the frontend. Reports-card copy updated (the auto-cron claim is dropped — scheduled sends no longer exist); error-summary buttons relabelled "Email summary". RESULT: the BrightSign app makes ZERO calls to Apps Script — the .gs backend can be switched off for BrightSign. (refreshPricesFromSheet still names WEBHOOK_URL but its fetch targets were migrated in bundle 2; it issues no .gs action — left as-is.) No SQL to apply — frontend-only deploy. Previously: v24.57.0 — BUNDLE 5d (partial) — ADMIN LEFTOVERS → SUPABASE (Cavitak Restructure). Five more .gs call sites repointed onto existing pilot RPCs (no new SQL): the Profile-Gate save and the My-Profile save (both self-edits) → profile_update(p_actor,p_payload{professional_title,email,phone}); _logDealView → view_log_append(p_ref_id,p_viewer_login,p_viewer_full_name,p_view_type) fire-and-forget; the Review tab's fetchNote → review_note_get(p_period_key) and saveNote → review_note_upsert(p_period_key,p_fy,p_scope,p_quarter_or_half,p_text,p_actor). Success checks moved .gs {status:'ok'}→RPC {ok:true}; error text →data.error. STILL ON .gs (need an explicit decision, see handoff): clear_test_data (a mass deal-delete — Test Mode is already retired, so the button now means 'delete all production deals'; recommend RETIRING the button rather than migrating it), and the three periodic-email triggers error_summary_test / send_quarterly_now / send_yearly_now (a Postgres RPC cannot send mail — keep on .gs, or move to a Supabase Edge Function + email provider). Frontend-only deploy. Previously: v24.56.0 — BUNDLE 5c — auth_change (password change) → SUPABASE (Cavitak Restructure). submitPasswordChange is repointed off the .gs auth_change action onto the existing user_change_password RPC (no new SQL — the RPC shipped with the pilot). The old-password hash is now computed SALTED with the user's current salt: a user_login_salt fetch → sha256Hex(curSalt + sha256Hex(currentPwd)), matching the stored password_hash format, so the RPC correctly rejects a wrong current password on the non-forced path. The new credential is generated client-side via _sbMakeCred(newPwd) — a fresh 32-hex salt + sha256Hex(salt + sha256Hex(newPwd)) — sent as p_new_salt / p_new_password_hash. CRITICAL FIX in the success path: the session is now re-persisted WITH the new salted hash (_persistSession's 4th arg sbFullHash = cred.hash) and _sbCurrentFullHash / window._sbSessionFullHash are updated — without this a post-change page refresh would see a null/stale sbFullHash and bounce the user to login. Success check moved .gs {status:'ok'}→RPC {ok:true}. No SQL to apply — frontend-only deploy. Previously: v24.55.0 — BUNDLE 5b-tail — discount_update → SUPABASE (Cavitak Restructure). The edit-flow "Save Discounts" button (_onDiscSaveClick) is repointed off the last .gs dashboard action onto a new RPC (bs-discount-update-v1.sql). discount_update(p_ref,p_project_discount,p_line_discounts,p_actor_id) updates deals.project_discount AND the lineDiscounts blob inside deals.raw_submission — exactly what the edit screen rehydrates from — so reopening an edited deal shows saved discounts precisely; it also stamps edited_by/edited_at. By design it does NOT write project_lines.line_discount_pct (the frontend's _discLineKey map keys do not reliably equal _sbDeriveSku-built project_lines.sku; a fragile match would risk wrong per-line values) — so a Save-Discounts-only edit leaves the High Discount widget's per-line figure stale until the deal is next fully re-Confirmed; project discount stays exact everywhere. Success check moved .gs {status:'ok'}→RPC {ok:true}; the _sessionPassword precondition dropped from the sign-in guard (RPC auth needs no password hash). Also: the stale hardcoded login-screen version fallback (was 'v24.46.0', 9 versions behind) is emptied — JS populates the real FRONTEND_VERSION on load. REQUIRES bs-discount-update-v1.sql applied in Supabase. Previously: v24.54.0 — BUNDLE 5b (partial) — DASHBOARD FEEDS → SUPABASE (Cavitak Restructure). Four dashboard/notification reads repointed off the .gs webhook: fetchServerNotifications→notification_list(p_recipient); markAllServerNotificationsRead→notification_mark_read(p_recipient,p_mark_all) fire-and-forget; _renderPipelineTrendBS→pipeline_snapshot_list(p_weeks) — those three RPCs already existed from the pilot and their return shapes match the frontend 1:1; and _renderHighDiscounts→discount_high_list(p_app,p_days), a NEW RPC (bs-dashboard-rpc-v1.sql) that lists BS deals from the last 30d where project_discount or any project_lines.line_discount_pct >=15%, joining users for sales/editor names. Success checks moved .gs {status:'ok'}→RPC {ok:true}. DEFERRED: discount_update (the edit-flow Save-Discounts button, one call site) stays on .gs for now — its line-discount write path needs the discount read/rehydrate logic traced first; carved into the Bundle 5 continuation. REQUIRES bs-dashboard-rpc-v1.sql applied in Supabase. Previously: v24.53.0 — BUNDLE 5a — CUSTOMER DIRECTORY → SUPABASE (Cavitak Restructure). The Customer Directory's four .gs webhook actions are repointed onto new Supabase RPCs (bs-customer-rpc-v1.sql): refreshCustomers→customer_list (p_app:'brightsign' — the parties table is a shared BS+tvONE directory, so the party list is shared but deal stats are app-scoped); submitCustomerForm→customer_upsert (p_payload + p_actor:loginName; upserts the parties row plus the is_primary contact row); deleteCustomer→customer_delete (FK cascades drop the contacts and null deals.customer_party_id — deals keep their customer_name text); submitMergeModal→customer_merge (reassigns ALL deals across BOTH apps — a merge of duplicate company records must not orphan the other app's deal links — moves source contacts to the target as non-primary, deletes the source party). All four success checks moved from .gs {status:'ok'} to RPC {ok:true}; error text data.message→data.error. The directory UI, the Add/Edit/Merge modals, Customer-360, and the derived Partner/Consultant tabs are unchanged. The .gs customer_list/upsert/delete/merge handlers stay dormant as the revert path. REQUIRES bs-customer-rpc-v1.sql applied in Supabase. First sub-bundle of Bundle 5 (the remaining .gs migration). Previously: v24.52.0 — BUNDLE 4c · BUCKET C — FINAL APPS SCRIPT CLEANUP (Cavitak Restructure). The last four .gs touchpoints are retired; the BrightSign app is now 100% off Apps Script (the .gs backend stays deployed but DORMANT as the rollback path). (1) BACKUP UI: the Team-tab backup panel + loadBackupList/renderBackupList/runManualBackup/restoreBackup/deleteBackup and the backup_list/run/restore/delete actions are removed - that UI managed .gs Sheet backup tabs, meaningless now that deals live in Postgres; Supabase auto-backs-up Postgres daily. The Team tab shows a static note in place of the panel. (2) HEALTH-CHECK PING: checkWebhookHealth + showWebhookBanner/hideWebhookBanner (GET ping) and the v24.26.25 backend version-check (pingBackendVersion_v2625, version_check action, semver helpers, _renderVersionBanner) plus the older pingBackend/compareVersions/showVersionMismatchBanner (ping action) are all removed - they polled the dormant .gs backend and could only report stale data. EXPECTED_BACKEND_MIN, the .version-mismatch-banner + .webhook-banner CSS, and the four login/rehydrate/boot call sites go with them. updateVersionFooter() is untouched. (3) EMAIL TEMPLATES: the Super email-template editor modal + openEmailTemplatesEditor/loadEmailTemplateForEdit/previewEmailTemplate/saveEmailTemplate/resetEmailTemplate and the email_templates_list/update/reset actions are retired. _fetchEmailTemplates (server fetch + localStorage cache) is replaced by a client-side EMAIL_TEMPLATES constant - the single source of truth for the mailto: quote-send wording; _renderEmailTemplate now renders against it. openEmailModal pre-computes endUserClause + gstLabel into the vars dict (template stays pure {{substitution}}) and its hardcoded fallback is dropped. (4) ERROR REPORTER: logFrontendError is repointed off the dormant .gs error_log_append webhook onto the Supabase error_log_append RPC - closing the v24.51.0 split where the reporter wrote to the .gs Errors sheet while the viewer (error_log_list) read Postgres. The duplicate-suppression cache (window._loggedErrorSignatures, 60s TTL) is unchanged. REQUIRES the error_log_append RPC applied in Supabase (see DEPLOY-bs-v24.52.0.md / bs-error-log-append-v1.sql); frontend-only deploy otherwise. The .gs handlers stay dormant as the revert path. Previously: BUNDLE 4 · PERIPHERALS → SUPABASE (Cavitak Restructure). Six remaining .gs subsystems repointed off the Apps Script webhook onto their Postgres RPCs — contracts verified against the live function defs. (1) TRASH/SOFT-DELETE: softDeleteEntry→entry_soft_delete, restoreTrashEntry→entry_restore, loadTrashList→trash_list; renderTrashList remapped to the RPC's fields (refId/project/endUser/dealValueINR/userFullName/deletedAt — the qty-model/venue/city line is dropped, not in the RPC payload). (2) ERROR LOG: loadErrorLogList→error_log_list, clearErrorLog→error_log_clear. (3) AUDIT + REVISIONS READ: toggleHistoryPanel→deal_audit_get (keyed by Postgres UUID — resolved from refId via _sbDealIdByRef, which bundle 3b's deal_list load populates for every deal; rows grouped by edited_at, fields remapped to snake_case), openRevisionsModal→revision_list (render field dealValue→dealValueINR). (4) STAGE TRANSITIONS: _bsC2bFetchTransitions→stage_transition_list (latestByRefId map unchanged). (5) RESET REQUESTS: submitForgotPassword→reset_request_create, loadResetRequests→reset_request_list (RPC returns `username` — mirrored to `loginName` for the renderer/notifications), approve/denyResetRequest→reset_request_resolve. (6) TEAM/USER MGMT: loadTeamTab + _fetchAllUsersForDropdowns→user_list (via _sbFetchTeam + _sbUserRowToBs adapter — maps the Postgres row to the legacy BS camelCase user shape so no consumer site changes), submitAddUser→user_create, submitEditUser→user_update, the profile self-save→profile_update (NOT user_update — that's Super-only; profile_update is the correct self-edit RPC), superResetUserPassword + resetUserFromTeam→user_admin_reset. KEY BEHAVIOUR CHANGES: 🗑 Delete is now ⊘ DEACTIVATE via user_set_active(false) — there is no hard-delete RPC by design (a destroyed user row would orphan audit/created_by refs); a deactivated user drops off the roster and cannot log in, reversible via Edit. Password reset/create now generate the credential CLIENT-SIDE: _sbMakeCred() makes a fresh 32-hex salt + the two-stage salted hash of cavitak@123 (the RPCs do not generate credentials). professionalTitle is SET-ON-CREATE only (option-a decision — user_update does not accept it); an "add-professionalTitle" field was added to the Add User modal. The redundant audit_log_append .gs write is RETIRED — deal_save writes the per-field audit delta server-side; sendAuditLogDiff is now a no-op stub and logEntry no longer calls it (_editSnapshot is just discarded). STILL ON .gs (bucket C, next — v24.52.0): the frontend error reporter error_log_append (errors still WRITE to the .gs Errors sheet but the viewer now reads Postgres — known split until 4c), plus the backup UI, health-check ping and email_templates_list which are slated for retirement. The Apps Script handlers stay dormant as the revert path. Previously: v24.50.0 — BUNDLE 3b · DEAL READ + EDIT-RESTORE → SUPABASE (Cavitak Restructure) — completes the deal cutover. History/dashboard READ is repointed off the Apps Script webhook onto the deal_list RPC: tryFetchCentralLog now calls _sbFetchBsLog (paginated deal_list, p_app:'brightsign'); the {ok,data,attempts} contract is preserved so refreshLog and all its callers are untouched. New _sbDealRowToEntry maps a Postgres deal row → the BS-shaped entry the History list / dashboard / edit-restore consume — header fields from columns, and when the row carries raw_submission the whole blob is merged in as the lossless base (tvONE's _sbMergeRestore pattern: blob is the base, a column value overrides only when non-empty). EDIT-RESTORE: editPastEntry is now async and fetches the lossless deal via bs_deal_get(p_display_ref) — which returns the deal + bs_deal_specs + project_lines + raw_submission in ONE call — falling back to the lean History-list row if the fetch fails. THE CUTOVER COMPLETES HERE: logEntry no longer routes edits to .gs — BOTH new and edited deals write to Supabase deal_save (an edit is an UPDATE, keyed by the id _sbDealRowToEntry registers into _sbDealIdByRef on every list-load and on restore). logEntry_LEGACY_GS now has NO caller — kept solely as the revert reference. The per-field AuditLog diff (sendAuditLogDiff) and the Revisions modal stay on the .gs AuditLog sheet — a bundle-4 peripheral; the diff is fired from the main logEntry path for edit-saves. verifyPendingSync no longer overwrites the (now Supabase-sourced) _centralLog and skips entirely when the queue holds no legacy 'gs' items — none are queued post-3a/3b. bsNormalizeEntries still runs at the load boundary. FRONTEND-ONLY DEPLOY: deal_list (shipped with the tvONE pilot, app-agnostic via p_app) and bs_deal_get (bs-rpc-v1.sql) are already applied in Supabase — no SQL, no Apps Script change. The Apps Script deal handlers (?action=read, handleLogPost) stay DORMANT as the revert path. After 3b the only BS subsystems still on .gs are the bundle-4 peripherals (audit/revisions, notifications, reset requests, error log, stage transitions, customer directory). Previously: v24.49.0 — BUNDLE 3a · DEAL WRITE → SUPABASE (Cavitak Restructure). The BrightSign deal WRITE path is repointed off the Apps Script webhook onto the Supabase deal_save RPC. logEntry() now SPLITS: NEW deals → deal_save (a confirmed RPC write — deals + bs_deal_specs + project_lines in one atomic call); EDIT-saves → logEntry_LEGACY_GS (the pre-3a webhook path, kept LIVE for the 3a→3b window because History reads are still .gs and an edited deal must stay visible there; the audit diff is a bundle-4 peripheral and also stays on .gs). New mapper _sbEntryToDealSave() translates buildEntryPayload's flat ~52-field object into the nested deal_save payload, verified field-for-field against bs-rpc-v1.sql (header / block-2d bs_specs / project_lines). Supporting helpers: _sbLoginToUserId (loginName→user UUID via bundle-1's _sbUsers cache — sales/presales person ids; actor is _sbCurrentUserId), _sbCloseMonth ('YYYY-MM'→'YYYY-MM-01' so ::DATE casts), _sbInt/_sbBool/_sbYesNoToInt/_sbText (sanitise the form's '—' placeholder so the RPC's INTEGER/BOOLEAN/DATE casts never throw — note hdmi_in is a yes/no toggle in the form but an INTEGER column, so it maps to 1/0), _sbDeriveSku (same model-code regex the Excel quote builder uses). _sbDealIdByRef is a session map that remembers each deal's Postgres id from the deal_save response, so the create flow's TWO logEntry calls — logEntry('viewed') on Generate BOQ then logEntry('saved') on Confirm, both NOT in edit mode — upsert one row instead of double-INSERTing on display_ref. buildEntryPayload is unchanged except ONE appended field: venueType (silently dropped before — same loss pattern as the v24.12.4 state / v24.12.5 outputs fixes — now mapped to deals.venue_type). Offline queue rewired: queuePendingEntry tags each item with a backend ('sb'|'gs'; defaults 'gs' so pre-3a queued items still retry the legacy way); retryPendingSync routes PER ITEM — sb items retry via deal_save and are spliced from the queue on a confirmed response, gs items retry the webhook and are cleared by verifyPendingSync as before. raw_submission carries the whole entry blob verbatim for lossless 3b edit-restore. The Apps Script deal handlers stay DORMANT as the revert path; logEntry_LEGACY_GS doubles as the in-file revert reference. Requires bs-pricebook-v1.sql + bs-deal-extension-v1.sql + bs-rpc-v1.sql + bs-pricebook-seed-v1.sql applied in Supabase (already done). pipeline_stages verified to hold all 8 BS_STAGES strings verbatim (incl. 'Commit to forcast') — no stage seed needed. Bundle 3b (deal READ + edit-restore) is next; until it ships, a deal created post-3a is in Postgres but not yet in the .gs-backed History. Previously: v24.48.2 — UI: the app version badge (#app-version-footer) now shows on EVERY page. It was nested inside #page-login, so it hid the moment login's page lost the .active class — visible only on the login screen. Moved the <div> out to body level (after #page-app closes); the CSS is already position:fixed bottom-right, so it now floats over login + all in-app tabs. No JS change — updateVersionFooter() still targets the same id. Previously: v24.48.1 —  // v24.48.1 — HOTFIX (bundle 2 regression). _sbAdaptCatalog emitted the model key as `modelId`, but the entire app reads MODELS rows as `m.id` / `p.id` (25+ sites). So every MODELS.find() missed: _advReadSelections could not match any Custom BOQ qty row back to a model, returned [], and Generate BOQ falsely reported "Pick at least one player" — the form silently blocked submit. FIX: _sbAdaptCatalog now emits `id` (matching the app + the old Apps Script catalog_get shape). The other three adapters (_sbAdaptPricing/Accessories/Cms) were audited against their consumers and are correct — no change. One-field fix. Previously: v24.48.0 —  // v24.48.0 — PRICE BOOK ON SUPABASE (Cavitak Restructure, bundle 2). The three price-book fetches (fetchPriceBook / fetchCmsPriceBook / fetchCatalog) are repointed from the Apps Script webhook (pricing_get / cms_pricing_get / catalog_get) to a SINGLE Supabase RPC, bs_pricebook_get. New _sbFetchPriceBook() makes ONE round trip per login session and memoises it (window._sbPriceBookRaw); the three public fetchers share that one result. Four adapters (_sbAdaptPricing/Accessories/Cms/Catalog) reshape the RPC's flat snake_case arrays into the nested camelCase shapes the existing PRICING / SAP_CODES / XC-surcharge / _accessoriesMap / _cmsPriceBookRows / MODELS builders already consume — so the proven price-book-building logic is byte-unchanged. The ensureFresh* cache-expiry checkers and the Super 'refresh prices' action clear the memo first so a refresh is a genuine re-fetch. Hardcoded fallback prices are kept: an RPC failure logs and continues, never blocks login. Requires bs-pricebook-v1.sql + bs-rpc-v1.sql + bs-pricebook-seed-v1.sql applied in Supabase. The Apps Script pricing_get/cms_pricing_get/catalog_get handlers stay dormant as the revert path. Previously: v24.47.1 —  // v24.47.1 — SPLASH TRIM: login splash padding cut to 100ms-stepped (was 1500/3000/3500ms). The setTimeout-paced steps were tuned for the slow Apps Script backend; with Supabase login they were pure padding. Real work inside those timers (checkWebhookHealth, refreshLog, offline-queue retry) is unchanged — only the splash delay was trimmed. Parity: tvONE gets the same trim in v25.109.2. Previously: v24.47.0 —  // v24.46.0 — ZOHO STAGE REDESIGN. The deal pipeline is realigned to the Zoho Deals "Stage" picklist (8 stages, verbatim incl. Zoho's "Commit to forcast" spelling): Pre-Qualified, Qualified, Proposal, Negotiation/Review, Awarded, Commit to forcast, Closed Won, Closed Lost. First 6 are open, last 2 terminal. The separate `outcome` field is RETIRED — won/lost/open is now DERIVED from stage via bsDealOutcome(). New canonical stage block (BS_STAGES / BS_STAGES_OPEN / BS_STAGE_WON / BS_STAGE_LOST / BS_STAGES_OPEN_SET / BS_LEGACY_STAGE_MAP / bsDealOutcome / bsIsClosedStage / bsNormalizeEntry / bsNormalizeEntries) is the single source of truth. Every deal is normalized AT THE LOAD BOUNDARY (loadLocalLog + both window._centralLog server writes wrapped in bsNormalizeEntries): legacy 5-stage values are remapped (Lead→Pre-Qualified, Opportunity→Qualified, Proposal→Proposal, Negotiation→Negotiation/Review, Order→Commit to forcast), legacy won/lost outcome overrides the mapped stage, and entry.outcome is re-derived — so all ~200 downstream entry.outcome reads stay correct without per-site edits. Entry form: f-stage select now lists the 8 Zoho stages; the retired f-outcome select is removed; the Closed-Lost reason capture (f-outcome-reason) is now a FREE-TEXT textarea (mirrors Zoho "Reason For Lost", optional) revealed only when stage==='Closed Lost'; the categorized OUTCOME_REASONS map is deleted. Dashboard: the Outcome filter (v26-f-outcome) is removed entirely — Won/Lost filtering is via the Stage filter (now 8 options); the Outcome-scorecard tiles drop the retired "On hold" bucket and Won/Lost tiles drill into the Stage filter. Quick-stage menu offers all 8 stages. cust360 stage/outcome breakdowns, 1-on-1 briefing chips, cockpit funnel/strip + STAGE_COLORS, pipeline-by-stage card, v26 STAGE_WEIGHTS (Pre-Qualified .10 → Commit to forcast .95 → Closed Won 1.0 / Closed Lost 0) and stage charts all re-pointed to the canonical block. Commit/Early KPI split re-mapped to the new late tier (Negotiation/Review + Awarded + Commit to forcast). Case Count tile sub repurposed from retired on-hold count to closed-deal count. Validation no longer requires outcome; payload still writes a derived outcome for pre-migration back-compat (harmless once the Outcome column is dropped by the migration ONESHOT). No backend change in this frontend cut — the per-sheet migration ONESHOT (legacy stage remap + outcome→stage override + Outcome column drop) is a separate step. Previously: v24.45.17 — SAP-CODE FOLLOW-UP FIXES (from first live quote test). (1) SSD SKU BLANK: the SSD BOM row was pushed with only `name`, no `sku`, so the quote builder's name-regex (which looks for a MODEL-code pattern) could not derive a SKU from "256 GB M.2 NVMe SSD" and the Excel SKU cell showed "—". Both SSD push sites (buildAdvancedBOMCard + buildBOMCard) now set sku from getSsdAccessory().sku (e.g. "BS-SSD-256"). (2) FABRICATED CMS SKUs: CMS rows were assigned invented placeholder SKUs ('CMS-INSTALL' / 'CMS-ONPREM-SUB' / 'CMS-CLOUD-SUB') — harmless before v24.45.16 but wrong once the SKU column went onto the customer quote. CMS line items are subscriptions / services, not BrightSign hardware: they have no product SKU and no SAP code. CMS rows now carry sku:'' (+ isService:true), and _bsXlSkuRich() returns a plain empty string for a row with no SKU — so CMS rows show a blank SKU cell, no "—", no "SAP:" line. Hardware rows are unchanged. No backend change. Previously: v24.45.16 — SAP CODE ON EXCEL QUOTE. The Excel BOM table's SKU cell is now two lines: the SKU (bold) on line 1, the SAP code ("SAP: <code>", small grey) on line 2 — procurement convenience for reorders. EXCEL-ONLY: the customer PDF deliberately carries NO SAP codes (internal data, must not reach the client). Both quote builders (_buildQuoteFromGuided + _buildQuoteFromAdvanced) now resolve row.sapCode via the existing getSapCode(sku) helper, which reads the SAP_CODES map that fetchPriceBook rebuilds from the Pricing + Accessories sheets on login. All 12 players + XC Win variants are already populated; SSD rows show "SAP: —" until their sapCode cell in the Accessories sheet is filled (then they resolve automatically, no code change). New _bsXlSkuRich() helper builds the ExcelJS richText value; SKU column added to wrapText; BOM row height 24 -> 32 to fit two lines (still a minimum — long notes auto-expand). No backend change. Previously: v24.45.15 — ECHARTS LAZY-LOAD (parity with tvONE v25.99.29). (1) echarts-gl deleted from <head> — it was dead foundation code added in v24.26.8 'for a 3D India map' that was never built (zero registerMap/geo3D/3D-series usage in the file); ~600 KB removed. (2) echarts@5.4.3 (~1 MB) removed from <head> — it is used ONLY by the Team Analytics dashboard (10 chart renderers + the pipeline-trend chart). New window._ensureEchartsLoadedBS() loads it on demand the first time a chart renders; the ~22 non-dashboard page loads (login, New Selection, History, Result) never download it. Hooked at both entry points: _renderTeamCharts (kicks the load + re-runs on resolve) and _renderPipelineTrendBS (awaits the load before render). The loader is window-attached because _renderPipelineTrendBS is a top-level function OUTSIDE the v26 dashboard-module IIFE where the helper is defined — one <script> tag, one in-flight promise, never a double-load. Existing 'typeof echarts === undefined' guards retained as the CDN-failure safety net (shows 'Chart library unavailable'). All chart calls are gated behind _activeTab==='team' so nothing renders at login. Net: ~1.6 MB off every non-dashboard first paint. No JS logic change to the charts themselves, no backend change. Previously: v24.45.14 — LAUNCH HYGIENE: <head> now has robots noindex,nofollow (internal tool must not be web-indexed), a Cavitak-mark SVG favicon + apple-touch-icon (ends the blank-tab-icon 'unfinished' tell), theme-color #4F46E5, and a description meta. A <noscript> fallback card was added after <body> so a JS failure shows a branded 'JavaScript is required' message instead of a blank white page. No JS/logic change, no backend change. Audit note: CDN-failure resilience for ExcelJS/jsPDF/html2canvas was reviewed and is already correct — every export path throws-and-catches into a user-visible showSync error toast. Previously: v24.45.13 — SSD MIXED-BOQ FIX. Custom BOQ buildAdvancedBOMCard no longer kills the whole SSD line when a single entry-level model (AU/LS, ssdCapable=false) is in the BOQ. The old binary anyNoSsd flag flipped to true on any one such model and routed the SSD line into a no-price "Not supported on selected entry-level models" warning — even when SSD-capable players (HD/XD/XT/XC) were also selected. Now: ssdCapablePlayers counts the players that actually accept an SSD (ssdCapable !== false); the SSD line is priced for those, qty capped at ssdCapablePlayers (not totalPlayers); a mixed BOQ gets a clarifying note ("fits the N SSD-capable players (HD/XD/XT/XC); not the LS/AU entry-level units"); the "not supported" warning now shows ONLY when ssdCapablePlayers === 0 (every selected player is entry-level — the genuinely-correct case). Single-site fix: the Excel _buildQuoteFromAdvanced path has no independent anyNoSsd logic (verified), so it inherits the corrected rows. NOTE: the SSD still needs a non-zero SSD-256/512/etc price in the Accessories sheet — getSsdAccessory() returns null for ₹0 rows and the line is silently skipped. NOTE 2: clampAccessoryQty now caps the SSD input (adv-ssd-qty) at the SSD-capable player count too — input box and BOM agree; WD105 still caps at total players. If no SSD-capable player is selected the SSD input resets to 0. No backend change. Pairs with backend v25.20.0. Previously: v24.45.12 — QUOTE FILENAME STANDARDISATION: Excel + PDF downloads now follow BS_<ProjectName>_<CaseID>[_<Mode>].<ext> (was <refId>-<Mode>.<ext>). New _buildQuoteFilename() helper sanitises the project name (non-alphanumerics → '_', trimmed, 40-char cap; falls back to 'Quote' if empty) and appends the refId as CaseID. The BoQ/BoM mode suffix is kept (meaningful distinction). Applied at all 3 sites: 2 Excel builders + the PDF. Parity with tvONE v25.99.36 (tvONE_<ProjectName>_<CaseID>). No backend change. Previously: v24.45.11 — SHEET-DRIVEN PRICING RULES: GST rate and the max discount cap can now be changed by editing a cell in the Sheet's new Settings tab — no code change, no redeploy. fetchPriceBook now captures a `settings` block from pricing_get (backend v25.20.0) into window.PRICING_SETTINGS. New helpers _cfgGstRate() / _cfgMaxDiscount() / _cfgGstLabel() expose the values with HARDCODED FALLBACKS (0.18 / 20) plus sane-range guards (GST 0-40%, discount 0-100%) — a missing, blank, or wildly-typo'd cell can never miscalculate a quote. Wired: 2 GST calculations (both BOM builders), 5 discount-cap sites (_discValidatePct, _discEffectivePct, 3 validation guards), and 8 GST display-text sites (2 BOM table rows, Excel cell + T&C, PDF row + T&C, 2 message templates) — so a rate change updates both the math and every label consistently. Verified by simulation across 5 scenarios incl. fallback + typo cases. Backend: v25.19.0 -> v25.20.0 (additive only). Previously: v24.45.10 — STALE-CACHE FIX (parity with tvONE v25.99.32): saveProfileGate() mirrored the freshly-entered professionalTitle/email/phone to state.user + _sessionUser but never refreshed window._allUsers. If the team list was loaded earlier in the session, a quote Excel/PDF referencing that rep would show the stale (pre-update, blank-title) row. saveProfileGate() now re-fetches _allUsers via _fetchAllUsersForDropdowns() after a successful save so exports use the current title. No backend change. Pairs with v25.19.0. Previously: v24.45.9 — NOTIFICATION CLEANUP (C-BS-7): converted all 74 native alert() calls to inline showSync() toasts — no more browser alert popups anywhere in the app. Error/failure/permission messages use type 'error' (toast persists until dismissed, matching old alert behaviour); the 2 success messages use 'success' (auto-fades); 'cancelled' messages use neutral type. Multi-line alert messages (\n\n) collapsed to ' \u00b7 '-separated single-line toasts. showSync() hardened — it is now the universal notification path, so it can never throw: if the toast DOM is not present yet (very early login screen) it falls back to a native alert so the message is never lost. Also fixed 4 dead showToast() calls (showToast was referenced but never defined — those notifications silently no-op'd); they now call showSync() directly. confirm() dialogs (20, blocking yes/no gates) intentionally left as-is. No backend change. Pairs with v25.19.0. Previously: v24.45.8 — CONSISTENCY FIX: corrected the role label "National Product Manager" → "National Product Lead" at all 4 remaining sites — login-screen footer, the offline-fallback USERS constant, the Result-page pricing escalation strip, and the pricing-escalation message string. (The tvONE pricing card was corrected separately in v25.99.27.) No behaviour change. Pairs with v25.19.0. Previously: v24.45.7 — TEST MODE HARDENING: verified Test Mode is permanently gone and unable to re-enable. _initTestMode() now also force-clears any stale per-user localStorage flag (bs-test-mode__<user> + bs-cockpit-include-test) on every boot — previously it only set the flag false without cleaning storage. setTestMode() was already a no-op stub that ignores its argument; confirmed every assignment to window._testModeOn is '= false' (zero '= true' paths anywhere). isTest always written blank on save. Net: Test Mode cannot be turned on by any code path, stale flags self-clean on next login. No backend change. Pairs with v25.19.0. Previously: v24.45.6 — DISCOUNT BUGFIX: the Excel BOQ ignored applied discounts. (1) Both quote builders (_buildQuoteFromGuided + _buildQuoteFromAdvanced) used row.unitPrice / row.lineTotal (LIST price) and ignored row.netUnitPrice / row.netLineTotal — so per-line figures in the Excel were always list price even when a discount was applied. Now the builders use the NET (discounted) unit price + line total when a discount exists, falling back to list price otherwise. (2) The Excel totals block was inconsistent — it showed the LIST subtotal but discounted GST + Grand Total. Now discount-aware: when a discount exists it renders List Subtotal -> Total Discount (red) -> Net Subtotal -> GST -> Grand Total, mirroring the in-app BOM; with no discount it shows a single Subtotal row as before. Per-line totals now reconcile with the net subtotal. No backend change. Pairs with v25.19.0. Previously: v24.45.5 — EXCEL SPACING AUDIT: cell-by-cell pass over the Excel renderer. (1) Date / Valid Until rows given explicit 16px height + vertical-middle alignment (were falling back to default 16 with no v-align, slight imbalance vs the 24px QUOTATION label). (2) Stray "—" placeholder removed from the empty left cell on the 3rd PROJECT DETAILS row (the row that has Location on the right but no matching QUOTED TO field on the left) — left cells now genuinely blank. (3) Unit Price / Line Total table-header cells given the same 1-char right indent as the numeric data cells below them, so the header text lines up directly above its figures. Verified by cell-by-cell openpyxl inspection across all 6 modes — borders, fills, alignment, row heights all consistent. No backend change. Pairs with v25.19.0. Previously: v24.45.4 — EXCEL POLISH: (1) Salesperson + Presales contact blocks now BOTH always render — Presales is optional, so when none is assigned the block shows "Not assigned" instead of being silently skipped (Excel layout now consistent deal-to-deal). (2) Cell/row/column spacing audit: T&C row heights now scale with text length (long entries — Warranty, Cancellation, Forex — no longer clipped at fixed 18px); QUOTED TO / PROJECT DETAILS value cells wrap long venue/location names with height scaling; verdict band wraps long Mixed-config verdict lines; Subtotal/GST/GRAND TOTAL value cells get a 1-char right indent so figures don't sit flush on the cell border. No backend change. Pairs with v25.19.0. Previously: v24.45.3 — UX FIX: "For Better Pricing" contact card moved to the BOTTOM of the Guided Result page (now renders after the BOM card + Project Summary). The Custom BOQ / Advanced path already placed it last since v24.12.6 — the Guided path was missed and still rendered it ABOVE the BOM table. Both paths are now consistent: pricing callout is the final card. No behavior change beyond render order. Pairs with v25.19.0. Previously: v24.45.2 — BUGFIX: Guided + Mixed mode Indoor/Outdoor steppers were clamped at 1 (treated a stale hidden total as the cap); now Indoor and Outdoor are independent counters and the total is derived from their sum. Root cause: adjustMixedQty / onMixedQtyInput treated the split as constrained by a SEPARATE total (the hidden single-mode f-qty input, which defaults to 1). Every +/- click was clamped to that stale total of 1, and the "other side" was auto-balanced to total-minus-thisValue — so Indoor+Outdoor could never exceed 1. Fix: in Mixed mode the TOTAL is now DERIVED from Indoor + Outdoor (the correct model). Indoor and Outdoor are independent counters (each 0..10000); adjusting one never touches the other. _updateMixedStatus + recalcMixedTotal keep the hidden f-qty input AND state.form.qty/qtyIndoor/qtyOutdoor in sync with the running sum so all downstream consumers (BOM, CMS 25-player threshold, backend payload) get the right total. _setMixed now calls recalcMixedTotal directly because the +/- buttons set .value programmatically and do NOT fire the 'input' event recalcMixedTotal was bound to (latent bug, previously masked by the broken clamp). Entering Mixed mode initializes state from the Indoor/Outdoor fields. _onTotalQtyChangedForMixed is now a no-op. Logic verified by simulation. No backend change. Pairs with v25.19.0. Previously: v24.45.1 — Added frontend version label on the login screen (parity with tvONE). Was: xlsx-js-style with old red CAVITAK MARKETING banner header. Now: Cavitak logo top-left + "BrightSign Product Selector" title in deep indigo (#312E81) + tricolor stripe (indigo/violet/red) + gold verdict band + indigo BoM table headers + red GRAND TOTAL banner + 12-row T&C block + salesperson + presales footer with Cavitak branded distributor band. New shared renderer _renderBsQuoteExcel(quote) takes a normalized payload, handles both BoQ (with prices) and BoM (no prices) modes, embeds Cavitak logo from existing CAVITAK_LOGO_DATA_URL constant (no re-encoding). Existing call sites unchanged: same downloadQuoteExcel() and _downloadAdvancedQuoteExcel() signatures preserved. Old xlsx-js-style functions deleted (~930 lines of legacy code removed). ExcelJS CDN added in <head>. ~150 KB lib download (gzipped) on first page load. Smoke-tested with realistic BoQ + BoM + empty-BOM payloads — all 3 render cleanly. Visual verification via LibreOffice headless render confirms the design matches the tvONE reference Excel pixel-for-pixel in structure. Pairs with backend v25.19.0. xlsx-js-style stays loaded for legacy History-tab CSV-style exportXLSX() (different use case, not customer-facing). Previously: v24.44.2 — UX wording sweep matching tvONE neutralized vocabulary.: All mid-action button labels neutralized to "Loading…": 'Saving…' (×7 — main save flow, profile, customer save, c2a/poa, pricing refresh) → 'Loading…'; 'Signing in…' (×2 — submit button + splash) → 'Loading…'; 'Signing in ✓' splash → 'Done ✓'; 'Sending…' (×4 — pre-mailto email modal stragglers) → 'Loading…'. All success toasts unified to 'Done ✓': 'Saved ✓' statusEl text (×3 — profile, settings, status checks) → 'Done ✓'; 'Password updated ✓' → 'Done ✓'; 'Template saved ✓' → 'Done ✓'; 'Template reset to default ✓' → 'Done ✓'; 'Backup deleted ✓' → 'Done ✓'; 'Session extended ✓' → 'Done ✓'; '✓ Prices refreshed — Pricing, Accessories, CMS, Catalog all reloaded' → 'Done ✓'; 'Up to date ✓' → 'Done ✓'; 'All entries uploaded ✓' (×2) → 'Done ✓'; 'History updated ✓' → 'Done ✓'; 'Refreshed ✓' → 'Done ✓'. Sync toast default text 'Saving…' → 'Working…' (was the brief flash before being replaced by the actual status). Net: BS now matches tvONE's neutralized vocabulary — a rep switching between apps sees the same words for the same operations. 23 surgical edits across the file. No backend change. Pairs with v25.19.0. Previously: v24.44.1 — EMAIL FLOW mailto: switch (broken-on-M365 backend send → true Outlook open with PDF+Excel auto-download). Click "Open in Outlook" in modal now: (1) downloads BOTH the PDF and Excel quote files for the rep to attach, (2) opens their default mail client (Outlook on M365) with To/CC/Subject/Body pre-filled from the modal fields, (3) rep attaches the just-downloaded files in Outlook and clicks Send — email truly originates from rep's mailbox, appears in their Sent folder, passes SPF/DKIM/DMARC. dipen.g@cavitak.com forced CC pre-filled (rep can technically remove but instructed not to). Modal subtitle updated to reflect new flow. Backend email_send handler intentionally left in place (dormant, no UI call site) — easy revert if ever needed. No backend deploy required. Pairs with v25.19.0. Previously: v24.44.0 — PDF polish (Excel logo embedding deferred to next session per agreed split). Three small targeted improvements to the Tender Spec / Quote PDF export: (1) NEW: Cavitak-branded footer band added above the version footer line. Mini Cavitak logo (26px) on left + right-aligned attribution "Cavitak Marketing Pvt Ltd" (bold, indigo) over "Authorized BrightSign Distributor · India" (muted slate). Subtle indigo→violet tinted background (rgba 0.04) with 2px solid #4F46E5 top border. Mirrors the header strip treatment for visual cohesion — reads as the official Cavitak signoff before the technical disclaimer. (2) Header title color tightened from #312E81 (dark indigo) → #4F46E5 (indigo, matching the accent strip end + new footer band border). Subtle cohesion win, no layout change. (3) Discovery: the Cavitak logo (635×277 JPEG, ~13KB) was already encoded as CAVITAK_LOGO_DATA_URL constant from v24.20.0 — no re-encoding needed. Reused the same constant for the new footer mini-logo. Backend v25.19.0 unchanged. Excel still uses xlsx-js-style; ExcelJS swap for image embedding is the next focused session.
+const FRONTEND_VERSION = '24.62.0';  // v24.62.0 — DEAD-CODE CLEANUP (bucket B). Eleven feature-named zero-reference functions removed (~452 lines) after investigating each for "superseded vs missing-call-site bug": renderReviewCards (225L — old Review-tab card builder; the Review tab was folded into Dashboard Team Analytics in v24.26.0, renderReview is now a stub), emailQuoteToPartner (96L — old backend-send email, superseded by the v24.44.1 mailto/openEmailModal flow), loadAndRenderNote (40L — C2A/PoA note loader; the bs-c2a-poa textarea no longer exists in the DOM, the note UI went with the old Review tab), clearFilters + currentPipelineForBS (pre-v26-dashboard leftovers — the v26 module owns filters and pipeline aggregation), _updateFiltersSummaryV2 + _persistFiltersExtended + _saveFilters (an abandoned extended/persistent-filters effort; the live system uses _updateFiltersSummary + applyReviewFilters), and ensureFreshPriceBook/CmsPriceBook/Catalog (Apps-Script-era 3-hour cache-staleness checkers; Supabase fetches the price book once per session). Each left as a one-line tombstone. Frontend-only — no backend/SQL change. NOTE: _buildDiscountControlCard was the 12th flagged function but is deliberately NOT deleted — it builds the project-discount input + Save Discounts button, and the discount backend (_onDiscSaveClick, the v24.55.0 discount_update RPC) is fully live, so its zero-reference status looks like a missing render call, not dead code — pending a visual check of whether the project-discount card shows on the Result page. Follow-up dead code surfaced by this pass (not yet removed): fetchNote / saveNote / wirePoaBlur are now orphaned too — the remainder of the retired C2A-note cluster. Previously: v24.61.0 — DEAD-CODE CLEANUP (bucket A). Five zero-reference functions removed after a whole-file reference scan (searches HTML onclick attrs AND JS, and excludes named IIFEs — so the result is TRUE zero-reference, unlike a naive JS-only scan): getClientFYQuarter (superseded FY/quarter helper), fetchWithTimeout (pre-Supabase fetch+AbortController wrapper, obsolete since _sbRpc), animateNumber (KPI count-up animation, no caller), fmtDelta (delta-% formatter, orphaned when YoY badges were removed in v24.25.0), _getTotalQty (qty helper superseded by the indoor/outdoor model). ~46 lines removed; each left as a one-line tombstone matching the existing _readUrlWithAuth convention. Frontend-only — no backend/SQL change. NOTE: the same scan flagged ~12 feature-named functions with no caller (bucket B — _buildDiscountControlCard, renderReviewCards, the ensureFresh* trio, clearFilters, currentPipelineForBS, loadAndRenderNote, etc.) which are deliberately NOT deleted: they may be missing-call-site bugs and need investigation, not removal. Previously: v24.60.0 — HISTORY-CARD + EDIT-RESTORE FIX (v24.50.0 migration read-path gaps). Two related bugs from the deal-READ cutover, both rooted in raw_submission not reaching the frontend. (1) HISTORY 'undefined' / missing model: the deal_list RPC (History list + dashboard source) returned a lean 15-column row with NO raw_submission, so _sbDealRowToEntry's lossless-restore branch never fired for list rows — it returned the bare header and the History card's e.environment / e.update / e.user / model / qty reads rendered the literal string 'undefined'. FIX (backend): deal_list now includes 'raw_submission' in its row_obj — additive; the RPC is shared with tvONE, additive and safe for both. _sbDealRowToEntry's existing _sbMergeRestore path lights up automatically (zero frontend mapper change) so the History card + dashboard analytics get model/qty/environment/user back. (2) EDIT-RESTORE failure + DATA CORRUPTION: editPastEntry fetches the lossless deal via bs_deal_get; its catch block silently fell back to the lean History-list row, comment-labelled 'degrades gracefully'. It does NOT — a lean entry loaded into the edit form, once saved, writes the 28-key lean header shape back as raw_submission via _sbEntryToDealSave, permanently DESTROYING the deal's deep fields. Proven in production: BS-14878908's raw_submission in the DB was exactly the 28-key lean header shape. FIX (frontend): editPastEntry now ABORTS on any bs_deal_get failure or empty result — shows an error toast and returns, never opening the edit form on partial data. Edit either fully restores or cleanly refuses; it can no longer corrupt a deal. NOTE: bs_deal_specs is deliberately NOT used as a restore fallback — it is a lossy boolean/int projection (a boolean touch column cannot distinguish 'no' from unset); raw_submission, stored verbatim, is the single lossless restore source, so the correct fix is to DELIVER it (deal_list) and PROTECT it (editPastEntry abort), not add a lossy secondary path. Backend: deal_list RPC updated in Supabase (one additive field) — no other SQL. Previously: v24.59.0 — DEAL-SAVE PRODUCTION FIX (Bug A + Bug B). BUG A — every BrightSign deal_save was rejected, so the deals table had 0 app='brightsign' rows. ROOT CAUSE (found by reading the live deal_save RPC + bs_deal_specs schema, NOT the stage theory in the handoff): _sbEntryToDealSave wrote entry.cmsBillingType — a DISPLAY LABEL built by buildEntryPayload ('Cloud' / 'On-premise' / 'On-premise (opted in)' / 'Standalone (no CMS)' / '—') — straight into bs_deal_specs.cms_deployment_mode, whose CHECK constraint allows only 'local' / 'cloud' (or NULL). Every BS deal therefore violated bs_deal_specs_cms_deployment_mode_check (even 'Cloud' fails — capital C); the bs_specs INSERT threw; deal_save's `EXCEPTION WHEN OTHERS` re-raised it as 'deal_save failed: …'; logEntry's catch queued the deal. FIX: new helper _sbCmsMode() normalizes the label to the DB enum — 'Cloud'→'cloud', 'On-premise'/'On-premise (opted in)'→'local', 'Standalone (no CMS)'/'—'→'' (→NULL; a standalone deal genuinely has no CMS deployment, and the CHECK allows NULL). The constraint is correct DB hygiene and is NOT relaxed. The other two CHECK-constrained bs_deal_specs columns — ssd (buildEntryPayload line already emits 'no'/'128GB'/'256GB'/'512GB'/'1TB') and environment ('indoor'/'outdoor'/'mixed') — were verified already-correct, no change. NOTE: the deal already sitting in a user's offline queue self-heals — retryPendingSync re-maps it through the fixed _sbEntryToDealSave on its next retry (or the 'Retry offline saves' button). BUG B — false 'saved to history'. logEntry's onDone callback fired on ALL FIVE code paths, including the three failure paths (no Supabase session → queued; payload-mapping throw → queued; deal_save rejection catch → queued). confirmSelection's onDone callback then UNCONDITIONALLY showed 'Confirmed ✓', reset the form, switched tabs, and fired a pushNotification 'Deal registered · saved to history' — so a rejected/queued deal looked fully saved and a salesperson would walk away from a deal that never landed. FIX: logEntry now passes an `ok` boolean to onDone — true ONLY after a confirmed deal_save RPC response, false on every failure/queue path. confirmSelection's callback shows the success UI (Confirmed ✓ + reset + 'saved to history' notification) only when ok===true; on failure it restores the Confirm button to its original label, keeps the form + result on screen, clears _confirmBusy, and re-enables Confirm so the user can genuinely retry (logEntry has already queued the deal and shown an error toast). The two logEntry('viewed') callers (Generate BOQ, Guided + Custom) declare no callback param and are unaffected by the new arg. FRONTEND-ONLY — no SQL, no migration, no Apps Script, no backend change. Previously: v24.58.0 — BUNDLE 5d-final — APPS SCRIPT ELIMINATED FROM BRIGHTSIGN (Cavitak Restructure). The last four .gs touchpoints are gone. (1) clear_test_data RETIRED: the Team-tab Danger Zone "Clear all test data" card is removed and clearTestData() is now a safe no-op stub — Test Mode was retired long ago so the button meant 'delete all real deals', a pure footgun. (2) error_summary_test → client-side: sendErrorSummaryTest now reads error_log_list and builds a 24h digest as a mailto: draft to dipen.g@cavitak.com — no server send. (3)(4) send_quarterly_now / send_yearly_now → client-side: both now open a pre-filled mailto: draft to the team (CC dipen.g), computing the fiscal Q / FY label locally. NOTE: the quarterly/yearly PERFORMANCE FIGURES were aggregated in the .gs backend; the drafts name the period and leave a placeholder line for the sender to paste Dashboard figures until that aggregation is ported to the frontend. Reports-card copy updated (the auto-cron claim is dropped — scheduled sends no longer exist); error-summary buttons relabelled "Email summary". RESULT: the BrightSign app makes ZERO calls to Apps Script — the .gs backend can be switched off for BrightSign. (refreshPricesFromSheet still names WEBHOOK_URL but its fetch targets were migrated in bundle 2; it issues no .gs action — left as-is.) No SQL to apply — frontend-only deploy. Previously: v24.57.0 — BUNDLE 5d (partial) — ADMIN LEFTOVERS → SUPABASE (Cavitak Restructure). Five more .gs call sites repointed onto existing pilot RPCs (no new SQL): the Profile-Gate save and the My-Profile save (both self-edits) → profile_update(p_actor,p_payload{professional_title,email,phone}); _logDealView → view_log_append(p_ref_id,p_viewer_login,p_viewer_full_name,p_view_type) fire-and-forget; the Review tab's fetchNote → review_note_get(p_period_key) and saveNote → review_note_upsert(p_period_key,p_fy,p_scope,p_quarter_or_half,p_text,p_actor). Success checks moved .gs {status:'ok'}→RPC {ok:true}; error text →data.error. STILL ON .gs (need an explicit decision, see handoff): clear_test_data (a mass deal-delete — Test Mode is already retired, so the button now means 'delete all production deals'; recommend RETIRING the button rather than migrating it), and the three periodic-email triggers error_summary_test / send_quarterly_now / send_yearly_now (a Postgres RPC cannot send mail — keep on .gs, or move to a Supabase Edge Function + email provider). Frontend-only deploy. Previously: v24.56.0 — BUNDLE 5c — auth_change (password change) → SUPABASE (Cavitak Restructure). submitPasswordChange is repointed off the .gs auth_change action onto the existing user_change_password RPC (no new SQL — the RPC shipped with the pilot). The old-password hash is now computed SALTED with the user's current salt: a user_login_salt fetch → sha256Hex(curSalt + sha256Hex(currentPwd)), matching the stored password_hash format, so the RPC correctly rejects a wrong current password on the non-forced path. The new credential is generated client-side via _sbMakeCred(newPwd) — a fresh 32-hex salt + sha256Hex(salt + sha256Hex(newPwd)) — sent as p_new_salt / p_new_password_hash. CRITICAL FIX in the success path: the session is now re-persisted WITH the new salted hash (_persistSession's 4th arg sbFullHash = cred.hash) and _sbCurrentFullHash / window._sbSessionFullHash are updated — without this a post-change page refresh would see a null/stale sbFullHash and bounce the user to login. Success check moved .gs {status:'ok'}→RPC {ok:true}. No SQL to apply — frontend-only deploy. Previously: v24.55.0 — BUNDLE 5b-tail — discount_update → SUPABASE (Cavitak Restructure). The edit-flow "Save Discounts" button (_onDiscSaveClick) is repointed off the last .gs dashboard action onto a new RPC (bs-discount-update-v1.sql). discount_update(p_ref,p_project_discount,p_line_discounts,p_actor_id) updates deals.project_discount AND the lineDiscounts blob inside deals.raw_submission — exactly what the edit screen rehydrates from — so reopening an edited deal shows saved discounts precisely; it also stamps edited_by/edited_at. By design it does NOT write project_lines.line_discount_pct (the frontend's _discLineKey map keys do not reliably equal _sbDeriveSku-built project_lines.sku; a fragile match would risk wrong per-line values) — so a Save-Discounts-only edit leaves the High Discount widget's per-line figure stale until the deal is next fully re-Confirmed; project discount stays exact everywhere. Success check moved .gs {status:'ok'}→RPC {ok:true}; the _sessionPassword precondition dropped from the sign-in guard (RPC auth needs no password hash). Also: the stale hardcoded login-screen version fallback (was 'v24.46.0', 9 versions behind) is emptied — JS populates the real FRONTEND_VERSION on load. REQUIRES bs-discount-update-v1.sql applied in Supabase. Previously: v24.54.0 — BUNDLE 5b (partial) — DASHBOARD FEEDS → SUPABASE (Cavitak Restructure). Four dashboard/notification reads repointed off the .gs webhook: fetchServerNotifications→notification_list(p_recipient); markAllServerNotificationsRead→notification_mark_read(p_recipient,p_mark_all) fire-and-forget; _renderPipelineTrendBS→pipeline_snapshot_list(p_weeks) — those three RPCs already existed from the pilot and their return shapes match the frontend 1:1; and _renderHighDiscounts→discount_high_list(p_app,p_days), a NEW RPC (bs-dashboard-rpc-v1.sql) that lists BS deals from the last 30d where project_discount or any project_lines.line_discount_pct >=15%, joining users for sales/editor names. Success checks moved .gs {status:'ok'}→RPC {ok:true}. DEFERRED: discount_update (the edit-flow Save-Discounts button, one call site) stays on .gs for now — its line-discount write path needs the discount read/rehydrate logic traced first; carved into the Bundle 5 continuation. REQUIRES bs-dashboard-rpc-v1.sql applied in Supabase. Previously: v24.53.0 — BUNDLE 5a — CUSTOMER DIRECTORY → SUPABASE (Cavitak Restructure). The Customer Directory's four .gs webhook actions are repointed onto new Supabase RPCs (bs-customer-rpc-v1.sql): refreshCustomers→customer_list (p_app:'brightsign' — the parties table is a shared BS+tvONE directory, so the party list is shared but deal stats are app-scoped); submitCustomerForm→customer_upsert (p_payload + p_actor:loginName; upserts the parties row plus the is_primary contact row); deleteCustomer→customer_delete (FK cascades drop the contacts and null deals.customer_party_id — deals keep their customer_name text); submitMergeModal→customer_merge (reassigns ALL deals across BOTH apps — a merge of duplicate company records must not orphan the other app's deal links — moves source contacts to the target as non-primary, deletes the source party). All four success checks moved from .gs {status:'ok'} to RPC {ok:true}; error text data.message→data.error. The directory UI, the Add/Edit/Merge modals, Customer-360, and the derived Partner/Consultant tabs are unchanged. The .gs customer_list/upsert/delete/merge handlers stay dormant as the revert path. REQUIRES bs-customer-rpc-v1.sql applied in Supabase. First sub-bundle of Bundle 5 (the remaining .gs migration). Previously: v24.52.0 — BUNDLE 4c · BUCKET C — FINAL APPS SCRIPT CLEANUP (Cavitak Restructure). The last four .gs touchpoints are retired; the BrightSign app is now 100% off Apps Script (the .gs backend stays deployed but DORMANT as the rollback path). (1) BACKUP UI: the Team-tab backup panel + loadBackupList/renderBackupList/runManualBackup/restoreBackup/deleteBackup and the backup_list/run/restore/delete actions are removed - that UI managed .gs Sheet backup tabs, meaningless now that deals live in Postgres; Supabase auto-backs-up Postgres daily. The Team tab shows a static note in place of the panel. (2) HEALTH-CHECK PING: checkWebhookHealth + showWebhookBanner/hideWebhookBanner (GET ping) and the v24.26.25 backend version-check (pingBackendVersion_v2625, version_check action, semver helpers, _renderVersionBanner) plus the older pingBackend/compareVersions/showVersionMismatchBanner (ping action) are all removed - they polled the dormant .gs backend and could only report stale data. EXPECTED_BACKEND_MIN, the .version-mismatch-banner + .webhook-banner CSS, and the four login/rehydrate/boot call sites go with them. updateVersionFooter() is untouched. (3) EMAIL TEMPLATES: the Super email-template editor modal + openEmailTemplatesEditor/loadEmailTemplateForEdit/previewEmailTemplate/saveEmailTemplate/resetEmailTemplate and the email_templates_list/update/reset actions are retired. _fetchEmailTemplates (server fetch + localStorage cache) is replaced by a client-side EMAIL_TEMPLATES constant - the single source of truth for the mailto: quote-send wording; _renderEmailTemplate now renders against it. openEmailModal pre-computes endUserClause + gstLabel into the vars dict (template stays pure {{substitution}}) and its hardcoded fallback is dropped. (4) ERROR REPORTER: logFrontendError is repointed off the dormant .gs error_log_append webhook onto the Supabase error_log_append RPC - closing the v24.51.0 split where the reporter wrote to the .gs Errors sheet while the viewer (error_log_list) read Postgres. The duplicate-suppression cache (window._loggedErrorSignatures, 60s TTL) is unchanged. REQUIRES the error_log_append RPC applied in Supabase (see DEPLOY-bs-v24.52.0.md / bs-error-log-append-v1.sql); frontend-only deploy otherwise. The .gs handlers stay dormant as the revert path. Previously: BUNDLE 4 · PERIPHERALS → SUPABASE (Cavitak Restructure). Six remaining .gs subsystems repointed off the Apps Script webhook onto their Postgres RPCs — contracts verified against the live function defs. (1) TRASH/SOFT-DELETE: softDeleteEntry→entry_soft_delete, restoreTrashEntry→entry_restore, loadTrashList→trash_list; renderTrashList remapped to the RPC's fields (refId/project/endUser/dealValueINR/userFullName/deletedAt — the qty-model/venue/city line is dropped, not in the RPC payload). (2) ERROR LOG: loadErrorLogList→error_log_list, clearErrorLog→error_log_clear. (3) AUDIT + REVISIONS READ: toggleHistoryPanel→deal_audit_get (keyed by Postgres UUID — resolved from refId via _sbDealIdByRef, which bundle 3b's deal_list load populates for every deal; rows grouped by edited_at, fields remapped to snake_case), openRevisionsModal→revision_list (render field dealValue→dealValueINR). (4) STAGE TRANSITIONS: _bsC2bFetchTransitions→stage_transition_list (latestByRefId map unchanged). (5) RESET REQUESTS: submitForgotPassword→reset_request_create, loadResetRequests→reset_request_list (RPC returns `username` — mirrored to `loginName` for the renderer/notifications), approve/denyResetRequest→reset_request_resolve. (6) TEAM/USER MGMT: loadTeamTab + _fetchAllUsersForDropdowns→user_list (via _sbFetchTeam + _sbUserRowToBs adapter — maps the Postgres row to the legacy BS camelCase user shape so no consumer site changes), submitAddUser→user_create, submitEditUser→user_update, the profile self-save→profile_update (NOT user_update — that's Super-only; profile_update is the correct self-edit RPC), superResetUserPassword + resetUserFromTeam→user_admin_reset. KEY BEHAVIOUR CHANGES: 🗑 Delete is now ⊘ DEACTIVATE via user_set_active(false) — there is no hard-delete RPC by design (a destroyed user row would orphan audit/created_by refs); a deactivated user drops off the roster and cannot log in, reversible via Edit. Password reset/create now generate the credential CLIENT-SIDE: _sbMakeCred() makes a fresh 32-hex salt + the two-stage salted hash of cavitak@123 (the RPCs do not generate credentials). professionalTitle is SET-ON-CREATE only (option-a decision — user_update does not accept it); an "add-professionalTitle" field was added to the Add User modal. The redundant audit_log_append .gs write is RETIRED — deal_save writes the per-field audit delta server-side; sendAuditLogDiff is now a no-op stub and logEntry no longer calls it (_editSnapshot is just discarded). STILL ON .gs (bucket C, next — v24.52.0): the frontend error reporter error_log_append (errors still WRITE to the .gs Errors sheet but the viewer now reads Postgres — known split until 4c), plus the backup UI, health-check ping and email_templates_list which are slated for retirement. The Apps Script handlers stay dormant as the revert path. Previously: v24.50.0 — BUNDLE 3b · DEAL READ + EDIT-RESTORE → SUPABASE (Cavitak Restructure) — completes the deal cutover. History/dashboard READ is repointed off the Apps Script webhook onto the deal_list RPC: tryFetchCentralLog now calls _sbFetchBsLog (paginated deal_list, p_app:'brightsign'); the {ok,data,attempts} contract is preserved so refreshLog and all its callers are untouched. New _sbDealRowToEntry maps a Postgres deal row → the BS-shaped entry the History list / dashboard / edit-restore consume — header fields from columns, and when the row carries raw_submission the whole blob is merged in as the lossless base (tvONE's _sbMergeRestore pattern: blob is the base, a column value overrides only when non-empty). EDIT-RESTORE: editPastEntry is now async and fetches the lossless deal via bs_deal_get(p_display_ref) — which returns the deal + bs_deal_specs + project_lines + raw_submission in ONE call — falling back to the lean History-list row if the fetch fails. THE CUTOVER COMPLETES HERE: logEntry no longer routes edits to .gs — BOTH new and edited deals write to Supabase deal_save (an edit is an UPDATE, keyed by the id _sbDealRowToEntry registers into _sbDealIdByRef on every list-load and on restore). logEntry_LEGACY_GS now has NO caller — kept solely as the revert reference. The per-field AuditLog diff (sendAuditLogDiff) and the Revisions modal stay on the .gs AuditLog sheet — a bundle-4 peripheral; the diff is fired from the main logEntry path for edit-saves. verifyPendingSync no longer overwrites the (now Supabase-sourced) _centralLog and skips entirely when the queue holds no legacy 'gs' items — none are queued post-3a/3b. bsNormalizeEntries still runs at the load boundary. FRONTEND-ONLY DEPLOY: deal_list (shipped with the tvONE pilot, app-agnostic via p_app) and bs_deal_get (bs-rpc-v1.sql) are already applied in Supabase — no SQL, no Apps Script change. The Apps Script deal handlers (?action=read, handleLogPost) stay DORMANT as the revert path. After 3b the only BS subsystems still on .gs are the bundle-4 peripherals (audit/revisions, notifications, reset requests, error log, stage transitions, customer directory). Previously: v24.49.0 — BUNDLE 3a · DEAL WRITE → SUPABASE (Cavitak Restructure). The BrightSign deal WRITE path is repointed off the Apps Script webhook onto the Supabase deal_save RPC. logEntry() now SPLITS: NEW deals → deal_save (a confirmed RPC write — deals + bs_deal_specs + project_lines in one atomic call); EDIT-saves → logEntry_LEGACY_GS (the pre-3a webhook path, kept LIVE for the 3a→3b window because History reads are still .gs and an edited deal must stay visible there; the audit diff is a bundle-4 peripheral and also stays on .gs). New mapper _sbEntryToDealSave() translates buildEntryPayload's flat ~52-field object into the nested deal_save payload, verified field-for-field against bs-rpc-v1.sql (header / block-2d bs_specs / project_lines). Supporting helpers: _sbLoginToUserId (loginName→user UUID via bundle-1's _sbUsers cache — sales/presales person ids; actor is _sbCurrentUserId), _sbCloseMonth ('YYYY-MM'→'YYYY-MM-01' so ::DATE casts), _sbInt/_sbBool/_sbYesNoToInt/_sbText (sanitise the form's '—' placeholder so the RPC's INTEGER/BOOLEAN/DATE casts never throw — note hdmi_in is a yes/no toggle in the form but an INTEGER column, so it maps to 1/0), _sbDeriveSku (same model-code regex the Excel quote builder uses). _sbDealIdByRef is a session map that remembers each deal's Postgres id from the deal_save response, so the create flow's TWO logEntry calls — logEntry('viewed') on Generate BOQ then logEntry('saved') on Confirm, both NOT in edit mode — upsert one row instead of double-INSERTing on display_ref. buildEntryPayload is unchanged except ONE appended field: venueType (silently dropped before — same loss pattern as the v24.12.4 state / v24.12.5 outputs fixes — now mapped to deals.venue_type). Offline queue rewired: queuePendingEntry tags each item with a backend ('sb'|'gs'; defaults 'gs' so pre-3a queued items still retry the legacy way); retryPendingSync routes PER ITEM — sb items retry via deal_save and are spliced from the queue on a confirmed response, gs items retry the webhook and are cleared by verifyPendingSync as before. raw_submission carries the whole entry blob verbatim for lossless 3b edit-restore. The Apps Script deal handlers stay DORMANT as the revert path; logEntry_LEGACY_GS doubles as the in-file revert reference. Requires bs-pricebook-v1.sql + bs-deal-extension-v1.sql + bs-rpc-v1.sql + bs-pricebook-seed-v1.sql applied in Supabase (already done). pipeline_stages verified to hold all 8 BS_STAGES strings verbatim (incl. 'Commit to forcast') — no stage seed needed. Bundle 3b (deal READ + edit-restore) is next; until it ships, a deal created post-3a is in Postgres but not yet in the .gs-backed History. Previously: v24.48.2 — UI: the app version badge (#app-version-footer) now shows on EVERY page. It was nested inside #page-login, so it hid the moment login's page lost the .active class — visible only on the login screen. Moved the <div> out to body level (after #page-app closes); the CSS is already position:fixed bottom-right, so it now floats over login + all in-app tabs. No JS change — updateVersionFooter() still targets the same id. Previously: v24.48.1 —  // v24.48.1 — HOTFIX (bundle 2 regression). _sbAdaptCatalog emitted the model key as `modelId`, but the entire app reads MODELS rows as `m.id` / `p.id` (25+ sites). So every MODELS.find() missed: _advReadSelections could not match any Custom BOQ qty row back to a model, returned [], and Generate BOQ falsely reported "Pick at least one player" — the form silently blocked submit. FIX: _sbAdaptCatalog now emits `id` (matching the app + the old Apps Script catalog_get shape). The other three adapters (_sbAdaptPricing/Accessories/Cms) were audited against their consumers and are correct — no change. One-field fix. Previously: v24.48.0 —  // v24.48.0 — PRICE BOOK ON SUPABASE (Cavitak Restructure, bundle 2). The three price-book fetches (fetchPriceBook / fetchCmsPriceBook / fetchCatalog) are repointed from the Apps Script webhook (pricing_get / cms_pricing_get / catalog_get) to a SINGLE Supabase RPC, bs_pricebook_get. New _sbFetchPriceBook() makes ONE round trip per login session and memoises it (window._sbPriceBookRaw); the three public fetchers share that one result. Four adapters (_sbAdaptPricing/Accessories/Cms/Catalog) reshape the RPC's flat snake_case arrays into the nested camelCase shapes the existing PRICING / SAP_CODES / XC-surcharge / _accessoriesMap / _cmsPriceBookRows / MODELS builders already consume — so the proven price-book-building logic is byte-unchanged. The ensureFresh* cache-expiry checkers and the Super 'refresh prices' action clear the memo first so a refresh is a genuine re-fetch. Hardcoded fallback prices are kept: an RPC failure logs and continues, never blocks login. Requires bs-pricebook-v1.sql + bs-rpc-v1.sql + bs-pricebook-seed-v1.sql applied in Supabase. The Apps Script pricing_get/cms_pricing_get/catalog_get handlers stay dormant as the revert path. Previously: v24.47.1 —  // v24.47.1 — SPLASH TRIM: login splash padding cut to 100ms-stepped (was 1500/3000/3500ms). The setTimeout-paced steps were tuned for the slow Apps Script backend; with Supabase login they were pure padding. Real work inside those timers (checkWebhookHealth, refreshLog, offline-queue retry) is unchanged — only the splash delay was trimmed. Parity: tvONE gets the same trim in v25.109.2. Previously: v24.47.0 —  // v24.46.0 — ZOHO STAGE REDESIGN. The deal pipeline is realigned to the Zoho Deals "Stage" picklist (8 stages, verbatim incl. Zoho's "Commit to forcast" spelling): Pre-Qualified, Qualified, Proposal, Negotiation/Review, Awarded, Commit to forcast, Closed Won, Closed Lost. First 6 are open, last 2 terminal. The separate `outcome` field is RETIRED — won/lost/open is now DERIVED from stage via bsDealOutcome(). New canonical stage block (BS_STAGES / BS_STAGES_OPEN / BS_STAGE_WON / BS_STAGE_LOST / BS_STAGES_OPEN_SET / BS_LEGACY_STAGE_MAP / bsDealOutcome / bsIsClosedStage / bsNormalizeEntry / bsNormalizeEntries) is the single source of truth. Every deal is normalized AT THE LOAD BOUNDARY (loadLocalLog + both window._centralLog server writes wrapped in bsNormalizeEntries): legacy 5-stage values are remapped (Lead→Pre-Qualified, Opportunity→Qualified, Proposal→Proposal, Negotiation→Negotiation/Review, Order→Commit to forcast), legacy won/lost outcome overrides the mapped stage, and entry.outcome is re-derived — so all ~200 downstream entry.outcome reads stay correct without per-site edits. Entry form: f-stage select now lists the 8 Zoho stages; the retired f-outcome select is removed; the Closed-Lost reason capture (f-outcome-reason) is now a FREE-TEXT textarea (mirrors Zoho "Reason For Lost", optional) revealed only when stage==='Closed Lost'; the categorized OUTCOME_REASONS map is deleted. Dashboard: the Outcome filter (v26-f-outcome) is removed entirely — Won/Lost filtering is via the Stage filter (now 8 options); the Outcome-scorecard tiles drop the retired "On hold" bucket and Won/Lost tiles drill into the Stage filter. Quick-stage menu offers all 8 stages. cust360 stage/outcome breakdowns, 1-on-1 briefing chips, cockpit funnel/strip + STAGE_COLORS, pipeline-by-stage card, v26 STAGE_WEIGHTS (Pre-Qualified .10 → Commit to forcast .95 → Closed Won 1.0 / Closed Lost 0) and stage charts all re-pointed to the canonical block. Commit/Early KPI split re-mapped to the new late tier (Negotiation/Review + Awarded + Commit to forcast). Case Count tile sub repurposed from retired on-hold count to closed-deal count. Validation no longer requires outcome; payload still writes a derived outcome for pre-migration back-compat (harmless once the Outcome column is dropped by the migration ONESHOT). No backend change in this frontend cut — the per-sheet migration ONESHOT (legacy stage remap + outcome→stage override + Outcome column drop) is a separate step. Previously: v24.45.17 — SAP-CODE FOLLOW-UP FIXES (from first live quote test). (1) SSD SKU BLANK: the SSD BOM row was pushed with only `name`, no `sku`, so the quote builder's name-regex (which looks for a MODEL-code pattern) could not derive a SKU from "256 GB M.2 NVMe SSD" and the Excel SKU cell showed "—". Both SSD push sites (buildAdvancedBOMCard + buildBOMCard) now set sku from getSsdAccessory().sku (e.g. "BS-SSD-256"). (2) FABRICATED CMS SKUs: CMS rows were assigned invented placeholder SKUs ('CMS-INSTALL' / 'CMS-ONPREM-SUB' / 'CMS-CLOUD-SUB') — harmless before v24.45.16 but wrong once the SKU column went onto the customer quote. CMS line items are subscriptions / services, not BrightSign hardware: they have no product SKU and no SAP code. CMS rows now carry sku:'' (+ isService:true), and _bsXlSkuRich() returns a plain empty string for a row with no SKU — so CMS rows show a blank SKU cell, no "—", no "SAP:" line. Hardware rows are unchanged. No backend change. Previously: v24.45.16 — SAP CODE ON EXCEL QUOTE. The Excel BOM table's SKU cell is now two lines: the SKU (bold) on line 1, the SAP code ("SAP: <code>", small grey) on line 2 — procurement convenience for reorders. EXCEL-ONLY: the customer PDF deliberately carries NO SAP codes (internal data, must not reach the client). Both quote builders (_buildQuoteFromGuided + _buildQuoteFromAdvanced) now resolve row.sapCode via the existing getSapCode(sku) helper, which reads the SAP_CODES map that fetchPriceBook rebuilds from the Pricing + Accessories sheets on login. All 12 players + XC Win variants are already populated; SSD rows show "SAP: —" until their sapCode cell in the Accessories sheet is filled (then they resolve automatically, no code change). New _bsXlSkuRich() helper builds the ExcelJS richText value; SKU column added to wrapText; BOM row height 24 -> 32 to fit two lines (still a minimum — long notes auto-expand). No backend change. Previously: v24.45.15 — ECHARTS LAZY-LOAD (parity with tvONE v25.99.29). (1) echarts-gl deleted from <head> — it was dead foundation code added in v24.26.8 'for a 3D India map' that was never built (zero registerMap/geo3D/3D-series usage in the file); ~600 KB removed. (2) echarts@5.4.3 (~1 MB) removed from <head> — it is used ONLY by the Team Analytics dashboard (10 chart renderers + the pipeline-trend chart). New window._ensureEchartsLoadedBS() loads it on demand the first time a chart renders; the ~22 non-dashboard page loads (login, New Selection, History, Result) never download it. Hooked at both entry points: _renderTeamCharts (kicks the load + re-runs on resolve) and _renderPipelineTrendBS (awaits the load before render). The loader is window-attached because _renderPipelineTrendBS is a top-level function OUTSIDE the v26 dashboard-module IIFE where the helper is defined — one <script> tag, one in-flight promise, never a double-load. Existing 'typeof echarts === undefined' guards retained as the CDN-failure safety net (shows 'Chart library unavailable'). All chart calls are gated behind _activeTab==='team' so nothing renders at login. Net: ~1.6 MB off every non-dashboard first paint. No JS logic change to the charts themselves, no backend change. Previously: v24.45.14 — LAUNCH HYGIENE: <head> now has robots noindex,nofollow (internal tool must not be web-indexed), a Cavitak-mark SVG favicon + apple-touch-icon (ends the blank-tab-icon 'unfinished' tell), theme-color #4F46E5, and a description meta. A <noscript> fallback card was added after <body> so a JS failure shows a branded 'JavaScript is required' message instead of a blank white page. No JS/logic change, no backend change. Audit note: CDN-failure resilience for ExcelJS/jsPDF/html2canvas was reviewed and is already correct — every export path throws-and-catches into a user-visible showSync error toast. Previously: v24.45.13 — SSD MIXED-BOQ FIX. Custom BOQ buildAdvancedBOMCard no longer kills the whole SSD line when a single entry-level model (AU/LS, ssdCapable=false) is in the BOQ. The old binary anyNoSsd flag flipped to true on any one such model and routed the SSD line into a no-price "Not supported on selected entry-level models" warning — even when SSD-capable players (HD/XD/XT/XC) were also selected. Now: ssdCapablePlayers counts the players that actually accept an SSD (ssdCapable !== false); the SSD line is priced for those, qty capped at ssdCapablePlayers (not totalPlayers); a mixed BOQ gets a clarifying note ("fits the N SSD-capable players (HD/XD/XT/XC); not the LS/AU entry-level units"); the "not supported" warning now shows ONLY when ssdCapablePlayers === 0 (every selected player is entry-level — the genuinely-correct case). Single-site fix: the Excel _buildQuoteFromAdvanced path has no independent anyNoSsd logic (verified), so it inherits the corrected rows. NOTE: the SSD still needs a non-zero SSD-256/512/etc price in the Accessories sheet — getSsdAccessory() returns null for ₹0 rows and the line is silently skipped. NOTE 2: clampAccessoryQty now caps the SSD input (adv-ssd-qty) at the SSD-capable player count too — input box and BOM agree; WD105 still caps at total players. If no SSD-capable player is selected the SSD input resets to 0. No backend change. Pairs with backend v25.20.0. Previously: v24.45.12 — QUOTE FILENAME STANDARDISATION: Excel + PDF downloads now follow BS_<ProjectName>_<CaseID>[_<Mode>].<ext> (was <refId>-<Mode>.<ext>). New _buildQuoteFilename() helper sanitises the project name (non-alphanumerics → '_', trimmed, 40-char cap; falls back to 'Quote' if empty) and appends the refId as CaseID. The BoQ/BoM mode suffix is kept (meaningful distinction). Applied at all 3 sites: 2 Excel builders + the PDF. Parity with tvONE v25.99.36 (tvONE_<ProjectName>_<CaseID>). No backend change. Previously: v24.45.11 — SHEET-DRIVEN PRICING RULES: GST rate and the max discount cap can now be changed by editing a cell in the Sheet's new Settings tab — no code change, no redeploy. fetchPriceBook now captures a `settings` block from pricing_get (backend v25.20.0) into window.PRICING_SETTINGS. New helpers _cfgGstRate() / _cfgMaxDiscount() / _cfgGstLabel() expose the values with HARDCODED FALLBACKS (0.18 / 20) plus sane-range guards (GST 0-40%, discount 0-100%) — a missing, blank, or wildly-typo'd cell can never miscalculate a quote. Wired: 2 GST calculations (both BOM builders), 5 discount-cap sites (_discValidatePct, _discEffectivePct, 3 validation guards), and 8 GST display-text sites (2 BOM table rows, Excel cell + T&C, PDF row + T&C, 2 message templates) — so a rate change updates both the math and every label consistently. Verified by simulation across 5 scenarios incl. fallback + typo cases. Backend: v25.19.0 -> v25.20.0 (additive only). Previously: v24.45.10 — STALE-CACHE FIX (parity with tvONE v25.99.32): saveProfileGate() mirrored the freshly-entered professionalTitle/email/phone to state.user + _sessionUser but never refreshed window._allUsers. If the team list was loaded earlier in the session, a quote Excel/PDF referencing that rep would show the stale (pre-update, blank-title) row. saveProfileGate() now re-fetches _allUsers via _fetchAllUsersForDropdowns() after a successful save so exports use the current title. No backend change. Pairs with v25.19.0. Previously: v24.45.9 — NOTIFICATION CLEANUP (C-BS-7): converted all 74 native alert() calls to inline showSync() toasts — no more browser alert popups anywhere in the app. Error/failure/permission messages use type 'error' (toast persists until dismissed, matching old alert behaviour); the 2 success messages use 'success' (auto-fades); 'cancelled' messages use neutral type. Multi-line alert messages (\n\n) collapsed to ' \u00b7 '-separated single-line toasts. showSync() hardened — it is now the universal notification path, so it can never throw: if the toast DOM is not present yet (very early login screen) it falls back to a native alert so the message is never lost. Also fixed 4 dead showToast() calls (showToast was referenced but never defined — those notifications silently no-op'd); they now call showSync() directly. confirm() dialogs (20, blocking yes/no gates) intentionally left as-is. No backend change. Pairs with v25.19.0. Previously: v24.45.8 — CONSISTENCY FIX: corrected the role label "National Product Manager" → "National Product Lead" at all 4 remaining sites — login-screen footer, the offline-fallback USERS constant, the Result-page pricing escalation strip, and the pricing-escalation message string. (The tvONE pricing card was corrected separately in v25.99.27.) No behaviour change. Pairs with v25.19.0. Previously: v24.45.7 — TEST MODE HARDENING: verified Test Mode is permanently gone and unable to re-enable. _initTestMode() now also force-clears any stale per-user localStorage flag (bs-test-mode__<user> + bs-cockpit-include-test) on every boot — previously it only set the flag false without cleaning storage. setTestMode() was already a no-op stub that ignores its argument; confirmed every assignment to window._testModeOn is '= false' (zero '= true' paths anywhere). isTest always written blank on save. Net: Test Mode cannot be turned on by any code path, stale flags self-clean on next login. No backend change. Pairs with v25.19.0. Previously: v24.45.6 — DISCOUNT BUGFIX: the Excel BOQ ignored applied discounts. (1) Both quote builders (_buildQuoteFromGuided + _buildQuoteFromAdvanced) used row.unitPrice / row.lineTotal (LIST price) and ignored row.netUnitPrice / row.netLineTotal — so per-line figures in the Excel were always list price even when a discount was applied. Now the builders use the NET (discounted) unit price + line total when a discount exists, falling back to list price otherwise. (2) The Excel totals block was inconsistent — it showed the LIST subtotal but discounted GST + Grand Total. Now discount-aware: when a discount exists it renders List Subtotal -> Total Discount (red) -> Net Subtotal -> GST -> Grand Total, mirroring the in-app BOM; with no discount it shows a single Subtotal row as before. Per-line totals now reconcile with the net subtotal. No backend change. Pairs with v25.19.0. Previously: v24.45.5 — EXCEL SPACING AUDIT: cell-by-cell pass over the Excel renderer. (1) Date / Valid Until rows given explicit 16px height + vertical-middle alignment (were falling back to default 16 with no v-align, slight imbalance vs the 24px QUOTATION label). (2) Stray "—" placeholder removed from the empty left cell on the 3rd PROJECT DETAILS row (the row that has Location on the right but no matching QUOTED TO field on the left) — left cells now genuinely blank. (3) Unit Price / Line Total table-header cells given the same 1-char right indent as the numeric data cells below them, so the header text lines up directly above its figures. Verified by cell-by-cell openpyxl inspection across all 6 modes — borders, fills, alignment, row heights all consistent. No backend change. Pairs with v25.19.0. Previously: v24.45.4 — EXCEL POLISH: (1) Salesperson + Presales contact blocks now BOTH always render — Presales is optional, so when none is assigned the block shows "Not assigned" instead of being silently skipped (Excel layout now consistent deal-to-deal). (2) Cell/row/column spacing audit: T&C row heights now scale with text length (long entries — Warranty, Cancellation, Forex — no longer clipped at fixed 18px); QUOTED TO / PROJECT DETAILS value cells wrap long venue/location names with height scaling; verdict band wraps long Mixed-config verdict lines; Subtotal/GST/GRAND TOTAL value cells get a 1-char right indent so figures don't sit flush on the cell border. No backend change. Pairs with v25.19.0. Previously: v24.45.3 — UX FIX: "For Better Pricing" contact card moved to the BOTTOM of the Guided Result page (now renders after the BOM card + Project Summary). The Custom BOQ / Advanced path already placed it last since v24.12.6 — the Guided path was missed and still rendered it ABOVE the BOM table. Both paths are now consistent: pricing callout is the final card. No behavior change beyond render order. Pairs with v25.19.0. Previously: v24.45.2 — BUGFIX: Guided + Mixed mode Indoor/Outdoor steppers were clamped at 1 (treated a stale hidden total as the cap); now Indoor and Outdoor are independent counters and the total is derived from their sum. Root cause: adjustMixedQty / onMixedQtyInput treated the split as constrained by a SEPARATE total (the hidden single-mode f-qty input, which defaults to 1). Every +/- click was clamped to that stale total of 1, and the "other side" was auto-balanced to total-minus-thisValue — so Indoor+Outdoor could never exceed 1. Fix: in Mixed mode the TOTAL is now DERIVED from Indoor + Outdoor (the correct model). Indoor and Outdoor are independent counters (each 0..10000); adjusting one never touches the other. _updateMixedStatus + recalcMixedTotal keep the hidden f-qty input AND state.form.qty/qtyIndoor/qtyOutdoor in sync with the running sum so all downstream consumers (BOM, CMS 25-player threshold, backend payload) get the right total. _setMixed now calls recalcMixedTotal directly because the +/- buttons set .value programmatically and do NOT fire the 'input' event recalcMixedTotal was bound to (latent bug, previously masked by the broken clamp). Entering Mixed mode initializes state from the Indoor/Outdoor fields. _onTotalQtyChangedForMixed is now a no-op. Logic verified by simulation. No backend change. Pairs with v25.19.0. Previously: v24.45.1 — Added frontend version label on the login screen (parity with tvONE). Was: xlsx-js-style with old red CAVITAK MARKETING banner header. Now: Cavitak logo top-left + "BrightSign Product Selector" title in deep indigo (#312E81) + tricolor stripe (indigo/violet/red) + gold verdict band + indigo BoM table headers + red GRAND TOTAL banner + 12-row T&C block + salesperson + presales footer with Cavitak branded distributor band. New shared renderer _renderBsQuoteExcel(quote) takes a normalized payload, handles both BoQ (with prices) and BoM (no prices) modes, embeds Cavitak logo from existing CAVITAK_LOGO_DATA_URL constant (no re-encoding). Existing call sites unchanged: same downloadQuoteExcel() and _downloadAdvancedQuoteExcel() signatures preserved. Old xlsx-js-style functions deleted (~930 lines of legacy code removed). ExcelJS CDN added in <head>. ~150 KB lib download (gzipped) on first page load. Smoke-tested with realistic BoQ + BoM + empty-BOM payloads — all 3 render cleanly. Visual verification via LibreOffice headless render confirms the design matches the tvONE reference Excel pixel-for-pixel in structure. Pairs with backend v25.19.0. xlsx-js-style stays loaded for legacy History-tab CSV-style exportXLSX() (different use case, not customer-facing). Previously: v24.44.2 — UX wording sweep matching tvONE neutralized vocabulary.: All mid-action button labels neutralized to "Loading…": 'Saving…' (×7 — main save flow, profile, customer save, c2a/poa, pricing refresh) → 'Loading…'; 'Signing in…' (×2 — submit button + splash) → 'Loading…'; 'Signing in ✓' splash → 'Done ✓'; 'Sending…' (×4 — pre-mailto email modal stragglers) → 'Loading…'. All success toasts unified to 'Done ✓': 'Saved ✓' statusEl text (×3 — profile, settings, status checks) → 'Done ✓'; 'Password updated ✓' → 'Done ✓'; 'Template saved ✓' → 'Done ✓'; 'Template reset to default ✓' → 'Done ✓'; 'Backup deleted ✓' → 'Done ✓'; 'Session extended ✓' → 'Done ✓'; '✓ Prices refreshed — Pricing, Accessories, CMS, Catalog all reloaded' → 'Done ✓'; 'Up to date ✓' → 'Done ✓'; 'All entries uploaded ✓' (×2) → 'Done ✓'; 'History updated ✓' → 'Done ✓'; 'Refreshed ✓' → 'Done ✓'. Sync toast default text 'Saving…' → 'Working…' (was the brief flash before being replaced by the actual status). Net: BS now matches tvONE's neutralized vocabulary — a rep switching between apps sees the same words for the same operations. 23 surgical edits across the file. No backend change. Pairs with v25.19.0. Previously: v24.44.1 — EMAIL FLOW mailto: switch (broken-on-M365 backend send → true Outlook open with PDF+Excel auto-download). Click "Open in Outlook" in modal now: (1) downloads BOTH the PDF and Excel quote files for the rep to attach, (2) opens their default mail client (Outlook on M365) with To/CC/Subject/Body pre-filled from the modal fields, (3) rep attaches the just-downloaded files in Outlook and clicks Send — email truly originates from rep's mailbox, appears in their Sent folder, passes SPF/DKIM/DMARC. dipen.g@cavitak.com forced CC pre-filled (rep can technically remove but instructed not to). Modal subtitle updated to reflect new flow. Backend email_send handler intentionally left in place (dormant, no UI call site) — easy revert if ever needed. No backend deploy required. Pairs with v25.19.0. Previously: v24.44.0 — PDF polish (Excel logo embedding deferred to next session per agreed split). Three small targeted improvements to the Tender Spec / Quote PDF export: (1) NEW: Cavitak-branded footer band added above the version footer line. Mini Cavitak logo (26px) on left + right-aligned attribution "Cavitak Marketing Pvt Ltd" (bold, indigo) over "Authorized BrightSign Distributor · India" (muted slate). Subtle indigo→violet tinted background (rgba 0.04) with 2px solid #4F46E5 top border. Mirrors the header strip treatment for visual cohesion — reads as the official Cavitak signoff before the technical disclaimer. (2) Header title color tightened from #312E81 (dark indigo) → #4F46E5 (indigo, matching the accent strip end + new footer band border). Subtle cohesion win, no layout change. (3) Discovery: the Cavitak logo (635×277 JPEG, ~13KB) was already encoded as CAVITAK_LOGO_DATA_URL constant from v24.20.0 — no re-encoding needed. Reused the same constant for the new footer mini-logo. Backend v25.19.0 unchanged. Excel still uses xlsx-js-style; ExcelJS swap for image embedding is the next focused session.
   // v24.36.3 — Two bugfixes per user feedback. (1) HEADER NAME "—" BUG: On fresh login (sign-in from login page), the user-label-name slot stayed as the HTML default "—" because _applyPostLoginUI() was NEVER actually called in the fresh-login flow despite the v24.20.1 comment claiming it would be called "below". The "below" promise was never fulfilled. Only the rehydrate path (refresh while signed in) called it, which is why the issue only surfaced on cold logins. Now calls _applyPostLoginUI() in the fresh-login flow too — idempotent so safe against duplicate calls in slow login races. (2) NOTIFICATIONS NOT CLEARING DAILY: Notifications had 7-day rolling retention. User wants yesterday's notifications gone at 12:01 AM (daily reset). Changed _loadNotifs_ cutoff from "now - 7 days" to "start of today (00:00:00 local time)". Notifs older than midnight are now filtered out on every load and the cleaned list is persisted so the bell badge count stays accurate. NOTIF_RETENTION_MS constant kept declared (referenced elsewhere) but no longer used as the cutoff in _loadNotifs_. Pairs with backend v25.15.0.
 // v24.36.2 — Label refinement: HDMI input → "HDMI live source input port?" (added "port").
 // v24.36.1 — Card 03 field order refinement: Resolution → Touch → HDMI input → GPIO → HDMI Output port → SSD → Wi-Fi. "How many screens per player?" relabeled to "How many HDMI Output port?".
@@ -12242,24 +12242,7 @@ async function fetchPriceBook(loginName, passwordHash, force){
   }
 }
 
-/* v24.14.10: Re-fetch if cache stale. Called opportunistically before any quote render.
-   No-op if cache is fresh or if we haven't logged in yet. */
-async function ensureFreshPriceBook(){
-  if(!window.state || !window.state.user) return;
-  // v24.14.11: After rehydrate, _sessionPassword is null but _sessionPasswordHash is set.
-  // getCurrentAuthHash() handles both cases. Bail only if we have NEITHER.
-  if(!window._sessionPassword && !window._sessionPasswordHash) return;
-  const age = Date.now() - (window._priceBookFetchedAt || 0);
-  const max = window._priceBookCacheMaxAgeMs || 10800000;
-  if(age < max) return;
-  try{
-    const pwHash = await getCurrentAuthHash();
-    if(!pwHash) return;
-    // v24.48.0 — cache expired: clear the shared RPC memo so this is a real re-fetch.
-    window._sbPriceBookRaw = null;
-    await fetchPriceBook(window.state.user.loginName, pwHash);
-  }catch(_){ /* keep stale price book on refresh failure */ }
-}
+/* v24.62.0 — ensureFreshPriceBook deleted (dead code, zero refs — Apps-Script-era price-cache staleness checker; Supabase fetches the price book once per session). */
 
 /* v24.14.12 — CMS price book.
    - Lives in CmsPricing tab (separate from Pricing/Accessories).
@@ -12295,20 +12278,7 @@ async function fetchCmsPriceBook(loginName, passwordHash, force){
   }
 }
 
-async function ensureFreshCmsPriceBook(){
-  if(!window.state || !window.state.user) return;
-  if(!window._sessionPassword && !window._sessionPasswordHash) return;
-  const age = Date.now() - (window._cmsPriceBookFetchedAt || 0);
-  const max = window._cmsPriceBookCacheMaxAgeMs || 10800000;
-  if(age < max) return;
-  try{
-    const pwHash = await getCurrentAuthHash();
-    if(!pwHash) return;
-    // v24.48.0 — cache expired: clear the shared RPC memo so this is a real re-fetch.
-    window._sbPriceBookRaw = null;
-    await fetchCmsPriceBook(window.state.user.loginName, pwHash);
-  }catch(_){ /* keep stale CMS price book on refresh failure */ }
-}
+/* v24.62.0 — ensureFreshCmsPriceBook deleted (dead code, zero refs — Apps-Script-era cache staleness checker). */
 
 /* v24.15.0 — Catalog fetch.
    Mirrors fetchPriceBook pattern. Loads model specs from Catalog tab.
@@ -12529,20 +12499,7 @@ function _validateSalesPresales(){
   return true;
 }
 
-async function ensureFreshCatalog(){
-  if(!window.state || !window.state.user) return;
-  if(!window._sessionPassword && !window._sessionPasswordHash) return;
-  const age = Date.now() - (window._catalogFetchedAt || 0);
-  const max = window._catalogCacheMaxAgeMs || 10800000;
-  if(age < max) return;
-  try{
-    const pwHash = await getCurrentAuthHash();
-    if(!pwHash) return;
-    // v24.48.0 — cache expired: clear the shared RPC memo so this is a real re-fetch.
-    window._sbPriceBookRaw = null;
-    await fetchCatalog(window.state.user.loginName, pwHash);
-  }catch(_){ /* keep stale catalog on refresh failure */ }
-}
+/* v24.62.0 — ensureFreshCatalog deleted (dead code, zero refs — Apps-Script-era cache staleness checker). */
 
 /* v24.15.0 — SSD accessory lookup.
    Returns the accessory record for given capacity (128/256/512/1024).
@@ -19992,21 +19949,7 @@ function formatINR(n){
    v24.4.0: REVIEW TAB
    ============================================================ */
 
-/* Get current FY + quarter based on today. Indian FY = April-March. */
-function getClientFYQuarter(date){
-  const d=date||new Date();
-  const m=d.getMonth()+1;
-  const y=d.getFullYear();
-  const fyStartYear=m>=4?y:y-1;
-  const fyEndYear=fyStartYear+1;
-  const fy=('0'+(fyStartYear%100)).slice(-2)+'-'+('0'+(fyEndYear%100)).slice(-2);
-  let quarter;
-  if(m>=4&&m<=6)quarter='Q1';
-  else if(m>=7&&m<=9)quarter='Q2';
-  else if(m>=10&&m<=12)quarter='Q3';
-  else quarter='Q4';
-  return {fy:fy,quarter:quarter,fyStartYear:fyStartYear};
-}
+/* v24.61.0 — getClientFYQuarter deleted (dead code, zero references — superseded FY/quarter helper). */
 
 /* Populate the period selector dropdowns */
 /* Compute delta + arrow class + formatted label */
@@ -20056,231 +19999,7 @@ async function renderReview(){
   }
 }
 
-function renderReviewCards(host,data,period,comparePeriod){
-  const primary=data.primary||{};
-  const compare=data.compare||null;
-  const parts=[];
-
-  // Card 1: Executive summary
-  // v24.25.0 — YoY comparison badges removed. 2025 data is billed/SAP legacy
-  // (not pipeline) so vs-prev-year deltas were misleading. When April 2027 arrives
-  // and a full year of post-cutoff data exists, the YoY logic can be re-enabled.
-  const kpi=(label,value)=>{
-    return `<div class="exec-kpi"><div class="exec-kpi-label">${label}</div><div class="exec-kpi-value">${value}</div></div>`;
-  };
-  parts.push(`<div class="review-card">
-    <div class="review-card-head">
-      <div class="review-card-icon ri-exec">★</div>
-      <div class="review-card-title">Executive summary</div>
-      <div class="review-card-sub">${escapeHtml(period)}</div>
-    </div>
-    <div class="exec-kpi-grid${SHOW_PRICING?'':' no-pricing'}">
-      ${SHOW_PRICING?kpi('Pipeline (₹)',formatINR(primary.pipelineValue)):''}
-      ${SHOW_PRICING?kpi('Won (₹)',formatINR(primary.wonValue)):''}
-      ${kpi('Win rate',primary.winRate+'%')}
-      ${kpi('Active deals',primary.activeCount)}
-      ${kpi('Total entries',primary.entryCount)}
-    </div>
-  </div>`);
-
-  // Card 2: Business source split
-  // v24.25.0 — vs-compare deltas removed. Cutoff makes prior-period compare misleading.
-  const bySource=primary.bySource||{BrightSign:{count:0,value:0},Cavitak:{count:0,value:0}};
-  // v24.14.6: BrightSign source (was 'OEM' in v24.x).
-  // v24.4.8: when pricing is hidden, use deal COUNTS instead of ₹ values for the split
-  const bsMetric=SHOW_PRICING?bySource.BrightSign.value:bySource.BrightSign.count;
-  const cavMetric=SHOW_PRICING?bySource.Cavitak.value:bySource.Cavitak.count;
-  const totalSrc=bsMetric+cavMetric;
-  const bsPct=totalSrc>0?Math.round((bsMetric/totalSrc)*100):0;
-  const cavPct=totalSrc>0?Math.round((cavMetric/totalSrc)*100):0;
-  const valueLabel=(n)=>SHOW_PRICING?formatINR(n):(n+' '+(n===1?'deal':'deals'));
-  const subLabel=totalSrc>0?(SHOW_PRICING?'₹'+formatINR(totalSrc).replace('₹',''):(totalSrc+' total deals')):'no data';
-  parts.push(`<div class="review-card">
-    <div class="review-card-head">
-      <div class="review-card-icon ri-src">◐</div>
-      <div class="review-card-title">Business source split</div>
-      <div class="review-card-sub">${subLabel}</div>
-    </div>
-    <div class="source-row">
-      <div><div class="source-label">BrightSign-generated</div></div>
-      <div class="source-bar-wrap"><div class="source-bar source-bar-oem" style="width:${Math.max(bsPct,4)}%"><span class="source-bar-pct">${bsPct}%</span></div></div>
-      <div class="source-value">${valueLabel(bsMetric)}</div>
-    </div>
-    <div class="source-row">
-      <div><div class="source-label">Cavitak-generated</div></div>
-      <div class="source-bar-wrap"><div class="source-bar source-bar-cavitak" style="width:${Math.max(cavPct,4)}%"><span class="source-bar-pct">${cavPct}%</span></div></div>
-      <div class="source-value">${valueLabel(cavMetric)}</div>
-    </div>
-  </div>`);
-
-  // Card 3: Funnel
-  const funnel=primary.funnel||[];
-  const maxCount=Math.max(1,...funnel.map(f=>f.count));
-  let funRows='';
-  for(let i=0;i<funnel.length;i++){
-    const f=funnel[i];
-    const barW=Math.round((f.count/maxCount)*100);
-    let retention='';
-    if(i>0&&funnel[i-1].count>0){
-      const r=Math.round((f.count/funnel[i-1].count)*100);
-      retention=r+'%';
-    } else if(i===0){
-      retention='—';
-    }
-    funRows+=`<div class="funnel-row${SHOW_PRICING?'':' no-pricing'}">
-      <div class="funnel-stage">${escapeHtml(f.stage)}</div>
-      <div class="funnel-count">${f.count}</div>
-      ${SHOW_PRICING?`<div class="funnel-value">${formatINR(f.value)}</div>`:''}
-      <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${Math.max(barW,2)}%"></div></div>
-      <div class="funnel-retention">${retention}</div>
-    </div>`;
-  }
-  const leadCount=funnel[0]?funnel[0].count:0;
-  const orderCount=funnel[4]?funnel[4].count:0;
-  const overallConv=leadCount>0?Math.round((orderCount/leadCount)*100):0;
-  const lost=primary.lost||{count:0,value:0};
-  const onHold=primary.onHold||{count:0,value:0};
-  const lostDisp=SHOW_PRICING?`${lost.count} (${formatINR(lost.value)})`:lost.count;
-  const onHoldDisp=SHOW_PRICING?`${onHold.count} (${formatINR(onHold.value)})`:onHold.count;
-  parts.push(`<div class="review-card">
-    <div class="review-card-head">
-      <div class="review-card-icon ri-funnel">▽</div>
-      <div class="review-card-title">Funnel</div>
-      <div class="review-card-sub">${primary.entryCount} active entries</div>
-    </div>
-    ${funRows}
-    <div class="funnel-total">
-      <span>Lead → Order conversion</span>
-      <span class="funnel-total-rate">${overallConv}%</span>
-    </div>
-    <div class="funnel-dropped">
-      <span class="funnel-dropped-pill" style="color:#991B1B;">✖ Lost: ${lostDisp}</span>
-      <span class="funnel-dropped-pill" style="color:#92400E;">⏸ On hold: ${onHoldDisp}</span>
-    </div>
-  </div>`);
-
-  // Card 4: Ecosystem reach
-  // v24.25.0 — vs-compare deltas removed (pipeline cutoff makes them misleading).
-  const eco=primary.ecosystem||{partners:0,consultants:0,endClients:0};
-  const ecoTile=(label,cur)=>{
-    return `<div class="eco-tile"><div class="eco-tile-label">${label}</div><div class="eco-tile-value">${cur}</div><div class="eco-tile-sub">unique in period</div></div>`;
-  };
-  parts.push(`<div class="review-card">
-    <div class="review-card-head">
-      <div class="review-card-icon ri-eco">◆</div>
-      <div class="review-card-title">Ecosystem reach</div>
-      <div class="review-card-sub">unique relationships</div>
-    </div>
-    <div class="eco-grid">
-      ${ecoTile('Partners / SIs',eco.partners)}
-      ${ecoTile('Consultants',eco.consultants)}
-      ${ecoTile('End clients',eco.endClients)}
-    </div>
-  </div>`);
-
-  // Card 5: Quarterly breakdown (current FY)
-  const quarters=data.quartersThisFY||[];
-  const ytd=data.ytdThisFY||{entryCount:0,pipelineValue:0,wonValue:0,winRate:0};
-  const qRow=(label,getter)=>{
-    let row=`<td>${label}</td>`;
-    quarters.forEach(q=>{row+=`<td class="num">${getter(q)}</td>`;});
-    row+=`<td class="num"><strong>${getter(ytd)}</strong></td>`;
-    return `<tr>${row}</tr>`;
-  };
-  parts.push(`<div class="review-card">
-    <div class="review-card-head">
-      <div class="review-card-icon ri-q">◧</div>
-      <div class="review-card-title">Quarterly breakdown — ${escapeHtml(data.currentFY||'')}</div>
-      <div class="review-card-sub">FY Apr–Mar</div>
-    </div>
-    <table class="review-table">
-      <thead>
-        <tr>
-          <th>Metric</th>
-          ${quarters.map(q=>`<th class="num">${q.quarter}</th>`).join('')}
-          <th class="num">YTD</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${qRow('Entries',b=>b.entryCount||0)}
-        ${SHOW_PRICING?qRow('Pipeline',b=>formatINR(b.pipelineValue||0)):''}
-        ${SHOW_PRICING?qRow('Won',b=>formatINR(b.wonValue||0)):''}
-        ${qRow('Win rate',b=>(b.winRate||0)+'%')}
-        <tr class="pfy-row">
-          <td>Prior FY invoiced (₹L)</td>
-          ${quarters.map(q=>`<td class="num">${priorFY_fmtLakh(priorFY_q(q.quarter))}</td>`).join('')}
-          <td class="num"><strong>${priorFY_fmtLakh(PRIOR_FY_DATA.totals.revenue)}</strong></td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="review-pfy-note">
-      <strong>Prior FY invoiced</strong> = ₹ billed by Cavitak for BrightSign in FY25-26 (SAP).
-      Shown for scale reference alongside current-year entry activity — these are different units
-      (₹ vs entry count) and not a direct comparison.
-    </div>
-  </div>`);
-
-  // Card 6: Pipeline cutoff explainer
-  // v24.25.0 — Full YoY card replaced by an inline note. FY25-26 is invoiced (SAP)
-  // legacy data; FY26-27+ is pipeline activity tracked in this app. Direct YoY
-  // comparison was misleading. When April 2027 arrives, restore YoY here.
-  parts.push(`<div class="review-card">
-    <div class="review-card-head">
-      <div class="review-card-icon ri-yoy">⇡</div>
-      <div class="review-card-title">Why no year-over-year comparison?</div>
-      <div class="review-card-sub">Pipeline started 2026-04-01</div>
-    </div>
-    <div style="font-family:var(--sans);font-size:13px;color:var(--ink-muted);line-height:1.6;padding:8px 4px;">
-      All metrics on this page show <strong>pipeline activity from ${escapeHtml(PIPELINE_DATA_START)} onward</strong>. Older Sheet1 rows exist (legacy SAP/billed data) but are excluded from every aggregation because they are different in kind — invoiced revenue vs. live deal pipeline. YoY comparisons will return automatically once a full post-cutoff year of data exists (April 2027+).
-    </div>
-  </div>`);
-
-  // Card 7: Funnel by user — rows clickable to open 1-on-1 briefing below
-  const byUser=primary.byUser||[];
-  if(byUser.length){
-    parts.push(`<div class="review-card">
-      <div class="review-card-head">
-        <div class="review-card-icon ri-user">☰</div>
-        <div class="review-card-title">Funnel by user</div>
-        <div class="review-card-sub">${byUser.length} active user${byUser.length===1?'':'s'} · click a row to see their entries</div>
-      </div>
-      <table class="review-table review-table-clickable">
-        <thead>
-          <tr>
-            <th>User</th>
-            <th class="num">Lead</th><th class="num">Oppt</th><th class="num">Prop</th><th class="num">Neg</th><th class="num">Order</th>
-            ${SHOW_PRICING?'<th class="num">Pipeline</th><th class="num">Won</th>':''}
-            <th class="num" style="width:70px;">Details</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${byUser.map(u=>`<tr onclick="showBriefing('${escapeHtml(u.user).replace(/'/g,"\\'")}','${escapeHtml(period)}')" style="cursor:pointer;">
-            <td><strong>${escapeHtml(u.user)}</strong></td>
-            <td class="num">${u.funnel[0].count}</td>
-            <td class="num">${u.funnel[1].count}</td>
-            <td class="num">${u.funnel[2].count}</td>
-            <td class="num">${u.funnel[3].count}</td>
-            <td class="num">${u.funnel[4].count}</td>
-            ${SHOW_PRICING?`<td class="num">${formatINR(u.pipelineValue)}</td><td class="num">${formatINR(u.wonValue)}</td>`:''}
-            <td class="num"><span class="briefing-link">View →</span></td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>`);
-    // Empty placeholder for the briefing card — populated by showBriefing()
-    parts.push(`<div id="review-briefing-host"></div>`);
-  }
-
-  // Data quality banner (only relevant when pricing is shown)
-  if(SHOW_PRICING){
-    const missing=(data.meta&&data.meta.missingDealValue)||0;
-    if(missing>0){
-      parts.push(`<div class="data-quality-banner">⚠️ ${missing} entr${missing===1?'y has':'ies have'} missing deal value — totals above may be understated. Edit those entries to fix.</div>`);
-    }
-  }
-
-  host.innerHTML=parts.join('');
-}
+/* v24.62.0 — renderReviewCards deleted (dead code, zero refs — old Review-tab card builder; the tab was folded into Dashboard Team Analytics in v24.26.0). */
 
 /* v24.4.10: 1-on-1 briefing — show a specific user's entries filtered to review period.
    Called when a super/OEM clicks a row in the "Funnel by user" table. */
@@ -22103,102 +21822,7 @@ async function sendEmailViaBackend(){
   }
 }
 
-async function emailQuoteToPartner(){
-  if(!state.result||state.result.noRec){showSync('No recommendation available to email.', 'error');return;}
-  if(typeof XLSX==='undefined'){showSync('Excel library not loaded. Check internet and reload.', 'error');return;}
-  const f=state.form;const r=state.result;const m=r.model;
-
-  // Validate partner contact email
-  const toEmail=(f.contactemail||'').trim();
-  if(!toEmail){
-    showSync('Cannot email quote — no partner contact email on file. \u00b7 Please add it in the form and try again.', 'error');
-    return;
-  }
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail)){
-    showSync(`The contact email does not look valid: "${toEmail}" \u00b7 Please correct it in the form and try again.`, 'error');
-    return;
-  }
-
-  // Step 1: Download Excel so the user can attach it
-  const wbResult=downloadQuoteExcel(true);
-  if(!wbResult||!wbResult.wb){showSync('Excel generation failed. Try Download Excel button first.', 'error');return;}
-  XLSX.writeFile(wbResult.wb,wbResult.fname);
-
-  // Step 2: Compose email content
-  const subject=`Quote · ${f.project||'Project'} · ${m.id} · ${f.qty} unit${f.qty==1?'':'s'}`;
-  const greeting=(f.contactname||'').trim()?`Dear ${f.contactname},`:'Dear Partner,';
-  const userName=state.user?state.user.fullName:'Cavitak Team';
-  // v24.19.0: Use partner-facing professionalTitle, NOT internal role.
-  const userTitle=(state.user && state.user.professionalTitle)?state.user.professionalTitle:'';
-  const userPhone=(state.user && state.user.phone)?state.user.phone:'';
-  const isUserSuper = state.user && state.user.isSuper === true;
-  const envStr=f.environment==='mixed'?`Mixed (${f.qtyIndoor} indoor + ${f.qtyOutdoor} outdoor)`:(f.environment||'—');
-  const resStr=(f.resolution||'—').toUpperCase();
-
-  // Sign-off: name + title (if set) + phone (if set) + Cavitak. No hardcoded "Dipenkumar" block —
-  // the escalation contact only shows up for non-Super users (parity with pricing callout card).
-  const signOffLines=[userName];
-  if(userTitle) signOffLines.push(userTitle);
-  if(userPhone) signOffLines.push('📞 ' + userPhone);
-  signOffLines.push('Cavitak Marketing Pvt Ltd');
-
-  const bodyLines=[
-    greeting,
-    '',
-    `Please find attached the BrightSign product recommendation and quotation for your project "${f.project||'Project'}"${f.enduser?` at ${f.enduser}`:''}${f.venue?` (${f.venue})`:''}.`,
-    '',
-    `Recommended model: ${m.id} — ${m.tag||''}`,
-    `Quantity: ${f.qty} unit${f.qty==1?'':'s'}`,
-    `Deployment type: ${envStr}`,
-    `Resolution: ${resStr}`,
-    ...((state._bomTotals && state._bomTotals.grandTotal)?[
-      '',
-      `Indicative quotation: ${formatINR(state._bomTotals.grandTotal)} (incl. ${_cfgGstLabel()})`,
-      `(Gross Total ${formatINR(state._bomTotals.subtotal)} + GST ${formatINR(state._bomTotals.gst)})`
-    ]:[]),
-    '',
-    `The attached Excel has two sheets: Summary and Quotation (with BOQ line-items + indicative pricing).`,
-    '',
-    `For commercial terms, volume rates, stock position, or any clarifications, please contact me directly.`,
-    ...(isUserSuper ? [] : [
-      '',
-      `For pricing escalation: Dipenkumar Gajjar — National Product Lead · dipen.g@cavitak.com`
-    ]),
-    '',
-    '-- IMPORTANT: Please attach the Excel file that just downloaded before sending --',
-    '',
-    'Regards,'
-  ].concat(signOffLines);
-  const bodyText=bodyLines.join('\n');
-
-  // Step 3: Open user's mail app with pre-filled mailto:
-  // CC always includes dipen.g@cavitak.com
-  const ccEmail='dipen.g@cavitak.com';
-  const mailto=`mailto:${encodeURIComponent(toEmail)}?cc=${encodeURIComponent(ccEmail)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
-
-  // Show instructions to user BEFORE opening mail app
-  const btn=document.querySelector('.btn-email');
-  if(btn){btn.disabled=true;btn.textContent='Opening mail app…';}
-
-  showSync(`Excel downloaded · Mail app opening…`,'success');
-
-  // Small delay so user sees the Excel download notification first
-  setTimeout(()=>{
-    // Open the mail app — this will either:
-    //   - Launch a new message window in Outlook/Apple Mail/Thunderbird
-    //   - Open Gmail compose in a new tab (if Gmail is default handler)
-    window.location.href=mailto;
-
-    // After trigger, show helper message with attachment reminder
-    setTimeout(()=>{
-      if(btn){btn.textContent='Email opened ✓ · Attach file & send';btn.style.background='var(--emerald)';}
-      showSync(`Your mail app is open. Attach "${wbResult.fname}" and click Send.`,'success');
-      setTimeout(()=>{
-        if(btn){btn.disabled=false;btn.textContent='✉ Email to partner';btn.style.background='';}
-      },5000);
-    },600);
-  },400);
-}
+/* v24.62.0 — emailQuoteToPartner deleted (dead code, zero refs — old backend-send email; superseded by the v24.44.1 mailto/openEmailModal flow). */
 
 function clearLog(){
   if(confirm('Clear this device\'s history view?\n\nYour actual entries are safe — this only clears what\'s shown on this device.')){
@@ -22210,12 +21834,7 @@ function clearLog(){
   }
 }
 
-/* v24.2.11: Fetch with timeout wrapper — abort after ms to prevent hung requests */
-function fetchWithTimeout(url,options,timeoutMs){
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),timeoutMs||8000);
-  return fetch(url,{...options,signal:controller.signal}).finally(()=>clearTimeout(timer));
-}
+/* v24.61.0 — fetchWithTimeout deleted (dead code, zero references — pre-Supabase fetch+AbortController wrapper, obsolete since _sbRpc). */
 
 /* v24.58.0 (5d-final) — _readUrlWithAuth deleted (its only caller, verifyPendingSync, no longer reads .gs). */
 
@@ -23262,31 +22881,9 @@ function hasActiveFilters(){
   return !!(f.city||f.user||f.project||f.partner||f.consultant||(f.dateRange&&f.dateRange!=='all'));
 }
 
-function clearFilters(){
-  window._filters={city:'',user:'',project:'',partner:'',consultant:'',dateRange:'all'};
-  ['city','user','project','partner','consultant'].forEach(f=>{document.getElementById('flt-'+f).value='';});
-  const dr=document.getElementById('flt-daterange');if(dr)dr.value='all';
-  renderDashboard();  // v23.1: filters on dashboard
-}
+/* v24.62.0 — clearFilters deleted (dead code, zero refs — pre-v26 dashboard filter reset; the v26 module owns filters). */
 
-/* v18: Render KPI strip with animated count-up numbers */
-/* Animate numeric value from 0 to target */
-function animateNumber(elId,target){
-  const el=document.getElementById(elId);
-  if(!el)return;
-  const duration=800;
-  const start=performance.now();
-  const startVal=parseInt(el.textContent.replace(/[^0-9]/g,''))||0;
-  function frame(now){
-    const t=Math.min((now-start)/duration,1);
-    const eased=1-Math.pow(1-t,3);  // ease-out cubic
-    const current=Math.round(startVal+(target-startVal)*eased);
-    el.textContent=current.toLocaleString('en-IN');
-    if(t<1)requestAnimationFrame(frame);
-    else el.textContent=target.toLocaleString('en-IN');
-  }
-  requestAnimationFrame(frame);
-}
+/* v24.61.0 — animateNumber deleted (dead code, zero references — KPI count-up animation, no caller). */
 
 /* v24.2.12: Export dropdown menu helpers */
 function toggleExportMenu(){
@@ -24179,30 +23776,9 @@ window.showTab=function(which){
     return '₹' + Math.round(v);
   }
 
-  function fmtDelta(pct){
-    if(pct === null || pct === undefined || isNaN(pct)) return {text:'—', color:'var(--ink-subtle,#94A3B8)'};
-    const rounded = pct.toFixed(1);
-    if(pct > 0)  return {text:'+' + rounded + '%', color:'#059669'};
-    if(pct < 0)  return {text: rounded + '%',        color:'#DC2626'};
-    return {text:'0%', color:'var(--ink-subtle,#94A3B8)'};
-  }
+  /* v24.61.0 — fmtDelta deleted (dead code, zero references — orphaned when YoY delta badges were removed in v24.25.0). */
 
-  function currentPipelineForBS(){
-    // Sum dealValueINR for open deals in central log (this app's family = BrightSign by default of the whole app)
-    const log = window._centralLog || [];
-    const OPEN_STAGES = BS_STAGES_OPEN_SET;  // v24.46.0: 6 Zoho open stages
-    let total = 0, n = 0;
-    for(let i = 0; i < log.length; i++){
-      const r = log[i] || {};
-      const outcome = (r.outcome || 'open').toString().toLowerCase();
-      if(outcome !== 'open') continue;
-      const stage = (r.stage || '').toString();
-      if(!OPEN_STAGES[stage]) continue;
-      const v = _readDealValue(r);
-      if(!isNaN(v)) { total += v; n++; }
-    }
-    return {total:total, count:n};
-  }
+  /* v24.62.0 — currentPipelineForBS deleted (dead code, zero refs — pre-v26 pipeline-sum helper; v26 dashboard aggregates its own). */
 
   // v24.38.0 removed: fetchAggregate (sales_history_aggregate caller).
   // The C2a SAP/Actuals path was removed in v24.16.0; this caller was orphan.
@@ -24260,46 +23836,7 @@ window.showTab=function(which){
       _c2aSaving = false;
     }
   }
-  async function loadAndRenderNote(periodKey, fy, scope, qOrH){
-    const ta = document.getElementById('bs-c2a-poa');
-    const metaEl = document.getElementById('bs-c2a-poa-meta');
-    const periodLabel = document.getElementById('bs-c2a-poa-period');
-    if(!ta) return;
-
-    if(periodLabel) periodLabel.textContent = periodKey ? '· ' + periodKey : '';
-
-    // Same period key as before? Keep whatever text is in the textarea (user may be editing)
-    if(_c2aLastPeriodKey === periodKey) return;
-
-    ta.disabled = true;
-    if(metaEl) metaEl.textContent = 'Loading…';
-    const note = await fetchNote(periodKey);
-    ta.value = note ? (note.text || '') : '';
-    _c2aLastPoaText   = ta.value;
-    _c2aLastPeriodKey = periodKey;
-    // Store fy/scope/qOrH on the textarea dataset for the blur handler
-    ta.dataset.periodKey = periodKey;
-    ta.dataset.fy = fy || '';
-    ta.dataset.scope = scope || '';
-    ta.dataset.qOrH = qOrH || '';
-
-    // Super can edit; others read-only
-    const isSuper = !!(state.user && state.user.isSuper);
-    ta.readOnly = !isSuper;
-    ta.disabled = false;
-    ta.placeholder = isSuper
-      ? 'Super only — write the plan / commentary for this review period. Saves automatically on blur.'
-      : (ta.value ? '' : 'No plan of action recorded for this period.');
-
-    if(metaEl){
-      if(note && note.updatedAt){
-        const when = new Date(note.updatedAt);
-        metaEl.textContent = 'Last updated by ' + (note.updatedBy || '—') + ' on ' + when.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-      } else {
-        metaEl.textContent = note === null ? 'Could not load plan of action.' : 'Not yet written.';
-      }
-    }
-  }
+  /* v24.62.0 — loadAndRenderNote deleted (dead code, zero refs — C2A/PoA note loader; the bs-c2a-poa textarea no longer exists in the DOM). */
 
   function wirePoaBlur(){
     const ta = document.getElementById('bs-c2a-poa');
@@ -25984,38 +25521,9 @@ if(document.readyState==='loading'){
       }
     } catch(_){}
   }
-  function _persistFiltersExtended(){
-    try {
-      const f = window._reviewFilters;
-      const out = {};
-      FILTER_GROUPS.forEach(function(g){ out[g] = Array.from(f[g] || []); });
-      out.search  = String(f.search || '');
-      out.fy      = Array.from(f.fy || []);
-      out.outcome = Array.from(f.outcome || []);
-      localStorage.setItem(LS_FILTERS_KEY, JSON.stringify(out));
-    } catch(_){}
-  }
+  /* v24.62.0 — _persistFiltersExtended deleted (dead code, zero refs — abandoned extended-filters persistence). */
 
-      // v24.25.0 — re-implement summary count to include search/fy/outcome
-  function _updateFiltersSummaryV2(){
-    const sumEl = document.getElementById('review-filters-summary');
-    if(!sumEl) return;
-    _ensureExtendedFilters();
-    const f = window._reviewFilters;
-    let count = 0;
-    FILTER_GROUPS.forEach(function(g){ count += (f[g] && f[g].size) || 0; });
-    if(f.fy && f.fy.size)           count += 1;
-    if(f.outcome && f.outcome.size) count += 1;
-    if(f.search)                    count += 1;
-    if(count === 0){
-      sumEl.textContent = '— No filters applied';
-      sumEl.style.color = 'var(--ink-subtle,#94A3B8)';
-    } else {
-      sumEl.textContent = count + (count === 1 ? ' filter active' : ' filters active');
-      sumEl.style.color = 'var(--indigo,#4F46E5)';
-      sumEl.style.fontWeight = '600';
-    }
-  }
+      /* v24.62.0 — _updateFiltersSummaryV2 deleted (dead code, zero refs — abandoned alternate of the live _updateFiltersSummary). */
 
   // FY helper — returns the Indian FY label ('FY26-27') for a Date.
   function _entryFY(e){
@@ -26219,9 +25727,7 @@ if(document.readyState==='loading'){
     } catch(_){}
     return saved;
   }
-  function _saveFilters(f){
-    try { localStorage.setItem(LS_COCKPIT_KEY, JSON.stringify(f)); } catch(_){}
-  }
+  /* v24.62.0 — _saveFilters deleted (dead code, zero refs — abandoned cockpit-filter persistence). */
   function _restoreFilterUI(){
     const f = _getFilters();
     const w = document.getElementById('cockpit-window');
@@ -29160,10 +28666,7 @@ async function _renderPipelineTrendBS() {
    skips these fields when content=audio (existing v24 code).
    ===================================================================== */
 (function() {
-  function _getTotalQty() {
-    const el = document.getElementById('f-qty');
-    return Math.max(1, parseInt((el && el.value) || '1', 10) || 1);
-  }
+  /* v24.61.0 — _getTotalQty deleted (dead code, zero references — superseded by the indoor/outdoor qty model). */
   function _readMixed() {
     const i = document.getElementById('f-qty-indoor');
     const o = document.getElementById('f-qty-outdoor');
