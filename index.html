@@ -6292,6 +6292,156 @@
       transition: transform var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
       -webkit-tap-highlight-color: transparent;
     }
+    /* v1.7.0 — Reference-design field system: numbered section header */
+    .sec-head { display: flex; align-items: center; gap: 14px; margin: 0 0 20px; }
+    .sec-badge {
+      flex: 0 0 auto; width: 40px; height: 40px; border-radius: 12px;
+      background: var(--c-accent); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; letter-spacing: 0.02em;
+    }
+    .sec-head-text { min-width: 0; }
+    .sec-title {
+      font-family: var(--font-display, Georgia, 'Times New Roman', serif);
+      font-size: 26px; font-weight: 700; color: var(--c-fg); line-height: 1.1;
+    }
+    .sec-sub { font-size: 13px; color: var(--c-fg-mute); margin-top: 3px; }
+
+    /* Field caption (small uppercase label with optional required star) */
+    .field-caption {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase; color: var(--c-fg-mute);
+      margin: 0 0 10px;
+    }
+    .field-caption .req { color: #e0245e; margin-left: 3px; }
+
+    /* Icon-card selector grid (Indoor / Outdoor / Mixed pattern) */
+    .icard-grid { display: grid; gap: 10px; margin-bottom: 8px; }
+    .icard-cols-2 { grid-template-columns: 1fr 1fr; }
+    .icard-cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .icard {
+      position: relative; appearance: none; font-family: inherit; cursor: pointer;
+      text-align: left; display: flex; flex-direction: column; gap: 6px;
+      padding: 14px; min-height: 92px;
+      background: var(--c-elev); color: var(--c-fg);
+      border: 1.5px solid var(--c-border); border-radius: 14px;
+      transition: border-color 120ms, box-shadow 120ms, background 120ms, transform 80ms;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .icard:active { transform: scale(0.98); }
+    .icard.is-selected {
+      border-color: var(--c-accent); border-width: 2px;
+      background: var(--c-accent-soft, rgba(55,35,106,0.06));
+      box-shadow: 0 0 0 3px var(--c-accent-soft, rgba(55,35,106,0.12));
+    }
+    .icard-ico {
+      width: 26px; height: 26px; color: var(--c-fg-mute);
+      display: inline-flex;
+    }
+    .icard-ico svg { width: 100%; height: 100%; }
+    .icard.is-selected .icard-ico { color: var(--c-accent); }
+    .icard-label { font-size: 15px; font-weight: 700; color: var(--c-fg); }
+    .icard-sub { font-size: 12px; color: var(--c-fg-mute); line-height: 1.3; }
+    .icard-check {
+      position: absolute; top: 10px; right: 12px;
+      color: var(--c-accent); font-weight: 700; font-size: 16px;
+    }
+
+    /* Conditional sub-panel (e.g. Split for mixed deployment) */
+    .field-subpanel {
+      margin: 4px 0 8px; padding: 14px;
+      background: var(--c-accent-soft, rgba(55,35,106,0.05));
+      border: 1px solid var(--c-border); border-radius: 12px;
+    }
+    .field-subpanel-title {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; color: var(--c-accent-deep, var(--c-accent));
+      margin-bottom: 12px;
+    }
+    .split-row { display: flex; gap: 12px; }
+    .split-col { flex: 1; min-width: 0; }
+    .split-col label {
+      display: block; font-size: 12px; color: var(--c-fg-mute);
+      margin-bottom: 6px; font-weight: 600;
+    }
+    .split-col input {
+      width: 100%; height: 44px; padding: 0 12px; text-align: center;
+      font-family: inherit; font-size: 16px; font-weight: 600; color: var(--c-fg);
+      background: var(--c-bg); border: 1.5px solid var(--c-border); border-radius: 10px;
+    }
+    .split-col input:focus { outline: none; border-color: var(--c-accent); box-shadow: 0 0 0 2px var(--c-accent-soft, rgba(55,35,106,0.12)); }
+    .split-hint { font-size: 11px; color: var(--c-fg-mute); margin-top: 10px; }
+
+    /* v1.6.2 — Polished Advanced cart */
+    .cart-add-block {
+      margin-bottom: 14px; padding: 14px;
+      background: var(--c-elev); border: 1px solid var(--c-border);
+      border-radius: var(--r-md);
+    }
+    .cart-add-title {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.03em;
+      text-transform: uppercase; color: var(--c-fg-mute); margin-bottom: 10px;
+    }
+    .cart-add-row { display: flex; gap: 8px; align-items: stretch; }
+    .cart-add-row-cms { flex-wrap: wrap; }
+    .cart-select {
+      flex: 1; min-width: 0; height: 44px; padding: 0 12px;
+      font-family: inherit; font-size: 14px; color: var(--c-fg);
+      background: var(--c-bg); border: 1.5px solid var(--c-border);
+      border-radius: var(--r-sm); cursor: pointer; appearance: auto;
+    }
+    .cart-select:focus { outline: none; border-color: var(--c-accent); box-shadow: 0 0 0 2px var(--c-accent-soft, rgba(55,35,106,0.12)); }
+    .cart-add-row-cms .cart-select { flex: 1 1 30%; }
+    .cart-qty-input {
+      width: 64px; height: 44px; padding: 0 8px; text-align: center;
+      font-family: inherit; font-size: 15px; font-weight: 600; color: var(--c-fg);
+      background: var(--c-bg); border: 1.5px solid var(--c-border);
+      border-radius: var(--r-sm);
+    }
+    .cart-qty-input:focus { outline: none; border-color: var(--c-accent); box-shadow: 0 0 0 2px var(--c-accent-soft, rgba(55,35,106,0.12)); }
+    .cart-add-btn { height: 44px; padding: 0 20px; white-space: nowrap; flex-shrink: 0; }
+
+    .cart-list-head {
+      font-size: 13px; font-weight: 700; color: var(--c-fg);
+      margin: 18px 0 8px;
+    }
+    .cart-list {
+      border: 1px solid var(--c-border); border-radius: var(--r-md);
+      overflow: hidden; background: var(--c-elev);
+    }
+    .cart-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px; border-bottom: 1px solid var(--c-border);
+    }
+    .cart-item:last-child { border-bottom: none; }
+    .cart-item-info { flex: 1; min-width: 0; }
+    .cart-item-name { font-weight: 600; font-size: 14px; color: var(--c-fg); }
+    .cart-item-sub { font-size: 11px; color: var(--c-fg-mute); margin-top: 2px; }
+    .cart-item-stepper {
+      display: flex; align-items: center; gap: 4px;
+      background: var(--c-bg); border: 1px solid var(--c-border);
+      border-radius: 999px; padding: 2px;
+    }
+    .cart-step-btn {
+      width: 30px; height: 30px; border: none; border-radius: 999px;
+      background: transparent; color: var(--c-fg); cursor: pointer;
+      font-size: 17px; line-height: 1; display: flex; align-items: center; justify-content: center;
+      transition: background 100ms;
+    }
+    .cart-step-btn:active { background: var(--c-accent-soft, rgba(55,35,106,0.12)); }
+    .cart-item-qty { min-width: 26px; text-align: center; font-weight: 700; font-size: 14px; color: var(--c-fg); }
+    .cart-remove-btn {
+      width: 32px; height: 32px; border: none; background: transparent;
+      color: var(--c-fg-mute); cursor: pointer; font-size: 15px; border-radius: 8px;
+      transition: color 100ms, background 100ms;
+    }
+    .cart-remove-btn:active { color: #d33; background: rgba(211,51,51,0.1); }
+    .cart-empty {
+      margin-top: 14px; padding: 24px 16px; text-align: center;
+      color: var(--c-fg-mute); font-size: 13px;
+      background: var(--c-elev); border: 1px dashed var(--c-border); border-radius: var(--r-md);
+    }
+
     /* v1.6.0 — CMS vendor picker cards with logos */
     .cms-vendor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .cms-vendor-card {
@@ -7174,6 +7324,27 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v1.7.0  (2026-06-11)  — Reference-design field system (foundation + Step 2)
+       Began rebuilding the input fields to match the provided reference design
+       (icon cards, numbered section badges, pill buttons, conditional panels)
+       instead of bare native dropdowns. This ship lays the reusable foundation
+       and converts Step 2 (Deployment) as the first fully-redesigned step:
+         - sectionHeader(num, title, sub): numbered rounded badge + serif heading.
+         - iconCardGroup(): the Indoor/Outdoor/Mixed card pattern (icon + label +
+           sub, purple ring + tint + check when selected). Shared _ICO icon set.
+         - fieldCaption(): small uppercase field labels with required *.
+         - Conditional sub-panel: picking "Mixed" reveals an indoor/outdoor split
+           (field-subpanel), matching the reference exactly.
+         - Data model: a single "Total players" stepper now distributes into
+           qty_indoor/qty_outdoor by deployment_type (_distributeTotal), since the
+           engine reads indoor/outdoor. Mixed preserves the user's split; Indoor/
+           Outdoor put the whole count on one side. _inferDeployType restores the
+           card from indoor/outdoor on edit of older deals. split-set handles the
+           mixed inputs. Step-2 validation now requires a deployment type (guided).
+       Verified: 10/10 distribution tests, node --check clean.
+       NEXT: apply the same card/pill/badge treatment to Steps 1, 3, 4, 5 and the
+       Advanced cart so the whole input system matches the reference.
+     ------------------------------------------------------------
      v1.6.1  (2026-06-11)  — ROOT-CAUSE pricebook fix + real CMS logos
        THE "Pricebook still loading" ROOT CAUSE (finally): fetchPricebook() ran
        ONLY inside login(). A plain page reload restores the session from
@@ -7993,7 +8164,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v1.6.1',
+      version: 'brightsign-v1.7.0',
       constants,
       calico,
       mv,
@@ -22858,14 +23029,63 @@
 
       const deployFields = isGuided
         ? '<div class="sp-16"></div>' +
-          '<h3 class="h3">Deployment</h3>' +
-          '<p class="help">How many players, and where they run.</p>' +
-          stepperRow('qty_indoor',  'Indoor players',  'Standard indoor environment',       indoor) +
-          stepperRow('qty_outdoor', 'Outdoor players', 'Weather-exposed / high-brightness', outdoor) +
+          sectionHeader(2, 'Deployment', 'How many players, and where they run.') +
+          // Player count
+          fieldCaption('Number of BrightSign players', true) +
+          stepperRow('qty_total', 'Total players', '', (total || 1), { min: 1, max: 200 }) +
+          '<div class="sp-16"></div>' +
+          // Deployment type as icon cards
+          fieldCaption('Deployment type', true) +
+          iconCardGroup('deployment_type', d.deployment_type || _inferDeployType(d), [
+            { value: 'indoor',  label: 'Indoor',  sub: 'Standard signage',     icon: _ICO.indoor },
+            { value: 'outdoor', label: 'Outdoor', sub: 'Enclosure required',   icon: _ICO.outdoor },
+            { value: 'mixed',   label: 'Mixed',   sub: 'Indoor + Outdoor',     icon: _ICO.mixed }
+          ], { cols: 3 }) +
+          // Conditional split panel for Mixed
+          ((d.deployment_type === 'mixed' || (indoor > 0 && outdoor > 0))
+            ? '<div class="field-subpanel">' +
+                '<div class="field-subpanel-title">Split for mixed deployment</div>' +
+                '<div class="split-row">' +
+                  '<div class="split-col"><label>Indoor qty</label>' +
+                    '<input type="text" inputmode="numeric" value="' + indoor + '" data-action="split-set" data-key="qty_indoor" aria-label="Indoor quantity"></div>' +
+                  '<div class="split-col"><label>Outdoor qty</label>' +
+                    '<input type="text" inputmode="numeric" value="' + outdoor + '" data-action="split-set" data-key="qty_outdoor" aria-label="Outdoor quantity"></div>' +
+                '</div>' +
+                '<div class="split-hint">Total above auto-updates to Indoor + Outdoor.</div>' +
+              '</div>'
+            : '') +
           '<p class="help" style="margin-top:14px;font-weight:600;">' + esc(env) + ' \u00b7 ' + total + ' player' + (total === 1 ? '' : 's') + ' total</p>'
         : '';
 
       return '' + pathCards + deployFields;
+    }
+
+    // v1.7.0 — Infer the deployment-type card from existing indoor/outdoor counts
+    // (for restoring a saved/edited deal that predates the deployment_type field).
+    function _inferDeployType(d) {
+      const i = Number(d.qty_indoor) || 0, o = Number(d.qty_outdoor) || 0;
+      if (i > 0 && o > 0) return 'mixed';
+      if (o > 0) return 'outdoor';
+      if (i > 0) return 'indoor';
+      return '';
+    }
+
+    // v1.7.0 — Distribute the single qty_total into qty_indoor/qty_outdoor based
+    // on the chosen deployment_type. Indoor/Outdoor put the whole count on one
+    // side; Mixed preserves the user's existing split (or seeds an even-ish one
+    // the first time Mixed is picked). The engine reads indoor/outdoor only.
+    function _distributeTotal(d) {
+      const total = Math.max(1, Number(d.qty_total) || ((Number(d.qty_indoor)||0)+(Number(d.qty_outdoor)||0)) || 1);
+      const type = d.deployment_type || _inferDeployType(d) || 'indoor';
+      if (type === 'indoor')  { d.qty_indoor = total; d.qty_outdoor = 0; }
+      else if (type === 'outdoor') { d.qty_indoor = 0; d.qty_outdoor = total; }
+      else { // mixed
+        const i = Number(d.qty_indoor) || 0, o = Number(d.qty_outdoor) || 0;
+        if (i + o !== total) {
+          if (i + o === 0) { d.qty_indoor = Math.ceil(total/2); d.qty_outdoor = total - d.qty_indoor; }
+          // else: leave the user's split alone (they're editing it directly)
+        }
+      }
     }
 
     /* ---------- Step 3: Inputs & outputs ---------- */
@@ -22892,6 +23112,60 @@
         '</div>' +
       '</div>';
     }
+
+    // v1.7.0 — Numbered section header (e.g. "02  Deployment") matching the
+    // reference design: a rounded badge with the step number + a serif heading.
+    function sectionHeader(num, title, sub) {
+      return '<div class="sec-head">' +
+        '<span class="sec-badge">' + esc(String(num)) + '</span>' +
+        '<div class="sec-head-text">' +
+          '<div class="sec-title">' + esc(title) + '</div>' +
+          (sub ? '<div class="sec-sub">' + esc(sub) + '</div>' : '') +
+        '</div>' +
+      '</div>';
+    }
+
+    // v1.7.0 — Field group label (small uppercase caption, optional required *).
+    function fieldCaption(text, required) {
+      return '<div class="field-caption">' + esc(text) +
+        (required ? '<span class="req">*</span>' : '') + '</div>';
+    }
+
+    // v1.7.0 — Icon-card selector group (the Indoor/Outdoor/Mixed pattern from the
+    // reference). opts.options = [{value,label,sub,icon(svg string)}]. Single-select.
+    // Renders as a responsive grid of tappable cards; the chosen one gets a purple
+    // ring + tinted fill + check. Wired via data-action (default 'iconcard-pick')
+    // with data-key + data-val so one handler serves every group.
+    function iconCardGroup(key, value, options, opts) {
+      opts = opts || {};
+      const action = opts.action || 'iconcard-pick';
+      const cols = opts.cols || 2;
+      const cards = options.map(function (o) {
+        const sel = String(value) === String(o.value);
+        return '<button type="button" class="icard' + (sel ? ' is-selected' : '') + '" ' +
+          'data-action="' + esc(action) + '" data-key="' + esc(key) + '" data-val="' + esc(o.value) + '">' +
+          (o.icon ? '<span class="icard-ico">' + o.icon + '</span>' : '') +
+          '<span class="icard-label">' + esc(o.label) + '</span>' +
+          (o.sub ? '<span class="icard-sub">' + esc(o.sub) + '</span>' : '') +
+          (sel ? '<span class="icard-check">\u2713</span>' : '') +
+        '</button>';
+      }).join('');
+      return '<div class="icard-grid icard-cols-' + cols + '">' + cards + '</div>';
+    }
+
+    // v1.7.0 — Shared SVG icons for the icon cards (stroke-based, inherit color).
+    var _ICO = {
+      indoor:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+      outdoor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>',
+      mixed:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>',
+      local:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+      cloud:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>',
+      video:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>',
+      audiovid:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>',
+      audio:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>'
+    };
+
+
 
     // v27.2.6 — Compact checkbox-row renderer. Replaces the prior .tile
     // card-banner style. Renders a single line: [✓] Name — sub. Tap target
@@ -23753,14 +24027,17 @@
     /* ---------- BoM card renderer ---------- */
 
     function _cartRow(kind, idx, label, qty, sub) {
-      const btn = 'style="width:30px;height:30px;border:1px solid var(--border,#ccc);border-radius:8px;background:transparent;cursor:pointer;font-size:16px;line-height:1;"';
-      return '<div style="display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--border,#eee);">' +
-        '<span style="flex:1;min-width:0;"><span style="font-weight:600;">' + esc(label) + '</span>' +
-          (sub ? '<span style="display:block;font-size:11px;color:var(--muted,#888);">' + esc(sub) + '</span>' : '') + '</span>' +
-        '<button type="button" data-action="cart-qty" data-kind="' + kind + '" data-idx="' + idx + '" data-delta="-1" ' + btn + '>\u2212</button>' +
-        '<span style="min-width:22px;text-align:center;font-weight:600;">' + (Number(qty) || 0) + '</span>' +
-        '<button type="button" data-action="cart-qty" data-kind="' + kind + '" data-idx="' + idx + '" data-delta="1" ' + btn + '>+</button>' +
-        '<button type="button" data-action="cart-remove" data-kind="' + kind + '" data-idx="' + idx + '" style="margin-left:4px;border:none;background:transparent;color:var(--danger,#c0392b);cursor:pointer;font-size:16px;">\u2715</button>' +
+      return '<div class="cart-item">' +
+        '<div class="cart-item-info">' +
+          '<div class="cart-item-name">' + esc(label) + '</div>' +
+          (sub ? '<div class="cart-item-sub">' + esc(sub) + '</div>' : '') +
+        '</div>' +
+        '<div class="cart-item-stepper">' +
+          '<button type="button" class="cart-step-btn" data-action="cart-qty" data-kind="' + kind + '" data-idx="' + idx + '" data-delta="-1" aria-label="Decrease">\u2212</button>' +
+          '<span class="cart-item-qty">' + (Number(qty) || 0) + '</span>' +
+          '<button type="button" class="cart-step-btn" data-action="cart-qty" data-kind="' + kind + '" data-idx="' + idx + '" data-delta="1" aria-label="Increase">+</button>' +
+        '</div>' +
+        '<button type="button" class="cart-remove-btn" data-action="cart-remove" data-kind="' + kind + '" data-idx="' + idx + '" aria-label="Remove">\u2715</button>' +
       '</div>';
     }
 
@@ -23782,49 +24059,70 @@
                     .sort(function (a, b) { return (Number(a.rank) || 0) - (Number(b.rank) || 0); });
 
       let html = '<h3 class="h3">Build your quote</h3>' +
-        '<p class="help">Add any players, accessories, and a CMS plan. No engine \u2014 your call.</p>';
+        '<p class="help">Add players, accessories and a CMS plan one at a time \u2014 pick a model, set the quantity, then tap Add. Repeat for as many different models as you need. No engine, your call.</p>';
 
-      html += '<div class="field"><label>Add player</label><div style="display:flex;gap:8px;">' +
-        '<select id="cart-player-sel" style="flex:1;">' +
-          cat.map(function (c) { return '<option value="' + esc(c.model_id) + '">' + esc(c.model_id) + ' \u2014 ' + esc(c.model_group) + ' series</option>'; }).join('') +
-        '</select><button type="button" class="btn" data-action="cart-add-player">Add</button></div></div>';
+      // ---- Add player (with qty) ----
+      html += '<div class="cart-add-block">' +
+        '<div class="cart-add-title">Add a player</div>' +
+        '<div class="cart-add-row">' +
+          '<select id="cart-player-sel" class="cart-select">' +
+            cat.map(function (c) { return '<option value="' + esc(c.model_id) + '">' + esc(c.model_id) + ' \u2014 ' + esc(c.model_group) + ' series</option>'; }).join('') +
+          '</select>' +
+          '<input id="cart-player-qty" class="cart-qty-input" type="number" min="1" value="1" inputmode="numeric" aria-label="Quantity">' +
+          '<button type="button" class="btn btn-primary cart-add-btn" data-action="cart-add-player">Add</button>' +
+        '</div>' +
+      '</div>';
 
-      html += '<div class="field"><label>Add accessory</label><div style="display:flex;gap:8px;">' +
-        '<select id="cart-acc-sel" style="flex:1;">' +
-          '<option value="WD105">Wi-Fi module (WD105)</option>' +
-          '<option value="BS-SSD-128GB">SSD 128 GB</option>' +
-          '<option value="BS-SSD-256GB">SSD 256 GB</option>' +
-          '<option value="BS-SSD-512GB">SSD 512 GB</option>' +
-          '<option value="BS-SSD-1024GB">SSD 1 TB</option>' +
-        '</select><button type="button" class="btn" data-action="cart-add-accessory">Add</button></div></div>';
+      // ---- Add accessory (with qty) ----
+      html += '<div class="cart-add-block">' +
+        '<div class="cart-add-title">Add an accessory</div>' +
+        '<div class="cart-add-row">' +
+          '<select id="cart-acc-sel" class="cart-select">' +
+            '<option value="WD105">Wi-Fi module (WD105)</option>' +
+            '<option value="BS-SSD-128GB">SSD 128 GB</option>' +
+            '<option value="BS-SSD-256GB">SSD 256 GB</option>' +
+            '<option value="BS-SSD-512GB">SSD 512 GB</option>' +
+            '<option value="BS-SSD-1024GB">SSD 1 TB</option>' +
+          '</select>' +
+          '<input id="cart-acc-qty" class="cart-qty-input" type="number" min="1" value="1" inputmode="numeric" aria-label="Quantity">' +
+          '<button type="button" class="btn btn-primary cart-add-btn" data-action="cart-add-accessory">Add</button>' +
+        '</div>' +
+      '</div>';
 
-      html += '<div class="field"><label>Add CMS</label><div style="display:flex;gap:6px;flex-wrap:wrap;">' +
-        '<select id="cart-cms-vendor"><option value="BrightSign">BrightSign</option><option value="Korbyt">Korbyt</option><option value="Pickcel">Pickcel</option></select>' +
-        '<select id="cart-cms-mode"><option value="local">On-prem</option><option value="cloud">Cloud</option></select>' +
-        '<select id="cart-cms-term"><option value="1">1 yr</option><option value="2">2 yr</option><option value="3">3 yr</option><option value="4">4 yr</option><option value="5">5 yr</option></select>' +
-        '<button type="button" class="btn" data-action="cart-add-cms">Add</button></div></div>';
+      // ---- Add CMS ----
+      html += '<div class="cart-add-block">' +
+        '<div class="cart-add-title">Add a CMS plan</div>' +
+        '<div class="cart-add-row cart-add-row-cms">' +
+          '<select id="cart-cms-vendor" class="cart-select"><option value="BrightSign">BrightSign</option><option value="Korbyt">Korbyt</option><option value="Pickcel">Pickcel</option></select>' +
+          '<select id="cart-cms-mode" class="cart-select"><option value="local">On-prem</option><option value="cloud">Cloud</option></select>' +
+          '<select id="cart-cms-term" class="cart-select"><option value="1">1 yr</option><option value="2">2 yr</option><option value="3">3 yr</option><option value="4">4 yr</option><option value="5">5 yr</option></select>' +
+          '<button type="button" class="btn btn-primary cart-add-btn" data-action="cart-add-cms">Add</button>' +
+        '</div>' +
+      '</div>';
 
+      // ---- Cart contents ----
       const sel = d.advancedSelections || [], acc = d.advancedAccessories || [];
       if (!sel.length && !acc.length) {
-        html += '<div class="banner info" style="margin-top:12px;">Cart is empty \u2014 add items above.</div>';
+        html += '<div class="cart-empty">Your cart is empty \u2014 add items above.</div>';
       } else {
-        html += '<h3 class="h3" style="margin-top:16px;">Cart</h3>';
+        html += '<div class="cart-list-head">In your quote</div><div class="cart-list">';
         sel.forEach(function (it, i) {
           const c = (pb.catalog || []).find(function (x) { return x.model_id === it.model_id; }) || {};
-          html += _cartRow('player', i, it.model_id, it.qty, c.model_group ? c.model_group + ' series' : '');
+          html += _cartRow('player', i, it.model_id, it.qty, c.model_group ? c.model_group + ' series' : 'Player');
         });
         acc.forEach(function (it, i) {
-          html += _cartRow('acc', i, it.label || it.id, it.qty, it.kind === 'cms' ? 'CMS' : 'Accessory');
+          html += _cartRow('acc', i, it.label || it.id, it.qty, it.kind === 'cms' ? 'CMS plan' : 'Accessory');
         });
+        html += '</div>';
       }
 
       const lines = STORE.bomLines(d);
       const quote = STORE.computeQuote(lines, d.project_discount || 0);
-      if (lines.length) html += '<div class="card" style="margin-top:8px;padding:12px;">' + renderBomTable(quote, showPrices) + '</div>';
+      if (lines.length) html += '<div class="card" style="margin-top:14px;padding:12px;">' + renderBomTable(quote, showPrices) + '</div>';
 
       const totalPlayers = sel.reduce(function (s2, it) { return s2 + (Number(it.qty) || 0); }, 0);
       if (totalPlayers > 25 && !acc.some(function (a) { return a.kind === 'cms'; })) {
-        html += '<div class="banner warn" style="margin-top:8px;">A CMS is required for more than 25 players \u2014 add one above.</div>';
+        html += '<div class="banner warn" style="margin-top:10px;">A CMS is required for more than 25 players \u2014 add one above.</div>';
       }
       return html;
     }
@@ -23945,6 +24243,14 @@
       // deployment fields aren't even shown and the engine can't run.
       if (d.step === 2 && d.mode !== 'guided' && d.mode !== 'advanced') {
         errors._path = 'Choose Guided or Advanced to continue.';
+      }
+      // v1.7.0 — Guided Step 2 also needs a deployment type so the player count
+      // can be assigned to indoor/outdoor (the engine reads those, not total).
+      if (d.step === 2 && d.mode === 'guided') {
+        const it = _inferDeployType(d);
+        if (!d.deployment_type && !it) {
+          errors.deployment_type = 'Pick a deployment type (Indoor / Outdoor / Mixed).';
+        }
       }
       // Steps 2\u20136 (Deployment, Budget, Technical, Add-ons, CMS & Build) carry
       // no blocking validation \u2014 every field has a sensible default and the
@@ -24096,6 +24402,23 @@
             d.step = 2;
             saveDraft();
             rerenderPreservingScroll(); // stay in place; card highlights + fields appear
+          }
+          return;
+        }
+
+        // v1.7.0 — Icon-card single-select (deployment type, content type, etc.)
+        if (action === 'iconcard-pick') {
+          const key = actEl.getAttribute('data-key');
+          const val = actEl.getAttribute('data-val');
+          if (key && val != null) {
+            wizardData[key] = val;
+            // Deployment type controls how the total player count splits into
+            // indoor/outdoor — redistribute when it changes.
+            if (key === 'deployment_type') _distributeTotal(wizardData);
+            // Some icon-card choices reveal conditional sub-panels (e.g. Mixed
+            // deployment reveals the indoor/outdoor split), so re-render.
+            saveDraft();
+            rerenderPreservingScroll();
           }
           return;
         }
@@ -24274,34 +24597,59 @@
             const min = (key === 'qty_total') ? 1 : 0;
             wizardData[key] = (Number(wizardData[key]) || 0) + (action === 'step-inc' ? 1 : -1);
             if (wizardData[key] < min) wizardData[key] = min;
+            // v1.7.0 — qty_total is the single player count on the Deployment
+            // step; distribute it into qty_indoor/qty_outdoor by deployment_type
+            // (the engine reads indoor/outdoor, not total). Mixed keeps whatever
+            // split the user set in the sub-panel.
+            if (key === 'qty_total') _distributeTotal(wizardData);
           }
           saveDraft();
           rerenderPreservingScroll();
           return;
         }
 
+        // v1.7.0 — Mixed-deployment split inputs (indoor/outdoor qty).
+        if (action === 'split-set') {
+          const key = actEl.getAttribute('data-key');
+          const n = Math.max(0, parseInt(actEl.value, 10) || 0);
+          if (key === 'qty_indoor' || key === 'qty_outdoor') {
+            wizardData[key] = n;
+            wizardData.qty_total = (Number(wizardData.qty_indoor) || 0) + (Number(wizardData.qty_outdoor) || 0);
+            saveDraft();
+            // Don't full re-render on every keystroke (loses focus); the total
+            // line updates on blur/next interaction. But clamp wifi/ssd caps.
+          }
+          return;
+        }
+
         // Toggle (tile w/ checkbox)
         if (action === 'cart-add-player') {
           const selEl = document.getElementById('cart-player-sel');
+          const qtyEl = document.getElementById('cart-player-qty');
           const model = selEl && selEl.value;
+          const addQty = Math.max(1, parseInt(qtyEl && qtyEl.value, 10) || 1);
           if (model) {
             wizardData.advancedSelections = wizardData.advancedSelections || [];
             const ex = wizardData.advancedSelections.find(function (x) { return x.model_id === model; });
-            if (ex) ex.qty = (Number(ex.qty) || 0) + 1;
-            else wizardData.advancedSelections.push({ model_id: model, qty: 1 });
+            if (ex) ex.qty = (Number(ex.qty) || 0) + addQty;
+            else wizardData.advancedSelections.push({ model_id: model, qty: addQty });
+            toast(model + ' \u00d7' + addQty + ' added', 'default');
             rerenderPreservingScroll();
           }
           return;
         }
         if (action === 'cart-add-accessory') {
           const selEl = document.getElementById('cart-acc-sel');
+          const qtyEl = document.getElementById('cart-acc-qty');
           const id = selEl && selEl.value;
+          const addQty = Math.max(1, parseInt(qtyEl && qtyEl.value, 10) || 1);
           if (id) {
             wizardData.advancedAccessories = wizardData.advancedAccessories || [];
             const label = selEl.options[selEl.selectedIndex].text;
             const ex = wizardData.advancedAccessories.find(function (x) { return x.kind === 'accessory' && x.id === id; });
-            if (ex) ex.qty = (Number(ex.qty) || 0) + 1;
-            else wizardData.advancedAccessories.push({ kind: 'accessory', id: id, label: label, qty: 1 });
+            if (ex) ex.qty = (Number(ex.qty) || 0) + addQty;
+            else wizardData.advancedAccessories.push({ kind: 'accessory', id: id, label: label, qty: addQty });
+            toast(label + ' \u00d7' + addQty + ' added', 'default');
             rerenderPreservingScroll();
           }
           return;
