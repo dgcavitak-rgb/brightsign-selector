@@ -6291,51 +6291,44 @@
       transition: transform var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
       -webkit-tap-highlight-color: transparent;
     }
-    /* v1.4.0 — Path-choice interstitial (Guided / Advanced) */
-    .path-choice { max-width: 680px; margin: 8px auto 0; padding: 8px 0; }
-    .path-choice-head { text-align: center; margin-bottom: 28px; }
-    .path-choice-title {
-      font-family: var(--font-display, inherit);
-      font-size: 26px; font-weight: 700; color: var(--ink); margin: 0 0 10px;
+    /* v1.4.1 — Inline path choice (Guided / Advanced) at top of Step 2 */
+    .path-pick-label {
+      font-size: 13px; font-weight: 600; color: var(--ink-soft);
+      text-transform: uppercase; letter-spacing: 0.04em; margin: 2px 0 12px;
     }
-    .path-choice-sub {
-      font-size: 14px; color: var(--ink-soft); margin: 0 auto; max-width: 460px; line-height: 1.5;
-    }
-    .path-choice-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
-    }
-    @media (max-width: 520px) { .path-choice-grid { grid-template-columns: 1fr; } }
-    .path-card {
-      appearance: none; font-family: inherit; cursor: pointer;
+    .path-pick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 560px) { .path-pick-grid { grid-template-columns: 1fr; } }
+    .path-pick-card {
+      appearance: none; font-family: inherit; cursor: pointer; position: relative;
       background: var(--bg-card); border: 1.5px solid var(--border-soft);
-      border-radius: var(--r-lg, 16px); padding: 26px 20px;
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
-      text-align: center;
+      border-radius: var(--r-md); padding: 16px;
+      display: flex; align-items: flex-start; gap: 12px; text-align: left;
       transition: transform var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
       -webkit-tap-highlight-color: transparent;
     }
-    .path-card:hover {
-      transform: translateY(-3px); border-color: var(--accent);
-      box-shadow: 0 8px 24px rgba(15,14,12,0.08);
+    .path-pick-card:hover {
+      transform: translateY(-2px); border-color: var(--accent);
+      box-shadow: 0 6px 18px rgba(15,14,12,0.07);
     }
-    .path-card:active { transform: scale(0.98); }
-    .path-card-icon {
-      width: 52px; height: 52px; border-radius: 14px;
+    .path-pick-card:active { transform: scale(0.985); }
+    .path-pick-card.is-selected {
+      border-color: var(--accent); background: var(--accent-soft);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+    .path-pick-icon {
+      width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
       background: var(--accent-soft); color: var(--accent-deep);
       display: inline-flex; align-items: center; justify-content: center;
-      margin-bottom: 4px;
     }
-    .path-card-icon svg { width: 26px; height: 26px; }
-    .path-card-title { font-size: 18px; font-weight: 700; color: var(--ink); }
-    .path-card-sub { font-size: 13px; color: var(--ink-soft); }
-    .path-back {
-      appearance: none; font-family: inherit; cursor: pointer;
-      display: block; margin: 22px auto 0; padding: 8px 14px;
-      background: transparent; border: 0; color: var(--accent-deep);
-      font-size: 13px; font-weight: 600;
-      -webkit-tap-highlight-color: transparent;
+    .path-pick-card.is-selected .path-pick-icon { background: var(--bg-card); }
+    .path-pick-icon svg { width: 20px; height: 20px; }
+    .path-pick-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+    .path-pick-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+    .path-pick-sub { font-size: 12.5px; color: var(--ink-soft); line-height: 1.4; }
+    .path-pick-check {
+      position: absolute; top: 10px; right: 12px;
+      color: var(--accent-deep); font-weight: 800; font-size: 15px;
     }
-    .path-back:hover { text-decoration: underline; }
     .export-mode-card:hover {
       transform: translateY(-2px);
       border-color: var(--accent);
@@ -7065,6 +7058,37 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v1.4.2  (2026-06-11)  — HOTFIX: syntax error from v1.4.1 path revert
+       v1.4.1 shipped with a SyntaxError ("missing ) after argument list") that
+       blanked the whole app. Cause: when reverting the v1.4.0 path-pick handler,
+       the str_replace accidentally consumed the opening line of the very next
+       handler ('if (action === "hist-filter") {'), orphaning its body and
+       leaving an unbalanced brace. Restored the hist-filter handler opening.
+       Root cause of it slipping through: the syntax-check wrapper used in this
+       session truncated node --check output with `head`, which masked the
+       non-zero exit. Verification now respects exit codes directly.
+     ------------------------------------------------------------
+     v1.4.1  (2026-06-11)  — Path choice at Step 2 + stepper bug fix + audit
+       Path choice relocated: reverted the v1.4.0 separate interstitial screen.
+       The Guided/Advanced choice now lives INLINE at the top of Step 2 as two
+       selectable cards. Picking Guided stays on Step 2 and reveals the
+       deployment (qty) fields below; Advanced jumps to the cart (Step 6). Step 2
+       Next is blocked until a path is picked. Edited deals skip this (mode is
+       restored/inferred during hydration).
+       STEPPER BUG FIX (the "no stepper working" report): the Deployment qty
+       steppers (Indoor/Outdoor players) did nothing — both the +/- click
+       handler and the direct-type handler only mutated NAMESPACED stepper keys;
+       the bare-key branch was a no-op ("reserved"). Both now write the value to
+       the top-level wizard field (qty_indoor / qty_outdoor), so the steppers
+       increment, decrement (floored at 0), and accept typed input.
+       Verified this session (no duplication / proper design):
+         - Field audit: every wizard field binds in exactly ONE step (zero
+           cross-step duplicates).
+         - All v1.3.x work intact: 0 user-facing tvONE strings; enriched email
+           body; handoff notifications; History region scoping; Step-1 form
+           parity (partner/consultant optional).
+         - 13/13 logic tests (stepper inc/dec/type + Step-2 path flow).
+     ------------------------------------------------------------
      v1.4.0  (2026-06-11)  — Path-choice screen after Project Context
        The Guided/Advanced choice moved out of the Step-1 form (it was a "Quote
        mode" dropdown at the top) into its own dedicated screen that appears
@@ -7650,7 +7674,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v1.4.0',
+      version: 'brightsign-v1.4.2',
       constants,
       calico,
       mv,
@@ -14351,7 +14375,8 @@
       // hdmi_in, touch, gpio, qty_*, environment) are NOT deal columns — they go
       // to raw_submission and/or bs_specs (built below), never to payload.*.
       Object.keys(deal).forEach(function(k) {
-        // Skip transient UI-only flags (underscore-prefixed, e.g. _pathPending).
+        // Skip transient UI-only flags (underscore-prefixed) so they never
+        // leak into the saved payload.
         if (k.charAt(0) === '_') return;
         // Skip server-managed + cached fields, and everything the BS builder
         // handles explicitly (lines, bs_specs source fields, reco).
@@ -14804,8 +14829,7 @@
       })();
       return {
         step: 1,
-        mode: '',                       // '' until path chosen | 'guided' | 'advanced'
-        _pathPending: false,            // true while showing path-choice screen
+        mode: '',                       // '' until path chosen at Step 2 | 'guided' | 'advanced'
         // shared deal header
         project: '', customer_name: '', partner_name: '', consultant_name: '',
         venue_type: '', city: '', state: '',
@@ -23599,13 +23623,6 @@
       //   and the CALICO-skip-Step-4 rule routes 4 → 6 directly.
       if (wizardData.step === 4 && !wizardData.hasLed) wizardData.step = 6;
       if (wizardData.step === 5)                       wizardData.step = 6;
-      // v1.4.0 — If we land past Step 1 with no path chosen yet (e.g. a fresh
-      // new quote, or a deep-link before the mode was set), show the path
-      // screen rather than a guided step that assumes a mode.
-      if (wizardData.step > 1 && !wizardData.mode) {
-        wizardData.step = 1;
-        wizardData._pathPending = true;
-      }
       renderWizard();
     }
 
@@ -23629,16 +23646,6 @@
     function renderWizard() {
       const d = wizardData;
       const visibleSteps = computeVisibleSteps(d);
-      // v1.4.0 — During the path-choice interstitial, hide the step header and
-      // the Next/Back action bar; the path screen carries its own controls.
-      if (d._pathPending) {
-        setRoot(
-          '<div class="v273-page">' +
-            '<div id="wiz-step-body">' + renderStepBody(d) + '</div>' +
-          '</div>'
-        );
-        return;
-      }
       setRoot(
         '<div class="v273-page">' +
           renderWizStepper(d.step, visibleSteps) +
@@ -23698,46 +23705,7 @@
         '</div>';
     }
 
-    // v1.4.0 — Path-choice interstitial. Shown after Project Context (Step 1)
-    // when the user has filled the project header but not yet chosen a build
-    // path. Two large cards: Guided (run the recommendation engine) or Advanced
-    // (pick exact models from a cart). Picking one sets d.mode, clears the
-    // pending flag, and advances to the right step.
-    function renderPathChoice(d) {
-      return '' +
-        '<div class="path-choice">' +
-          '<div class="path-choice-head">' +
-            '<h2 class="path-choice-title">Choose your path</h2>' +
-            '<p class="path-choice-sub">Guided \\u2014 answer a few questions and we recommend a player. ' +
-              'Advanced \\u2014 pick exact models yourself.</p>' +
-          '</div>' +
-          '<div class="path-choice-grid">' +
-            '<button class="path-card" type="button" data-action="path-pick" data-mode="guided">' +
-              '<span class="path-card-icon">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-                  '<circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>' +
-                '</svg>' +
-              '</span>' +
-              '<span class="path-card-title">Guided</span>' +
-              '<span class="path-card-sub">Recommend a player for me</span>' +
-            '</button>' +
-            '<button class="path-card" type="button" data-action="path-pick" data-mode="advanced">' +
-              '<span class="path-card-icon">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-                  '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>' +
-                '</svg>' +
-              '</span>' +
-              '<span class="path-card-title">Advanced</span>' +
-              '<span class="path-card-sub">Build my own (cart)</span>' +
-            '</button>' +
-          '</div>' +
-          '<button class="path-back" type="button" data-action="path-back">\\u2190 Back to project details</button>' +
-        '</div>';
-    }
-
     function renderStepBody(d) {
-      // v1.4.0 — path-choice interstitial gates entry past Step 1.
-      if (d._pathPending) return renderPathChoice(d);
       switch (d.step) {
         case 1: return renderStep1(d);
         case 2: return renderStep2(d);
@@ -23908,12 +23876,51 @@
       const total   = indoor + outdoor;
       const env = (indoor > 0 && outdoor > 0) ? 'Mixed (indoor + outdoor)'
                 : (outdoor > 0) ? 'Outdoor only' : 'Indoor only';
-      return '' +
-        '<h3 class="h3">Deployment</h3>' +
-        '<p class="help">How many players, and where they run. Outdoor sites use weather-capable chassis (XD / XT / XC) automatically.</p>' +
-        stepperRow('qty_indoor',  'Indoor players',  'Standard indoor environment',       indoor) +
-        stepperRow('qty_outdoor', 'Outdoor players', 'Weather-exposed / high-brightness', outdoor) +
-        '<p class="help" style="margin-top:14px;font-weight:600;">' + esc(env) + ' \u00b7 ' + total + ' player' + (total === 1 ? '' : 's') + ' total</p>';
+
+      // v1.4.1 - Path choice lives at the top of Step 2 (inline cards, not a
+      // separate screen). Guided reveals the deployment fields below; Advanced
+      // jumps to the cart (Step 6). The currently-selected path is highlighted.
+      const isGuided   = d.mode === 'guided';
+      const isAdvanced = d.mode === 'advanced';
+      const pathCards =
+        '<div class="path-pick-label">How do you want to build this quote?</div>' +
+        '<div class="path-pick-grid">' +
+          '<button class="path-pick-card' + (isGuided ? ' is-selected' : '') + '" type="button" ' +
+            'data-action="path-pick" data-mode="guided">' +
+            '<span class="path-pick-icon">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                '<circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>' +
+            '</span>' +
+            '<span class="path-pick-text">' +
+              '<span class="path-pick-title">Guided</span>' +
+              '<span class="path-pick-sub">Answer a few questions \u2014 we recommend a player</span>' +
+            '</span>' +
+            (isGuided ? '<span class="path-pick-check">\u2713</span>' : '') +
+          '</button>' +
+          '<button class="path-pick-card' + (isAdvanced ? ' is-selected' : '') + '" type="button" ' +
+            'data-action="path-pick" data-mode="advanced">' +
+            '<span class="path-pick-icon">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
+            '</span>' +
+            '<span class="path-pick-text">' +
+              '<span class="path-pick-title">Advanced</span>' +
+              '<span class="path-pick-sub">Pick exact models yourself (cart)</span>' +
+            '</span>' +
+            (isAdvanced ? '<span class="path-pick-check">\u2713</span>' : '') +
+          '</button>' +
+        '</div>';
+
+      const deployFields = isGuided
+        ? '<div class="sp-16"></div>' +
+          '<h3 class="h3">Deployment</h3>' +
+          '<p class="help">How many players, and where they run. Outdoor sites use weather-capable chassis (XD / XT / XC) automatically.</p>' +
+          stepperRow('qty_indoor',  'Indoor players',  'Standard indoor environment',       indoor) +
+          stepperRow('qty_outdoor', 'Outdoor players', 'Weather-exposed / high-brightness', outdoor) +
+          '<p class="help" style="margin-top:14px;font-weight:600;">' + esc(env) + ' \u00b7 ' + total + ' player' + (total === 1 ? '' : 's') + ' total</p>'
+        : '';
+
+      return '' + pathCards + deployFields;
     }
 
     /* ---------- Step 3: Inputs & outputs ---------- */
@@ -24997,6 +25004,12 @@
         if (!d.contact_email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.contact_email)) errors.contact_email = 'Valid email required.';
         // partner_name, consultant_name, internal_notes, external_notes: optional.
       }
+      // v1.4.1 — Step 2 now hosts the path choice (Guided / Advanced) at the
+      // top. Block Next until the user picks one; without a mode the guided
+      // deployment fields aren't even shown and the engine can't run.
+      if (d.step === 2 && d.mode !== 'guided' && d.mode !== 'advanced') {
+        errors._path = 'Choose Guided or Advanced to continue.';
+      }
       // Steps 2\u20136 (Deployment, Budget, Technical, Add-ons, CMS & Build) carry
       // no blocking validation \u2014 every field has a sensible default and the
       // recommendation engine (guided) / cart check (advanced) validates the
@@ -25132,27 +25145,22 @@
         if (!actEl) return;
         const action = actEl.getAttribute('data-action');
 
-        // v1.4.0 — Path-choice interstitial (after Step 1).
+        // v1.4.1 — Path choice (inline at top of Step 2).
         if (action === 'path-pick') {
           const mode = actEl.getAttribute('data-mode');
           const d = getWizardData();
           d.mode = (mode === 'advanced') ? 'advanced' : 'guided';
-          d._pathPending = false;
-          // Guided -> Step 2 (deployment); Advanced -> Step 6 (cart).
-          d.step = (d.mode === 'advanced') ? 6 : 2;
-          saveDraft();
-          renderWizard();
-          return;
-        }
-        if (action === 'path-back') {
-          const d = getWizardData();
-          d._pathPending = false;
-          d.step = 1;
+          // Guided: stay on Step 2 so the deployment fields appear below the
+          // cards. Advanced: jump straight to the cart (Step 6).
+          if (d.mode === 'advanced') d.step = 6;
+          else                       d.step = 2;
           saveDraft();
           renderWizard();
           return;
         }
 
+        // History filter
+        if (action === 'hist-filter') {
           const f = actEl.getAttribute('data-value');
           setHistoryFilter(f);
           return;
@@ -25283,7 +25291,12 @@
             wizardData[ns][key] = (Number(wizardData[ns][key]) || 0) + (action === 'step-inc' ? 1 : -1);
             if (wizardData[ns][key] < 0) wizardData[ns][key] = 0;
           } else {
-            // bare key — currently unused for steppers; reserved
+            // v1.4.1 — bare-key steppers (e.g. qty_indoor, qty_outdoor on the
+            // Deployment step) write directly to the top-level wizard field.
+            // Previously this branch was a no-op, so those steppers did nothing.
+            const min = (key === 'qty_total') ? 1 : 0;
+            wizardData[key] = (Number(wizardData[key]) || 0) + (action === 'step-inc' ? 1 : -1);
+            if (wizardData[key] < min) wizardData[key] = min;
           }
           saveDraft();
           rerenderPreservingScroll();
@@ -26645,6 +26658,7 @@
             return;
           }
           if (ns) wizardData[ns][key] = safe;
+          else    wizardData[key] = safe;  // v1.4.1 — bare-key direct-type (qty_indoor/outdoor)
           saveDraft();
           // Don't re-render mid-type; user is still typing.
           return;
@@ -27626,15 +27640,6 @@
         return;
       }
       d.errors = {};
-      // v1.4.0 — After Project Context (Step 1), show the path-choice screen
-      // instead of jumping straight to Step 2. Once a path is picked (or if we
-      // re-enter an existing deal that already has a mode), proceed normally.
-      if (d.step === 1 && !d._pathPending && !d.mode) {
-        d._pathPending = true;
-        UI.saveDraft();
-        UI.renderWizard();
-        return;
-      }
       // Walk the visible-steps array for the current mode (guided=[1..6],
       // advanced=[1,6]). Move to the next visible step, or stay put on the last.
       const vis = UI.computeVisibleSteps(d);
