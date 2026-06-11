@@ -6292,6 +6292,19 @@
       transition: transform var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
       -webkit-tap-highlight-color: transparent;
     }
+    /* v1.5.1 — CMS vendor sub-panel (groups deployment + term under the vendor) */
+    .cms-subpanel {
+      margin-top: 14px; padding: 14px;
+      background: var(--c-accent-soft, rgba(55,35,106,0.05));
+      border: 1px solid var(--c-border); border-radius: var(--r-md);
+    }
+    .cms-subpanel-title {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; color: var(--c-accent-deep, var(--c-accent));
+      margin-bottom: 10px;
+    }
+    .cms-subpanel .field:last-child { margin-bottom: 0; }
+
     /* v1.4.6 — Segmented pill group (resolution / outputs / power / yes-no) */
     .pill-field { margin: 0 0 14px; }
     .pill-field > label {
@@ -6318,20 +6331,21 @@
 
     /* v1.4.6 — Budget tier slider */
     .tier-field { margin: 6px 0 14px; }
-    .tier-current { margin-bottom: 14px; }
+    .tier-current { margin-bottom: 22px; }
     .tier-current-label {
       font-family: var(--font-display, inherit);
-      font-size: 30px; font-weight: 700; color: var(--c-fg); line-height: 1.1;
+      font-size: 30px; font-weight: 700; color: var(--c-fg);
+      line-height: 1.15; margin-bottom: 6px;
     }
     .tier-current-series {
-      font-size: 12px; font-weight: 600; letter-spacing: 0.08em;
-      color: var(--c-fg-mute); text-transform: uppercase; margin-top: 4px;
+      font-size: 12px; font-weight: 600; letter-spacing: 0.1em;
+      color: var(--c-fg-mute); text-transform: uppercase; margin-top: 0;
     }
     .tier-range {
       -webkit-appearance: none; appearance: none;
       width: 100%; height: 6px; border-radius: 999px;
       background: linear-gradient(90deg, var(--c-accent) 0%, var(--c-border) 100%);
-      outline: none; margin: 8px 0 12px; padding: 0; cursor: pointer;
+      outline: none; margin: 14px 0 16px; padding: 0; cursor: pointer;
     }
     .tier-range::-webkit-slider-thumb {
       -webkit-appearance: none; appearance: none;
@@ -7123,6 +7137,19 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v1.5.1  (2026-06-11)  — Budget spacing + CMS cleanup + stale line removed
+       - Budget tier: more breathing room around the big tier label / series tag
+         (Basic / LS SERIES) and around the slider, which were cramped.
+       - CMS section (Step 6): kept all three fields (vendor / deployment / term,
+         all needed for CMS pricing) but grouped the deployment + term under the
+         chosen vendor in a tinted sub-panel, so it reads as one CMS block with a
+         clearer prompt instead of three loose dropdowns.
+       - Removed the stale "Use case" review-summary line (referenced d.content,
+         the Primary use case field removed in v1.4.9).
+       Note: the console "message channel closed" error in testing is from a
+       browser extension (the app uses no chrome.runtime/messaging APIs) and is
+       harmless.
+     ------------------------------------------------------------
      v1.5.0  (2026-06-11)  — Dead-code purge (tvONE recommendation engine)
        Removed 1,658 lines (5.5% of the file) of provably-dead tvONE code that
        the BrightSign app never reaches:
@@ -7849,7 +7876,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v1.5.0',
+      version: 'brightsign-v1.5.1',
       constants,
       calico,
       mv,
@@ -23469,28 +23496,33 @@
       const total = (Number(d.qty_indoor) || 0) + (Number(d.qty_outdoor) || 0);
 
       // ---- CMS inputs ----
-      let cms = '<h3 class="h3">Content management (CMS)</h3>';
-      if (total > 25) {
-        cms += '<p class="help" style="font-weight:600;">A CMS is required for more than 25 players.</p>';
-      }
+      const cmsChosen = d.cms_vendor && d.cms_vendor !== 'None';
+      let cms = '<h3 class="h3">Content management (CMS)</h3>' +
+        '<p class="help">Pick a CMS to bundle its subscription into the quote, or leave as None.' +
+        (total > 25 ? ' <strong>A CMS is required for more than 25 players.</strong>' : '') + '</p>';
       cms += wizSelect('cms_vendor', 'CMS vendor', d.cms_vendor || 'None', [
-        { value: 'None',       label: 'None' },
+        { value: 'None',       label: 'None \u2014 player only, no CMS' },
         { value: 'BrightSign', label: 'BrightSign CMS' },
         { value: 'Korbyt',     label: 'Korbyt' },
         { value: 'Pickcel',    label: 'Pickcel' }
       ]);
-      if (d.cms_vendor && d.cms_vendor !== 'None') {
-        cms += wizSelect('cms_deployment_mode', 'Deployment', d.cms_deployment_mode || '', [
-          { value: 'local', label: 'On-premise (local)' },
-          { value: 'cloud', label: 'Cloud (hosted)' }
-        ], { placeholder: '\u2014 select \u2014' });
-        cms += wizSelect('cms_term', 'Subscription term', String(d.cms_term || ''), [
-          { value: '1', label: '1 year' },
-          { value: '2', label: '2 years' },
-          { value: '3', label: '3 years' },
-          { value: '4', label: '4 years' },
-          { value: '5', label: '5 years' }
-        ], { placeholder: '\u2014 select \u2014' });
+      // When a vendor is chosen, group its options in a tinted sub-panel so the
+      // section reads as one CMS block rather than three loose dropdowns.
+      if (cmsChosen) {
+        cms += '<div class="cms-subpanel">' +
+          '<div class="cms-subpanel-title">' + esc(d.cms_vendor) + ' subscription</div>' +
+          wizSelect('cms_deployment_mode', 'Deployment', d.cms_deployment_mode || '', [
+            { value: 'local', label: 'On-premise (local)' },
+            { value: 'cloud', label: 'Cloud (hosted)' }
+          ], { placeholder: '\u2014 select \u2014' }) +
+          wizSelect('cms_term', 'Subscription term', String(d.cms_term || ''), [
+            { value: '1', label: '1 year' },
+            { value: '2', label: '2 years' },
+            { value: '3', label: '3 years' },
+            { value: '4', label: '4 years' },
+            { value: '5', label: '5 years' }
+          ], { placeholder: '\u2014 select \u2014' }) +
+        '</div>';
       }
 
       // ---- review summary ----
@@ -23499,7 +23531,6 @@
       add('Project',  d.project || '\u2014', 1);
       add('End User', d.customer_name || '\u2014', 1);
       add('Stage',    d.stage || '\u2014', 1);
-      if (d.content) add('Use case', d.content, 1);
       const envSummary = (Number(d.qty_indoor) > 0 ? d.qty_indoor + ' indoor' : '') +
                          (Number(d.qty_indoor) > 0 && Number(d.qty_outdoor) > 0 ? ' + ' : '') +
                          (Number(d.qty_outdoor) > 0 ? d.qty_outdoor + ' outdoor' : '');
