@@ -6292,6 +6292,12 @@
       transition: transform var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
       -webkit-tap-highlight-color: transparent;
     }
+    /* v1.5.4 — Step 6 section dividers (separate CMS / Recommended / Review) */
+    .step6-divider {
+      height: 1px; background: var(--c-border);
+      margin: 24px 0 20px; opacity: 0.7;
+    }
+
     /* v1.5.1 — CMS vendor sub-panel (groups deployment + term under the vendor) */
     .cms-subpanel {
       margin-top: 14px; padding: 14px;
@@ -7137,6 +7143,34 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v1.5.4  (2026-06-11)  — CMS vendor sub-panel fix + Step 6 section dividers
+       Bug: picking a CMS vendor (e.g. BrightSign CMS) stored the value but the
+       Deployment + Term sub-panel never appeared. Cause: the data-bind select
+       handler updated wizardData and saved, but deliberately did NOT re-render
+       (to avoid stealing focus from text inputs). cms_vendor controls
+       conditional UI on the same step, so it now triggers rerenderPreservingScroll
+       on change. Handled in BOTH the 'input' (Chrome) and 'change' (Safari)
+       listeners so it fires cross-browser; selects don't have the focus-loss
+       problem text inputs do.
+       Layout: the Review summary read as if it were appended to the CMS section.
+       Added horizontal dividers between the three Step-6 blocks (CMS /
+       Recommended / Review) so each reads as its own section.
+     ------------------------------------------------------------
+     v1.5.3  (2026-06-11)  — Bug fix: home-retry ReferenceError + full save verify
+       Fixed a latent ReferenceError: the Home screen's "Retry" button (shown
+       when stats fail to load) called loadHomeSimpleStats() — a function that
+       does not exist. It now calls loadHomeKpis() (the real home-stats loader,
+       same one used on normal Home render). Tapping Retry would previously throw
+       after loadHomeRecent() and leave the KPIs unrefreshed.
+       Also verified this build end-to-end against the live backend (no code
+       change, just confirmation): a full BrightSign deal_save dry-run persisted
+       cleanly — deal header (value computed = 8 x 25000 = 200000), bs_deal_specs
+       (qty 5+3), and project_lines (LS445 x8) all written correctly; test row
+       then removed. STRUCTURED_COLS matches the live deals columns; all 8 wizard
+       stages match pipeline_stages.stage_name; actor_user_id is supplied. The
+       save path is confirmed working — the only thing gating a real save is the
+       pricebook load (fixed in v1.5.2).
+     ------------------------------------------------------------
      v1.5.2  (2026-06-11)  — Pricebook resilience (cart/build no longer dead-ends)
        Diagnosis: the "Pricebook loading" banner that blocked both the Guided
        Build and the Advanced cart is NOT a backend problem — the backend
@@ -7894,7 +7928,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v1.5.2',
+      version: 'brightsign-v1.5.4',
       constants,
       calico,
       mv,
@@ -23608,8 +23642,10 @@
       catch (e) { recoHtml = '<div class="banner warn" style="margin-top:12px">Could not build the recommendation \u2014 ' + esc(e && e.message || 'error') + '</div>'; }
 
       return cms +
-        '<h3 class="h3" style="margin-top:20px;">Recommended</h3>' + recoHtml +
-        '<h3 class="h3" style="margin-top:20px;">Review</h3>' + summaryHtml;
+        '<div class="step6-divider"></div>' +
+        '<h3 class="h3">Recommended</h3>' + recoHtml +
+        '<div class="step6-divider"></div>' +
+        '<h3 class="h3">Review</h3>' + summaryHtml;
     }
 
     /* ---------- BoM card renderer ---------- */
@@ -24307,7 +24343,7 @@
         }
 
         // v27.3.0 — Load-error retry handlers
-        if (action === 'home-retry')  { loadHomeRecent(); loadHomeSimpleStats(); return; }
+        if (action === 'home-retry')  { loadHomeRecent(); loadHomeKpis(); return; }
         if (action === 'hist-retry')  { loadHistoryList(); return; }
         if (action === 'cust-retry')  { loadCustomerList(); return; }
 
@@ -25384,6 +25420,15 @@
             wizardData[bind] = t.value;
           }
           saveDraft();
+          // v1.5.4 — cms_vendor (a select) controls the deployment/term sub-panel
+          // on Step 6. Chrome fires 'input' for selects, so re-render here too so
+          // the sub-panel appears immediately on pick. Selects don't lose focus
+          // the way text inputs would, so this is safe. (The 'change' listener
+          // has the same guard for Safari, which only fires 'change' on select.)
+          if (bind === 'cms_vendor' && t.tagName === 'SELECT') {
+            rerenderPreservingScroll();
+            return;
+          }
           // No re-render on input — would lose focus. Caller can re-render
           // explicitly when needed (e.g. projector resolution depends on
           // projector count, which uses stepper — handled separately).
@@ -25641,6 +25686,15 @@
             wizardData[bind] = t.value;
           }
           saveDraft();
+          // v1.5.4 — Some selects control conditional UI on the same step and
+          // must trigger a re-render so the dependent fields appear/disappear.
+          // cms_vendor reveals the deployment + term sub-panel on Step 6; without
+          // a re-render, picking a vendor stored the value but the sub-panel
+          // never showed. Selects don't have the focus-loss problem text inputs
+          // do, so re-rendering on change is safe.
+          if (bind === 'cms_vendor') {
+            rerenderPreservingScroll();
+          }
           return;
         }
         // alpha.7.2: Same Safari concern for saved-deal selects.
