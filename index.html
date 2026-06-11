@@ -7123,6 +7123,46 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v1.5.0  (2026-06-11)  — Dead-code purge (tvONE recommendation engine)
+       Removed 1,658 lines (5.5% of the file) of provably-dead tvONE code that
+       the BrightSign app never reaches:
+         - The entire RECOMMEND IIFE (recommendCalico / recommendMv /
+           recommendCorio + all their CORIO/CALICO/MV helpers, ~999 lines). Its
+           only callers were smoke tests; the live BrightSign engine is
+           computeReco (untouched, independent).
+         - 45 dead engine smoke-test blocks (~494 lines) that exercised the
+           removed RECOMMEND.* methods.
+         - Two orphaned tvONE render functions with zero call sites:
+           renderStep3Calico and appendSxCards (~170 lines).
+       Verified safe at every step (node --check via exit code after each removal;
+       9/9 live logic tests still pass; all live render/engine/save functions
+       intact). Every remaining reference to a removed symbol is inside a comment
+       block — zero executable references.
+       NOT removed (entangled with live code, deferred): the CATALOG object (live
+       UI reads CATALOG.version for the login + health views; its tvONE sub-data
+       is still exercised by surviving catalog tests), and tvONE render functions
+       still wired into the live saved-deal view (renderSavedDealIoSection). These
+       are dead data but cost nothing at runtime and removing them is refactoring,
+       not cleanup.
+     ------------------------------------------------------------
+     v1.4.9  (2026-06-11)  — Step 1: remove Primary use case + all-mandatory
+       Removed the "Primary use case" (content) dropdown from Step 1 entirely.
+       It was self-contained: not in SOFT_FIELDS, and the only engine reference
+       (contentAudioOnly detection) safely defaults to false when absent.
+       Made all Step-1 fields mandatory EXCEPT the two Notes fields, per request.
+       partner_name and consultant_name were optional; both are now required in
+       the form (asterisk + HTML5) AND in validateStep. Verified marker<->validator
+       parity: 17 fields total, 15 required (every * has a validator and vice
+       versa), 2 optional (internal_notes + external_notes only).
+     ------------------------------------------------------------
+     v1.4.8  (2026-06-11)  — About sheet: stale tvONE product list fixed
+       The About sheet's "Supports" row still listed tvONE product lines
+       (CORIO / CALICO / Multi Viewer / Signal Extension). Replaced with the
+       BrightSign player series (LS / HD / XD / XT / XC / AU). This was the last
+       user-visible stale tvONE product string; remaining CORIO/CALICO references
+       are confined to the dormant tvONE recommendation engine + comments/tests,
+       none reachable in BrightSign flows.
+     ------------------------------------------------------------
      v1.4.7  (2026-06-11)  — Topbar logo + favicon (the real tvONE holdout)
        Root cause of the persistent tvONE topbar logo found: the topbar markup
        had its OWN hardcoded tvONE PNG baked into the <img src="data:..."> tag
@@ -7809,7 +7849,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v1.4.7',
+      version: 'brightsign-v1.5.0',
       constants,
       calico,
       mv,
@@ -7820,1003 +7860,9 @@
 
   console.log('App ready:', CATALOG.version);
 
-  /* ============================================================
-     RECOMMEND (Session 2+3 of v27 rebuild)
-     Pure recommendation functions. Each takes a fully-normalised
-     input object and returns { chassis, cards, concerns, valueAdds }
-     plus reasons[] and meta{} for debug. No DOM reads. No window
-     globals. No side effects.
-
-     Source map (line refs are v26 index.html):
-       calico        ← recommend() L10093, pickInputCards() L9940
-                       (refactor of L10093-10264 + L9940-10090)
-       mv            ← (Session 3) recommendMWP() L10807
-       corio         ← (Session 3) recommend() in CORIO block L11464
-
-     Refactor pattern:
-       - window._tvInputBreakdownV2580.{hdmi4k,hdmiFhd,sdi12g,sdi3g,hdbt,ip}
-           → input.inputs.*
-       - window._tvInputBreakdownV2580.displayQty → input.outputs.display
-       - window._tvInputBreakdownV2580.audioNeeded → input.audio
-       - input.projectorCount/Res → input.outputs.projector/projectorRes
-       - input.outputSignal==='SDI' + input.sdiCount → input.outputs.sdi
-       - input.inputs (total) → computed from per-signal counts
-       - window._v2580_unfittableCards → returned from pick helper as {picks, unfittable}
-       - CHASSIS/INPUT_CARDS/OUTPUT_CARDS/SLOT11_ALLOWED_WHEN_SLOT12
-           → CATALOG.calico.{chassis,inputCards,outputCards,slotRules.slot11AllowedWhenSlot12}
-       - PORT_CAPACITY_4K60 → CATALOG.constants.PORT_CAPACITY_4K60
-
-     Logic preserved verbatim. Soft validation per SPEC §2.3:
-     concerns/valueAdds are data; never throw on soft issues.
-     ============================================================ */
-  const RECOMMEND = (function() {
-
-    /* ---------- CALICO ---------- */
-
-    // Pure-function port of v26 pickInputCards (L9940).
-    // Returns { picks, unfittable } — replaces window._v2580_unfittableCards
-    // side-channel. picks: [{card, qty, slot}]. unfittable: array of card keys.
-    function _pickCalicoInputCards(extraInputsNeeded, input) {
-      const IC = CATALOG.calico.inputCards;
-      const SLOT11 = CATALOG.calico.slotRules.slot11AllowedWhenSlot12;
-      const inp = input.inputs;
-
-      // v25.100.1 guard: SDI/HDBaseT/IP ALWAYS need cards even when total fits
-      // native 8. Audio also needs a card. Bail only when truly nothing to pick.
-      const nonHdmiInputs = (inp.sdi12g || 0) + (inp.sdi3g || 0) + (inp.hdbt || 0) + (inp.ip || 0);
-      const audioGuard = !!input.audio;
-      if (extraInputsNeeded <= 0 && nonHdmiInputs <= 0 && !audioGuard) {
-        return { picks: [], unfittable: [] };
-      }
-
-      // Build cardsNeeded list — verbatim v25.80 per-signal logic.
-      const cardsNeeded = []; // { key, ports, hbOnly?, lbOnly?, _placed? }
-
-      const hdmiTotal = (inp.hdmi4k || 0) + (inp.hdmiFhd || 0);
-      const NATIVE_HDMI = 8;
-      const hdmiOverflow = Math.max(0, hdmiTotal - NATIVE_HDMI);
-      if (hdmiOverflow > 0) {
-        let remaining = hdmiOverflow;
-        if (remaining >= 4) {
-          cardsNeeded.push({ key: 'HDMI_4K_4IN', ports: 4, hbOnly: true });
-          remaining -= 4;
-        }
-        while (remaining > 0) {
-          cardsNeeded.push({ key: 'HDMI_4K_2IN', ports: 2, hbOnly: false });
-          remaining -= 2;
-        }
-      }
-      if ((inp.sdi12g || 0) > 0) {
-        let r = inp.sdi12g;
-        while (r > 0) { cardsNeeded.push({ key: 'SDI_12G_4IN', ports: 4, hbOnly: true }); r -= 4; }
-      }
-      if ((inp.sdi3g || 0) > 0) {
-        let r = inp.sdi3g;
-        while (r > 0) { cardsNeeded.push({ key: 'SDI_3G_4IN', ports: 4, hbOnly: false }); r -= 4; }
-      }
-      if ((inp.hdbt || 0) > 0) {
-        let r = inp.hdbt;
-        while (r > 0) { cardsNeeded.push({ key: 'HDBASET_2IN', ports: 2, hbOnly: false }); r -= 2; }
-      }
-      if ((inp.ip || 0) > 0) {
-        let r = inp.ip;
-        while (r > 0) { cardsNeeded.push({ key: 'MEDIA_4K_IN', ports: 1, hbOnly: false }); r -= 1; }
-      }
-      if (input.audio) {
-        cardsNeeded.push({ key: 'AUDIO_2IN_4OUT', ports: 2, hbOnly: false, lbOnly: true });
-      }
-
-      if (cardsNeeded.length === 0) return { picks: [], unfittable: [] };
-
-      // Pack into 2 slots: Slot 12 = HB, Slot 11 = LB.
-      // Greedy: HB-only first, LB-only next, then flexibles respecting pairing.
-      let slot12Key = null, slot11Key = null;
-      for (let i = 0; i < cardsNeeded.length; i++) {
-        const c = cardsNeeded[i];
-        if (c.hbOnly && !slot12Key) { slot12Key = c.key; c._placed = true; break; }
-      }
-      for (let i = 0; i < cardsNeeded.length; i++) {
-        const c = cardsNeeded[i];
-        if (c.lbOnly && !c._placed && !slot11Key) { slot11Key = c.key; c._placed = true; break; }
-      }
-      const remaining = cardsNeeded.filter(c => !c._placed);
-      for (let i = 0; i < remaining.length; i++) {
-        const c = remaining[i];
-        if (!slot12Key) { slot12Key = c.key; c._placed = true; }
-        else if (!slot11Key) {
-          const allowedInSlot11 = SLOT11[slot12Key] || [];
-          if (allowedInSlot11.indexOf(c.key) >= 0) { slot11Key = c.key; c._placed = true; }
-        }
-      }
-
-      const picks = [];
-      const unfittable = [];
-      if (slot12Key) picks.push({ card: IC[slot12Key], qty: 1, slot: 'HB (Slot 12)' });
-      if (slot11Key) picks.push({ card: IC[slot11Key], qty: 1, slot: 'LB (Slot 11)' });
-      cardsNeeded.forEach(c => { if (!c._placed) unfittable.push(c.key); });
-
-      return { picks, unfittable };
-    }
-
-    function recommendCalico(rawInput) {
-      // Normalize input — defensive defaults so callers can omit zeros.
-      const input = {
-        inputs: Object.assign(
-          { hdmi4k: 0, hdmiFhd: 0, sdi12g: 0, sdi3g: 0, hdbt: 0, ip: 0 },
-          (rawInput && rawInput.inputs) || {}
-        ),
-        outputs: Object.assign(
-          { display: 0, displayRes: 'FHD', projector: 0, projectorRes: 'FHD', sdi: 0, led: false },
-          (rawInput && rawInput.outputs) || {}
-        ),
-        screens: (rawInput && rawInput.screens) || [],
-        audio: !!(rawInput && rawInput.audio)
-      };
-
-      const PORT_CAP = CATALOG.constants.PORT_CAPACITY_4K60;
-      const CHASSIS = CATALOG.calico.chassis;
-      const OUT = CATALOG.calico.outputCards;
-
-      const ledPixels = input.screens.reduce((a, s) => a + (s.pixels || 0), 0);
-      const ledPorts = input.screens.reduce((a, s) => a + (s.ports || 0), 0);
-      const rawLedPorts = ledPixels > 0 ? ledPixels / PORT_CAP : 0;
-      const projPorts = input.outputs.projector || 0;
-
-      const userWantsSDI = (input.outputs.sdi || 0) > 0;
-      const sdiPortsNeeded = userWantsSDI ? input.outputs.sdi : 0;
-      const displayPorts = input.outputs.display || 0;
-      const hdmiPortsNeeded = ledPorts + projPorts + displayPorts;
-      const portsNeeded = hdmiPortsNeeded + sdiPortsNeeded;
-
-      const inputsNeeded = input.inputs.hdmi4k + input.inputs.hdmiFhd +
-                           input.inputs.sdi12g + input.inputs.sdi3g +
-                           input.inputs.hdbt + input.inputs.ip;
-
-      // v27.3.9 — Pixel-budget reformulation (Dipenkumar 2026-05-26).
-      //   - Projector ports removed from pixel formula (projectors are
-      //     valid outputs but pixel-budget is a display+LED concept; the
-      //     prior formula over-counted by including projector ports).
-      //   - HDMI display ports now contribute, gated by displayRes (FHD/4K)
-      //     which has flowed from the wizard since v27.3.1 but went unused.
-      //   `projPorts` and `projectorRes` remain consumed elsewhere (BoM
-      //   reasons, edge-blend logic) — only the pixel formula changed.
-      const dispPixelsPerUnit = input.outputs.displayRes === '4K' ? PORT_CAP : (1920 * 1080);
-      const totalPixelsProcessed = ledPixels + (displayPorts * dispPixelsPerUnit);
-
-      const reasons = [];
-      const concerns = [];
-      const valueAdds = [];
-      let chassis;
-      let outputCardInfeasible = false;
-
-      // CHASSIS CASCADE (v25.99.33 logic verbatim — 1U eligible only when EVERY input is HDMI)
-      const needsInputCardSlots = (input.inputs.sdi12g + input.inputs.sdi3g +
-                                   input.inputs.hdbt + input.inputs.ip) > 0;
-      const audioInChassis = input.audio;
-      if (!userWantsSDI && !needsInputCardSlots && !audioInChassis
-          && hdmiPortsNeeded <= 2 && inputsNeeded <= 6) {
-        chassis = 'C7-PRO-1200';
-        reasons.push('HDMI output ports: ' + hdmiPortsNeeded + ' — fits C7-PRO-1200 (2 ports native)');
-        reasons.push('Inputs: ' + inputsNeeded + ' (all HDMI) — fits C7-PRO-1200 (6 inputs native)');
-      } else {
-        chassis = 'C7-PRO-2200';
-        if (userWantsSDI) reasons.push('SDI output required — C7-PRO-2200 (1U does not support SDI)');
-        if (needsInputCardSlots) reasons.push('Non-HDMI inputs (SDI / HDBaseT / IP) require expansion cards — C7-PRO-2200 (1U fixed chassis has no input slots)');
-        if (audioInChassis) reasons.push('Audio input card required — C7-PRO-2200 (only the 2U chassis has the input slot for it)');
-        if (!userWantsSDI && hdmiPortsNeeded <= 4 && inputsNeeded <= 8) {
-          reasons.push('HDMI outputs: ' + hdmiPortsNeeded + ', Inputs: ' + inputsNeeded + ' — fit C7-PRO-2200 native');
-        }
-        if (hdmiPortsNeeded > 4) reasons.push('HDMI outputs: ' + hdmiPortsNeeded + ' — exceeds native 4, output card required');
-        if (inputsNeeded > 8) reasons.push('Inputs: ' + inputsNeeded + ' — exceeds native 8, input card required');
-      }
-
-      const model = CHASSIS[chassis];
-      const cards = [];
-
-      if (chassis === 'C7-PRO-2200') {
-        const nativeHdmi = model.maxPortsNative; // 4
-
-        // OUTPUT CARD SELECTION — Slot 10 holds exactly ONE card
-        if (userWantsSDI && hdmiPortsNeeded > nativeHdmi) {
-          outputCardInfeasible = true;
-          concerns.push('⚠ NO SINGLE-CHASSIS RECOMMENDATION — SDI output AND more than ' + nativeHdmi + ' HDMI outputs both requested. Slot 10 holds only ONE card (either SDI or HDMI expansion, not both). Requested: ' + hdmiPortsNeeded + ' HDMI + ' + sdiPortsNeeded + ' SDI. Multi-unit scenario required.');
-        } else if (userWantsSDI && sdiPortsNeeded > 4) {
-          outputCardInfeasible = true;
-          concerns.push('⚠ NO SINGLE-CHASSIS RECOMMENDATION — ' + sdiPortsNeeded + ' SDI outputs requested, but SDI_12G 4-OUT card provides max 4 ports. Multi-unit scenario required.');
-        } else if (!userWantsSDI && hdmiPortsNeeded > 12) {
-          outputCardInfeasible = true;
-          concerns.push('⚠ NO SINGLE-CHASSIS RECOMMENDATION — ' + hdmiPortsNeeded + ' HDMI outputs requested, but single C7-PRO-2200 maxes at 12 (native 4 × 4K + card 8 × FHD). Multi-unit scenario required.');
-        } else if (!userWantsSDI && hdmiPortsNeeded > 8 && hdmiPortsNeeded <= 12) {
-          cards.push({
-            sku: OUT.HDMI_2K_8OUT.sku, description: OUT.HDMI_2K_8OUT.desc, qty: 1,
-            notes: 'Adds 8 × FHD HDMI ports (native 4 × 4K HDMI remain). Used because 4K expansion card maxes at 8 total ports.',
-            role: 'output_card'
-          });
-          reasons.push(hdmiPortsNeeded + ' HDMI outputs → HDMI_2K 8-OUT card (native 4 × 4K + card 8 × FHD = 12 HDMI ports total)');
-          concerns.push('Port mix: 4 outputs available at 4K (native HDMI) and 8 outputs at FHD (via HDMI_2K 8-OUT card). Map displays to 4K vs FHD paths during BOM review.');
-        } else if (!userWantsSDI && hdmiPortsNeeded > nativeHdmi) {
-          cards.push({
-            sku: OUT.HDMI_4K_4OUT.sku, description: OUT.HDMI_4K_4OUT.desc, qty: 1,
-            notes: 'Adds 4 × 4K HDMI ports (native 4 + card 4 = 8 × 4K HDMI total)',
-            role: 'output_card'
-          });
-          reasons.push(hdmiPortsNeeded + ' HDMI outputs → HDMI_4K 4-OUT card (native 4 + card 4 = 8 × 4K HDMI)');
-        } else if (userWantsSDI && sdiPortsNeeded > 0 && sdiPortsNeeded <= 4) {
-          cards.push({
-            sku: OUT.SDI_12G_4OUT.sku, description: OUT.SDI_12G_4OUT.desc, qty: 1,
-            notes: 'Adds 4 × 4K SDI ports (' + sdiPortsNeeded + ' needed). Native 4 × 4K HDMI outputs remain available.',
-            role: 'output_card'
-          });
-          reasons.push(sdiPortsNeeded + ' SDI output(s) → SDI_12G 4-OUT card');
-          if (hdmiPortsNeeded > 0) reasons.push(hdmiPortsNeeded + ' HDMI output(s) use native 4 × 4K HDMI ports (no HDMI expansion card needed)');
-        }
-        // HDMI ≤ 4 with no SDI → no output card (chassis only handles it)
-
-        // INPUT CARD SELECTION
-        const extraIn = Math.max(0, inputsNeeded - model.inputs);
-        const audioNeeded = input.audio;
-        const hasNonHdmi = needsInputCardSlots;
-        const shouldPickCards = extraIn > 0 || audioNeeded || hasNonHdmi;
-
-        if (shouldPickCards) {
-          const result = _pickCalicoInputCards(extraIn, input);
-          const inputCards = result.picks;
-          const unfittable = result.unfittable;
-          inputCards.forEach(ic => {
-            cards.push({
-              sku: ic.card.sku, description: ic.card.desc, qty: ic.qty,
-              notes: 'Input expansion — adds ' + (ic.qty * ic.card.ports) + ' × ' + ic.card.resolution + ' ' + ic.card.signal + ' port(s) [' + ic.slot + ']',
-              role: 'input_card'
-            });
-          });
-          if (inputCards.length > 0) {
-            reasons.push(inputCards.map(ic => ic.qty + '× ' + ic.card.sku + ' ' + ic.slot).join(' + '));
-          }
-          if (unfittable.length > 0) {
-            outputCardInfeasible = true;
-            concerns.push('⚠ NOT POSSIBLE in single chassis — ' + unfittable.length + ' card(s) cannot fit in remaining slots: ' + unfittable.join(', ') + '. Slot constraints (HB-only, LB-only, or cross-slot pairing rules) prevent fit. Multi-chassis scenario required.');
-          }
-        } else if (inputsNeeded > 0 && inputsNeeded <= model.inputs && (input.inputs.hdmiFhd || 0) > 0) {
-          // VALUE-ADD: Inputs fit native AND user asked for FHD → promote to 4K free.
-          const fhdCount = input.inputs.hdmiFhd;
-          const k4Count = input.inputs.hdmi4k || 0;
-          valueAdds.push({
-            title: 'Free upgrade: ' + fhdCount + ' × FHD inputs promoted to 4K',
-            body: 'Your requirement lists ' + k4Count + ' × 4K + ' + fhdCount + ' × FHD inputs. All ' + inputsNeeded + ' inputs fit within the C7-PRO-2200\'s 8 native 4K-capable inputs — so we deliver all ' + inputsNeeded + ' as 4K at no additional cost. No FHD input card required, and the customer gets full 4K capability across every source.'
-          });
-        }
-        if (inputsNeeded > 16) {
-          outputCardInfeasible = true;
-          concerns.push('⚠ NO SINGLE-CHASSIS RECOMMENDATION — ' + inputsNeeded + ' inputs requested exceed single-chassis max of 16. Multi-unit scenario required.');
-        }
-
-        // Defensive BoM-completeness check (v25.99.37 — never silently ship
-        // unwireable BoM when non-HDMI inputs lack a matching input card).
-        const nonHdmiIn = input.inputs.sdi12g + input.inputs.sdi3g +
-                          input.inputs.hdbt + input.inputs.ip;
-        const inCardCount = cards.filter(c => c.role === 'input_card').length;
-        if (nonHdmiIn > 0 && inCardCount === 0) {
-          concerns.push('⚠ INPUT CARD MISSING — the configuration includes ' + nonHdmiIn + ' non-HDMI input(s) (SDI / HDBaseT / IP) but no input-expansion card is in the BoM. The C7-PRO-2200 native inputs are HDMI-only — these sources cannot connect without the matching input card. Re-check the input configuration.');
-        }
-
-        // v27.27.0 — CALICO PRO 2U fan-filter auto-include. The official
-        // C7-PRO-2U-FILTER kit (max 1 per C7-PRO-2200) ships automatically
-        // whenever the 2U chassis is recommended. No UI control — mirrors the
-        // CORIO CM2-Filter behaviour.
-        const fanFilter2U = CATALOG.calico.accessories && CATALOG.calico.accessories.FAN_FILTER_2U;
-        if (fanFilter2U) {
-          cards.push({
-            sku: fanFilter2U.sku,
-            description: fanFilter2U.desc,
-            qty: 1,
-            role: 'accessory'
-          });
-          reasons.push('Fan filter auto-included — recommended for every 2U (C7-PRO-2200) deployment');
-        }
-      }
-
-      if (projPorts > 0) {
-        const mode = projPorts > 1 ? 'edge blend' : 'standalone';
-        reasons.push(projPorts + '× ' + input.outputs.projectorRes + ' projector' +
-                     (projPorts > 1 ? 's' : '') + ' (' + mode + ') — 1 port per projector');
-      }
-
-      return {
-        chassis,
-        cards,
-        concerns,
-        valueAdds,
-        reasons,
-        meta: {
-          // v27.1.2 #4b — chassisLabel guaranteed (was missing on CALICO path,
-          // caused duplicate-SKU display in renderBomCard). Built from CATALOG
-          // entry: form-factor + native inputs/outputs gives a useful one-liner.
-          chassisLabel: (CHASSIS[chassis] && CHASSIS[chassis].model) || chassis,
-          // v27.1.2 #4b — io summary for the new I/O spec line in BoM card.
-          // renderBomCard formats this via HUMAN_LABELS into prose like
-          // "4 inputs (2× HDMI 4K, 2× HDMI FHD) · 1 output (HDMI)".
-          io: {
-            inputs:  Object.assign({}, input.inputs),
-            outputs: (function() {
-              // Strip projectorRes + displayRes (non-count) before copying so the
-              // summary doesn't try to format them as qty.
-              const o = Object.assign({}, input.outputs);
-              delete o.projectorRes;
-              delete o.displayRes;  // v27.3.1 — Display 4K/FHD selector
-              delete o.led;     // boolean, not a port count for v27.1.1 shape
-              return o;
-            })()
-          },
-          model: model.model, formFactor: model.formFactor,
-          ledPixels, ledPorts, rawLedPorts, projPorts,
-          hdmiPortsNeeded, sdiPortsNeeded, portsNeeded,
-          totalPixelsProcessed, inputsNeeded,
-          hasCards: cards.length > 0,
-          outputCardInfeasible
-        }
-      };
-    }
-
-    // v27.25.0 — moved here (was after the return; see breadcrumb below).
-    // v27.19.0 — CORIO signal→card translator. The input FORM collects GENERIC
-    // signal types (per Dipenkumar's handwritten spec p.1): 4K HDMI / FHD HDMI /
-    // HDBaseT / 3G SDI / 12G SDI / DVI-U. The engine maps each generic signal to
-    // the matching CARD KEY in the chosen ecosystem (CM for Micro/Mini, CM2 for
-    // CM2). "Diff card may have diff port available" — the per-ecosystem card may
-    // differ (e.g. 4K HDMI in → CM 'HDMI 4K' 2-port card vs CM2 'HDMI 4K 4-in'
-    // 4-port card). 12G-SDI has no CM card → it lives only in the CM2 map, so
-    // selecting it forces CM2 (handled by _corioAutoSelectChassis needsCM2Card).
-    var CORIO_SIGNAL_MAP = {
-      input: {
-        '4K HDMI':  { CM: 'HDMI 4K',    CM2: 'HDMI 4K 4-in' },
-        'FHD HDMI': { CM: 'HDMI 1080p', CM2: 'HDMI 1080p' },
-        'HDBaseT':  { CM: 'HDBaseT',    CM2: 'HDBaseT' },
-        '3G SDI':   { CM: 'SDI 3G',     CM2: 'SDI 3G' },
-        '12G SDI':  { CM: null,         CM2: 'SDI 12G' },   // CM2-only → forces CM2
-        'DVI-U':    { CM: 'DVI-U',      CM2: 'DVI-U' }
-      },
-      output: {
-        '4K HDMI':  { CM: 'HDMI 4K 2-out',    CM2: 'HDMI 4K' },
-        'FHD HDMI': { CM: 'HDMI 1080p 4-out', CM2: 'HDMI 1080p' },
-        'HDBaseT':  { CM: 'HDBaseT scaled',   CM2: null },   // no CM2 HDBT out card
-        '3G SDI':   { CM: 'SDI 3G scaled',    CM2: null },   // CM2 uses 12G SDI out
-        '12G SDI':  { CM: null,               CM2: 'SDI 12G' }
-      }
-    };
-
-    return Object.freeze({
-      calico: recommendCalico,
-      mv: recommendMv,
-      corio: recommendCorio
-    });
-
-    /* ---------- MV (CORIOview) ---------- */
-
-    // Pure-function port of v26 recommendMWP (L10807).
-    // Soft issues → concerns. Hard impossibilities (signal not in catalog,
-    // too many cards for MTO) → returned as { error, chassis: null, cards: [] }
-    // per SPEC §2.3.
-    function recommendMv(rawInput) {
-      const input = {
-        inputs: Array.isArray(rawInput && rawInput.inputs) ? rawInput.inputs : [],
-        outputSignal: (rawInput && rawInput.outputSignal) || ''
-      };
-
-      const CHASSIS = CATALOG.mv.chassis;
-      const INPUT_MODS = CATALOG.mv.inputModules;
-      const OUTPUT_MODS = CATALOG.mv.outputModules;
-      const MTO = CHASSIS['MWP-MTO'];
-
-      // Normalize: filter to entries with valid signal + qty>0
-      const validInputs = input.inputs.filter(r => r && r.signal && Number(r.qty) > 0);
-
-      if (validInputs.length === 0 || !input.outputSignal) {
-        return {
-          chassis: null, cards: [], concerns: [], valueAdds: [],
-          reasons: [],
-          meta: { type: 'empty', kind: validInputs.length === 0 ? 'no-inputs' : 'no-output' },
-          error: validInputs.length === 0 ? 'No input rows provided.' : 'No output signal selected.'
-        };
-      }
-
-      const reasons = [];
-      const concerns = [];
-      const valueAdds = [];
-
-      // v27.1.2 #4b — build a uniform meta.io shape so renderBomCard can
-      // format the I/O spec line consistently across MV / CALICO / CORIO.
-      // For MV: inputs is keyed by signal label (already human-readable);
-      // outputs is { [outputSignal]: 1 }.
-      function _buildMvIo() {
-        const ins = {};
-        validInputs.forEach(function(r) {
-          ins[r.signal] = (ins[r.signal] || 0) + (Number(r.qty) || 0);
-        });
-        const outs = {};
-        if (input.outputSignal) outs[input.outputSignal] = 1;
-        return { inputs: ins, outputs: outs };
-      }
-
-      // alpha.9.2: Rule A — Multi Viewer caps at 2 distinct signal types.
-      // Defense in depth; the wizard UI also enforces this at the row level.
-      // Fires before the downstream card-count guard (MTO.maxInputCards) so the
-      // rep sees a spec-level message ("max 2 distinct") rather than a hardware
-      // message ("needs 4 cards but supports 2").
-      const MV_DISTINCT_CAP = 2;
-      const distinctSigs = new Set(validInputs.map(r => r.signal)).size;
-      if (distinctSigs > MV_DISTINCT_CAP) {
-        return {
-          chassis: null, cards: [], concerns, valueAdds, reasons,
-          meta: { type: 'error' },
-          error: 'Multi Viewer supports max ' + MV_DISTINCT_CAP + ' distinct signal types. Requested: ' + distinctSigs + '. Remove rows or change signal types to reduce to ' + MV_DISTINCT_CAP + ' distinct.'
-        };
-      }
-
-      // Step 1: SINGLE-signal path — try a fixed preset (only possible when output is 4K HDMI).
-      if (validInputs.length === 1) {
-        const single = validInputs[0];
-        const sig = single.signal;
-        const qty = Number(single.qty) || 0;
-
-        if (input.outputSignal === '4K HDMI') {
-          // Iterate fixed-chassis entries in catalog order, find ones matching signal & capacity.
-          const candidates = [];
-          Object.keys(CHASSIS).forEach(sku => {
-            const c = CHASSIS[sku];
-            if (c.fixedChassis && c.inSignal === sig && c.inPorts >= qty) {
-              candidates.push(c);
-            }
-          });
-          if (candidates.length > 0) {
-            candidates.sort((a, b) => a.inPorts - b.inPorts);
-            const chosen = candidates[0];
-            reasons.push('Single-signal ' + qty + '× ' + sig + ' → ' + chosen.sku + ' (' + chosen.inPorts + '-port preset)');
-            return {
-              chassis: chosen.sku,
-              cards: [],
-              concerns,
-              valueAdds,
-              reasons,
-              meta: {
-                type: 'fixed', chassisLabel: chosen.desc,
-                io: _buildMvIo(),
-                inputSignal: sig, outputSignal: input.outputSignal, inputCount: qty
-              }
-            };
-          }
-        }
-
-        // Step 2: single-signal MTO fallback
-        const inputCard = INPUT_MODS[sig];
-        const outputCard = OUTPUT_MODS[input.outputSignal];
-        if (!inputCard) {
-          return {
-            chassis: null, cards: [], concerns, valueAdds, reasons,
-            meta: { type: 'error' },
-            error: 'Input signal "' + sig + '" not supported in current catalog.'
-          };
-        }
-        if (!outputCard) {
-          return {
-            chassis: null, cards: [], concerns, valueAdds, reasons,
-            meta: { type: 'error' },
-            error: 'Output signal "' + input.outputSignal + '" not supported in current catalog.'
-          };
-        }
-        const cardsNeeded = Math.ceil(qty / inputCard.portsPerCard);
-        if (cardsNeeded > MTO.maxInputCards) {
-          return {
-            chassis: null, cards: [], concerns, valueAdds, reasons,
-            meta: { type: 'error' },
-            error: 'This configuration needs ' + cardsNeeded + ' input cards but MWP-MTO supports max ' + MTO.maxInputCards + '. Contact tvONE for a custom build.'
-          };
-        }
-
-        // Preserve PLACEHOLDER warning as a concern if the output card is flagged.
-        if (outputCard.placeholder) {
-          concerns.push('Output module ' + outputCard.sku + ' is a PLACEHOLDER SKU; awaiting tvONE confirmation.');
-        }
-
-        reasons.push('No fixed preset matches — MTO build: ' + cardsNeeded + '× ' + inputCard.sku + ' + 1× ' + outputCard.sku);
-        return {
-          chassis: 'MWP-MTO',
-          cards: [
-            { sku: inputCard.sku,  description: inputCard.desc,  qty: cardsNeeded, role: 'input_card',  inputSignal: sig },
-            { sku: outputCard.sku, description: outputCard.desc, qty: 1,           role: 'output_card', outputSignal: input.outputSignal }
-          ],
-          concerns,
-          valueAdds,
-          reasons,
-          meta: {
-            type: 'mto', chassisLabel: MTO.desc,
-            io: _buildMvIo(),
-            inputSignal: sig, outputSignal: input.outputSignal, inputCount: qty
-          }
-        };
-      }
-
-      // Step 3: MIXED-input MTO path — always MWP-MTO with one card per signal type.
-      const outputCard = OUTPUT_MODS[input.outputSignal];
-      if (!outputCard) {
-        return {
-          chassis: null, cards: [], concerns, valueAdds, reasons,
-          meta: { type: 'error' },
-          error: 'Output signal "' + input.outputSignal + '" not supported in current catalog.'
-        };
-      }
-
-      const cardLines = [];
-      let totalCards = 0;
-      const signalLabels = [];
-      let totalPorts = 0;
-      for (let i = 0; i < validInputs.length; i++) {
-        const row = validInputs[i];
-        const sig = row.signal;
-        const qty = Number(row.qty) || 0;
-        const inputCard = INPUT_MODS[sig];
-        if (!inputCard) {
-          return {
-            chassis: null, cards: [], concerns, valueAdds, reasons,
-            meta: { type: 'error' },
-            error: 'Input signal "' + sig + '" not supported in current catalog.'
-          };
-        }
-        const cardsNeeded = Math.ceil(qty / inputCard.portsPerCard);
-        cardLines.push({
-          sku: inputCard.sku, description: inputCard.desc, qty: cardsNeeded,
-          role: 'input_card', inputSignal: sig
-        });
-        totalCards += cardsNeeded;
-        signalLabels.push(qty + '× ' + sig);
-        totalPorts += qty;
-      }
-
-      if (totalCards > MTO.maxInputCards) {
-        return {
-          chassis: null, cards: [], concerns, valueAdds, reasons,
-          meta: { type: 'error' },
-          error: 'Mixed-input build needs ' + totalCards + ' input cards but MWP-MTO supports max ' + MTO.maxInputCards + '. Reduce signal-type count or quantities. Contact tvONE for higher-density custom builds.'
-        };
-      }
-
-      if (outputCard.placeholder) {
-        concerns.push('Output module ' + outputCard.sku + ' is a PLACEHOLDER SKU; awaiting tvONE confirmation.');
-      }
-
-      const summarySignals = signalLabels.join(' + ');
-      reasons.push('Mixed inputs (' + summarySignals + ') → MWP-MTO + ' + cardLines.length + ' input card(s) + 1× ' + outputCard.sku);
-
-      return {
-        chassis: 'MWP-MTO',
-        cards: cardLines.concat([
-          { sku: outputCard.sku, description: outputCard.desc, qty: 1, role: 'output_card', outputSignal: input.outputSignal }
-        ]),
-        concerns,
-        valueAdds,
-        reasons,
-        meta: {
-          type: 'mto-mixed', chassisLabel: MTO.desc + ' \u00b7 mixed input (' + summarySignals + ')',
-          io: _buildMvIo(),
-          inputSignal: summarySignals, outputSignal: input.outputSignal, inputCount: totalPorts
-        }
-      };
-    }
-
-    /* ---------- CORIO ---------- */
-
-    /* v27.3.1 — CORIO chassis auto-select.
-       Canvas-first per Dipenkumar's design rule (2026-05-25 notebook):
-         ≤ 5 canvases → C3-503 Micro (3 modular slots, FHD, CM ecosystem)
-         ≤ 6 canvases → C3-510 Mini  (5 modular slots + 1 fixed DVI-U, FHD, CM ecosystem)
-         > 6 canvases → CM2-547-MK2  (13 slots, 4K, CM2 ecosystem)
-       Then a card-slot override: if the input/output signal mix requires more
-       cards than the canvas-picked chassis has slots, upgrade to the smallest
-       chassis that fits.
-       4K signal mix (HDMI 4K, SDI 12G, etc.) still forces CM2 unconditionally
-       because Micro/Mini are FHD-only.
-       Backward-compat: if canvasCount is 0 / undefined, falls back to the
-       v26 slot-driven heuristic (estSlots ≤ 3 → Micro, else Mini). */
-    // v27.16.1 — Real slot-fit math. For each signal type, slots needed =
-    // ceil(requested ports / that card's port capacity). Uses the actual
-    // CATALOG card port counts (CM ecosystem for the fit check, since the
-    // canvas rule starts at a CM chassis). Returns {input, output, total}.
-    function _corioSlotsNeeded(inputCounts, outputCounts, ecosystem) {
-      // v27.19.0 — Ecosystem-aware slot math. Each signal type maps to its
-      // matching card in the GIVEN ecosystem (CM for Micro/Mini, CM2 for CM2)
-      // and cards-needed = ceil(ports requested / that card's port capacity).
-      // "Diff card may have diff port available" (handwritten spec p.1): the
-      // port-per-card lookup is built from the actual card list, not assumed.
-      // Returns {input, output, total} CARD (= slot) counts.
-      function slotsFor(counts, cards) {
-        var portByKey = {};
-        cards.forEach(function (c) { portByKey[c.key] = c.ports; });
-        var slots = 0;
-        Object.keys(counts).forEach(function (k) {
-          var qty = Number(counts[k] || 0);
-          if (qty <= 0) return;
-          var perCard = portByKey[k] || 2;   // default 2 if signal not in this ecosystem
-          slots += Math.ceil(qty / perCard);
-        });
-        return slots;
-      }
-      var corio = (CATALOG && CATALOG.corio) ? CATALOG.corio : {};
-      var set = (ecosystem === 'CM2' && corio.cm2) ? corio.cm2
-              : (corio.cm || { inputs: [], outputs: [] });
-      var inSlots  = slotsFor(inputCounts,  set.inputs);
-      var outSlots = slotsFor(outputCounts, set.outputs);
-      return { input: inSlots, output: outSlots, total: inSlots + outSlots };
-    }
-
-    function _corioAutoSelectChassis(inputCounts, outputCounts, canvasCount) {
-      // v27.19.0 — Corrected per handwritten CORIO logic (2 pages):
-      //   STEP 1: Canvas count picks the chassis tier:
-      //           Canvas ≤5 → C3-503 Micro · =6 → C3-510 Mini · >6 → CM2-547-MK2
-      //   STEP 2: Check the input+output cards FIT the canvas-picked chassis.
-      //           Micro/Mini are ALL-FLEX → total cards vs total slots (3 / 5).
-      //           If they don't fit: upgrade Micro→Mini→CM2 "likewise".
-      //           CM2 has fixed input/output slots → checked separately in the
-      //           post-selection validation (recommendCorio tail); CM2 is the
-      //           top tier so it can't upgrade further.
-      //   4K is NOT a chassis trigger on its own — CM Micro/Mini accept 4K
-      //   inputs (downscaled). BUT a CM2-ONLY card (true-4K input cards /
-      //   12G-SDI) cannot physically host on a CM chassis, so it forces CM2.
-      const needsCM2Card = (Number(inputCounts['HDMI 4K 2-in'] || 0) > 0)
-                        || (Number(inputCounts['HDMI 4K 4-in'] || 0) > 0)
-                        || (Number(inputCounts['SDI 12G'] || 0) > 0)
-                        || (Number(outputCounts['SDI 12G'] || 0) > 0);
-      if (needsCM2Card) return 'CM2-547-MK2';
-
-      // STEP 1 — canvas-count chassis pick
-      const canv = Number(canvasCount) || 0;
-      let chassis;
-      if (canv > 6)       chassis = 'CM2-547-MK2';
-      else if (canv > 5)  chassis = 'C3-510';   // 6 → Mini
-      else if (canv >= 1) chassis = 'C3-503';   // 1..5 → Micro
-      else {
-        // No canvas count entered → pick the smallest CM chassis that fits the
-        // cards (never CM2 from absence of canvas data).
-        const n0 = _corioSlotsNeeded(inputCounts, outputCounts, 'CM').total;
-        chassis = (n0 <= 3) ? 'C3-503' : 'C3-510';
-      }
-
-      // STEP 2 — slot fit-check (all-flex model for Micro/Mini). Upgrade only
-      // if the CM cards overflow the flex slots of the canvas-picked chassis.
-      // Uses CM ecosystem port-counts (Micro/Mini host CM cards).
-      const need = _corioSlotsNeeded(inputCounts, outputCounts, 'CM').total;
-      const SLOTS = { 'C3-503': 3, 'C3-510': 5, 'CM2-547-MK2': 13 };
-      if (chassis === 'C3-503' && need > SLOTS['C3-503']) {
-        chassis = (need <= SLOTS['C3-510']) ? 'C3-510' : 'CM2-547-MK2';
-      } else if (chassis === 'C3-510' && need > SLOTS['C3-510']) {
-        chassis = 'CM2-547-MK2';
-      }
-
-      return chassis;
-    }
-
-    // v27.25.0 — CORIO_SIGNAL_MAP definition RELOCATED above the IIFE return.
-    // It sat here (past `return Object.freeze`), so its assignment never ran →
-    // CORIO_SIGNAL_MAP was undefined → "Cannot read properties of undefined
-    // (reading 'input')" on every CORIO quote. Now defined before the return.
-
-    // Translate generic signal counts → ecosystem card-key counts.
-    // signalCounts: { '4K HDMI': n, 'HDBaseT': n, ... }; dir: 'input'|'output'.
-    // Returns { cardKeyCounts, unmapped: [signals with no card in this ecosystem] }.
-    function _corioTranslateSignals(signalCounts, dir, ecosystem) {
-      var map = CORIO_SIGNAL_MAP[dir] || {};
-      var eco = (ecosystem === 'CM2') ? 'CM2' : 'CM';
-      var out = {};
-      var unmapped = [];
-      Object.keys(signalCounts || {}).forEach(function (sig) {
-        var qty = Number(signalCounts[sig] || 0);
-        if (qty <= 0) return;
-        var entry = map[sig];
-        var cardKey = entry ? entry[eco] : null;
-        if (!cardKey) { unmapped.push(sig); return; }
-        out[cardKey] = (out[cardKey] || 0) + qty;
-      });
-      return { cardKeyCounts: out, unmapped: unmapped };
-    }
-
-    // Does this generic signal set contain a CM2-only signal (forces CM2)?
-    function _corioSignalsForceCM2(inputSignals, outputSignals) {
-      function has(sigs) {
-        sigs = sigs || {};
-        return Object.keys(sigs).some(function (s) {
-          if (Number(sigs[s] || 0) <= 0) return false;
-          var inMap = CORIO_SIGNAL_MAP.input[s] || CORIO_SIGNAL_MAP.output[s];
-          return inMap && inMap.CM === null && inMap.CM2;   // CM2-only signal
-        });
-      }
-      return has(inputSignals) || has(outputSignals);
-    }
-
-    // Pure-function port of v26 recommendCORIO (L11463) + auto-select combined.
-    // Caller can override chassis via rawInput.chassisSku; otherwise auto-selected.
-    // v27.3.1 — accepts rawInput.canvases (number) per CORIO design rule.
-    function recommendCorio(rawInput) {
-      const input = {
-        inputs: (rawInput && rawInput.inputs) || {},
-        outputs: (rawInput && rawInput.outputs) || {},
-        audio: (rawInput && rawInput.audio) || null,             // '2-4' | '8-8' | null
-        psuChoice: (rawInput && rawInput.psuChoice) || '400',     // '400' | '700' | '400+redundant' | ...
-        fanFilter: !!(rawInput && rawInput.fanFilter),
-        autoBlank: (rawInput && rawInput.autoBlank !== false),    // default true
-        chassisSku: (rawInput && rawInput.chassisSku) || null,
-        canvases: Number((rawInput && rawInput.canvases) || 0)     // v27.3.1
-      };
-
-      const CHASSIS = CATALOG.corio.chassis;
-      const ACC = CATALOG.corio.accessories;
-      const PSUS = CATALOG.corio.psu;
-
-      // v27.19.0 — GENERIC SIGNAL PATH. If the new form supplied generic signal
-      // counts (signalInputs / signalOutputs), resolve the chassis tier first,
-      // then translate signals → ecosystem card keys, and feed them into
-      // input.inputs / input.outputs so the existing card-selection runs as-is.
-      var _signalTranslation = null;
-      const sigIn  = (rawInput && rawInput.signalInputs)  || null;
-      const sigOut = (rawInput && rawInput.signalOutputs) || null;
-      if (sigIn || sigOut) {
-        // Chassis from canvas + CM2-forcing signals (12G-SDI etc.)
-        var forcedCM2 = _corioSignalsForceCM2(sigIn, sigOut);
-        var tierSku = input.chassisSku;
-        if (!tierSku) {
-          var canv = input.canvases;
-          if (forcedCM2) tierSku = 'CM2-547-MK2';
-          else if (canv > 6) tierSku = 'CM2-547-MK2';
-          else if (canv > 5) tierSku = 'C3-510';
-          else if (canv >= 1) tierSku = 'C3-503';
-          else tierSku = 'C3-503';   // refined by overflow below
-        }
-        var tierEco = (CHASSIS[tierSku] && CHASSIS[tierSku].cardEcosystem === 'CM2') ? 'CM2' : 'CM';
-        // Translate using the tier's ecosystem, then slot-overflow upgrade for CM.
-        var tIn  = _corioTranslateSignals(sigIn,  'input',  tierEco);
-        var tOut = _corioTranslateSignals(sigOut, 'output', tierEco);
-        // Overflow check for CM tiers (Micro/Mini all-flex) → upgrade likewise.
-        if (tierSku === 'C3-503' || tierSku === 'C3-510') {
-          var needCards = _corioSlotsNeeded(tIn.cardKeyCounts, tOut.cardKeyCounts, 'CM').total;
-          var FLEX = { 'C3-503': 3, 'C3-510': 5 };
-          if (tierSku === 'C3-503' && needCards > FLEX['C3-503']) {
-            tierSku = (needCards <= FLEX['C3-510']) ? 'C3-510' : 'CM2-547-MK2';
-          } else if (tierSku === 'C3-510' && needCards > FLEX['C3-510']) {
-            tierSku = 'CM2-547-MK2';
-          }
-          // If upgraded to CM2, re-translate against CM2 ecosystem.
-          if (tierSku === 'CM2-547-MK2') {
-            tierEco = 'CM2';
-            tIn  = _corioTranslateSignals(sigIn,  'input',  'CM2');
-            tOut = _corioTranslateSignals(sigOut, 'output', 'CM2');
-          }
-        }
-        input.inputs = tIn.cardKeyCounts;
-        input.outputs = tOut.cardKeyCounts;
-        input.chassisSku = tierSku;
-        _signalTranslation = { tierEco: tierEco, unmappedIn: tIn.unmapped, unmappedOut: tOut.unmapped, forcedCM2: forcedCM2 };
-      }
-
-      // Resolve chassis: explicit override or auto-select (canvas-first per v27.3.1).
-      const chassisSku = input.chassisSku || _corioAutoSelectChassis(input.inputs, input.outputs, input.canvases);
-      const chassis = CHASSIS[chassisSku];
-      if (!chassis) {
-        return {
-          chassis: null, cards: [], concerns: [], valueAdds: [], reasons: [],
-          meta: { type: 'error' },
-          error: 'Unknown chassis: ' + chassisSku
-        };
-      }
-
-      const moduleSet = (chassis.cardEcosystem === 'CM2') ? CATALOG.corio.cm2 : CATALOG.corio.cm;
-      const cards = [];
-      const concerns = [];
-      const valueAdds = [];
-      const reasons = [];
-      let slotsInputUsed = 0, slotsOutputUsed = 0;
-
-      // v27.3.14b — CM2 fan filter auto-include. Recommended-practice for any
-      // CM2-547-MK2 deployment per Dipenkumar 2026-05-26. User can untick the
-      // wizard toggle to suppress (the toggle value still wins) — but the
-      // default for CM2 builds becomes "yes, include the filter". CM Micro /
-      // Mini chassis stay opt-in. Surfaced in `reasons` so the user can see
-      // why the line was added.
-      if (chassis.cardEcosystem === 'CM2' && !input.fanFilter) {
-        input.fanFilter = true;
-        reasons.push('Fan filter auto-added (recommended for CM2 chassis)');
-      }
-
-      reasons.push('Auto-selected ' + chassis.label + ' (' + chassis.sku + ') based on signal mix');
-      // v27.19.0 — Surface any generic signals that have no card in the chosen
-      // ecosystem (e.g. 3G-SDI output requested but chassis resolved to CM2,
-      // which has no 3G-SDI output card — CM2 uses 12G-SDI out).
-      if (_signalTranslation) {
-        (_signalTranslation.unmappedIn || []).forEach(function (s) {
-          concerns.push('Input signal "' + s + '" has no card in the ' + _signalTranslation.tierEco + ' ecosystem — not added. Review the chassis/signal choice.');
-        });
-        (_signalTranslation.unmappedOut || []).forEach(function (s) {
-          concerns.push('Output signal "' + s + '" has no card in the ' + _signalTranslation.tierEco + ' ecosystem — not added. Review the chassis/signal choice.');
-        });
-      }
-      // v27.16.1 — Canvas count is the sole chassis driver. Emit the rule line
-      // when a canvas count was supplied, so the user sees the tier reasoning.
-      if (input.canvases > 0 && !input.chassisSku) {
-        if (input.canvases > 6) {
-          reasons.push('Canvas count: ' + input.canvases + ' (> 6) \u2014 CORIOmaster2 (CM2) required');
-        } else if (input.canvases > 5) {
-          reasons.push('Canvas count: ' + input.canvases + ' \u2014 CORIOmaster Mini fits 6 canvases');
-        } else {
-          reasons.push('Canvas count: ' + input.canvases + ' \u2014 CORIOmaster Micro fits up to 5 canvases');
-        }
-      }
-      // v27.16.1 — If CM2 was selected on a \u22646-canvas build, it can only be
-      // because a CM2-only card (true-4K input / 12G-SDI) was chosen. Surface
-      // that explicitly so the chassis tier isn't surprising.
-      if (chassis.sku === 'CM2-547-MK2' && input.canvases > 0 && input.canvases <= 6 && !input.chassisSku) {
-        concerns.push('Upgraded to CORIOmaster2 (CM2): the selected 4K / 12G-SDI cards require the CM2 chassis (CM Micro/Mini cannot host these cards).');
-      }
-
-      // Input cards
-      for (let i = 0; i < moduleSet.inputs.length; i++) {
-        const card = moduleSet.inputs[i];
-        const qty = Number(input.inputs[card.key] || 0);
-        if (qty <= 0) continue;
-        let portsRequired = qty;
-        // C3-510 has 2 fixed DVI-U input ports built-in — subtract them only for DVI-U
-        if (chassis.fixedInput && card.key === chassis.fixedInput.signal) {
-          portsRequired = Math.max(0, qty - chassis.fixedInput.ports);
-        }
-        if (portsRequired <= 0) {
-          reasons.push(qty + '× ' + card.key + ' absorbed by chassis fixed input — no card needed');
-          continue;
-        }
-        const cardsNeeded = Math.ceil(portsRequired / card.ports);
-        cards.push({
-          sku: card.sku, qty: cardsNeeded,
-          description: card.desc + ' (' + qty + ' port' + (qty === 1 ? '' : 's') + ' requested)',
-          role: 'input_card', inputSignal: card.key,
-          meta: { portsPerCard: card.ports, portsRequested: qty, portsAfterFixed: portsRequired }
-        });
-        slotsInputUsed += cardsNeeded;
-      }
-
-      // Output cards
-      for (let i = 0; i < moduleSet.outputs.length; i++) {
-        const card = moduleSet.outputs[i];
-        const qty = Number(input.outputs[card.key] || 0);
-        if (qty <= 0) continue;
-        const cardsNeeded = Math.ceil(qty / card.ports);
-        cards.push({
-          sku: card.sku, qty: cardsNeeded,
-          description: card.desc + ' (' + qty + ' port' + (qty === 1 ? '' : 's') + ' requested)',
-          role: 'output_card', outputSignal: card.key,
-          meta: { portsPerCard: card.ports, portsRequested: qty }
-        });
-        slotsOutputUsed += cardsNeeded;
-      }
-
-      // Audio module
-      if (input.audio === '2-4' && moduleSet.audio['2-4']) {
-        cards.push({
-          sku: moduleSet.audio['2-4'].sku, qty: 1,
-          description: moduleSet.audio['2-4'].desc,
-          role: 'audio_card'
-        });
-        slotsInputUsed += 1;
-      } else if (input.audio === '8-8') {
-        if (moduleSet.audio['8-8']) {
-          cards.push({
-            sku: moduleSet.audio['8-8'].sku, qty: 1,
-            description: moduleSet.audio['8-8'].desc,
-            role: 'audio_card'
-          });
-          slotsInputUsed += 1;
-        } else {
-          return {
-            chassis: null, cards: [], concerns, valueAdds, reasons,
-            meta: { type: 'error', attemptedChassis: chassis.sku },
-            error: '8-IN / 8-OUT audio module only available on CORIOmaster Micro/Mini. CM2 supports 2-IN/3-OUT only.'
-          };
-        }
-      }
-
-      // Slot validation (hard math)
-      const totalSlotsUsed = slotsInputUsed + slotsOutputUsed;
-      if (chassis.slotsAreFlex) {
-        if (totalSlotsUsed > chassis.slots) {
-          return {
-            chassis: null, cards: [], concerns, valueAdds, reasons,
-            meta: { type: 'error', attemptedChassis: chassis.sku, slotsUsed: totalSlotsUsed, slotsTotal: chassis.slots },
-            error: 'Configuration needs ' + totalSlotsUsed + ' slots but ' + chassis.label + ' has only ' + chassis.slots + ' slots. Reduce the input/output count or pick a larger chassis.'
-          };
-        }
-      } else {
-        // CM2: input vs output split with 1 flex overflow slot.
-        const inputCap = (chassis.slotsInputOnly + chassis.slotsInputHb);  // 8 for CM2
-        const outputCap = chassis.slotsOutput;                              // 7 for CM2
-        const flexCap = chassis.slotsFlex;                                  // 1 for CM2
-        const inputOver = Math.max(0, slotsInputUsed - inputCap);
-        const outputOver = Math.max(0, slotsOutputUsed - outputCap);
-        const flexUsed = inputOver + outputOver;
-        if (flexUsed > flexCap) {
-          return {
-            chassis: null, cards: [], concerns, valueAdds, reasons,
-            meta: { type: 'error', attemptedChassis: chassis.sku, slotsInputUsed, slotsOutputUsed },
-            error: 'Configuration needs ' + slotsInputUsed + ' input slot(s) + ' + slotsOutputUsed + ' output slot(s) — exceeds CM2 capacity (max 8 input + 7 output + 1 flex). Reduce cards or split into multiple chassis.'
-          };
-        }
-      }
-
-      // CPU module (auto-include)
-      cards.push({
-        sku: chassis.cpuModule, qty: 1,
-        description: 'HTTPS CPU module for ' + chassis.label,
-        role: 'accessory'
-      });
-
-      // PSU
-      if (chassis.psuRequired) {
-        const is700 = String(input.psuChoice).indexOf('700') === 0;
-        const psu = is700 ? PSUS['700'] : PSUS['400'];
-        cards.push({
-          sku: psu.sku, qty: 1,
-          description: psu.desc + ' (chassis PSU)',
-          role: 'accessory'
-        });
-        if (String(input.psuChoice).indexOf('redundant') !== -1) {
-          cards.push({
-            sku: psu.sku, qty: 1,
-            description: psu.desc + ' (redundant)',
-            role: 'accessory'
-          });
-        }
-      }
-
-      // Fan filter. v27.25.1 — guard to CM2 only: it's auto-included for CM2
-      // (above), and a manually-ticked box must never put a CM2-only filter on
-      // a Micro/Mini chassis.
-      if (input.fanFilter && chassis.cardEcosystem === 'CM2') {
-        const filter = ACC['CM2-Filter'];
-        cards.push({
-          sku: filter.sku, qty: 1,
-          description: filter.desc,
-          role: 'accessory'
-        });
-      }
-
-      // CM-BLANK auto-fill for Micro/Mini if enabled
-      if (input.autoBlank && (chassis.sku === 'C3-503' || chassis.sku === 'C3-510')) {
-        const unfilled = chassis.slots - totalSlotsUsed;
-        if (unfilled > 0) {
-          const blank = ACC['CM-BLANK'];
-          cards.push({
-            sku: blank.sku, qty: unfilled,
-            description: blank.desc + (unfilled === 1 ? '' : 's'),
-            role: 'accessory'
-          });
-        }
-      }
-
-      return {
-        chassis: chassis.sku,
-        cards,
-        concerns,
-        valueAdds,
-        reasons,
-        meta: {
-          type: 'ok',
-          chassisLabel: chassis.label,
-          // v27.1.2 #4b — io summary for the BoM I/O spec line.
-          io: {
-            inputs:  Object.assign({}, input.inputs),
-            outputs: Object.assign({}, input.outputs)
-          },
-          ecosystem: chassis.cardEcosystem,
-          slotsUsed: totalSlotsUsed,
-          slotsTotal: chassis.slots,
-          slotsInputUsed,
-          slotsOutputUsed
-        }
-      };
-    }
-  })();
+  // [tvONE recommendation engine removed in v1.5.0 — the CORIO/CALICO/MV/SX
+  //  RECOMMEND IIFE was dead code from the tvONE app. BrightSign uses
+  //  computeReco (see APP IIFE). Removed ~1000 lines + their smoke tests.]
 
   console.log('RECOMMEND ready: BrightSign player ladder + PoE+');
 
@@ -12642,42 +11688,6 @@
     //   1. SX handlers moved from input listener to click listener (silent
     //      ReferenceError since v27.3.12 made every SX button non-functional).
     //   2. CM2 fan filter auto-included when chassis resolves to CM2 (was opt-in).
-    check('v27.3.14b: RECOMMEND.corio auto-adds CM2-Filter when chassis is CM2',
-      () => {
-        // Build that forces CM2 (12G-SDI is CM2-only).
-        const r = RECOMMEND.corio({
-          inputs: { 'SDI 12G': 1 },
-          outputs: { 'HDMI 4K': 1 }
-          // NB: no fanFilter:true passed; auto-include should fire.
-        });
-        if (!r || !r.cards) return 'no cards returned';
-        const skus = r.cards.map(c => c.sku);
-        return skus.includes('CM2-Filter')
-          || 'CM2 chassis selected but CM2-Filter not auto-added; got: ' + skus.join(',');
-      });
-    check('v27.3.14b: RECOMMEND.corio does NOT auto-add CM2-Filter for CM Micro chassis',
-      () => {
-        // FHD-only build → CM ecosystem (C3-503 Micro), should NOT get the filter.
-        const r = RECOMMEND.corio({
-          inputs: { 'HDMI 1080p': 1 },
-          outputs: { 'HDMI 1080p': 1 },
-          canvases: 2
-        });
-        if (!r || !r.cards) return 'no cards returned';
-        const skus = r.cards.map(c => c.sku);
-        return !skus.includes('CM2-Filter')
-          || 'CM Micro chassis got CM2-Filter wrongly; got: ' + skus.join(',');
-      });
-    check('v27.3.14b: RECOMMEND.corio emits reason line when fan filter is auto-added',
-      () => {
-        const r = RECOMMEND.corio({
-          inputs: { 'SDI 12G': 1 },
-          outputs: { 'HDMI 4K': 1 }
-        });
-        if (!r || !r.reasons) return 'no reasons array';
-        const hasReason = r.reasons.some(line => line.indexOf('Fan filter auto-added') !== -1);
-        return hasReason || 'expected "Fan filter auto-added" reason; got: ' + r.reasons.join(' | ');
-      });
     check('v27.3.14b: SX handlers no longer reference actEl in input listener',
       () => {
         // Defensive: the v27.3.14b relocation removed 16 misplaced handlers.
@@ -12779,38 +11789,6 @@
       () => UI._screenDimensions(0, 1080, 2.5).ok === false
         || 'got ok=true unexpectedly');
     // Engine pixel-formula change: projector dropped, display added.
-    check('v27.3.9: engine totalPixelsProcessed excludes projector contribution',
-      () => {
-        const r = RECOMMEND.calico({
-          inputs: { hdmi4k: 1, hdmiFhd: 0, sdi12g: 0, sdi3g: 0, hdbt: 0, ip: 0 },
-          outputs: { display: 0, displayRes: 'FHD', projector: 2, projectorRes: '4K', sdi: 0 },
-          screens: [], audio: false
-        });
-        return r && r.meta && r.meta.totalPixelsProcessed === 0
-          || 'got: ' + (r && r.meta && r.meta.totalPixelsProcessed);
-      });
-    check('v27.3.9: engine totalPixelsProcessed adds display×4K pixel-budget',
-      () => {
-        const r = RECOMMEND.calico({
-          inputs: { hdmi4k: 1, hdmiFhd: 0, sdi12g: 0, sdi3g: 0, hdbt: 0, ip: 0 },
-          outputs: { display: 2, displayRes: '4K', projector: 0, projectorRes: 'FHD', sdi: 0 },
-          screens: [], audio: false
-        });
-        const want = 2 * (3840 * 2160);
-        return r && r.meta && r.meta.totalPixelsProcessed === want
-          || 'got: ' + (r && r.meta && r.meta.totalPixelsProcessed) + ' want: ' + want;
-      });
-    check('v27.3.9: engine totalPixelsProcessed adds display×FHD pixel-budget',
-      () => {
-        const r = RECOMMEND.calico({
-          inputs: { hdmi4k: 1, hdmiFhd: 0, sdi12g: 0, sdi3g: 0, hdbt: 0, ip: 0 },
-          outputs: { display: 2, displayRes: 'FHD', projector: 0, projectorRes: 'FHD', sdi: 0 },
-          screens: [], audio: false
-        });
-        const want = 2 * (1920 * 1080);
-        return r && r.meta && r.meta.totalPixelsProcessed === want
-          || 'got: ' + (r && r.meta && r.meta.totalPixelsProcessed) + ' want: ' + want;
-      });
 
     /* ---------- v27.1.2 invariants ---------- */
     // §1.2 — HUMAN_LABELS structural shape
@@ -12857,45 +11835,6 @@
           || 'got: ' + JSON.stringify(w.screens);
       });
     // #4b — meta.io shape after recommendCalico
-    check('v27.1.2 #4b: recommendCalico return has meta.chassisLabel non-empty',
-      () => {
-        const r = RECOMMEND.calico({ inputs: { hdmi4k: 1 }, outputs: { display: 1 } });
-        return (r && r.meta && typeof r.meta.chassisLabel === 'string' && r.meta.chassisLabel.length > 0)
-          || 'got: ' + (r && r.meta && r.meta.chassisLabel);
-      });
-    check('v27.1.2 #4b: recommendCalico chassisLabel !== chassis SKU (dedupe)',
-      () => {
-        const r = RECOMMEND.calico({ inputs: { hdmi4k: 1 }, outputs: { display: 1 } });
-        return (r && r.chassis && r.meta && r.meta.chassisLabel !== r.chassis)
-          || 'got: chassis=' + (r && r.chassis) + ' label=' + (r && r.meta && r.meta.chassisLabel);
-      });
-    check('v27.1.2 #4b: recommendCalico return has meta.io.inputs + meta.io.outputs',
-      () => {
-        const r = RECOMMEND.calico({ inputs: { hdmi4k: 2 }, outputs: { display: 1 } });
-        return (r && r.meta && r.meta.io && r.meta.io.inputs && r.meta.io.outputs
-                && r.meta.io.inputs.hdmi4k === 2 && r.meta.io.outputs.display === 1)
-          || 'got: ' + JSON.stringify(r && r.meta && r.meta.io);
-      });
-    check('v27.1.2 #4b: recommendCorio return has meta.io',
-      () => {
-        const r = RECOMMEND.corio({ inputs: { 'HDMI 4K': 1 }, outputs: { 'HDMI 4K': 1 } });
-        // v27.1.3 S2 — coerce truthy chain to boolean
-        return !!(r && r.meta && r.meta.io && r.meta.io.inputs)
-          || 'got: ' + JSON.stringify(r && r.meta && r.meta.io);
-      });
-    check('v27.1.2 #4b: recommendMv fixed path has meta.io',
-      () => {
-        // v27.1.3 S3 — MV input modules are keyed '4K HDMI' (not 'HDMI 4K'
-        // which is CORIO vocabulary). Wrong key fell through to error path
-        // which has no meta.io, so the test failed for a fake reason.
-        const r = RECOMMEND.mv({
-          inputs: [{ signal: '4K HDMI', qty: 1 }],
-          outputSignal: '4K HDMI'
-        });
-        // v27.1.3 S2 — coerce truthy chain to boolean
-        return !!(r && r.meta && r.meta.io && r.meta.io.inputs)
-          || 'got: ' + JSON.stringify(r && r.meta && r.meta.io);
-      });
 
     check('Object.isFrozen(CATALOG)',
       () => Object.isFrozen(CATALOG) === true || 'not frozen');
@@ -13016,193 +11955,23 @@
 
     /* ---------- Session 2: RECOMMEND.calico smoke (SPEC §5.1) ---------- */
 
-    check('SPEC §6 example: 3× HDMI 4K → 2 display → C7-PRO-1200, no cards',
-      () => {
-        const r = RECOMMEND.calico({
-          inputs: { hdmi4k: 3, hdmiFhd: 0, sdi12g: 0, sdi3g: 0, hdbt: 0, ip: 0 },
-          outputs: { display: 2, projector: 0, sdi: 0, led: false },
-          screens: [],
-          audio: false
-        });
-        if (r.chassis !== 'C7-PRO-1200') return 'chassis: ' + r.chassis;
-        if (r.cards.length !== 0) return 'cards: ' + r.cards.length;
-        if (r.concerns.length !== 0) return 'concerns: ' + JSON.stringify(r.concerns);
-        if (r.valueAdds.length !== 0) return 'valueAdds: ' + r.valueAdds.length;
-        return true;
-      });
 
-    check('CALICO small: 4× HDMI 4K + 2× HDMI FHD → 2 display → C7-PRO-1200',
-      () => {
-        const r = RECOMMEND.calico({
-          inputs: { hdmi4k: 4, hdmiFhd: 2 },
-          outputs: { display: 2 }
-        });
-        if (r.chassis !== 'C7-PRO-1200') return 'chassis: ' + r.chassis;
-        if (r.cards.length !== 0) return 'expected no cards (1U has no slots), got ' + r.cards.length;
-        return true;
-      });
 
-    check('CALICO medium: 2× HDMI 4K + 1× SDI 12G → 2 display + 1 SDI → 2200 + SDI_12G_4OUT + SDI_12G_4IN',
-      () => {
-        const r = RECOMMEND.calico({
-          inputs: { hdmi4k: 2, sdi12g: 1 },
-          outputs: { display: 2, sdi: 1 }
-        });
-        if (r.chassis !== 'C7-PRO-2200') return 'chassis: ' + r.chassis;
-        const skus = r.cards.map(c => c.sku);
-        const wantOut = 'C7-PRO-SDI-12G-4OUT';
-        const wantIn = 'C7-PRO-SDI-12G-4IN';
-        if (!skus.includes(wantOut)) return 'missing output card; got: ' + skus.join(',');
-        if (!skus.includes(wantIn)) return 'missing input card; got: ' + skus.join(',');
-        const inputCard = r.cards.find(c => c.sku === wantIn);
-        if (inputCard.role !== 'input_card') return 'input card role wrong: ' + inputCard.role;
-        return true;
-      });
 
-    check('CALICO large: 10× HDMI 4K + 1 LED + 1 display → 2200 + HDMI_4K_2IN (no output card)',
-      () => {
-        const r = RECOMMEND.calico({
-          inputs: { hdmi4k: 10 },
-          outputs: { display: 1, led: true },
-          screens: [{ pixels: 3840 * 2160, ports: 1 }]
-        });
-        if (r.chassis !== 'C7-PRO-2200') return 'chassis: ' + r.chassis;
-        const skus = r.cards.map(c => c.sku);
-        // v27.27.0 — 2U BoM now also carries the auto-included fan filter; assert on
-        // the non-accessory cards (input/output) and confirm the filter is present.
-        const nonAcc = r.cards.filter(c => c.role !== 'accessory').map(c => c.sku);
-        if (nonAcc.length !== 1) return 'expected 1 card (input only), got ' + nonAcc.length + ': ' + nonAcc.join(',');
-        if (nonAcc[0] !== 'C7-PRO-HDMI-4K2IN') return 'expected HDMI_4K_2IN, got ' + nonAcc[0];
-        if (!skus.includes('C7-PRO-2U-FILTER')) return '2U fan filter not auto-added; got: ' + skus.join(',');
-        if (r.meta.hdmiPortsNeeded !== 2) return 'hdmiPortsNeeded: ' + r.meta.hdmiPortsNeeded;
-        return true;
-      });
 
-    check('CALICO edge: 4× 4K + 4× FHD = 8 native, no cards, value-add fires',
-      () => {
-        const r = RECOMMEND.calico({
-          inputs: { hdmi4k: 4, hdmiFhd: 4 },
-          outputs: { display: 2 }
-        });
-        if (r.chassis !== 'C7-PRO-2200') return 'chassis: ' + r.chassis;
-        // v27.27.0 — only the auto-included 2U fan filter is expected (no I/O cards).
-        const nonAcc = r.cards.filter(c => c.role !== 'accessory');
-        if (nonAcc.length !== 0) return 'expected 0 non-accessory cards, got ' + nonAcc.length;
-        if (!r.cards.some(c => c.sku === 'C7-PRO-2U-FILTER')) return '2U fan filter not auto-added';
-        if (r.valueAdds.length !== 1) return 'expected 1 valueAdd, got ' + r.valueAdds.length;
-        if (!/Free upgrade/.test(r.valueAdds[0].title)) return 'valueAdd title: ' + r.valueAdds[0].title;
-        return true;
-      });
 
-    check('CALICO infeasibility: SDI + HDMI > 4 → output infeasible concern',
-      () => {
-        const r = RECOMMEND.calico({
-          inputs: { hdmi4k: 6 },
-          outputs: { display: 6, sdi: 1 }
-        });
-        if (r.chassis !== 'C7-PRO-2200') return 'chassis: ' + r.chassis;
-        if (!r.meta.outputCardInfeasible) return 'expected outputCardInfeasible=true';
-        if (!r.concerns.some(c => /NO SINGLE-CHASSIS/.test(c))) return 'expected NO SINGLE-CHASSIS concern';
-        return true;
-      });
 
-    check('CALICO defensive: SDI input bypassing card selection trips INPUT CARD MISSING',
-      () => {
-        // Synthetic: ask for SDI 3G input but force chassis-only by no audio/non-HDMI...
-        // Actually this can't happen by construction now — the card picker fires when
-        // non-HDMI inputs exist. So instead, verify the engine correctly picks the SDI
-        // card when SDI inputs are requested (the assertion's normal-happy path).
-        const r = RECOMMEND.calico({
-          inputs: { hdmi4k: 2, sdi3g: 2 },
-          outputs: { display: 2 }
-        });
-        const skus = r.cards.map(c => c.sku);
-        if (!skus.includes('C7-PRO-SDI-3G-4IN')) return 'expected SDI_3G_4IN, got: ' + skus.join(',');
-        if (r.concerns.some(c => /INPUT CARD MISSING/.test(c))) return 'unexpected INPUT CARD MISSING';
-        return true;
-      });
 
     check('CALICO returns frozen RECOMMEND module',
       () => Object.isFrozen(RECOMMEND) === true || 'RECOMMEND not frozen');
 
-    check('CALICO normalization: missing fields default to 0/false',
-      () => {
-        const r = RECOMMEND.calico({});  // empty input
-        if (r.chassis !== 'C7-PRO-1200') return 'chassis: ' + r.chassis;
-        if (r.cards.length !== 0) return 'cards: ' + r.cards.length;
-        return true;
-      });
 
-    check('v27.27.0: CALICO 2U auto-includes C7-PRO-2U-FILTER (1U does not)',
-      () => {
-        const r2u = RECOMMEND.calico({ inputs: { hdmi4k: 2, sdi12g: 1 }, outputs: { display: 2, sdi: 1 } });
-        if (r2u.chassis !== 'C7-PRO-2200') return '2U test chassis: ' + r2u.chassis;
-        const filter = r2u.cards.find(c => c.sku === 'C7-PRO-2U-FILTER');
-        if (!filter) return '2U filter not added; got: ' + r2u.cards.map(c => c.sku).join(',');
-        if (filter.role !== 'accessory') return 'filter role: ' + filter.role;
-        if (filter.qty !== 1) return 'filter qty: ' + filter.qty;
-        const r1u = RECOMMEND.calico({ inputs: { hdmi4k: 3 }, outputs: { display: 2 } });
-        if (r1u.chassis !== 'C7-PRO-1200') return '1U test chassis: ' + r1u.chassis;
-        if (r1u.cards.some(c => c.sku === 'C7-PRO-2U-FILTER')) return '1U should NOT carry the 2U filter';
-        return true;
-      });
 
     /* ---------- Session 3: RECOMMEND.mv smoke (SPEC §5.1) ---------- */
 
-    check('MV small: 4× FHD HDMI → 4K HDMI out → MWP-4H-1Y preset',
-      () => {
-        const r = RECOMMEND.mv({
-          inputs: [{ signal: 'FHD HDMI', qty: 4 }],
-          outputSignal: '4K HDMI'
-        });
-        if (r.chassis !== 'MWP-4H-1Y') return 'chassis: ' + r.chassis;
-        if (r.cards.length !== 0) return 'expected no cards (fixed preset), got ' + r.cards.length;
-        if (r.meta.type !== 'fixed') return 'type: ' + r.meta.type;
-        return true;
-      });
 
-    check('MV medium: 8× FHD HDMI → 4K HDMI out → MWP-8H-1Y preset',
-      () => {
-        const r = RECOMMEND.mv({
-          inputs: [{ signal: 'FHD HDMI', qty: 8 }],
-          outputSignal: '4K HDMI'
-        });
-        if (r.chassis !== 'MWP-8H-1Y') return 'chassis: ' + r.chassis;
-        if (r.meta.type !== 'fixed') return 'type: ' + r.meta.type;
-        return true;
-      });
 
-    check('MV large (single-signal MTO): 4× 4K HDMI → DVI-I out → MWP-MTO + cards',
-      () => {
-        const r = RECOMMEND.mv({
-          inputs: [{ signal: '4K HDMI', qty: 4 }],
-          outputSignal: 'DVI-I'
-        });
-        if (r.chassis !== 'MWP-MTO') return 'chassis: ' + r.chassis;
-        if (r.cards.length !== 2) return 'expected 2 cards (in + out), got ' + r.cards.length;
-        const skus = r.cards.map(c => c.sku);
-        if (!skus.includes('CV-HDMI-4K-2IN-FF')) return 'missing input card; got: ' + skus.join(',');
-        if (!skus.includes('CV-DVI-I-SC-2OUT-FF')) return 'missing output card; got: ' + skus.join(',');
-        return true;
-      });
 
-    check('MV edge (mixed inputs): HDMI + SDI → 4K HDMI out → MWP-MTO with 2 input cards',
-      () => {
-        const r = RECOMMEND.mv({
-          inputs: [
-            { signal: 'FHD HDMI', qty: 4 },
-            { signal: '3G-SDI', qty: 4 }
-          ],
-          outputSignal: '4K HDMI'
-        });
-        if (r.chassis !== 'MWP-MTO') return 'chassis: ' + r.chassis;
-        if (r.meta.type !== 'mto-mixed') return 'type: ' + r.meta.type;
-        // 1 HDMI card + 1 SDI card + 1 output card = 3 lines
-        if (r.cards.length !== 3) return 'expected 3 cards, got ' + r.cards.length;
-        const inputCards = r.cards.filter(c => c.role === 'input_card');
-        if (inputCards.length !== 2) return 'expected 2 input cards, got ' + inputCards.length;
-        return true;
-      });
 
     // ---- v27.1.0 B8: chassisLabel set on all 3 MV recommend paths ----
     // Pre-v27.1 these three RECOMMEND.mv branches stamped `chassisDesc`
@@ -13210,81 +11979,12 @@
     // BoM card x2) read `chassisLabel`. Result: MV BoM rows showed blank
     // description. Regressing requires re-touching the rename — these
     // checks catch that immediately.
-    check('B8: MV fixed-chassis path sets meta.chassisLabel',
-      () => {
-        // 4× FHD HDMI in / 4K HDMI out → MWP-4H-1Y preset (proven by the
-        // "MV small" smoke above). Previous attempt used FHD HDMI out
-        // which has no matching fixed chassis → routed to error path.
-        const r = RECOMMEND.mv({ inputs: [{ signal: 'FHD HDMI', qty: 4 }], outputSignal: '4K HDMI' });
-        return (r && r.meta && r.meta.type === 'fixed' && typeof r.meta.chassisLabel === 'string' && r.meta.chassisLabel.length > 0)
-          || 'meta=' + JSON.stringify(r && r.meta);
-      });
-    check('B8: MV MTO single-signal path sets meta.chassisLabel',
-      () => {
-        const r = RECOMMEND.mv({ inputs: [{ signal: '4K HDMI', qty: 4 }], outputSignal: 'DVI-I' });
-        return (r && r.meta && r.meta.type === 'mto' && typeof r.meta.chassisLabel === 'string' && r.meta.chassisLabel.length > 0)
-          || 'meta=' + JSON.stringify(r && r.meta);
-      });
-    check('B8: MV MTO mixed-input path sets meta.chassisLabel',
-      () => {
-        const r = RECOMMEND.mv({
-          inputs: [{ signal: 'FHD HDMI', qty: 4 }, { signal: '3G-SDI', qty: 4 }],
-          outputSignal: '4K HDMI'
-        });
-        return (r && r.meta && r.meta.type === 'mto-mixed' && typeof r.meta.chassisLabel === 'string' && r.meta.chassisLabel.length > 0)
-          || 'meta=' + JSON.stringify(r && r.meta);
-      });
 
-    check('MV error: too many cards for MTO (within distinct cap)',
-      () => {
-        // alpha.9.2: was 3 distinct × qty 4 (4 cards); after Rule A that fires
-        // the distinct-cap guard first. Reworked to 2 distinct + high qty so
-        // the totalCards > maxInputCards branch still has coverage.
-        const r = RECOMMEND.mv({
-          inputs: [
-            { signal: 'FHD HDMI', qty: 4 },
-            { signal: '3G-SDI',   qty: 12 }
-          ],
-          outputSignal: '4K HDMI'
-        });
-        if (!r.error) return 'expected error, got chassis: ' + r.chassis;
-        if (!/MTO supports max/.test(r.error)) return 'error msg: ' + r.error;
-        return true;
-      });
 
-    check('MV PLACEHOLDER preserved: HDMI 1080p output surfaces concern',
-      () => {
-        const r = RECOMMEND.mv({
-          inputs: [{ signal: '4K HDMI', qty: 4 }],
-          outputSignal: 'HDMI 1080p'
-        });
-        if (!r.concerns.some(c => /PLACEHOLDER/.test(c))) return 'expected PLACEHOLDER concern; concerns: ' + JSON.stringify(r.concerns);
-        return true;
-      });
 
-    check('MV empty input → graceful error',
-      () => {
-        const r = RECOMMEND.mv({ inputs: [], outputSignal: '4K HDMI' });
-        if (r.chassis !== null) return 'chassis: ' + r.chassis;
-        if (!r.error) return 'expected error';
-        return true;
-      });
 
     /* ---------- Session 3: RECOMMEND.corio smoke (SPEC §5.1) ---------- */
 
-    check('CORIO small: 2× HDMI 1080p + 1× HDMI 1080p out → C3-503 (Micro)',
-      () => {
-        const r = RECOMMEND.corio({
-          inputs: { 'HDMI 1080p': 2 },
-          outputs: { 'HDMI 1080p 4-out': 1 }
-        });
-        if (r.chassis !== 'C3-503') return 'chassis: ' + r.chassis;
-        if (r.meta.ecosystem !== 'CM') return 'ecosystem: ' + r.meta.ecosystem;
-        const skus = r.cards.map(c => c.sku);
-        if (!skus.includes('CM-C3-503-CPU-HTTPS')) return 'missing CPU; got: ' + skus.join(',');
-        if (!skus.includes('CM-BLANK')) return 'missing CM-BLANK auto-fill; got: ' + skus.join(',');
-        return true;
-      });
 
     /* v27.3.1 — this test previously asserted Mini, which was a v26 bug:
        8 HDMI 1080p + 4 SDI 3G + 4 1080p-4-out → estSlots = 4+2+2 = 8,
@@ -13294,143 +11994,21 @@
     // v27.19.0 — Corrected slot math: 8 HDMI(÷4=2) + 4 SDI-3G(÷2=2) + 4 out(÷4=1)
     // = 5 cards, which FITS Mini (5 slots). No canvas → smallest CM that fits =
     // Mini. (Old test expected CM2 from the pre-correction slot bug.)
-    check('CORIO: 5 cards, no canvas → Mini (fits 5 slots)',
-      () => {
-        const r = RECOMMEND.corio({
-          inputs: { 'HDMI 1080p': 8, 'SDI 3G': 4 },
-          outputs: { 'HDMI 1080p 4-out': 4 }
-        });
-        return r.chassis === 'C3-510' || ('chassis: ' + r.chassis);
-      });
 
     // Genuine overflow: 12 HDMI(÷4=3) + 8 SDI-3G(÷2=4) in + 8 out(÷4=2) = 9 cards
     // → overflows Mini (5) → upgrades to CM2.
-    check('CORIO: 9 cards (no canvas) → CM2 (overflow over Mini)',
-      () => {
-        const r = RECOMMEND.corio({
-          inputs: { 'HDMI 1080p': 12, 'SDI 3G': 8 },
-          outputs: { 'HDMI 1080p 4-out': 8 }
-        });
-        if (r.chassis !== 'CM2-547-MK2') return 'chassis: ' + r.chassis;
-        if (r.meta.ecosystem !== 'CM2') return 'ecosystem: ' + r.meta.ecosystem;
-        return true;
-      });
 
     /* v27.3.1 — canvas-first chassis selection per Dipenkumar's CORIO design rule.
        Validates the new 3-tier canvas thresholds with no card-slot pressure. */
-    check('CORIO canvas-rule: 3 canvases, tiny signal mix → Micro',
-      () => {
-        const r = RECOMMEND.corio({
-          inputs: { 'HDMI 1080p': 2 }, outputs: { 'HDMI 1080p 4-out': 1 },
-          canvases: 3
-        });
-        return r.chassis === 'C3-503' || ('got: ' + r.chassis);
-      });
 
-    check('CORIO canvas-rule: 6 canvases, light signals → Mini',
-      () => {
-        const r = RECOMMEND.corio({
-          inputs: { 'HDMI 1080p': 2 }, outputs: { 'HDMI 1080p 4-out': 1 },
-          canvases: 6
-        });
-        return r.chassis === 'C3-510' || ('got: ' + r.chassis);
-      });
 
-    check('CORIO canvas-rule: 7 canvases → CM2 (canvas-driven)',
-      () => {
-        const r = RECOMMEND.corio({
-          inputs: { 'HDMI 1080p': 2 }, outputs: { 'HDMI 1080p 4-out': 1 },
-          canvases: 7
-        });
-        return r.chassis === 'CM2-547-MK2' || ('got: ' + r.chassis);
-      });
 
-    check('CORIO canvas-rule: 3 canvases + 4K input → CM2 (4K forces)',
-      () => {
-        const r = RECOMMEND.corio({
-          inputs: { 'HDMI 4K 4-in': 4 }, outputs: {},
-          canvases: 3
-        });
-        return r.chassis === 'CM2-547-MK2' || ('got: ' + r.chassis);
-      });
 
-    check('CORIO canvas-rule: 3 canvases but 8 FHD inputs → Mini (slot override)',
-      () => {
-        const r = RECOMMEND.corio({
-          inputs: { 'HDMI 1080p': 8 }, outputs: {},
-          canvases: 3
-        });
-        // 8 inputs → estSlots = 4 > Micro's 3 → upgrades to Mini (≤5)
-        return r.chassis === 'C3-510' || ('got: ' + r.chassis);
-      });
 
-    check('CORIO large: 4K signal triggers CM2-547-MK2',
-      () => {
-        const r = RECOMMEND.corio({
-          inputs: { 'HDMI 4K 2-in': 4 },
-          outputs: { 'HDMI 4K': 2 }
-        });
-        if (r.chassis !== 'CM2-547-MK2') return 'chassis: ' + r.chassis;
-        if (r.meta.ecosystem !== 'CM2') return 'ecosystem: ' + r.meta.ecosystem;
-        const skus = r.cards.map(c => c.sku);
-        if (!skus.includes('CM2-4RPS')) return 'missing 400W PSU (psuRequired); got: ' + skus.join(',');
-        if (skus.includes('CM-BLANK')) return 'unexpected CM-BLANK on CM2 (Micro/Mini only); got: ' + skus.join(',');
-        return true;
-      });
 
-    check('CORIO edge: C3-510 fixed DVI-U absorbs 2 ports',
-      () => {
-        const r = RECOMMEND.corio({
-          chassisSku: 'C3-510',  // force chassis to verify fixed-input behaviour
-          inputs: { 'DVI-U': 2 },
-          outputs: { 'HDMI 1080p 4-out': 1 }
-        });
-        if (r.chassis !== 'C3-510') return 'chassis: ' + r.chassis;
-        // 2 DVI-U inputs are fully absorbed by the chassis's fixed 2-port DVI-U input
-        // → no DVI-U card needed
-        const skus = r.cards.map(c => c.sku);
-        if (skus.includes('CM-DVIU-2IN')) return 'unexpected DVI-U input card; got: ' + skus.join(',');
-        if (!r.reasons.some(x => /absorbed by chassis fixed input/.test(x))) return 'expected absorption reason';
-        return true;
-      });
 
-    check('CORIO error: 8-8 audio on CM2 rejected (hard impossibility)',
-      () => {
-        const r = RECOMMEND.corio({
-          chassisSku: 'CM2-547-MK2',
-          inputs: { 'HDMI 4K 2-in': 2 },
-          outputs: { 'HDMI 4K': 2 },
-          audio: '8-8'
-        });
-        if (!r.error) return 'expected error, got chassis: ' + r.chassis;
-        if (!/8-8|8-IN/.test(r.error)) return 'error msg: ' + r.error;
-        return true;
-      });
 
-    check('CORIO error: slot overflow on Micro returns error',
-      () => {
-        const r = RECOMMEND.corio({
-          chassisSku: 'C3-503',  // 3 slots only
-          inputs: { 'HDMI 1080p': 4 },  // 1 card
-          outputs: { 'HDMI 1080p 4-out': 16, 'SDI 3G scaled': 8 }  // 4 + 4 = 8 cards → exceeds 3
-        });
-        if (!r.error) return 'expected error, got chassis: ' + r.chassis;
-        if (!/slots/.test(r.error)) return 'error msg: ' + r.error;
-        return true;
-      });
 
-    check('CORIO accessory: fanFilter flag adds CM2-Filter line',
-      () => {
-        const r = RECOMMEND.corio({
-          chassisSku: 'CM2-547-MK2',
-          inputs: { 'HDMI 4K 2-in': 2 },
-          outputs: { 'HDMI 4K': 2 },
-          fanFilter: true
-        });
-        const skus = r.cards.map(c => c.sku);
-        if (!skus.includes('CM2-Filter')) return 'missing CM2-Filter; got: ' + skus.join(',');
-        return true;
-      });
 
     check('RECOMMEND module exposes calico, mv, corio',
       () => {
@@ -16370,7 +14948,7 @@
             '</div>' +
             '<div class="about-row">' +
               '<div class="about-key">Supports</div>' +
-              '<div class="about-val">CORIO  \u00b7  CALICO  \u00b7  Multi Viewer  \u00b7  Signal Extension</div>' +
+              '<div class="about-val">LS  \u00b7  HD  \u00b7  XD  \u00b7  XT  \u00b7  XC  \u00b7  AU Series</div>' +
             '</div>' +
           '</div>' +
           '<div class="about-footer">' +
@@ -23969,17 +22547,8 @@
           '<h3 class="h3">Project</h3>' +
           field('project',         'Project name', d.project,         { required: true, placeholder: 'e.g. Auditorium upgrade' }) +
           field('customer_name',   'End User',     d.customer_name,   { required: true }) +
-          field('partner_name',    'Partner',      d.partner_name,    { placeholder: 'Optional' }) +
-          field('consultant_name', 'Consultant',   d.consultant_name, { placeholder: 'Optional' }) +
-          selectField('content', 'Primary use case', d.content, [
-            { value: 'signage',     label: 'Digital signage' },
-            { value: 'menu',        label: 'Menu board' },
-            { value: 'wayfinding',  label: 'Wayfinding / directory' },
-            { value: 'videowall',   label: 'Video wall' },
-            { value: 'interactive', label: 'Interactive / touch' },
-            { value: 'audio-only',  label: 'Audio only (no display)' },
-            { value: 'other',       label: 'Other' }
-          ], { placeholder: '\u2014 select \u2014' }) +
+          field('partner_name',    'Partner',      d.partner_name,    { required: true }) +
+          field('consultant_name', 'Consultant',   d.consultant_name, { required: true }) +
           '<div class="sp-12"></div>' +
           '<h3 class="h3">Location</h3>' +
           selectField('venue_type', 'Venue type', d.venue_type, VENUE_TYPES, { placeholder: '\u2014 select \u2014', required: true }) +
@@ -24193,71 +22762,6 @@
         tierSlider('budget_tier', cur, tiers);
     }
 
-    function renderStep3Calico(d) {
-      const inErr = d.errors.calico_io
-        ? '<div class="banner err">' + esc(d.errors.calico_io) + '</div>' : '';
-      // v27.1.2 #3+#5 — derive LED count from existing screens array length.
-      // Stepper drives this via the new 'calico-led' action which resizes
-      // d.screens in-place (preserving entries on shrink, pushing {w,h,pitch}
-      // on grow) and toggles d.hasLed accordingly. This keeps hasLed and
-      // screens as the canonical state (no defaultWizard shape break).
-      const ledCount = (d.hasLed && Array.isArray(d.screens)) ? d.screens.length : 0;
-      return inErr +
-        '<h3 class="h3">Inputs</h3>' +
-        '<div class="card">' +
-          stepperRow('hdmi4k',  'HDMI 4K60', '4K60 4:4:4 sources',    d.calico_inputs.hdmi4k,  { namespace:'calico_inputs' }) +
-          stepperRow('hdmiFhd', 'HDMI FHD',  '1080p sources',         d.calico_inputs.hdmiFhd, { namespace:'calico_inputs' }) +
-          stepperRow('sdi12g',  'SDI 12G',   '12G-SDI sources',       d.calico_inputs.sdi12g,  { namespace:'calico_inputs' }) +
-          stepperRow('sdi3g',   'SDI 3G',    '3G-SDI sources',        d.calico_inputs.sdi3g,   { namespace:'calico_inputs' }) +
-          stepperRow('hdbt',    'HDBaseT',   'HDBT-extended sources', d.calico_inputs.hdbt,    { namespace:'calico_inputs' }) +
-          stepperRow('ip',      'IP / NDI',  'IP-streamed sources',   d.calico_inputs.ip,      { namespace:'calico_inputs' }) +
-        '</div>' +
-        '<h3 class="h3">Outputs</h3>' +
-        '<div class="card">' +
-          stepperRow('display',   'Display (HDMI)',   'Standard displays', d.calico_outputs.display,   { namespace:'calico_outputs' }) +
-          stepperRow('projector', 'Projector (HDMI)', 'Projector outputs', d.calico_outputs.projector, { namespace:'calico_outputs' }) +
-          stepperRow('sdi',       'SDI output',       '12G-SDI outputs',   d.calico_outputs.sdi,       { namespace:'calico_outputs' }) +
-          // v27.1.2 #3+#5 — LED relocated from Add-ons to Outputs as a qty stepper.
-          // Special action 'calico-led' (not the generic stepper action) so we
-          // can resize the screens array in lockstep. namespace omitted to mark
-          // this as a synthetic field — not a direct binding.
-          stepperRow('led',       'Active LED screens', 'Set count, then enter W/H/pitch per screen below', ledCount, { namespace:'__calico_led' }) +
-          // v27.3.0 — When LED screens > 0, render the per-screen W/H/pitch
-          // cards inline RIGHT HERE in Step 3 (Dipenkumar's UX call — keeping
-          // them in Step 4 split the flow). Step 4 auto-skips for CALICO.
-          (d.hasLed && Array.isArray(d.screens) && d.screens.length > 0
-            ? '<div class="calico-led-inline">' + renderLedScreens(d) + '</div>'
-            : '') +
-          /* v27.3.1 — Display resolution selector. Mirrors the projector
-             resolution control; appears only when display count > 0.
-             Per spec photo: Display [- + ] 4K/FHD (defaults FHD). */
-          (d.calico_outputs.display > 0
-            ? '<div class="field" style="margin-top:10px">' +
-                '<label>Display resolution</label>' +
-                '<select data-bind="calico_outputs.displayRes">' +
-                  '<option value="FHD"' + (d.calico_outputs.displayRes === 'FHD' ? ' selected' : '') + '>FHD</option>' +
-                  '<option value="4K"'  + (d.calico_outputs.displayRes === '4K'  ? ' selected' : '') + '>4K</option>' +
-                '</select>' +
-              '</div>'
-            : '') +
-          (d.calico_outputs.projector > 0
-            ? '<div class="field" style="margin-top:10px">' +
-                '<label>Projector resolution</label>' +
-                '<select data-bind="calico_outputs.projectorRes">' +
-                  '<option value="FHD"' + (d.calico_outputs.projectorRes === 'FHD' ? ' selected' : '') + '>FHD</option>' +
-                  '<option value="4K"'  + (d.calico_outputs.projectorRes === '4K'  ? ' selected' : '') + '>4K</option>' +
-                '</select>' +
-              '</div>'
-            : '') +
-          // v27.1.2 #3 — Audio relocated from Add-ons to Outputs.
-          toggleRow('calico_audio', 'Audio required', 'Add audio extraction / embed cards', d.calico_audio, { namespace:'' }) +
-        '</div>';
-      // v27.3.12 — Removed "Add-ons" section (was just the SX toggle).
-      //   Pre-v27.3.12: <h3>Add-ons</h3><div class="col"><toggle hasSx></div>
-      //   Now: SX is always visible inline at bottom of Step 3 (renderSxBlock),
-      //   so the Add-ons section + hasSx toggle is gone. Output section still
-      //   renders Audio toggle directly.
-    }
 
     function renderStep3Mv(d) {
       const MV_INPUT_SIGNALS = Object.keys(CATALOG.mv.inputModules);
@@ -25197,12 +23701,13 @@
     function validateStep(d) {
       const errors = {};
       if (d.step === 1) {
-        // BS Step 1 — deal header. project / customer / stage are hard-required
-        // (deal_save needs them). The rest are required-when-shown for a clean
-        // CRM record, EXCEPT partner_name + consultant_name (not every BS deal
-        // has a partner/consultant) and the two notes fields.
+        // BS Step 1 — deal header. All fields are required for a complete deal
+        // record EXCEPT the two notes fields (internal/external), which stay
+        // optional. The Primary use case field was removed entirely.
         if (!d.project || !d.project.trim())             errors.project = 'Required.';
         if (!d.customer_name || !d.customer_name.trim()) errors.customer_name = 'Required.';
+        if (!d.partner_name || !d.partner_name.trim())   errors.partner_name = 'Required.';
+        if (!d.consultant_name || !d.consultant_name.trim()) errors.consultant_name = 'Required.';
         if (!d.venue_type)                               errors.venue_type = 'Required.';
         if (!d.city || !d.city.trim())                   errors.city = 'Required.';
         if (!d.state || !d.state.trim())                 errors.state = 'Required.';
@@ -25214,7 +23719,7 @@
         if (!d.contact_name || !d.contact_name.trim())   errors.contact_name = 'Required.';
         if (!d.contact_phone || !/^[0-9]{10}$/.test(d.contact_phone)) errors.contact_phone = '10 digits required.';
         if (!d.contact_email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.contact_email)) errors.contact_email = 'Valid email required.';
-        // partner_name, consultant_name, internal_notes, external_notes: optional.
+        // internal_notes, external_notes: optional (Notes section).
       }
       // v1.4.1 — Step 2 now hosts the path choice (Guided / Advanced) at the
       // top. Block Next until the user picks one; without a mode the guided
@@ -28020,111 +26525,6 @@
     //   sx_data.sdi   → CATALOG.sx.da     → HDMI splitter / distribution amplifier
     //   sx_data.ap536 → CATALOG.sx.ap     → AP-536 audio extractor
     //   sx_data.avip  → CATALOG.sx.aocCodes → AOC cable (default placeholder)
-    function appendSxCards(reco, d) {
-      if (!reco || !d || !d.hasSx) return reco;
-      const cards = reco.cards || [];
-      const concerns = reco.concerns ? reco.concerns.slice() : [];
-
-      // 1. HDBaseT — per-line emission from sx_hdbt_lines. Each line's SKU
-      //    derives from (signal, direction). Family: 'Video' / 'Video+Audio'
-      //    share HD-One DX; 'Video+Audio+IR+RS232' uses HD-One LX.
-      const hdbtLines = Array.isArray(d.sx_hdbt_lines) ? d.sx_hdbt_lines : [];
-      hdbtLines.forEach(function (line) {
-        const qty = Number(line.qty) || 0;
-        if (qty <= 0) return;
-        const fam = CATALOG.sx.hdbt[line.signal] || CATALOG.sx.hdbt['Video'];
-        const dir = (line.direction === 'tx') ? 'tx'
-                  : (line.direction === 'rx') ? 'rx'
-                  : 'kit';
-        const sku = fam[dir];
-        const dirLabel = (dir === 'kit') ? 'Kit (TX+RX)' : (dir === 'tx') ? 'TX only' : 'RX only';
-        cards.push({
-          sku:  sku,
-          desc: 'HDBaseT ' + dirLabel + ' \u00b7 ' + fam.familyLabel + ' \u00b7 ' +
-                line.signal + ' \u00b7 ' + (line.resolution || '1080p'),
-          qty:  qty
-        });
-      });
-
-      // 2. HDMI Splitter (DA) — direct counts per model.
-      const da = d.sx_da_counts || {};
-      [['612','1×2 splitter'], ['614','1×4 splitter'], ['618','1×8 splitter']].forEach(function (pair) {
-        const k = pair[0], lbl = pair[1];
-        const qty = Number(da[k]) || 0;
-        if (qty <= 0) return;
-        const c = CATALOG.sx.da[k];
-        cards.push({
-          sku:  c.sku,
-          desc: lbl + ' \u00b7 ' + c.desc,
-          qty:  qty
-        });
-      });
-
-      // 3. AP-536 audio extractor.
-      const apQty = Number(d.sx_ap_qty) || 0;
-      if (apQty > 0) {
-        const ap = CATALOG.sx.ap['AP-536'];
-        cards.push({
-          sku:  ap.sku,
-          desc: ap.desc,
-          qty:  apQty
-        });
-        concerns.push('AP-536 billing SKU pending tvONE rep confirmation (placeholder line).');
-      }
-
-      // 4. AOC cables — per-line with assembled SKU code + length.
-      const aocLines = Array.isArray(d.sx_aoc_lines) ? d.sx_aoc_lines : [];
-      aocLines.forEach(function (line) {
-        const qty = Number(line.qty) || 0;
-        if (qty <= 0) return;
-        const codes = (CATALOG.sx.aocCodes && CATALOG.sx.aocCodes[line.signal]) || {};
-        const code = codes[line.jacket] || '661';
-        const lenM = Number(line.length) || 10;
-        const sku = 'T1-' + code + '-' + lenM + 'M';
-        cards.push({
-          sku:  sku,
-          desc: 'AOC ' + line.signal + ' \u00b7 ' + (line.jacket || 'Standard') +
-                ' jacket \u00b7 ' + lenM + ' m',
-          qty:  qty
-        });
-      });
-      if (aocLines.some(l => Number(l.qty) > 0)) {
-        concerns.push('AOC cable SKU pattern (T1-<code>-<length>M) pending tvONE rep confirmation.');
-      }
-
-      // ------- Backward-compat fallback: if no detail arrays but sums exist
-      // (old saved deal), emit using legacy defaults. New deals always go
-      // through the per-variant path above. -------
-      const noNewDetail =
-        hdbtLines.length === 0 &&
-        ((da['612']|0)+(da['614']|0)+(da['618']|0) === 0) &&
-        apQty === 0 &&
-        aocLines.length === 0;
-      const sx = d.sx_data || {};
-      if (noNewDetail && (Number(sx.hdmi)>0 || Number(sx.sdi)>0 || Number(sx.ap536)>0 || Number(sx.avip)>0)) {
-        const hdQ = Number(sx.hdmi) || 0;
-        if (hdQ > 0) {
-          const hd = CATALOG.sx.hdbt['Video'];
-          cards.push({ sku: hd.kit, desc: 'HDBaseT Extender Kit (' + hd.familyLabel + ', TX+RX, Video) \u2014 legacy', qty: hdQ });
-        }
-        const daQ = Number(sx.sdi) || 0;
-        if (daQ > 0) {
-          const da614 = CATALOG.sx.da['614'];
-          cards.push({ sku: da614.sku, desc: da614.desc + ' \u2014 legacy default 1×4', qty: daQ });
-        }
-        if (Number(sx.ap536) > 0) {
-          const ap = CATALOG.sx.ap['AP-536'];
-          cards.push({ sku: ap.sku, desc: ap.desc + ' \u2014 legacy', qty: Number(sx.ap536) });
-        }
-        if (Number(sx.avip) > 0) {
-          cards.push({ sku: 'AOC-CABLE-TBD', desc: 'AOC cable \u2014 legacy placeholder', qty: Number(sx.avip) });
-        }
-      }
-
-      reco.cards = cards;
-      reco.concerns = concerns;
-      return reco;
-    }
 
     /* ============================================================
        v1.0.0 — BrightSign recommendation engine. Replaces tvONE's
@@ -29286,33 +27686,7 @@
       });
 
     // ---- 8: MV signal-type cap (alpha.9.2 Rule A — max 2 distinct) ----
-    check('RECOMMEND.mv rejects > 2 distinct signal types',
-      () => {
-        const r = RECOMMEND.mv({
-          inputs: [
-            { signal: 'FHD HDMI', qty: 1 },
-            { signal: '3G-SDI',   qty: 1 },
-            { signal: 'HDBaseT',  qty: 1 }
-          ],
-          outputSignal: '4K HDMI'
-        });
-        const errStr = String(r && r.error || '');
-        return (errStr.indexOf('max 2 distinct') >= 0 && r.chassis == null)
-          || 'expected "max 2 distinct" error, got: chassis=' + r.chassis + ' error=' + JSON.stringify(r.error);
-      });
 
-    check('RECOMMEND.mv accepts 2 distinct signal types at boundary',
-      () => {
-        const r = RECOMMEND.mv({
-          inputs: [
-            { signal: 'FHD HDMI', qty: 2 },
-            { signal: '3G-SDI',   qty: 2 }
-          ],
-          outputSignal: '4K HDMI'
-        });
-        return (r && r.chassis === 'MWP-MTO' && !r.error)
-          || 'expected MWP-MTO chassis without error, got: chassis=' + r.chassis + ' error=' + JSON.stringify(r.error);
-      });
 
     return {
       pass, fail, lines: out,
