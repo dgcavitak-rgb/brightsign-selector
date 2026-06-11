@@ -6312,9 +6312,11 @@
     }
     .path-pick-card:active { transform: scale(0.985); }
     .path-pick-card.is-selected {
-      border-color: var(--accent); background: var(--accent-soft);
-      box-shadow: 0 0 0 1px var(--accent);
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: 0 0 0 2px var(--accent), 0 6px 18px rgba(15,14,12,0.10);
     }
+    .path-pick-card.is-selected .path-pick-title { color: var(--accent-deep); }
     .path-pick-icon {
       width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
       background: var(--accent-soft); color: var(--accent-deep);
@@ -7058,6 +7060,25 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v1.4.4  (2026-06-11)  — Confirm-sheet styling (Cancel overlay)
+       The Cancel-on-wizard confirm dialog (and other openSheet popups) rendered
+       with the legacy .sheet style — a bare full-width strip pinned to the
+       bottom with no card framing — because the polished .sheet-v3 card style
+       was never applied to the sheet body. openSheet now adds the sheet-v3 class
+       so every sheet renders as the intended centered, max-width card (bottom-
+       anchored on mobile, contained on desktop). The button logic was already
+       correct; this is purely the missing card styling.
+     ------------------------------------------------------------
+     v1.4.3  (2026-06-11)  — Step-2 path UX: toast dedupe + clearer selection
+       Toast de-duplication: tapping a blocked button repeatedly (e.g. Next on
+       Step 2 before choosing a path) stacked multiple identical toasts. toast()
+       now refreshes an on-screen duplicate instead of adding another copy.
+       Path-card selection clarity: picking Guided now re-renders WITHOUT jumping
+       to the top of the page (rerenderPreservingScroll), so the selected card
+       and the newly-revealed deployment fields stay in view. The selected card
+       also has a stronger highlight (2px accent ring + accent-tinted title) so
+       the choice is unmistakable. Advanced still jumps to the cart (Step 6).
+     ------------------------------------------------------------
      v1.4.2  (2026-06-11)  — HOTFIX: syntax error from v1.4.1 path revert
        v1.4.1 shipped with a SyntaxError ("missing ) after argument list") that
        blanked the whole app. Cause: when reverting the v1.4.0 path-pick handler,
@@ -7674,7 +7695,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v1.4.2',
+      version: 'brightsign-v1.4.4',
       constants,
       calico,
       mv,
@@ -15059,12 +15080,24 @@
       level = level || 'default';
       const host = $('toast-host');
       if (!host) return;
+      // v1.4.3 — De-dupe: if an identical toast is already on screen, refresh
+      // it instead of stacking a second copy. Repeated taps on a blocked button
+      // (e.g. Next before choosing a path) previously piled up duplicate toasts.
+      const existing = host.querySelectorAll('.toast');
+      for (let i = 0; i < existing.length; i++) {
+        if (existing[i].textContent === msg && !existing[i].dataset.dismissing) {
+          // Restart its life by nudging it; don't add a duplicate.
+          existing[i].style.opacity = '1';
+          return;
+        }
+      }
       const el = document.createElement('div');
       el.className = 'toast' + (level !== 'default' ? ' ' + level : '');
       el.textContent = msg;
       host.appendChild(el);
       const ms = level === 'err' ? 6500 : 3500;
       setTimeout(() => {
+        el.dataset.dismissing = '1';
         el.style.transition = 'opacity 220ms';
         el.style.opacity = '0';
         setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 240);
@@ -15126,6 +15159,13 @@
       const body = $('sheet-body');
       const host = $('sheet-host');
       if (!body || !host) return;
+
+      // v1.4.4 — Ensure the sheet body carries the polished v3 card styling.
+      // The element ships with class="sheet" (legacy bottom-anchored style);
+      // adding sheet-v3 gives it the centered, max-width, card-background look.
+      // Without this the confirm/picker sheets rendered as a bare full-width
+      // bottom strip on wide viewports.
+      if (!body.classList.contains('sheet-v3')) body.classList.add('sheet-v3');
 
       body.innerHTML = html;
 
@@ -25152,10 +25192,15 @@
           d.mode = (mode === 'advanced') ? 'advanced' : 'guided';
           // Guided: stay on Step 2 so the deployment fields appear below the
           // cards. Advanced: jump straight to the cart (Step 6).
-          if (d.mode === 'advanced') d.step = 6;
-          else                       d.step = 2;
-          saveDraft();
-          renderWizard();
+          if (d.mode === 'advanced') {
+            d.step = 6;
+            saveDraft();
+            renderWizard();           // step change — full render is fine
+          } else {
+            d.step = 2;
+            saveDraft();
+            rerenderPreservingScroll(); // stay in place; card highlights + fields appear
+          }
           return;
         }
 
