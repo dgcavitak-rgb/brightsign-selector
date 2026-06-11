@@ -7137,6 +7137,24 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v1.5.2  (2026-06-11)  — Pricebook resilience (cart/build no longer dead-ends)
+       Diagnosis: the "Pricebook loading" banner that blocked both the Guided
+       Build and the Advanced cart is NOT a backend problem — the backend
+       bs_pricebook_get('brightsign') returns 16 catalog rows and anon has
+       EXECUTE. It's a frontend race: the pricebook fetch is fire-and-forget
+       after login, and on a slow/throttled connection the user reaches Step 6
+       before it lands, leaving a dead-end banner (the Advanced cart literally
+       can't list players without the catalog).
+       Fixes:
+         - fetchPricebook now does ONE delayed (2.5s) retry on failure when no
+           pricebook is cached, so a single transient/slow-network miss self-heals.
+         - The Advanced cart loading state now (a) kicks off ensurePricebook() and
+           auto-re-renders when it lands, and (b) shows a "Retry now" button.
+         - New retry-pricebook action: force-refetches and re-renders, with toasts.
+       (The Advanced->Step 6 "jump" the user saw was this same banner under the
+       "CMS & build" step header, not a routing bug — renderAdvancedCart was being
+       called correctly but had nothing to show without the pricebook.)
+     ------------------------------------------------------------
      v1.5.1  (2026-06-11)  — Budget spacing + CMS cleanup + stale line removed
        - Budget tier: more breathing room around the big tier label / series tag
          (Basic / LS SERIES) and around the slider, which were cramped.
@@ -7876,7 +7894,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v1.5.1',
+      version: 'brightsign-v1.5.2',
       constants,
       calico,
       mv,
@@ -8212,6 +8230,28 @@
         }
       } catch (e) {
         console.warn('STORE.fetchPricebook failed; using cached pricebook:', e && e.message || e);
+        // v1.5.2 — One delayed retry so a single transient/slow-network failure
+        // self-heals without the user having to tap Retry. Only retries if we
+        // still have no pricebook (don't clobber a cached one).
+        if (!_pricebook) {
+          await new Promise(function (res) { setTimeout(res, 2500); });
+          try {
+            const r2 = await rpc('bs_pricebook_get', { p_app: APP_TAG });
+            if (r2 && r2.catalog) {
+              _pricebook = {
+                catalog:     Array.isArray(r2.catalog)     ? r2.catalog     : [],
+                pricing:     Array.isArray(r2.pricing)     ? r2.pricing     : [],
+                accessories: Array.isArray(r2.accessories) ? r2.accessories : [],
+                cms_pricing: Array.isArray(r2.cms_pricing) ? r2.cms_pricing : [],
+                settings:    r2.settings || {},
+                _fetchedAt:  Date.now()
+              };
+              try { localStorage.setItem(PRICEBOOK_STORAGE_KEY, JSON.stringify(_pricebook)); } catch (_) {}
+            }
+          } catch (e2) {
+            console.warn('STORE.fetchPricebook retry also failed:', e2 && e2.message || e2);
+          }
+        }
       }
       return _pricebook;
     }
@@ -23588,7 +23628,17 @@
 
     function renderAdvancedCart(d) {
       const pb = STORE.getPricebook();
-      if (!pb) return '<div class="banner info">Pricebook loading\u2026 reopen in a moment.</div>';
+      if (!pb) {
+        // v1.5.2 - Kick off a fetch and give a manual retry instead of a
+        // dead-end banner. The cart needs the catalog to list players, so
+        // nothing can render until the pricebook lands (slow on throttled
+        // connections). retry-pricebook re-fetches then re-renders.
+        STORE.ensurePricebook().then(function () {
+          if (wizardData && wizardData.step === 6) renderWizard();
+        });
+        return '<div class="banner info">Pricebook loading\u2026</div>' +
+          '<div style="margin-top:12px;"><button type="button" class="btn" data-action="retry-pricebook">Retry now</button></div>';
+      }
       const showPrices = bsCanSeePrices();
       const cat = (pb.catalog || []).filter(function (c) { return c.available; })
                     .sort(function (a, b) { return (Number(a.rank) || 0) - (Number(b.rank) || 0); });
@@ -23909,6 +23959,16 @@
             saveDraft();
             rerenderPreservingScroll(); // stay in place; card highlights + fields appear
           }
+          return;
+        }
+
+        // v1.5.2 — Manual pricebook retry (from the cart/build loading banner).
+        if (action === 'retry-pricebook') {
+          toast('Reloading pricebook\\u2026');
+          STORE.fetchPricebook(true).then(function () {
+            renderWizard();
+            if (STORE.getPricebook()) toast('Pricebook loaded');
+          });
           return;
         }
 
