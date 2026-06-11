@@ -7324,6 +7324,61 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v1.9.0  (2026-06-11)  — Add-ons + CMS unified as SHARED sections (both modes)
+       Per Dipenkumar: accessories and CMS are add-on parts that apply to Guided
+       AND Advanced. They are no longer cart-only dropdowns in Advanced mode.
+         - Flow: advanced visible steps [1,7] -> [1,5,6,7]. Picking Advanced now
+           enters at Add-ons (5), then CMS (6), then the cart (7 = build).
+           path-pick jumps to 5 instead of 7.
+         - Single data model: d.wifi/wifi_qty/ssd/ssd_size/ssd_qty and
+           d.cms_vendor/cms_deployment_mode/cms_term are the source of truth for
+           BOTH modes. STORE.bomLines now appends the shared Add-ons/CMS block
+           after the per-mode player lines (advanced no longer early-returns).
+           totalPlayers is mode-aware (advanced = sum of cart qtys) so
+           "0 = one per player" and the per-player CMS subscription qty resolve
+           correctly in advanced too.
+         - bs_deal_specs correctness win: advanced deals previously always saved
+           wifi=false / ssd='no' / cms='None' regardless of the cart; they now
+           persist the real spec (buildSavePayload already read these fields).
+         - Cart is PLAYERS ONLY: "Add an accessory" and "Add a CMS plan" blocks
+           removed (+ their two handlers); cart-qty/cart-remove retained for
+           legacy rows. Header copy updated. The >25-players CMS rule (cart
+           banner + wizBuild gate) now checks d.cms_vendor, with legacy
+           advancedAccessories cms lines still honoured.
+         - LEGACY: pre-v1.9.0 drafts/deals carrying advancedAccessories still
+           price via a fallback in bomLines (read-only path; no new entries
+           possible, so no double-count).
+         - Step 5 cap in advanced: permissive (200) until the cart has players,
+           since Add-ons now precede the cart in the flow.
+       Verified: node --check all blocks, headless bomLines logic tests (guided
+       unchanged / advanced merge / legacy fallback / per-player defaults),
+       hook audit (removed handlers had zero remaining callers).
+     ------------------------------------------------------------
+     v1.8.0  (2026-06-11)  — Reference-design conversion COMPLETE (Steps 1-7 + cart)
+       Finishes the field-system rebuild started in v1.7.0. Every wizard step and
+       the Advanced cart now share the same design language: numbered section
+       badge + serif heading, uppercase field captions, icon cards, pills.
+         - Step 1 (Project context): sectionHeader(1) + the six group headings
+           (Project / Location / Stage & owners / Partner contact / Closure /
+           Notes) converted from h3 to fieldCaption. Field markup, i-/f- ids,
+           data-bind and validateStep untouched — capture parity preserved.
+         - Step 3 (Budget tier): sectionHeader(3) + "Preferred class" caption;
+           help text folded into the header sub. tierSlider unchanged.
+         - Step 4 (Technical spec): sectionHeader(4); Capabilities h4 ->
+           fieldCaption. Resolution/outputs/power pills unchanged.
+         - Step 5 (Add-ons): sectionHeader(5). SSD size dropdown -> pillGroup
+           (same string values via pill-set). BUGFIX: the stepper sub-labels
+           printed a literal "\u00b7" on screen (double-escaped \\u00b7 since
+           v1.4.6) — now renders the middle dot.
+         - Step 6 (CMS): sectionHeader(6); >25-players warning kept as its own
+           help line. Vendor logo cards + sub-panel unchanged.
+         - Step 7 (Review & build): sectionHeader(7) + Recommended/Review
+           fieldCaptions over the existing card structure.
+         - Advanced cart: same sectionHeader(7, "Build your quote") so Advanced
+           mode no longer looks like a different app.
+       Verified: node --check all blocks, hook-parity audit (no new dark spots),
+       Step-1 marker<->validator parity re-confirmed (15 required + 2 notes).
+     ------------------------------------------------------------
      v1.7.0  (2026-06-11)  — Reference-design field system (foundation + Step 2)
        Began rebuilding the input fields to match the provided reference design
        (icon cards, numbered section badges, pill buttons, conditional panels)
@@ -8164,7 +8219,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v1.7.0',
+      version: 'brightsign-v1.9.0',
       constants,
       calico,
       mv,
@@ -8616,7 +8671,12 @@
       if (!_pricebook) return [];
       d = d || {};
       const lines = [];
-      const totalPlayers = (Number(d.qty_indoor) || 0) + (Number(d.qty_outdoor) || 0);
+      // v1.9.0 — mode-aware player total: guided counts indoor+outdoor; advanced
+      // counts the cart. Drives the "0 = one per player" accessory defaults and
+      // the per-player CMS subscription qty in BOTH modes.
+      const totalPlayers = d.mode === 'advanced'
+        ? (d.advancedSelections || []).reduce(function (s, it) { return s + (Number(it.qty) || 0); }, 0)
+        : (Number(d.qty_indoor) || 0) + (Number(d.qty_outdoor) || 0);
       const cat = function (id) { return (_pricebook.catalog || []).find(function (c) { return c.model_id === id; }) || {}; };
 
       function playerLine(model_id, qty, seg) {
@@ -8649,6 +8709,10 @@
 
       if (d.mode === 'advanced') {
         (d.advancedSelections || []).forEach(function (s) { playerLine(s.model_id, Number(s.qty) || 0, ''); });
+        // v1.9.0 LEGACY fallback — deals/drafts saved before the unification
+        // carried accessories/CMS inside advancedAccessories. Still price
+        // them. New entries can no longer be created (cart UI removed), so
+        // there is no double-count with the shared block below.
         (d.advancedAccessories || []).forEach(function (a) {
           if (a.kind === 'cms') {
             const row = cmsPriceOf(a.vendor, a.price_type, a.term_years);
@@ -8658,9 +8722,9 @@
             accLine(a.id, a.label || (ap && ap.name) || a.id, Number(a.qty) || 1, ap ? ap.unit_price_inr : 0);
           }
         });
-        return lines;
-      }
-
+        // FALL THROUGH to the shared Add-ons + CMS block — v1.9.0: these are
+        // common sections; both modes read d.wifi / d.ssd / d.cms_*.
+      } else {
       // guided
       const reco = d.reco;
       if (reco && reco.segments) {
@@ -8673,6 +8737,8 @@
           playerLine(d.pickOutdoor || outSeg.recommendedId, Number(d.qty_outdoor) || 0, 'outdoor');
         }
       }
+      }
+      // ---- SHARED: Add-ons + CMS (both modes) — v1.9.0 ----
       if (d.wifi) {
         const ap = accessoryPriceOf('WD105');
         accLine('WD105', (ap && ap.name) || 'Wi-Fi module (WD105)', Number(d.wifi_qty) || totalPlayers, ap ? ap.unit_price_inr : 0);
@@ -22737,8 +22803,9 @@
     }
 
     function computeVisibleSteps(d) {
-      // Advanced (cart) mode collapses to Project + Cart/Build (now Step 7).
-      if (d && d.mode === 'advanced') return [1, 7];
+      // v1.9.0 — Add-ons (5) and CMS (6) are shared sections: they apply to
+      // BOTH modes. Advanced = Project, Add-ons, CMS, Cart/Build.
+      if (d && d.mode === 'advanced') return [1, 5, 6, 7];
       // Guided: all seven sections (CMS and Review/build are separate pages).
       return [1, 2, 3, 4, 5, 6, 7];
     }
@@ -22894,32 +22961,35 @@
       return '' +
         '<form id="step1-form" autocomplete="off" novalidate>' +
           citiesDatalist +
-          '<h3 class="h3">Project</h3>' +
+          // v1.8.0 — reference-design header + group captions (field markup,
+          // ids and data-bind untouched; capture/validation parity preserved).
+          sectionHeader(1, 'Project context', 'Who, where, and when for this deal.') +
+          fieldCaption('Project') +
           field('project',         'Project name', d.project,         { required: true, placeholder: 'e.g. Auditorium upgrade' }) +
           field('customer_name',   'End User',     d.customer_name,   { required: true }) +
           field('partner_name',    'Partner',      d.partner_name,    { required: true }) +
           field('consultant_name', 'Consultant',   d.consultant_name, { required: true }) +
-          '<div class="sp-12"></div>' +
-          '<h3 class="h3">Location</h3>' +
+          '<div class="sp-16"></div>' +
+          fieldCaption('Location') +
           selectField('venue_type', 'Venue type', d.venue_type, VENUE_TYPES, { placeholder: '\u2014 select \u2014', required: true }) +
           field('city',  'City',  d.city,  { required: true, list: 'cities-list', placeholder: 'Start typing\u2026' }) +
           field('state', 'State', d.state, { required: true, placeholder: 'Auto-fills from city; type if City = Other' }) +
-          '<div class="sp-12"></div>' +
-          '<h3 class="h3">Stage &amp; owners</h3>' +
+          '<div class="sp-16"></div>' +
+          fieldCaption('Stage & owners') +
           selectField('stage', 'Stage', d.stage, STAGES, { required: true }) +
           selectField('lead_source', 'Lead Origin', d.lead_source, LEAD_SOURCES, { placeholder: '\u2014 select \u2014', required: true }) +
           selectField('sales_person_id',    'Sales person',    d.sales_person_id,    SALES_TEAM,    { placeholder: '\u2014 select \u2014', required: true }) +
           selectField('presales_person_id', 'Presales person', d.presales_person_id, PRESALES_TEAM, { placeholder: '\u2014 select \u2014', required: true }) +
-          '<div class="sp-12"></div>' +
-          '<h3 class="h3">Partner contact</h3>' +
+          '<div class="sp-16"></div>' +
+          fieldCaption('Partner contact') +
           field('contact_name',  'Contact name',  d.contact_name,  { required: true, placeholder: 'Site / partner contact person' }) +
           field('contact_phone', 'Contact phone', d.contact_phone, { required: true, inputmode: 'numeric', maxlength: 10, help: '10-digit mobile (no country code, no spaces)' }) +
           field('contact_email', 'Contact email', d.contact_email, { required: true, type: 'email', placeholder: 'name@company.com' }) +
-          '<div class="sp-12"></div>' +
-          '<h3 class="h3">Closure</h3>' +
+          '<div class="sp-16"></div>' +
+          fieldCaption('Closure') +
           field('close_month', 'Expected closure', d.close_month, { required: true, type: 'month', help: 'Year-month, e.g. 2026-09' }) +
-          '<div class="sp-12"></div>' +
-          '<h3 class="h3">Notes</h3>' +
+          '<div class="sp-16"></div>' +
+          fieldCaption('Notes') +
           textareaField('internal_notes', 'Internal notes', d.internal_notes, { rows: 3, placeholder: 'Visible only to Cavitak team \u2014 not exported to Excel/PDF' }) +
           textareaField('external_notes', 'External notes', d.external_notes, { rows: 3, placeholder: 'Shown in Excel/PDF exports to customer/partner' }) +
         '</form>';
@@ -23210,8 +23280,9 @@
       // tier (default Standard) is what actually gets saved/used by the engine.
       if (!d.budget_tier) d.budget_tier = cur;
       return '' +
-        '<h3 class="h3">Budget tier</h3>' +
-        '<p class="help">The class you\u2019d prefer. The technical spec always wins \u2014 you\u2019ll still see cheaper and pricier options that meet it.</p>' +
+        // v1.8.0 — reference-design header (badge 3 + serif title).
+        sectionHeader(3, 'Budget tier', 'The class you\u2019d prefer. The technical spec always wins \u2014 you\u2019ll still see cheaper and pricier options that meet it.') +
+        fieldCaption('Preferred class', true) +
         tierSlider('budget_tier', cur, tiers);
     }
 
@@ -23375,12 +23446,13 @@
         { value: 'poe', label: 'PoE+' }
       ];
       return '' +
-        '<h3 class="h3">Technical spec</h3>' +
-        '<p class="help">Hard requirements \u2014 only players that meet all of these are recommended.</p>' +
+        // v1.8.0 — reference-design header (badge 4 + serif title).
+        sectionHeader(4, 'Technical spec', 'Hard requirements \u2014 only players that meet all of these are recommended.') +
         pillGroup('resolution', 'Max resolution', d.resolution || 'FHD', resOpts) +
         pillGroup('outputs',    'HDMI outputs',   String(d.outputs || 1), outOpts) +
         pillGroup('power',      'Power',          d.power || 'dc', powerOpts) +
-        '<h4 class="h3" style="font-size:15px;margin-top:18px;">Capabilities</h4>' +
+        '<div class="sp-16"></div>' +
+        fieldCaption('Capabilities') +
         toggleRow('hdmi_in', 'HDMI input',          'Live HDMI source passthrough (XT only)', !!d.hdmi_in) +
         toggleRow('touch',   'Touch / interactive', 'Touchscreen / interactive display',       !!d.touch) +
         toggleRow('gpio',    'GPIO',                'Buttons, sensors, relays',                !!d.gpio);
@@ -23759,27 +23831,35 @@
        in the wizard since Step 5 is unreachable, but the switch statement
        still references it) get the new SX block. Eventually deletable. */
     function renderStep5(d) {
-      const total = (Number(d.qty_indoor) || 0) + (Number(d.qty_outdoor) || 0);
-      const capMax = total > 0 ? total : 1;  // v1.4.6 — qty cannot exceed total players
-      let html = '<h3 class="h3">Add-ons</h3>' +
-        '<p class="help">Optional Wi-Fi and storage. Quantities default to one per player.</p>' +
+      // v1.9.0 — shared section: in Advanced the player total comes from the
+      // cart (which may still be empty at this point in the flow), so the cap
+      // stays permissive (200) until players exist; "0 = one per player"
+      // resolves at build time in STORE.bomLines either way.
+      const total = d.mode === 'advanced'
+        ? (d.advancedSelections || []).reduce(function (s, it) { return s + (Number(it.qty) || 0); }, 0)
+        : (Number(d.qty_indoor) || 0) + (Number(d.qty_outdoor) || 0);
+      const capMax = total > 0 ? total : (d.mode === 'advanced' ? 200 : 1);
+      // v1.8.0 — reference-design header (badge 5 + serif title).
+      let html = sectionHeader(5, 'Add-ons', 'Optional Wi-Fi and storage. Quantities default to one per player.') +
         toggleRow('wifi', 'Wi-Fi module (WD105)', 'Dual-band Wi-Fi + Bluetooth', !!d.wifi);
       if (d.wifi) {
         // Clamp any previously-set qty that now exceeds the cap (e.g. user
         // lowered total players after setting a higher Wi-Fi count).
         if ((Number(d.wifi_qty) || 0) > capMax) d.wifi_qty = capMax;
-        html += stepperRow('wifi_qty', 'Wi-Fi modules', '0 = one per player (' + total + ') \\u00b7 max ' + capMax, Number(d.wifi_qty) || 0, { max: capMax });
+        html += stepperRow('wifi_qty', 'Wi-Fi modules', '0 = one per player (' + total + ') \u00b7 max ' + capMax, Number(d.wifi_qty) || 0, { max: capMax });
       }
       html += toggleRow('ssd', 'SSD storage', 'M.2 SSD for local media (XD / XT / XC only)', !!d.ssd);
       if (d.ssd) {
-        html += wizSelect('ssd_size', 'SSD size', d.ssd_size || '256GB', [
+        // v1.8.0 — SSD size as reference-style pills (was a dropdown). Same
+        // string values; pill-set writes wizardData.ssd_size identically.
+        html += pillGroup('ssd_size', 'SSD size', d.ssd_size || '256GB', [
           { value: '128GB',  label: '128 GB' },
           { value: '256GB',  label: '256 GB' },
           { value: '512GB',  label: '512 GB' },
           { value: '1024GB', label: '1 TB' }
         ]);
         if ((Number(d.ssd_qty) || 0) > capMax) d.ssd_qty = capMax;
-        html += stepperRow('ssd_qty', 'SSD drives', '0 = one per player (' + total + ') \\u00b7 max ' + capMax, Number(d.ssd_qty) || 0, { max: capMax });
+        html += stepperRow('ssd_qty', 'SSD drives', '0 = one per player (' + total + ') \u00b7 max ' + capMax, Number(d.ssd_qty) || 0, { max: capMax });
       }
       return html;
     }
@@ -23919,13 +23999,16 @@
     /* ---------- Step 6: Review & build ---------- */
 
     function renderStep6(d) {
-      const total = (Number(d.qty_indoor) || 0) + (Number(d.qty_outdoor) || 0);
+      // v1.9.0 — shared section: Advanced total comes from the cart.
+      const total = d.mode === 'advanced'
+        ? (d.advancedSelections || []).reduce(function (s, it) { return s + (Number(it.qty) || 0); }, 0)
+        : (Number(d.qty_indoor) || 0) + (Number(d.qty_outdoor) || 0);
 
       // ---- CMS inputs (Step 6 is now CMS-only; Review moved to Step 7) ----
       const cmsChosen = d.cms_vendor && d.cms_vendor !== 'None';
-      let cms = '<h3 class="h3">Content management (CMS)</h3>' +
-        '<p class="help">Pick a CMS to bundle its subscription into the quote, or leave as None.' +
-        (total > 25 ? ' <strong>A CMS is required for more than 25 players.</strong>' : '') + '</p>';
+      // v1.8.0 — reference-design header (badge 6 + serif title).
+      let cms = sectionHeader(6, 'Content management', 'Pick a CMS to bundle its subscription into the quote, or leave as None.') +
+        (total > 25 ? '<p class="help"><strong>A CMS is required for more than 25 players.</strong></p>' : '');
       cms += cmsVendorSelect(d.cms_vendor || 'None');
       // When a vendor is chosen, group its options in a tinted sub-panel so the
       // section reads as one CMS block rather than three loose dropdowns.
@@ -24019,9 +24102,11 @@
       try { d.reco = APP.recoForDeal(d); recoHtml = renderBomCard(d); }
       catch (e) { recoHtml = '<div class="banner warn" style="margin-top:12px">Could not build the recommendation \u2014 ' + esc(e && e.message || 'error') + '</div>'; }
 
-      return '<h3 class="h3">Recommended</h3>' + recoHtml +
+      // v1.8.0 — reference-design header (badge 7 + serif title).
+      return sectionHeader(7, 'Review & build', 'Check the recommendation, then build the quote.') +
+        fieldCaption('Recommended') + recoHtml +
         '<div class="step6-divider"></div>' +
-        '<h3 class="h3">Review</h3>' + summaryHtml;
+        fieldCaption('Review') + summaryHtml;
     }
 
     /* ---------- BoM card renderer ---------- */
@@ -24058,8 +24143,9 @@
       const cat = (pb.catalog || []).filter(function (c) { return c.available; })
                     .sort(function (a, b) { return (Number(a.rank) || 0) - (Number(b.rank) || 0); });
 
-      let html = '<h3 class="h3">Build your quote</h3>' +
-        '<p class="help">Add players, accessories and a CMS plan one at a time \u2014 pick a model, set the quantity, then tap Add. Repeat for as many different models as you need. No engine, your call.</p>';
+      // v1.9.0 — cart is PLAYERS ONLY. Add-ons + CMS are shared sections
+      // (Steps 5 & 6) for both modes; their lines join the BoM below.
+      let html = sectionHeader(7, 'Build your quote', 'Pick exact player models \u2014 set the quantity, tap Add. Wi-Fi, SSD and CMS from the previous steps are added automatically.');
 
       // ---- Add player (with qty) ----
       html += '<div class="cart-add-block">' +
@@ -24070,33 +24156,6 @@
           '</select>' +
           '<input id="cart-player-qty" class="cart-qty-input" type="number" min="1" value="1" inputmode="numeric" aria-label="Quantity">' +
           '<button type="button" class="btn btn-primary cart-add-btn" data-action="cart-add-player">Add</button>' +
-        '</div>' +
-      '</div>';
-
-      // ---- Add accessory (with qty) ----
-      html += '<div class="cart-add-block">' +
-        '<div class="cart-add-title">Add an accessory</div>' +
-        '<div class="cart-add-row">' +
-          '<select id="cart-acc-sel" class="cart-select">' +
-            '<option value="WD105">Wi-Fi module (WD105)</option>' +
-            '<option value="BS-SSD-128GB">SSD 128 GB</option>' +
-            '<option value="BS-SSD-256GB">SSD 256 GB</option>' +
-            '<option value="BS-SSD-512GB">SSD 512 GB</option>' +
-            '<option value="BS-SSD-1024GB">SSD 1 TB</option>' +
-          '</select>' +
-          '<input id="cart-acc-qty" class="cart-qty-input" type="number" min="1" value="1" inputmode="numeric" aria-label="Quantity">' +
-          '<button type="button" class="btn btn-primary cart-add-btn" data-action="cart-add-accessory">Add</button>' +
-        '</div>' +
-      '</div>';
-
-      // ---- Add CMS ----
-      html += '<div class="cart-add-block">' +
-        '<div class="cart-add-title">Add a CMS plan</div>' +
-        '<div class="cart-add-row cart-add-row-cms">' +
-          '<select id="cart-cms-vendor" class="cart-select"><option value="BrightSign">BrightSign</option><option value="Korbyt">Korbyt</option><option value="Pickcel">Pickcel</option></select>' +
-          '<select id="cart-cms-mode" class="cart-select"><option value="local">On-prem</option><option value="cloud">Cloud</option></select>' +
-          '<select id="cart-cms-term" class="cart-select"><option value="1">1 yr</option><option value="2">2 yr</option><option value="3">3 yr</option><option value="4">4 yr</option><option value="5">5 yr</option></select>' +
-          '<button type="button" class="btn btn-primary cart-add-btn" data-action="cart-add-cms">Add</button>' +
         '</div>' +
       '</div>';
 
@@ -24121,8 +24180,13 @@
       if (lines.length) html += '<div class="card" style="margin-top:14px;padding:12px;">' + renderBomTable(quote, showPrices) + '</div>';
 
       const totalPlayers = sel.reduce(function (s2, it) { return s2 + (Number(it.qty) || 0); }, 0);
-      if (totalPlayers > 25 && !acc.some(function (a) { return a.kind === 'cms'; })) {
-        html += '<div class="banner warn" style="margin-top:10px;">A CMS is required for more than 25 players \u2014 add one above.</div>';
+      // v1.9.0 — CMS now lives on the shared Step 6; legacy cart-cms lines
+      // still satisfy the rule for old drafts.
+      const hasCmsShared = !!(d.cms_vendor && d.cms_vendor !== 'None');
+      const hasCmsLegacy = acc.some(function (a) { return a.kind === 'cms'; });
+      if (totalPlayers > 25 && !hasCmsShared && !hasCmsLegacy) {
+        html += '<div class="banner warn" style="margin-top:10px;">A CMS is required for more than 25 players \u2014 ' +
+          '<button type="button" class="edit-link" data-action="wiz-jump" data-step="6" style="display:inline;">pick one in Content management</button>.</div>';
       }
       return html;
     }
@@ -24393,9 +24457,10 @@
           const d = wizardData;
           d.mode = (mode === 'advanced') ? 'advanced' : 'guided';
           // Guided: stay on Step 2 so the deployment fields appear below the
-          // cards. Advanced: jump straight to the cart (Step 7 = build).
+          // cards. Advanced: enter the shared flow at Add-ons (5), then CMS
+          // (6), then the cart (7 = build). v1.9.0.
           if (d.mode === 'advanced') {
-            d.step = 7;
+            d.step = 5;
             saveDraft();
             renderWizard();           // step change — full render is fine
           } else {
@@ -24638,37 +24703,9 @@
           }
           return;
         }
-        if (action === 'cart-add-accessory') {
-          const selEl = document.getElementById('cart-acc-sel');
-          const qtyEl = document.getElementById('cart-acc-qty');
-          const id = selEl && selEl.value;
-          const addQty = Math.max(1, parseInt(qtyEl && qtyEl.value, 10) || 1);
-          if (id) {
-            wizardData.advancedAccessories = wizardData.advancedAccessories || [];
-            const label = selEl.options[selEl.selectedIndex].text;
-            const ex = wizardData.advancedAccessories.find(function (x) { return x.kind === 'accessory' && x.id === id; });
-            if (ex) ex.qty = (Number(ex.qty) || 0) + addQty;
-            else wizardData.advancedAccessories.push({ kind: 'accessory', id: id, label: label, qty: addQty });
-            toast(label + ' \u00d7' + addQty + ' added', 'default');
-            rerenderPreservingScroll();
-          }
-          return;
-        }
-        if (action === 'cart-add-cms') {
-          const vendor = (document.getElementById('cart-cms-vendor') || {}).value;
-          const mode = (document.getElementById('cart-cms-mode') || {}).value;
-          const term = (document.getElementById('cart-cms-term') || {}).value;
-          if (vendor) {
-            wizardData.advancedAccessories = wizardData.advancedAccessories || [];
-            wizardData.advancedAccessories.push({
-              kind: 'cms', id: vendor + '-' + mode + '-' + term, vendor: vendor,
-              price_type: mode === 'cloud' ? 'cloud_subscription' : 'onpremise_subscription',
-              term_years: Number(term), label: vendor + ' CMS (' + mode + ', ' + term + 'yr)', qty: 1
-            });
-            rerenderPreservingScroll();
-          }
-          return;
-        }
+        // v1.9.0 — cart-add-accessory / cart-add-cms handlers removed:
+        // Add-ons + CMS are shared sections (Steps 5 & 6) in both modes.
+        // cart-qty / cart-remove below still serve legacy accessory rows.
         if (action === 'cart-qty') {
           const kind = actEl.getAttribute('data-kind');
           const idx = Number(actEl.getAttribute('data-idx'));
@@ -27054,12 +27091,15 @@
           UI.toast('Cart is empty \u2014 add at least one player.', 'err');
           return;
         }
-        const hasCms = (Array.isArray(d.advancedAccessories) ? d.advancedAccessories : [])
-          .some(function (a) { return a.kind === 'cms'; });
+        // v1.9.0 — CMS is a shared section: the wizard field is the source
+        // of truth; legacy cart-cms lines (pre-unification drafts) still count.
+        const hasCms = !!(d.cms_vendor && d.cms_vendor !== 'None') ||
+          (Array.isArray(d.advancedAccessories) ? d.advancedAccessories : [])
+            .some(function (a) { return a.kind === 'cms'; });
         if (playerQty > 25 && !hasCms) {
           UI.saveDraft();
           UI.renderWizard();
-          UI.toast('CMS is mandatory for more than 25 players \u2014 add a CMS line to the cart.', 'err');
+          UI.toast('CMS is mandatory for more than 25 players \u2014 pick one in the Content management step.', 'err');
           return;
         }
         d.reco = null;  // advanced lines come from the cart via STORE.bomLines
