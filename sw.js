@@ -78,7 +78,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v1.9.0';
+const CACHE_NAME = 'brightsign-v1.9.1';
 const SHELL_URLS = [
   './',
   './index.html'
@@ -126,6 +126,11 @@ self.addEventListener('fetch', function(event) {
 
   let url;
   try { url = new URL(req.url); } catch (e) { return; }
+
+  // v1.9.1 — only handle http(s). Browser-extension (chrome-extension://),
+  // blob:, data: etc. cannot be put into the Cache API and were throwing
+  // "Request scheme 'chrome-extension' is unsupported" (uncaught, noisy).
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') return;
 
   // Skip caching for explicitly-blocked hosts (Supabase RPC, OAuth).
   const isNeverCache = NEVER_CACHE_HOSTS.some(function(host) {
