@@ -7060,6 +7060,16 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v1.4.5  (2026-06-11)  — HOTFIX: path-pick ReferenceError (Guided/Advanced)
+       Tapping Guided/Advanced on Step 2 threw "getWizardData is not defined" and
+       did nothing (the blocked-path toast stayed). Cause: the path-pick handler
+       called getWizardData() — which only exists on the UI public API, NOT as a
+       bare function in the APP click-listener scope. Every sibling handler in
+       that listener uses the bare `wizardData` variable directly; path-pick now
+       does the same. node --check did not catch this (it validates syntax, not
+       whether a called identifier resolves) — verification now also scans the
+       edited handler region for unresolved calls.
+     ------------------------------------------------------------
      v1.4.4  (2026-06-11)  — Confirm-sheet styling (Cancel overlay)
        The Cancel-on-wizard confirm dialog (and other openSheet popups) rendered
        with the legacy .sheet style — a bare full-width strip pinned to the
@@ -7695,7 +7705,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v1.4.4',
+      version: 'brightsign-v1.4.5',
       constants,
       calico,
       mv,
@@ -25188,7 +25198,7 @@
         // v1.4.1 — Path choice (inline at top of Step 2).
         if (action === 'path-pick') {
           const mode = actEl.getAttribute('data-mode');
-          const d = getWizardData();
+          const d = wizardData;
           d.mode = (mode === 'advanced') ? 'advanced' : 'guided';
           // Guided: stay on Step 2 so the deployment fields appear below the
           // cards. Advanced: jump straight to the cart (Step 6).
