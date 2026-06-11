@@ -22,7 +22,7 @@
        check browser console for 'CSP violation' messages and adjust the
        allowlist surgically — never remove the directive wholesale. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://api.fontshare.com; font-src 'self' data: https://api.fontshare.com https://cdn.fontshare.com; img-src 'self' data: https://yhzecukifwnlgowmgkrc.supabase.co https://yhzecukifwnlgowmgkrc.supabase.in; connect-src 'self' https://yhzecukifwnlgowmgkrc.supabase.co https://yhzecukifwnlgowmgkrc.supabase.in wss://yhzecukifwnlgowmgkrc.supabase.co https://cdn.jsdelivr.net https://api.fontshare.com; manifest-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
-  <title>BrightSign Product Selector — v1</title>
+  <title>BrightSign Product Selector</title>
   <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAExUlEQVR42u2XXWwUVRTHz52ZdtsCJSCIJmqMqARJAWOlxcQPgvHBF33WhGhAX1CxSH3hRZ8MmCg8yQMJiVqVSKXbFokgLG3F2vLZ3fJR2i4tsJ1td7fdLbudnY97/z7c6bTLblsTTfChk9zsZO7e+/vdk3vunGG2lQXdx0uh+3zNC8wL/EMBTGuF+u59BNn+EwEIIqYSMU22aSJM0YgpRVP/IyKmKMSKiohUlSDEvxUQxLRSIm4SnHGCkyam+LxhzsQocSNFxBgxzUcEEM9kyE7ECZZFqq+UaA4JhTFGqlaU3xSFtKJSsiJ1NNZaQeOdr1Oy7VlKd28nVVVJK/KRFQlSeP8mGjzwBvHkbdKKS0iMj9P1rVvofGUFJZobSPOVkkKFGYwxIsc2IYTIbdwCAEzcroPuZ4gFKmCnQkgFP8RQPSF5+X0I4QAARs//hODOxbjx5UaYiUEAQPraFbSvX4XAUh9Gmo4CALhl5XEc20S+gAf/HrqfIX6mEo5xB5NXKvSxlLi0DYLbAIBkVwNCu5aiZ281srGbcvxAPzqq1iKwxIeRxl8KSuQLTMJvfQe9gRBveR6OEQEACG5BCO5K1LgSWyEc05XwI7TrAfTsqUJ2pF/Oc7MfHdXrEFhSjGF/fZ5EroAH/xa6nxBv2QDHGHLhtjuIe6FPhXZKiYvvTkkEGxGqXYaePRuQHelzIxGekjh6JEdimoBcWWbwkLvyKjiGfg9c5Et0f4KhesLYhS2eRCrUjFDtMlz/4jlkh3sBAMatAXRuXI/T5RqGjxx253WkgG1lIYSDzMBB6E0liLe9VGDlYhaJWuh+hrGL74CbCTcSTbiy+zH07K3GRKRbRmLwJs69Uo2WFQsRPVwHwTls0wA5nMO+24PosXJEj5XDHO2QcCcLITCDgJByEBACiLe+gKF6Qib8jbcx9ebPcHm7goFDb4ObWZkxrQGcWV6GtidWwLg1CM45yLYMQAhM3DmMaPMCxALrYaf7Zo8Ad7woJC+9B72BkOr6ANy6K0GdPyD06YPo3bcZ2VhYpub1q/ircg1aH1mK2PFmQAg3ArYJwWU4jcjP0Bs1xE6vgZ0OF5bw4BzJS9vkRuzaDsHlPho99yOCNeXo/eplmKN3PHj72qdwZvkCxE8clxvRcQpngRGph95YjNipZ2Cn+3MlclYu4angR1PwzjoEaxah9+tNsMYi7qHUjfaKJ9GyYhESv/82UxbkngPG0FHojcUYObV6moTskyvf6sJ3AAK58H2bYSV1D/5nxUq0PFSOxKkTc5wDeRINiDb5MHJyJexUSMLtuxg7/5aEh2q80zF+9iC6dpShb/+rsFJRmR0Xz+HsqkfR8nA5EqdPznUS8tzm5rQx1IDhE48j8ccm2Okwxq/uRvTXZUh110IIABBIdvlx7fPVCB9404Nn+m7gwmsvon3d00gEJuH5HMc2wWYuywUxtZTgZAh8gogYETiRWkKKtpggTCIi4kaKmKqR6ltEpCgExyZuTBAch9QFC0ktKSNhGkRK4Tc/m/W7AMItRBS3CGHyF87kcGKKLFIguKyCGCOmqEQKI3BO4JyYMnPZweb+MIEHy70v1H9PWUZExNiss2tzV21shvvZns0Nni/L5wX+NwJ/AzmyPuAkeE+vAAAAAElFTkSuQmCC">
   <link rel="preconnect" href="https://api.fontshare.com">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
@@ -6291,6 +6291,51 @@
       transition: transform var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
       -webkit-tap-highlight-color: transparent;
     }
+    /* v1.4.0 — Path-choice interstitial (Guided / Advanced) */
+    .path-choice { max-width: 680px; margin: 8px auto 0; padding: 8px 0; }
+    .path-choice-head { text-align: center; margin-bottom: 28px; }
+    .path-choice-title {
+      font-family: var(--font-display, inherit);
+      font-size: 26px; font-weight: 700; color: var(--ink); margin: 0 0 10px;
+    }
+    .path-choice-sub {
+      font-size: 14px; color: var(--ink-soft); margin: 0 auto; max-width: 460px; line-height: 1.5;
+    }
+    .path-choice-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    }
+    @media (max-width: 520px) { .path-choice-grid { grid-template-columns: 1fr; } }
+    .path-card {
+      appearance: none; font-family: inherit; cursor: pointer;
+      background: var(--bg-card); border: 1.5px solid var(--border-soft);
+      border-radius: var(--r-lg, 16px); padding: 26px 20px;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      text-align: center;
+      transition: transform var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .path-card:hover {
+      transform: translateY(-3px); border-color: var(--accent);
+      box-shadow: 0 8px 24px rgba(15,14,12,0.08);
+    }
+    .path-card:active { transform: scale(0.98); }
+    .path-card-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: var(--accent-soft); color: var(--accent-deep);
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-bottom: 4px;
+    }
+    .path-card-icon svg { width: 26px; height: 26px; }
+    .path-card-title { font-size: 18px; font-weight: 700; color: var(--ink); }
+    .path-card-sub { font-size: 13px; color: var(--ink-soft); }
+    .path-back {
+      appearance: none; font-family: inherit; cursor: pointer;
+      display: block; margin: 22px auto 0; padding: 8px 14px;
+      background: transparent; border: 0; color: var(--accent-deep);
+      font-size: 13px; font-weight: 600;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .path-back:hover { text-decoration: underline; }
     .export-mode-card:hover {
       transform: translateY(-2px);
       border-color: var(--accent);
@@ -7020,6 +7065,74 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v1.4.0  (2026-06-11)  — Path-choice screen after Project Context
+       The Guided/Advanced choice moved out of the Step-1 form (it was a "Quote
+       mode" dropdown at the top) into its own dedicated screen that appears
+       AFTER the user fills Project Context and taps Next — matching the old-app
+       reference design ("Choose your path" with two large cards).
+       Flow: Step 1 (Project Context) -> [Next] -> Path choice (Guided / Advanced
+       cards) -> Guided goes to Step 2 (Deployment), Advanced goes to Step 6
+       (cart). A "Back to project details" link returns to Step 1.
+       Wiring:
+         - New quotes default mode='' so the path screen always shows; picking a
+           card sets mode + advances. renderWizard hides the step header and
+           Next/Back bar during the interstitial (the path screen has its own).
+         - Deep-links past Step 1 without a chosen mode are routed to the path
+           screen (showWizard guard) so the engine never runs without a mode.
+         - Edited deals skip the path screen: hydration restores raw.mode, and a
+           fallback infers 'advanced' when advancedSelections is present, else
+           'guided', so older deals saved before mode-persistence still open
+           straight into edit.
+         - Transient _-prefixed UI flags (e.g. _pathPending) are excluded from
+           the save payload.
+       Verified: 11/11 path-flow state-machine cases (new/guided/advanced,
+       deep-links w/ and w/o mode, edit-hydration inference, path-back).
+     ------------------------------------------------------------
+     v1.3.2  (2026-06-11)  — Logo + text audit (user-facing brand sweep)
+       Caught tvONE text strings the v1.2.0 brand swap missed (logo image was
+       swapped, but several text labels were not):
+         - Login screen <h1> "tvONE Product Selector" -> "BrightSign ..."; login
+           logo alt "tvONE" -> "BrightSign".
+         - About sheet <h3> "tvONE Product Selector" -> "BrightSign ...".
+         - Lead Origin dropdown: ['Cavitak','tvONE'] -> ['Cavitak','BrightSign']
+           (the OEM-partner option; BrightSign is the OEM for this app). Origin
+           filter updated to classify on 'cavitak' (direct) vs everything else
+           (OEM) since neither label contains the legacy 'oem' token the old
+           filter tested for. Dependent smoke tests updated.
+         - Warranty text in exports: "warranty on tvONE products" -> "BrightSign".
+         - Stale <title> "... v1" -> "BrightSign Product Selector".
+       Verified: 0 user-visible tvONE strings remain across topbar, login, about,
+       dropdowns, exports, title, and manifest. Remaining tvONE references are
+       confined to the dormant tvONE recommendation engine (CORIO placeholder
+       SKUs) and code comments — never reached in BrightSign flows.
+     ------------------------------------------------------------
+     v1.3.1  (2026-06-11)  — Step-1 form/validation parity fix
+       Bug: Partner + Consultant fields rendered with required:true (asterisk +
+       HTML5 `required` attr) but validateStep did NOT require them — the form
+       said mandatory while the gate didn't enforce it, and HTML5 `required`
+       could block submission. Made both fields optional in the form to match
+       validation (they were intentionally optional since the save-loop rework).
+       Verified: all 13 Step-1 form required-markers now exactly match the 13
+       validators (zero mismatch, both directions).
+     ------------------------------------------------------------
+     v1.3.0  (2026-06-11)  — BS legacy: email body + handoff notifs + scoping
+       Email (client-side mailto, no backend): _buildMailtoUrl now includes a
+       plain-text configuration summary (qty x model per line) and, for roles
+       permitted to see prices (UI.bsCanSeePrices), an indicative INR total with
+       GST + POA note. BrightSign-branded subject + signature.
+       Handoff notifications (in-app, existing notification_create RPC): on save,
+       if the assigned sales or presales rep changed vs the load/last-save
+       baseline, the NEW assignee is notified ('<actor> assigned you as <role>').
+       Actor excluded; baseline refreshed each save so it fires once per change.
+       Region/role scoping parity: History view (loadHistoryList) now applies the
+       same getRegionScope + getSalesScope + dealMatchesScope filter as Home and
+       Dashboard. Previously History leaked every company deal regardless of role
+       (Sales/Presales/OEM now see only their own; BU Head only their region(s);
+       Super + Support see all). Closes a permission inconsistency.
+       NOT included (needs backend mailer — see BRIGHTSIGN-MAILER-SPEC.md):
+       PDF-attached email, daily error-summary email, scheduled quarterly/yearly
+       review emails. mailto cannot attach files or send automated mail.
+     ------------------------------------------------------------
      v1.2.0  (2026-06-11)  — BrightSign brand + dashboard parity
        Brand swap (assets in):
          - Official BrightSign purple wordmark embedded (login/header/exports),
@@ -7537,7 +7650,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v1.2.0',
+      version: 'brightsign-v1.4.0',
       constants,
       calico,
       mv,
@@ -10189,7 +10302,7 @@
       const date = new Date().toISOString().slice(0, 10);
       const mode = opts && opts.mode ? String(opts.mode).toUpperCase() : null;
       const modePart = mode ? '_' + mode : '';
-      // v27.3.0 — Filename pattern: tvONE_Quote_<ref>_<date>[_BOQ|BOM].<ext>
+      // Filename pattern: BrightSign_Quote_<ref>_<date>[_BOQ|BOM].<ext>
       return 'BrightSign_Quote_' + ref + modePart + '_' + date + '.' + ext;
     }
 
@@ -11983,7 +12096,7 @@
     check('v27.5: manifest link present in <head>',
       () => {
         const link = document.querySelector('link[rel="manifest"]');
-        return (link && link.href.indexOf('tvONE') > 0) || 'manifest link missing or wrong content';
+        return (link && link.href.indexOf('BrightSign') > 0) || 'manifest link missing or wrong content';
       });
     check('v27.5: serviceWorker API available + register intent recorded',
       () => {
@@ -13454,10 +13567,10 @@
       return true;
     }
 
-    // v27.1.1 — Lead Origin (renamed from "Lead source"). Cavitak = lead came
-    // from Cavitak's own sales motion; tvONE = lead came from the OEM partner.
-    // DB column name stays `lead_source` (label-only change frontend-side).
-    const LEAD_SOURCES = ['Cavitak', 'tvONE'];
+    // v1.3.1 — Lead Origin. Cavitak = lead came from Cavitak's own sales
+    // motion; BrightSign = lead came from the OEM partner (BrightSign). DB
+    // column name stays `lead_source` (label-only change frontend-side).
+    const LEAD_SOURCES = ['Cavitak', 'BrightSign'];
 
     // v27.1.1 B5 — City list (~150 entries) with State auto-fill. Sourced from
     // Indian metros + tier-1 + tier-2 cities biased to states with AV market
@@ -13920,7 +14033,7 @@
         ['SAP Code',      'Cavitak Vendor Code available on PO issuance. Quote reference no. to be used for material mapping in customer ERP.'],
         ['Payment Terms', '100% advance along with purchase order'],
         ['Lead Time',     '5\u20136 weeks from the date of PO placement and advance payment receipt'],
-        ['Warranty',      'Standard 5-year OEM warranty on tvONE products. Warranty card issued on delivery.'],
+        ['Warranty',      'Standard 5-year OEM warranty on BrightSign products. Warranty card issued on delivery.'],
         ['PO Validity',   'PO must be issued within 15 days from quote date (' + _date + '). Prices and lead times subject to revision thereafter.'],
         ['Taxes',         'GST @ 18% included above. Any additional levies, cess or local duties extra at actuals.'],
         ['Forex',         'Pricing based on prevailing INR\u2013USD rate on quote date. Material forex movement (>3%) before PO may revise pricing.'],
@@ -14110,6 +14223,10 @@
     let _autosaveTimer    = null;
     let _autosaveInFlight = false;
     let _savedDealLastSavedStage = null;  // v27.3.0 — for won-deal confetti
+    // v1.3.0 — baseline of assigned rep ids, for handoff-notification detection.
+    // Seeded on deal load (mirror of _savedDealLastSavedStage) and refreshed
+    // after each successful save.
+    let _savedDealLastAssignees = { sales: null, presales: null };
     const AUTOSAVE_DEBOUNCE_MS = 1000;
 
     // Field-render helpers for saved-deal accordion. Mirror wizard step 1's
@@ -14234,6 +14351,8 @@
       // hdmi_in, touch, gpio, qty_*, environment) are NOT deal columns — they go
       // to raw_submission and/or bs_specs (built below), never to payload.*.
       Object.keys(deal).forEach(function(k) {
+        // Skip transient UI-only flags (underscore-prefixed, e.g. _pathPending).
+        if (k.charAt(0) === '_') return;
         // Skip server-managed + cached fields, and everything the BS builder
         // handles explicitly (lines, bs_specs source fields, reco).
         if (k === 'id' || k === 'display_ref' || k === 'ref' ||
@@ -14378,6 +14497,48 @@
         if (_savedDealRefId !== inflightRefId) return; // navigated away
         setSavedDealStatus('saved');
         _savedDealLastSavedStage = newStage;
+
+        // v1.3.0 — Handoff notifications. If the assigned sales or presales rep
+        // changed on this save, notify the NEW assignee that a deal was handed
+        // to them. Compares against the baseline seeded on load / last save.
+        // Fire-and-forget; never blocks the save flow. The actor (person making
+        // the change) is excluded — no self-notifications.
+        try {
+          const curSales    = _savedDealData && _savedDealData.sales_person_id ? String(_savedDealData.sales_person_id) : null;
+          const curPresales = _savedDealData && _savedDealData.presales_person_id ? String(_savedDealData.presales_person_id) : null;
+          const handoffs = [];
+          if (curSales && curSales !== _savedDealLastAssignees.sales) {
+            handoffs.push({ id: curSales, role: 'sales lead' });
+          }
+          if (curPresales && curPresales !== _savedDealLastAssignees.presales) {
+            handoffs.push({ id: curPresales, role: 'presales lead' });
+          }
+          if (handoffs.length) {
+            const u3 = STORE.currentUser();
+            const actorUname3 = u3 && u3.username;
+            const actorName3  = (u3 && (u3.full_name || u3.username)) || 'A colleague';
+            const proj3 = (_savedDealData && _savedDealData.project) || '';
+            const refForHandoff = (_savedDealData && (_savedDealData.display_ref || _savedDealData.ref_id)) || _savedDealRefId;
+            handoffs.forEach(function (h) {
+              let uname = null;
+              try {
+                const ru = UI && UI._userRichFor && UI._userRichFor(h.id);
+                uname = ru && ru.username;
+              } catch (_) {}
+              if (uname && uname !== actorUname3) {
+                const msg = actorName3 + ' assigned you as ' + h.role + ' on this deal.';
+                STORE.notifCreate(uname, 'info', refForHandoff, proj3, msg).catch(function (e) {
+                  console.warn('handoff notif failed for', uname, e);
+                });
+              }
+            });
+          }
+          // Refresh the baseline so the same handoff doesn't re-fire on the next
+          // autosave tick.
+          _savedDealLastAssignees = { sales: curSales, presales: curPresales };
+        } catch (e) {
+          console.warn('handoff-notify threw:', e);
+        }
         if (transitionedToWon) {
           try { fireConfetti(); toast('Deal won! \uD83C\uDF89', 'ok'); } catch (e) {}
         }
@@ -14643,7 +14804,8 @@
       })();
       return {
         step: 1,
-        mode: 'guided',                 // 'guided' | 'advanced'
+        mode: '',                       // '' until path chosen | 'guided' | 'advanced'
+        _pathPending: false,            // true while showing path-choice screen
         // shared deal header
         project: '', customer_name: '', partner_name: '', consultant_name: '',
         venue_type: '', city: '', state: '',
@@ -14828,6 +14990,16 @@
         // Accessory qty hints (wifi_qty/ssd_qty) if the builder ever stows them.
         if (raw.wifi_qty != null) w.wifi_qty = Number(raw.wifi_qty) || 0;
         if (raw.ssd_qty != null)  w.ssd_qty  = Number(raw.ssd_qty) || 0;
+      }
+
+      // v1.4.0 — Mode fallback for older deals saved before mode was persisted.
+      // If hydration didn't recover a mode, infer it: a deal carrying advanced
+      // cart selections is 'advanced'; otherwise treat it as 'guided'. This
+      // keeps edited deals out of the new path-choice interstitial (which is
+      // only meant for brand-new quotes).
+      if (w.mode !== 'advanced' && w.mode !== 'guided') {
+        w.mode = (Array.isArray(w.advancedSelections) && w.advancedSelections.length > 0)
+          ? 'advanced' : 'guided';
       }
 
       // ---- 4. Lines -> kept on the wizard for soft-edit fallback ----
@@ -16002,7 +16174,7 @@
                 '<path d="M24 8 L36 16 L24 24"/>' +
               '</svg>' +
             '</div>' +
-            '<h3 style="margin:6px 0 2px;font-size:18px">tvONE Product Selector</h3>' +
+            '<h3 style="margin:6px 0 2px;font-size:18px">BrightSign Product Selector</h3>' +
             '<div style="font-size:12px;color:var(--ink-soft)">Cavitak Marketing Pvt Ltd</div>' +
           '</div>' +
           '<div class="about-grid">' +
@@ -16411,11 +16583,11 @@
           '<div class="login-card login-card-v3">' +
             '<div class="login-brand">' +
               '<div class="login-logos">' +
-                '<img class="login-tvone-logo" src="' + EXPORT.LOGO_TVONE_DURI + '" alt="tvONE" />' +
+                '<img class="login-tvone-logo" src="' + EXPORT.LOGO_TVONE_DURI + '" alt="BrightSign" />' +
                 '<span class="login-logo-divider"></span>' +
                 '<img class="login-cavitak-logo" src="' + EXPORT.LOGO_CAVITAK_DURI + '" alt="Cavitak Marketing" />' +
               '</div>' +
-              '<h1 class="login-title">tvONE Product Selector</h1>' +
+              '<h1 class="login-title">BrightSign Product Selector</h1>' +
               '<div class="login-subtitle">Cavitak Marketing \u00b7 sign in to continue</div>' +
             '</div>' +
             inner +
@@ -17430,8 +17602,11 @@
             d.lead_source || d.lead_origin ||
             (d.raw_submission && d.raw_submission.leadOrigin) || ''
           ).toLowerCase();
-          if (f.origin === 'cavitak') return role.indexOf('oem') === -1;
-          if (f.origin === 'oem')     return role.indexOf('oem') !== -1;
+          // v1.3.1 — Cavitak = direct sales motion; anything else (BrightSign,
+          // the OEM partner, or a literal 'oem' marker) = OEM-origin. Matching
+          // on 'cavitak' is the reliable test since that's the only direct value.
+          if (f.origin === 'cavitak') return role.indexOf('cavitak') !== -1;
+          if (f.origin === 'oem')     return role.indexOf('cavitak') === -1 && role.length > 0;
           return true;
         });
       }
@@ -19945,24 +20120,58 @@
           };
         } catch (e) { return { name: '', email: '', title: '', phone: '' }; }
       })();
-      const subject = 'Cavitak | Quotation \u2014 ' + proj + ' (Ref: ' + ref + ')';
-      // Signature lines — drop empties so we never render a blank line for an
-      // unset profile field. Always anchor with the company line.
+      const subject = 'Cavitak | BrightSign Quotation \u2014 ' + proj + ' (Ref: ' + ref + ')';
+
+      // v1.3.0 - BoM summary block in the body. Lists each line (qty x model),
+      // and, only for roles permitted to see prices, the priced total. POA
+      // lines are noted. mailto: bodies are plain text, so this is a compact
+      // human-readable recap, not the formatted Excel/PDF.
+      const bomBlock = (function () {
+        let lines = [];
+        try { lines = (STORE.bomLines ? STORE.bomLines(deal) : []) || []; }
+        catch (e) { lines = []; }
+        if (!lines.length) return [];
+        const out = ['Configuration summary:'];
+        lines.forEach(function (l) {
+          const qty = Number(l.qty) || 1;
+          const name = l.description || l.model_no || l.sku || 'Item';
+          out.push('  \u2022 ' + qty + ' \u00d7 ' + name);
+        });
+        let canSee = false;
+        try { canSee = !!(UI.bsCanSeePrices && UI.bsCanSeePrices()); } catch (e) { canSee = false; }
+        if (canSee) {
+          try {
+            const q = STORE.computeQuote(lines, deal.project_discount || 0);
+            if (q && q.grandTotal != null) {
+              const inr = '\u20b9' + Math.round(q.grandTotal).toLocaleString('en-IN');
+              out.push('');
+              out.push('Indicative total (incl. ' + q.gstPct + '% GST): ' + inr);
+              if (q.poaCount > 0) {
+                out.push('(' + q.poaCount + ' item' + (q.poaCount === 1 ? '' : 's') +
+                  ' priced on application, not included above.)');
+              }
+            }
+          } catch (e) { /* no price block on error */ }
+        }
+        out.push('');
+        return out;
+      })();
+
       const sigLines = [
         sender.name || 'Cavitak Marketing',
         sender.title,
         sender.phone ? '+91 ' + sender.phone : '',
-        'Cavitak Marketing Pvt. Ltd.'
+        'Cavitak Marketing Pvt. Ltd.  \u00b7  BrightSign India Distributor'
       ].filter(function (s) { return s && String(s).trim().length > 0; });
       const body = [
         'Dear ' + (cust || 'Sir/Madam') + ',',
         '',
-        'Attached is our quotation (Excel BoQ + PDF technical specification) for ' + proj + ', reference ' + ref + '.',
-        '',
+        'Please find attached our BrightSign quotation (Excel BoQ + PDF specification) for ' + proj + ', reference ' + ref + '.'
+      ].concat(bomBlock.length ? [''].concat(bomBlock) : ['']).concat([
         'Validity: 15 days from the date of this email. Kindly review and revert with any clarifications.',
         '',
         'Best regards,'
-      ].concat(sigLines).join('\r\n');
+      ]).concat(sigLines).join('\r\n');
       const params = [];
       if (sender.email) params.push('cc=' + encodeURIComponent(sender.email));
       params.push('subject=' + encodeURIComponent(subject));
@@ -21530,7 +21739,25 @@
           includeDeleted: includeDeleted
         });
         historyState.total = (r && r.total) || 0;
-        const allRows = (r && r.rows) || [];
+        let allRows = (r && r.rows) || [];
+        // v1.3.0 — Apply the same role/region scoping the Home + Dashboard views
+        // use, so History doesn't leak deals outside the viewer's scope. Sales/
+        // Presales/OEM see only their own; BU Head sees only their region(s);
+        // Super + Support see all. Without this, History showed every company
+        // deal regardless of role (permission inconsistency vs Home/Dashboard).
+        try {
+          const _hu = STORE.currentUser();
+          const _rScope = getRegionScope(_hu);
+          const _sScope = getSalesScope(_hu);
+          if (_rScope || _sScope) {
+            allRows = allRows.filter(function (d) {
+              // Keep soft-deleted rows visible in the 'deleted' tab regardless of
+              // scope is NOT desired — scope still applies; a rep shouldn't see
+              // another rep's deleted deals either.
+              return dealMatchesScope(d, _rScope, _sScope);
+            });
+          }
+        } catch (e) { console.warn('history scope filter threw:', e); }
         const curM = _currentYYYYMM();
         // v27.3.0 — apply stage filter + new dashboard filters
         let filtered = allRows.filter(d => {
@@ -22703,6 +22930,11 @@
       _savedDealRefId   = (deal && (deal.display_ref || deal.ref || deal.id)) || null;
       _autosaveInFlight = false;
       _savedDealLastSavedStage = (deal && deal.stage) || null;  // v27.3.0 confetti baseline
+      // v1.3.0 — seed assignee baseline for handoff detection (mirror of above).
+      _savedDealLastAssignees = {
+        sales:    (deal && deal.sales_person_id) ? String(deal.sales_person_id) : null,
+        presales: (deal && deal.presales_person_id) ? String(deal.presales_person_id) : null
+      };
       if (_autosaveTimer) { clearTimeout(_autosaveTimer); _autosaveTimer = null; }
 
       const refId    = _savedDealRefId || '\u2014';
@@ -23367,6 +23599,13 @@
       //   and the CALICO-skip-Step-4 rule routes 4 → 6 directly.
       if (wizardData.step === 4 && !wizardData.hasLed) wizardData.step = 6;
       if (wizardData.step === 5)                       wizardData.step = 6;
+      // v1.4.0 — If we land past Step 1 with no path chosen yet (e.g. a fresh
+      // new quote, or a deep-link before the mode was set), show the path
+      // screen rather than a guided step that assumes a mode.
+      if (wizardData.step > 1 && !wizardData.mode) {
+        wizardData.step = 1;
+        wizardData._pathPending = true;
+      }
       renderWizard();
     }
 
@@ -23390,6 +23629,16 @@
     function renderWizard() {
       const d = wizardData;
       const visibleSteps = computeVisibleSteps(d);
+      // v1.4.0 — During the path-choice interstitial, hide the step header and
+      // the Next/Back action bar; the path screen carries its own controls.
+      if (d._pathPending) {
+        setRoot(
+          '<div class="v273-page">' +
+            '<div id="wiz-step-body">' + renderStepBody(d) + '</div>' +
+          '</div>'
+        );
+        return;
+      }
       setRoot(
         '<div class="v273-page">' +
           renderWizStepper(d.step, visibleSteps) +
@@ -23449,7 +23698,46 @@
         '</div>';
     }
 
+    // v1.4.0 — Path-choice interstitial. Shown after Project Context (Step 1)
+    // when the user has filled the project header but not yet chosen a build
+    // path. Two large cards: Guided (run the recommendation engine) or Advanced
+    // (pick exact models from a cart). Picking one sets d.mode, clears the
+    // pending flag, and advances to the right step.
+    function renderPathChoice(d) {
+      return '' +
+        '<div class="path-choice">' +
+          '<div class="path-choice-head">' +
+            '<h2 class="path-choice-title">Choose your path</h2>' +
+            '<p class="path-choice-sub">Guided \\u2014 answer a few questions and we recommend a player. ' +
+              'Advanced \\u2014 pick exact models yourself.</p>' +
+          '</div>' +
+          '<div class="path-choice-grid">' +
+            '<button class="path-card" type="button" data-action="path-pick" data-mode="guided">' +
+              '<span class="path-card-icon">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                  '<circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>' +
+                '</svg>' +
+              '</span>' +
+              '<span class="path-card-title">Guided</span>' +
+              '<span class="path-card-sub">Recommend a player for me</span>' +
+            '</button>' +
+            '<button class="path-card" type="button" data-action="path-pick" data-mode="advanced">' +
+              '<span class="path-card-icon">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                  '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>' +
+                '</svg>' +
+              '</span>' +
+              '<span class="path-card-title">Advanced</span>' +
+              '<span class="path-card-sub">Build my own (cart)</span>' +
+            '</button>' +
+          '</div>' +
+          '<button class="path-back" type="button" data-action="path-back">\\u2190 Back to project details</button>' +
+        '</div>';
+    }
+
     function renderStepBody(d) {
+      // v1.4.0 — path-choice interstitial gates entry past Step 1.
+      if (d._pathPending) return renderPathChoice(d);
       switch (d.step) {
         case 1: return renderStep1(d);
         case 2: return renderStep2(d);
@@ -23556,15 +23844,11 @@
       return '' +
         '<form id="step1-form" autocomplete="off" novalidate>' +
           citiesDatalist +
-          selectField('mode', 'Quote mode', d.mode || 'guided', [
-            { value: 'guided',   label: 'Guided \u2014 recommend a player for me' },
-            { value: 'advanced', label: 'Advanced \u2014 build my own (cart)' }
-          ]) +
           '<h3 class="h3">Project</h3>' +
           field('project',         'Project name', d.project,         { required: true, placeholder: 'e.g. Auditorium upgrade' }) +
           field('customer_name',   'End User',     d.customer_name,   { required: true }) +
-          field('partner_name',    'Partner',      d.partner_name,    { required: true }) +
-          field('consultant_name', 'Consultant',   d.consultant_name, { required: true }) +
+          field('partner_name',    'Partner',      d.partner_name,    { placeholder: 'Optional' }) +
+          field('consultant_name', 'Consultant',   d.consultant_name, { placeholder: 'Optional' }) +
           selectField('content', 'Primary use case', d.content, [
             { value: 'signage',     label: 'Digital signage' },
             { value: 'menu',        label: 'Menu board' },
@@ -24848,8 +25132,27 @@
         if (!actEl) return;
         const action = actEl.getAttribute('data-action');
 
-        // History filter
-        if (action === 'hist-filter') {
+        // v1.4.0 — Path-choice interstitial (after Step 1).
+        if (action === 'path-pick') {
+          const mode = actEl.getAttribute('data-mode');
+          const d = getWizardData();
+          d.mode = (mode === 'advanced') ? 'advanced' : 'guided';
+          d._pathPending = false;
+          // Guided -> Step 2 (deployment); Advanced -> Step 6 (cart).
+          d.step = (d.mode === 'advanced') ? 6 : 2;
+          saveDraft();
+          renderWizard();
+          return;
+        }
+        if (action === 'path-back') {
+          const d = getWizardData();
+          d._pathPending = false;
+          d.step = 1;
+          saveDraft();
+          renderWizard();
+          return;
+        }
+
           const f = actEl.getAttribute('data-value');
           setHistoryFilter(f);
           return;
@@ -27323,6 +27626,15 @@
         return;
       }
       d.errors = {};
+      // v1.4.0 — After Project Context (Step 1), show the path-choice screen
+      // instead of jumping straight to Step 2. Once a path is picked (or if we
+      // re-enter an existing deal that already has a mode), proceed normally.
+      if (d.step === 1 && !d._pathPending && !d.mode) {
+        d._pathPending = true;
+        UI.saveDraft();
+        UI.renderWizard();
+        return;
+      }
       // Walk the visible-steps array for the current mode (guided=[1..6],
       // advanced=[1,6]). Move to the next visible step, or stay put on the last.
       const vis = UI.computeVisibleSteps(d);
@@ -28136,17 +28448,17 @@
         return all || 'shape: ' + Object.keys(EXPORT).join(',');
       });
 
-    check('EXPORT.filename produces tvONE_Quote_<ref>_<date>.<ext>',
+    check('EXPORT.filename produces BrightSign_Quote_<ref>_<date>.<ext>',
       () => {
         const fn = EXPORT.filename({ display_ref: 'TV-12345678' }, 'xlsx');
-        return /^tvONE_Quote_TV-12345678_\d{4}-\d{2}-\d{2}\.xlsx$/.test(fn)
+        return /^BrightSign_Quote_TV-12345678_\d{4}-\d{2}-\d{2}\.xlsx$/.test(fn)
           || 'got: ' + fn;
       });
 
     check('EXPORT.filename handles deal with no ref (fallback "NOREF")',
       () => {
         const fn = EXPORT.filename({}, 'pdf');
-        return /^tvONE_Quote_NOREF_\d{4}-\d{2}-\d{2}\.pdf$/.test(fn)
+        return /^BrightSign_Quote_NOREF_\d{4}-\d{2}-\d{2}\.pdf$/.test(fn)
           || 'got: ' + fn;
       });
 
@@ -28503,12 +28815,12 @@
       () => APP._PRESALES_TEAM.some(o => o.label === 'Sachchi Kaushik')
             || 'labels: ' + APP._PRESALES_TEAM.map(o => o.label).join(' | '));
 
-    // N7: LEAD_SOURCES locked to ['Cavitak', 'tvONE']
-    check('v27.1.1 N7: LEAD_SOURCES is exactly ["Cavitak","tvONE"]',
+    // N7: LEAD_SOURCES locked to ['Cavitak', 'BrightSign']
+    check('LEAD_SOURCES is exactly ["Cavitak","BrightSign"]',
       () => {
         const ls = APP._LEAD_SOURCES;
         return (Array.isArray(ls) && ls.length === 2 &&
-                ls[0] === 'Cavitak' && ls[1] === 'tvONE')
+                ls[0] === 'Cavitak' && ls[1] === 'BrightSign')
           || 'got: ' + JSON.stringify(ls);
       });
 
