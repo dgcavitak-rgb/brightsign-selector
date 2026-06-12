@@ -1839,6 +1839,26 @@
       text-align: center; font: 600 15px var(--f-mono); padding: 0; border-radius: 0; }
     .stepper input:focus-visible { outline: 2px solid var(--c-accent); outline-offset: -2px; }
 
+    /* v2.0.0 — Advanced model grid (Step 3) */
+    .stepper .stepper-val { min-width: 44px; /* v2.1.0 F2 — 52→44 */ min-height: var(--tap);
+      display: inline-flex; align-items: center; justify-content: center;
+      border-left: 1px solid var(--c-border); border-right: 1px solid var(--c-border);
+      font: 600 15px var(--f-mono); }
+    .adv-model-grid { display: flex; flex-direction: column; gap: 8px; }
+    .adv-model-row { display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 12px; border: 1px solid var(--c-border);
+      border-radius: var(--r-md); background: var(--c-elev); }
+    .adv-model-row.is-active { border-color: var(--c-accent);
+      box-shadow: 0 0 0 1px var(--c-accent) inset; }
+    .adv-model-row .stepper { flex: 0 0 auto; } /* v2.1.0 F2 — stepper never shrinks; was clipping on long-description rows (AU335, LS425) */
+    .adv-model-main { flex: 1; min-width: 0; }  /* v2.1.0 F2 — text column absorbs the squeeze instead */
+    .adv-model-name { font: 600 15px var(--f-mono); color: var(--c-fg); }
+    .adv-model-grp { font: 600 10px var(--f-mono); color: var(--c-accent);
+      border: 1px solid var(--c-accent); border-radius: 4px; padding: 1px 5px;
+      margin-left: 6px; vertical-align: 1px; }
+    .adv-model-tag { font-size: 12px; color: var(--c-fg-mute); margin-top: 2px; }
+    .adv-os-row { display: flex; gap: 6px; margin-top: 8px; }
+
     /* Tile selector */
     .tile-group { display: grid; gap: 10px; }
     .tile { display: block; padding: 14px 16px; border-radius: var(--r-md);
@@ -1917,11 +1937,19 @@
     .wiz-dot.done { background: var(--c-accent-dk); }
     .wiz-step-label { text-align: center; font-size: 12px; color: var(--c-fg-mute);
       margin: 0 0 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    /* v2.1.0 F3 — full-bleed sticky footer. The bar previously sat inset by
+       the view's 16px side padding, so scrolling content stayed visible in
+       the gutters beside it (read as "transparent" on device, worst in
+       dark). Negative side margins + matching side padding make the solid
+       var(--c-bg) span edge to edge; a faint top shadow separates it from
+       content sliding underneath. */
     .wiz-actionbar { position: sticky;
       bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
-      background: var(--c-bg); padding: 12px 0;
+      background: var(--c-bg);
+      margin: 16px -16px 0; padding: 12px 16px;
       display: flex; gap: 10px; align-items: center;
-      border-top: 1px solid var(--c-border); margin-top: 16px; z-index: 5; }
+      border-top: 1px solid var(--c-border); z-index: 5;
+      box-shadow: 0 -6px 16px -10px rgba(0,0,0,0.25); }
     .wiz-actionbar .grow { flex: 1; }
     .wiz-summary { display: flex; flex-direction: column; gap: 10px; }
     .wiz-summary .sum-row { display: flex; justify-content: space-between;
@@ -2210,7 +2238,7 @@
     .h2 { font-size: 17px; font-weight: 700; margin: 0 0 6px; }
     .h3 { font-size: 13px; font-weight: 700; margin: 0 0 6px;
       text-transform: uppercase; letter-spacing: 0.05em; color: var(--c-fg-soft); }
-    .sp-12 { height: 12px; } .sp-24 { height: 24px; }
+    .sp-12 { height: 12px; } .sp-16 { height: 16px; } .sp-24 { height: 24px; } /* v2.0.2 — sp-16 had 9 uses, no rule */
 
     /* Login */
     .login-bg { min-height: 100vh; display: flex; align-items: center;
@@ -6495,10 +6523,15 @@
     .cms-subpanel .field:last-child { margin-bottom: 0; }
 
     /* v1.4.6 — Segmented pill group (resolution / outputs / power / yes-no) */
-    .pill-field { margin: 0 0 14px; }
+    .pill-field { margin: 0 0 16px; }
+    /* v2.1.0 F5 — pillGroup labels join the fieldCaption rhythm: same small
+       uppercase mute caption as every other group on guided Step 3, so the
+       page reads caption → control → space uniformly (Player quantity /
+       Budget tier / Content type / Technical spec / Capabilities). */
     .pill-field > label {
-      display: block; font-size: 13px; font-weight: 600;
-      color: var(--c-fg-soft); margin: 0 0 6px;
+      display: block; font-size: 12px; font-weight: 700;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--c-fg-mute); margin: 0 0 10px;
     }
     .pill-group { display: flex; gap: 8px; flex-wrap: wrap; }
     .pill-btn {
@@ -6517,6 +6550,55 @@
       color: #fff;
     }
     .pill-sub { font-size: 12px; color: var(--c-fg-mute); margin: 6px 0 0; }
+
+    /* v2.1.0 F4+F6 — segment-picker ladder + BoM table moved from inline
+       styles to classes. F4: the old inline markup used pre-v2 tokens
+       (--accent/--border/--muted fallbacks) and raw <button>s with no color,
+       so model names rendered UA ButtonText (near-black) on dark. Everything
+       below is on the live token vocabulary, defined in BOTH themes.
+       F6: selected ladder row gets the accent ring + soft glow (matches
+       .adv-model-row.is-active), numerals go mono, Grand total emphasized. */
+    .seg-pick { margin-bottom: 16px; }
+    .seg-pick-head { font-size: 12px; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase; color: var(--c-fg-mute); margin: 0 0 10px; }
+    .seg-row { display: flex; width: 100%; align-items: center; gap: 10px;
+      padding: 12px; margin-bottom: 8px; cursor: pointer; text-align: left;
+      appearance: none; font-family: inherit;
+      background: var(--c-elev); color: var(--c-fg);
+      border: 1px solid var(--c-border); border-radius: var(--r-md);
+      -webkit-tap-highlight-color: transparent; }
+    .seg-row:active { background: var(--c-sunk); }
+    .seg-row.is-selected { border-color: var(--c-accent);
+      box-shadow: 0 0 0 1px var(--c-accent) inset, 0 0 14px var(--c-accent-lt);
+      background: var(--c-accent-lt); }
+    .seg-radio { width: 16px; height: 16px; border-radius: 50%; flex: 0 0 auto;
+      border: 2px solid var(--c-border-st); background: transparent; }
+    .seg-row.is-selected .seg-radio { border-color: var(--c-accent);
+      background: var(--c-accent); }
+    .seg-main { flex: 1; min-width: 0; }
+    .seg-name { font: 600 15px var(--f-mono); color: var(--c-fg); }
+    .seg-tag { display: block; font-size: 12px; color: var(--c-fg-mute); margin-top: 2px; }
+    .seg-price { font: 600 13px var(--f-mono); white-space: nowrap; color: var(--c-fg); }
+    .bs-pill { display: inline-block; font-size: 10px; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 6px;
+      border-radius: 6px; background: var(--c-accent-lt); color: var(--c-accent);
+      border: 1px solid var(--c-accent); margin-left: 6px; vertical-align: 1px; }
+    .bomt { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+    .bomt th { text-align: left; padding: 4px; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.05em; text-transform: uppercase; color: var(--c-fg-mute);
+      border-bottom: 2px solid var(--c-border-st); }
+    .bomt th.num, .bomt td.num { text-align: right; }
+    .bomt th.ctr, .bomt td.ctr { text-align: center; }
+    .bomt td { padding: 8px 4px; border-bottom: 1px solid var(--c-border);
+      vertical-align: top; }
+    .bomt td.num, .bomt td.ctr { font-family: var(--f-mono); }
+    .bomt .bomt-sku { font-family: var(--f-mono); font-size: 11px; color: var(--c-fg-mute); }
+    .bomt td.poa { color: var(--c-fg-mute); }
+    .bomt tr.bomt-tot td { border-bottom: 0; padding: 4px; }
+    .bomt tr.bomt-tot td.lbl { text-align: right; color: var(--c-fg-soft); }
+    .bomt tr.bomt-grand td { border-top: 2px solid var(--c-border-st);
+      padding-top: 8px; font-weight: 700; }
+    .bomt tr.bomt-grand td.num { font: 700 16px var(--f-mono); color: var(--c-accent); }
 
     /* v1.4.6 — Budget tier slider */
     .tier-field { margin: 6px 0 14px; }
@@ -7325,6 +7407,111 @@
   <script>
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
+     ------------------------------------------------------------
+     v2.1.0  (2026-06-12)  — device-feedback fixes F1–F6 (12 Jun walk)
+       F1 CMS pricing hardened + proven. cmsPriceOf vendor match is now
+          strip-' CMS' normalize-equality (live pricebook strings re-verified
+          this session: 'BrightSign CMS'/'Korbyt CMS'/'Pickcel CMS'/'Poppulo
+          CMS'; wizard stores 'Korbyt' etc). Install rows carry term_years
+          NULL in the DB — matched term-agnostically, qty 1 flat. Subscription:
+          exact-term row first, else 1-yr row x term (full-term cost paid
+          up-front); only term=1 rows exist today so 2–5yr derive. NOTE: the
+          v2.0.x code already substring-matched + null-term install — the
+          total device failure most likely came from a stale pre-v2 PWA cache;
+          this release re-proves the whole path headlessly with the real DB
+          strings either way. Poppulo stays UI-excluded (0 INR TBD).
+       F2 Advanced grid clipping (AU335/LS425 long descriptions):
+          .adv-model-row .stepper flex 0 0 auto; .adv-model-main flex:1
+          min-width:0; .stepper-val min-width 52→44.
+       F3 Back/Next footer full-bleed: bar was inset by the view's 16px side
+          padding so content scrolled visibly through the gutters beside it
+          ("transparent" on device). Negative side margins + matching side
+          padding; faint top shadow.
+       F4 Dark-theme legibility: segment-picker ladder + _bsPill +
+          renderBomTable moved off pre-v2 inline tokens (--accent/--border/
+          --muted fallbacks; raw <button> with no color = UA near-black text
+          on dark) onto classed styles using the live vocabulary
+          (--c-fg/--c-fg-mute/--c-border/--c-accent/--c-accent-lt/--f-mono).
+       F5 Guided Step 3 rhythm: pillGroup labels restyled onto the
+          fieldCaption pattern (12px/700/uppercase/mute) so the page reads
+          caption → control → space uniformly; .pill-field margin 14→16.
+       F6 Review presentation: ladder rows get the accent ring + soft glow
+          when selected (matches .adv-model-row.is-active), mono model names
+          and prices, BoM table mono numerals, Grand total 16px mono accent,
+          uppercase table headers, seg-pick-head caption.
+       sw.js CACHE_NAME → brightsign-v2.1.0.
+     ------------------------------------------------------------
+     v2.0.2  (2026-06-12)  — graphics/background audit fixes
+       Full visual-layer audit of the v2 surfaces: every CSS custom property
+       referenced by the new grid CSS verified against the app's token set
+       (--c-elev/--c-border/--c-fg/--c-fg-mute/--c-accent/--f-mono all
+       defined in BOTH light and dark theme blocks; --r-md/--tap in the base
+       :root) — no missing backgrounds, no hardcoded colors, dark mode safe.
+       Banners (.banner.info/.warn/.err) fully token-backed. Two defects:
+         - .sp-16 spacer had 9 markup uses but NO rule (only .sp-12/.sp-24
+           existed) — rendered as zero-height, cramping section spacing on
+           the guided Configure page. Rule added.
+         - Advanced-grid OS pills emitted the nonexistent state class
+           'is-on'; the app's pill state class is 'is-selected' (pillGroup,
+           .pill-btn.is-selected). Selected OS had no visual indication.
+       Verified-good in the same audit: iconCardGroup cols-3 grid rule,
+       fieldCaption required-star, review classes (wiz-summary/sum-row/
+       edit-link/step6-divider), path-pick cards, stepper reuse.
+     ------------------------------------------------------------
+     v2.0.1  (2026-06-12)  — post-2.0 sweep: one real fix + audit corrections
+       FIX: hydrateWizardFromDeal now restores raw.cms_qty. Saving an explicit
+       license count, then editing the deal, previously dropped it — the CMS
+       step re-seeded licenses to the player total and the BoM changed
+       silently on resave. Save side was always correct (raw_submission
+       sweeps all wizard keys); only hydrate missed it.
+       AUDIT CORRECTIONS (no code change — for the record):
+         - pw-toggle is NOT dead: handled via closest('[data-action=...]')
+           at the global click listener (v27.3.14d port). The hook-parity
+           script's exclusion filter hid the handler line from itself.
+         - Notification bell is NOT dead: #notif-btn has a closest() handler;
+           the lone 'notif-show' string is a smoke-test selector, and the
+           smoke passes via its #notif-badge alternative (present in topbar).
+       VERIFIED NON-ISSUES: zero deals carry legacy advancedAccessories
+       (read-only fallback is moot); BS-18624135 advancedSelections shape
+       hydrates into the v2 grid as-is; bs_specs already persists content +
+       derived environment. Known gap by design: cms_qty has no bs_deal_specs
+       column (lives in raw_submission); adding one is a backend DDL+RPC
+       change — proposal handed to Dipenkumar, not applied.
+     ------------------------------------------------------------
+     v2.0.0  (2026-06-11)  — Six-step flow restructure (Dipenkumar's handwritten spec)
+       1 Project | 2 Mode pick | 3 Configure (branched) | 4 Accessories |
+       5 CMS | 6 Review & build. Both modes share one linear flow.
+         - Step 2 is a pure Guided/Advanced choice; tapping a card advances to 3.
+         - Step 3 GUIDED merges player quantity (direct indoor/outdoor steppers
+           — qty_total / deployment_type / Mixed split-panel machinery removed;
+           the engine always read the two quantities), budget tier, the NEW
+           content-type field, and the technical spec. content values are
+           'av'/'video'/'audio' BY DESIGN: buildBsSpec routes audio via
+           content.indexOf('audio'), so Audio+Video must not contain "audio".
+           Audio-only hides the video spec and routes to AU335.
+         - Step 3 ADVANCED replaces the cart with a full-catalog model grid
+           (qty stepper per model, rank order). XC models choose the OS —
+           BrightSignOS (variant_key '') or Windows ('win'); both price rows
+           verified live (XC2055 174,688/201,771; XC4055 242,396/269,479).
+           unitPriceOf gained a variant param with base-row fallback.
+         - Step 4 Accessories: cap is now strictly the player total in BOTH
+           modes (quantities precede it). Zero players renders an info note
+           (spec: Wi-Fi/SSD cannot exceed player qty).
+         - Step 5 CMS: license-quantity stepper (seeded to player total on
+           vendor pick; explicit value wins; CMS-only deals step up from 0).
+           BoM subscription qty = licenses, not blindly the player count.
+         - Step 6 Review & build (common): summary rows remapped to the new
+           steps; Advanced shows its selections + priced BoM (no engine).
+         - CMS-only deals: build is allowed with zero players when a vendor +
+           licenses exist (guided computeReco gate AND advanced wizBuild gate).
+         - Removed: renderAdvancedCart, _cartRow, cart-add-player/cart-qty/
+           cart-remove handlers, split-set handler, _inferDeployType,
+           _distributeTotal, qty_total special cases. UI.renderStep5 export
+           kept as a back-compat KEY pointing at renderStepAddons (smoke
+           12016 asserts it's callable — renaming without this would have
+           been an IIFE-tail ReferenceError, the alpha.9.0 footgun).
+         - Legacy: old drafts clamp step>6 to 6; pre-2.0 advancedAccessories
+           still price via the read-only bomLines fallback.
      ------------------------------------------------------------
      v1.9.2  (2026-06-11)  — PWA / home-screen icon fix ("favicon")
        The favicon + apple-touch-icon data URIs already existed (purple B),
@@ -8246,7 +8433,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v1.9.2',
+      version: 'brightsign-v2.1.0',
       constants,
       calico,
       mv,
@@ -8663,12 +8850,18 @@
     }
 
     // Base (variant_key '') active unit price for a player. 0 => POA.
-    function unitPriceOf(model_id) {
+    function unitPriceOf(model_id, variant) {
+      // v2.0.0 — optional variant_key (e.g. 'win' for XC Windows builds);
+      // missing variant rows fall back to the base '' row.
       const rows = (_pricebook && _pricebook.pricing) || [];
-      const r = rows.find(function (p) {
-        return p.model_id === model_id &&
-               (p.variant_key === '' || p.variant_key == null) && !p.active_to;
-      });
+      const v = variant || '';
+      const match = function (vk) {
+        return rows.find(function (p) {
+          return p.model_id === model_id &&
+                 ((p.variant_key || '') === vk) && !p.active_to;
+        });
+      };
+      const r = match(v) || (v ? match('') : null);
       return r ? Number(r.unit_price_inr) || 0 : 0;
     }
 
@@ -8678,11 +8871,21 @@
       return r ? { unit_price_inr: Number(r.unit_price_inr) || 0, name: r.name || '', sku: r.sku || idOrSku } : null;
     }
 
-    // CMS row. installation: flat. subscription: exact term else 1-yr x term.
+    // CMS row. installation: flat (DB rows carry term_years NULL — matched
+    // term-agnostically). subscription: exact term else 1-yr x term (notes:
+    // full-term cost paid up-front).
+    // v2.1.0 F1 — vendor match normalized: pricebook stores 'Korbyt CMS' /
+    // 'BrightSign CMS' / 'Pickcel CMS' (live strings re-verified this
+    // session); the wizard stores 'Korbyt' etc. Strip a trailing ' CMS',
+    // trim, lowercase, compare for equality. The v2.0.x substring match
+    // also resolved these pairs but equality is collision-proof and matches
+    // the diagnosed spec. Poppulo CMS exists in the DB at 0 INR and stays
+    // excluded from the vendor picker.
     function cmsPriceOf(vendor, priceType, term) {
       const rows = (_pricebook && _pricebook.cms_pricing) || [];
-      const vmatch = function (r) { return String(r.vendor || '').toLowerCase().indexOf(String(vendor || '').toLowerCase()) !== -1; };
-      const cand = rows.filter(function (r) { return r.price_type === priceType && vmatch(r) && !r.active_to; });
+      const vkey = function (s) { return String(s == null ? '' : s).replace(/\s*CMS\s*$/i, '').trim().toLowerCase(); };
+      const want = vkey(vendor);
+      const cand = rows.filter(function (r) { return r.price_type === priceType && vkey(r.vendor) === want && !r.active_to; });
       if (!cand.length) return null;
       if (priceType === 'installation') return { unit_price_inr: Number(cand[0].unit_price_inr) || 0 };
       const exact = cand.find(function (r) { return Number(r.term_years) === Number(term); });
@@ -8706,13 +8909,14 @@
         : (Number(d.qty_indoor) || 0) + (Number(d.qty_outdoor) || 0);
       const cat = function (id) { return (_pricebook.catalog || []).find(function (c) { return c.model_id === id; }) || {}; };
 
-      function playerLine(model_id, qty, seg) {
+      function playerLine(model_id, qty, seg, variant) {
         if (!model_id || qty <= 0) return;
         const c = cat(model_id);
-        const unit = quoteUnit(unitPriceOf(model_id));
+        const unit = quoteUnit(unitPriceOf(model_id, variant));
         lines.push({
           product_family: 'Player', sku: model_id,
-          description: (c.model_group ? c.model_group + ' series' : 'Player') + (seg ? ' \u00b7 ' + seg : ''),
+          description: (c.model_group ? c.model_group + ' series' : 'Player') +
+            (variant === 'win' ? ' \u00b7 Windows' : '') + (seg ? ' \u00b7 ' + seg : ''),
           model_no: model_id, qty: qty, unit_price_inr: unit, line_discount_pct: 0,
           is_service: false, notes: c.tag || '', line_total_inr: unit * qty
         });
@@ -8735,7 +8939,7 @@
       }
 
       if (d.mode === 'advanced') {
-        (d.advancedSelections || []).forEach(function (s) { playerLine(s.model_id, Number(s.qty) || 0, ''); });
+        (d.advancedSelections || []).forEach(function (s) { playerLine(s.model_id, Number(s.qty) || 0, '', s.os === 'win' ? 'win' : ''); });
         // v1.9.0 LEGACY fallback — deals/drafts saved before the unification
         // carried accessories/CMS inside advancedAccessories. Still price
         // them. New entries can no longer be created (cart UI removed), so
@@ -8777,12 +8981,17 @@
         accLine(sku, 'SSD ' + size, Number(d.ssd_qty) || totalPlayers, ap ? ap.unit_price_inr : 0);
       }
       if (d.cms_vendor && d.cms_vendor !== 'None') {
-        const inst = cmsPriceOf(d.cms_vendor, 'installation', null);
-        if (inst) cmsLine(d.cms_vendor + '-install', d.cms_vendor + ' installation', 1, inst.unit_price_inr);
-        const subType = d.cms_deployment_mode === 'cloud' ? 'cloud_subscription' : 'onpremise_subscription';
-        const term = Number(d.cms_term) || 1;
-        const sub = cmsPriceOf(d.cms_vendor, subType, term);
-        if (sub) cmsLine(d.cms_vendor + '-sub', d.cms_vendor + ' subscription \u00b7 ' + term + 'yr \u00b7 ' + (d.cms_deployment_mode || 'local'), totalPlayers, sub.unit_price_inr);
+        // v2.0.0 — explicit license count wins; unset falls back to the player
+        // total. Zero licenses (and zero players) = no CMS lines at all.
+        const licQty = Number(d.cms_qty) > 0 ? Number(d.cms_qty) : totalPlayers;
+        if (licQty > 0) {
+          const inst = cmsPriceOf(d.cms_vendor, 'installation', null);
+          if (inst) cmsLine(d.cms_vendor + '-install', d.cms_vendor + ' installation', 1, inst.unit_price_inr);
+          const subType = d.cms_deployment_mode === 'cloud' ? 'cloud_subscription' : 'onpremise_subscription';
+          const term = Number(d.cms_term) || 1;
+          const sub = cmsPriceOf(d.cms_vendor, subType, term);
+          if (sub) cmsLine(d.cms_vendor + '-sub', d.cms_vendor + ' subscription \u00b7 ' + term + 'yr \u00b7 ' + (d.cms_deployment_mode || 'local'), licQty, sub.unit_price_inr);
+        }
       }
       return lines;
     }
@@ -13911,10 +14120,9 @@
     const STEP_TITLES = [
       null,
       'Project context',
-      'Deployment',
-      'Budget tier',
-      'Technical spec',
-      'Add-ons',
+      'Choose your path',
+      'Configure',
+      'Accessories',
       'Content management',
       'Review & build'
     ];
@@ -13924,10 +14132,9 @@
     const STEP_PILL_LABELS = [
       null,
       'Project',
-      'Deploy',
-      'Budget',
-      'Tech',
-      'Add-ons',
+      'Mode',
+      'Configure',
+      'Accessories',
       'CMS',
       'Build'
     ];
@@ -14042,6 +14249,8 @@
         const merged = Object.assign(defaultWizard(), parsed);
         merged.reco = null;
         merged.errors = {};
+        // v2.0.0 — pre-2.0 drafts could sit on step 7 (old cart/review).
+        if (Number(merged.step) > 6) merged.step = 6;
         return merged;
       } catch (e) {
         return defaultWizard();
@@ -14173,6 +14382,12 @@
         // Accessory qty hints (wifi_qty/ssd_qty) if the builder ever stows them.
         if (raw.wifi_qty != null) w.wifi_qty = Number(raw.wifi_qty) || 0;
         if (raw.ssd_qty != null)  w.ssd_qty  = Number(raw.ssd_qty) || 0;
+        // v2.0.1 — explicit CMS license count must round-trip: without this,
+        // editing a deal re-seeded licenses to the player total and silently
+        // changed the BoM on resave. buildSavePayload already stows it (the
+        // raw catch-all sweeps every non-transient wizard key); only this
+        // hydrate side was missing.
+        if (raw.cms_qty != null)  w.cms_qty  = Number(raw.cms_qty) || 0;
       }
 
       // v1.4.0 — Mode fallback for older deals saved before mode was persisted.
@@ -22793,7 +23008,7 @@
       } else if (!wizardData) {
         wizardData = loadDraft();
       }
-      wizardData.step = clamp(parseInt(stepNum, 10) || 1, 1, 7);
+      wizardData.step = clamp(parseInt(stepNum, 10) || 1, 1, 6); // v2.0.0 — 6-step flow
       wizardData.errors = {};
       // v1.6.0 — BrightSign has a linear 7-step flow (no LED/SX skip logic, which
       // was tvONE-only). Deep-links just clamp into range.
@@ -22830,11 +23045,10 @@
     }
 
     function computeVisibleSteps(d) {
-      // v1.9.0 — Add-ons (5) and CMS (6) are shared sections: they apply to
-      // BOTH modes. Advanced = Project, Add-ons, CMS, Cart/Build.
-      if (d && d.mode === 'advanced') return [1, 5, 6, 7];
-      // Guided: all seven sections (CMS and Review/build are separate pages).
-      return [1, 2, 3, 4, 5, 6, 7];
+      // v2.0.0 — single 6-step flow for BOTH modes (per Dipenkumar's spec):
+      // 1 Project, 2 Mode pick, 3 Configure (branches guided/advanced),
+      // 4 Accessories (common), 5 CMS (common), 6 Review & build (common).
+      return [1, 2, 3, 4, 5, 6];
     }
 
     /* v27.3.0 — Polished wizard progress header. Shows:
@@ -22884,11 +23098,10 @@
       switch (d.step) {
         case 1: return renderStep1(d);
         case 2: return renderStep2(d);
-        case 3: return renderStep3(d);
-        case 4: return renderStep4(d);
-        case 5: return renderStep5(d);
-        case 6: return renderStep6(d);
-        case 7: return d.mode === 'advanced' ? renderAdvancedCart(d) : renderStep7(d);
+        case 3: return d.mode === 'advanced' ? renderStep3Advanced(d) : renderStep3Guided(d);
+        case 4: return renderStepAddons(d);
+        case 5: return renderStepCms(d);
+        case 6: return renderStepReview(d);
         default: return '';
       }
     }
@@ -23084,19 +23297,14 @@
     }
 
     function renderStep2(d) {
-      const indoor  = Number(d.qty_indoor)  || 0;
-      const outdoor = Number(d.qty_outdoor) || 0;
-      const total   = indoor + outdoor;
-      const env = (indoor > 0 && outdoor > 0) ? 'Mixed (indoor + outdoor)'
-                : (outdoor > 0) ? 'Outdoor only' : 'Indoor only';
-
-      // v1.4.1 - Path choice lives at the top of Step 2 (inline cards, not a
-      // separate screen). Guided reveals the deployment fields below; Advanced
-      // jumps to the cart (Step 6). The currently-selected path is highlighted.
+      // v2.0.0 — Step 2 is ONLY the Guided/Advanced choice (per spec). All
+      // deployment fields moved to Step 3 (guided branch). Tapping a card
+      // advances to Step 3 via the path-pick handler.
       const isGuided   = d.mode === 'guided';
       const isAdvanced = d.mode === 'advanced';
-      const pathCards =
-        '<div class="path-pick-label">How do you want to build this quote?</div>' +
+      const err = d.errors && d.errors.mode
+        ? '<div class="banner warn" style="margin-bottom:10px;">' + esc(d.errors.mode) + '</div>' : '';
+      return sectionHeader(2, 'Choose your path', 'How do you want to build this quote?') + err +
         '<div class="path-pick-grid">' +
           '<button class="path-pick-card' + (isGuided ? ' is-selected' : '') + '" type="button" ' +
             'data-action="path-pick" data-mode="guided">' +
@@ -23118,72 +23326,16 @@
             '</span>' +
             '<span class="path-pick-text">' +
               '<span class="path-pick-title">Advanced</span>' +
-              '<span class="path-pick-sub">Pick exact models yourself (cart)</span>' +
+              '<span class="path-pick-sub">Pick exact models and quantities yourself</span>' +
             '</span>' +
             (isAdvanced ? '<span class="path-pick-check">\u2713</span>' : '') +
           '</button>' +
         '</div>';
-
-      const deployFields = isGuided
-        ? '<div class="sp-16"></div>' +
-          sectionHeader(2, 'Deployment', 'How many players, and where they run.') +
-          // Player count
-          fieldCaption('Number of BrightSign players', true) +
-          stepperRow('qty_total', 'Total players', '', (total || 1), { min: 1, max: 200 }) +
-          '<div class="sp-16"></div>' +
-          // Deployment type as icon cards
-          fieldCaption('Deployment type', true) +
-          iconCardGroup('deployment_type', d.deployment_type || _inferDeployType(d), [
-            { value: 'indoor',  label: 'Indoor',  sub: 'Standard signage',     icon: _ICO.indoor },
-            { value: 'outdoor', label: 'Outdoor', sub: 'Enclosure required',   icon: _ICO.outdoor },
-            { value: 'mixed',   label: 'Mixed',   sub: 'Indoor + Outdoor',     icon: _ICO.mixed }
-          ], { cols: 3 }) +
-          // Conditional split panel for Mixed
-          ((d.deployment_type === 'mixed' || (indoor > 0 && outdoor > 0))
-            ? '<div class="field-subpanel">' +
-                '<div class="field-subpanel-title">Split for mixed deployment</div>' +
-                '<div class="split-row">' +
-                  '<div class="split-col"><label>Indoor qty</label>' +
-                    '<input type="text" inputmode="numeric" value="' + indoor + '" data-action="split-set" data-key="qty_indoor" aria-label="Indoor quantity"></div>' +
-                  '<div class="split-col"><label>Outdoor qty</label>' +
-                    '<input type="text" inputmode="numeric" value="' + outdoor + '" data-action="split-set" data-key="qty_outdoor" aria-label="Outdoor quantity"></div>' +
-                '</div>' +
-                '<div class="split-hint">Total above auto-updates to Indoor + Outdoor.</div>' +
-              '</div>'
-            : '') +
-          '<p class="help" style="margin-top:14px;font-weight:600;">' + esc(env) + ' \u00b7 ' + total + ' player' + (total === 1 ? '' : 's') + ' total</p>'
-        : '';
-
-      return '' + pathCards + deployFields;
     }
 
-    // v1.7.0 — Infer the deployment-type card from existing indoor/outdoor counts
-    // (for restoring a saved/edited deal that predates the deployment_type field).
-    function _inferDeployType(d) {
-      const i = Number(d.qty_indoor) || 0, o = Number(d.qty_outdoor) || 0;
-      if (i > 0 && o > 0) return 'mixed';
-      if (o > 0) return 'outdoor';
-      if (i > 0) return 'indoor';
-      return '';
-    }
+    // v2.0.0 — _inferDeployType removed (deployment type derived no more; quantities are direct).
 
-    // v1.7.0 — Distribute the single qty_total into qty_indoor/qty_outdoor based
-    // on the chosen deployment_type. Indoor/Outdoor put the whole count on one
-    // side; Mixed preserves the user's existing split (or seeds an even-ish one
-    // the first time Mixed is picked). The engine reads indoor/outdoor only.
-    function _distributeTotal(d) {
-      const total = Math.max(1, Number(d.qty_total) || ((Number(d.qty_indoor)||0)+(Number(d.qty_outdoor)||0)) || 1);
-      const type = d.deployment_type || _inferDeployType(d) || 'indoor';
-      if (type === 'indoor')  { d.qty_indoor = total; d.qty_outdoor = 0; }
-      else if (type === 'outdoor') { d.qty_indoor = 0; d.qty_outdoor = total; }
-      else { // mixed
-        const i = Number(d.qty_indoor) || 0, o = Number(d.qty_outdoor) || 0;
-        if (i + o !== total) {
-          if (i + o === 0) { d.qty_indoor = Math.ceil(total/2); d.qty_outdoor = total - d.qty_indoor; }
-          // else: leave the user's split alone (they're editing it directly)
-        }
-      }
-    }
+    // v2.0.0 — _distributeTotal removed with qty_total.
 
     /* ---------- Step 3: Inputs & outputs ---------- */
 
@@ -23291,10 +23443,17 @@
       '</label>';
     }
 
-    function renderStep3(d) {
-      // v1.4.6 — Budget tier as a slider (Basic -> Flagship) with a big current
-      // label + series sub. Order matches the player ladder. Default to Standard
-      // when unset so the slider has a sensible starting position.
+    function renderStep3Guided(d) {
+      // v2.0.0 — guided Configure page (spec p.1): Substep 1 = player quantity
+      // (indoor/outdoor steppers; deployment type is now DERIVED from the two
+      // quantities — the engine already keys segments off qty_indoor/qty_outdoor)
+      // + budget tier. Substep 2 = technical spec, gaining the NEW content-type
+      // field. Values 'av'/'video'/'audio' are deliberate: buildBsSpec routes
+      // audio-only via content.indexOf('audio'), so "av" must NOT contain the
+      // substring "audio" or Audio+Video deals would all get AU335.
+      const indoor  = Number(d.qty_indoor)  || 0;
+      const outdoor = Number(d.qty_outdoor) || 0;
+      const total   = indoor + outdoor;
       const tiers = [
         { value: 'Basic',       label: 'Basic',       series: 'LS SERIES' },
         { value: 'Standard',    label: 'Standard',    series: 'HD SERIES' },
@@ -23303,14 +23462,56 @@
         { value: 'Flagship',    label: 'Flagship',    series: 'XC SERIES' }
       ];
       const cur = d.budget_tier || 'Standard';
-      // v1.4.6 — The slider always shows a position; persist it so the shown
-      // tier (default Standard) is what actually gets saved/used by the engine.
       if (!d.budget_tier) d.budget_tier = cur;
+      const content = d.content || 'av';
+      if (!d.content) d.content = content;
+      const audioOnly = content === 'audio';
+
+      const resOpts = [
+        { value: 'FHD', label: 'Full HD' },
+        { value: '4K',  label: '4K' },
+        { value: '8K',  label: '8K' }
+      ];
+      const outOpts = [
+        { value: '1', label: '1' },
+        { value: '2', label: '2' },
+        { value: '4', label: '4' }
+      ];
+      const powerOpts = [
+        { value: 'dc',  label: 'DC' },
+        { value: 'poe', label: 'PoE+' }
+      ];
+
+      const videoSpec = audioOnly
+        ? '<div class="banner info" style="margin-top:10px;">Audio-only routes to the AU335 audio player \u2014 the video spec below is skipped.</div>'
+        : pillGroup('resolution', 'Max resolution', d.resolution || 'FHD', resOpts) +
+          pillGroup('outputs',    'HDMI outputs',   String(d.outputs || 1), outOpts) +
+          pillGroup('power',      'Power',          d.power || 'dc', powerOpts) +
+          '<div class="sp-16"></div>' +
+          fieldCaption('Capabilities') +
+          toggleRow('hdmi_in', 'HDMI input',          'Live HDMI source passthrough (XT only)', !!d.hdmi_in) +
+          toggleRow('touch',   'Touch / interactive', 'Touchscreen / interactive display',       !!d.touch) +
+          toggleRow('gpio',    'GPIO',                'Buttons, sensors, relays',                !!d.gpio);
+
       return '' +
-        // v1.8.0 — reference-design header (badge 3 + serif title).
-        sectionHeader(3, 'Budget tier', 'The class you\u2019d prefer. The technical spec always wins \u2014 you\u2019ll still see cheaper and pricier options that meet it.') +
-        fieldCaption('Preferred class', true) +
-        tierSlider('budget_tier', cur, tiers);
+        sectionHeader(3, 'Configure', 'Quantities, budget and the technical spec. CMS-only deals are fine \u2014 leave both quantities at 0.') +
+        fieldCaption('Player quantity', true) +
+        stepperRow('qty_indoor',  'Indoor players',  'Standard signage',          indoor,  { min: 0, max: 200 }) +
+        stepperRow('qty_outdoor', 'Outdoor players', 'Aluminium / metal chassis', outdoor, { min: 0, max: 200 }) +
+        '<p class="help" style="font-weight:600;">' + total + ' player' + (total === 1 ? '' : 's') + ' total</p>' +
+        '<div class="sp-16"></div>' +
+        fieldCaption('Budget tier', true) +
+        tierSlider('budget_tier', cur, tiers) +
+        '<div class="sp-16"></div>' +
+        fieldCaption('Content type', true) +
+        iconCardGroup('content', content, [
+          { value: 'av',    label: 'Audio + Video', sub: 'Standard signage',  icon: _ICO.audiovid },
+          { value: 'video', label: 'Video only',    sub: 'Silent displays',   icon: _ICO.video },
+          { value: 'audio', label: 'Audio only',    sub: 'AU335 audio player', icon: _ICO.audio }
+        ], { cols: 3 }) +
+        '<div class="sp-16"></div>' +
+        fieldCaption('Technical spec') +
+        videoSpec;
     }
 
 
@@ -23457,32 +23658,52 @@
 
     /* ---------- Step 4: LED screens ---------- */
 
-    function renderStep4(d) {
-      const resOpts = [
-        { value: 'FHD', label: 'Full HD' },
-        { value: '4K',  label: '4K' },
-        { value: '8K',  label: '8K' }
-      ];
-      const outOpts = [
-        { value: '1', label: '1' },
-        { value: '2', label: '2' },
-        { value: '4', label: '4' }
-      ];
-      const powerOpts = [
-        { value: 'dc',  label: 'DC' },
-        { value: 'poe', label: 'PoE+' }
-      ];
-      return '' +
-        // v1.8.0 — reference-design header (badge 4 + serif title).
-        sectionHeader(4, 'Technical spec', 'Hard requirements \u2014 only players that meet all of these are recommended.') +
-        pillGroup('resolution', 'Max resolution', d.resolution || 'FHD', resOpts) +
-        pillGroup('outputs',    'HDMI outputs',   String(d.outputs || 1), outOpts) +
-        pillGroup('power',      'Power',          d.power || 'dc', powerOpts) +
-        '<div class="sp-16"></div>' +
-        fieldCaption('Capabilities') +
-        toggleRow('hdmi_in', 'HDMI input',          'Live HDMI source passthrough (XT only)', !!d.hdmi_in) +
-        toggleRow('touch',   'Touch / interactive', 'Touchscreen / interactive display',       !!d.touch) +
-        toggleRow('gpio',    'GPIO',                'Buttons, sensors, relays',                !!d.gpio);
+    function renderStep3Advanced(d) {
+      // v2.0.0 — Advanced Configure (spec p.2): the full catalog as a grid of
+      // qty steppers (AU335 ... XC4055), replacing the old cart dropdown. XC
+      // models additionally choose the OS — BrightSignOS (variant_key '') or
+      // Windows (variant_key 'win'); both rows verified live in bs pricing.
+      const pb = (typeof STORE !== 'undefined' && STORE.getPricebook) ? STORE.getPricebook() : null;
+      const catalog = (pb && Array.isArray(pb.catalog)) ? pb.catalog.filter(function (c) { return c.available; }) : [];
+      if (!catalog.length) {
+        return sectionHeader(3, 'Configure', 'Pick exact models and quantities.') +
+          '<div class="banner warn">Catalog still loading \u2014 give it a second and reopen this step.</div>';
+      }
+      const sorted = catalog.slice().sort(function (a, b) { return (Number(a.rank) || 0) - (Number(b.rank) || 0); });
+      const sel = Array.isArray(d.advancedSelections) ? d.advancedSelections : [];
+      const selOf = function (id) { return sel.find(function (s) { return s.model_id === id; }) || null; };
+      const total = sel.reduce(function (s, it) { return s + (Number(it.qty) || 0); }, 0);
+
+      const rows = sorted.map(function (c) {
+        const s = selOf(c.model_id);
+        const qty = s ? (Number(s.qty) || 0) : 0;
+        const os = s && s.os === 'win' ? 'win' : '';
+        const isXC = c.model_group === 'XC';
+        const osPills = isXC
+          ? '<div class="adv-os-row">' +
+              '<button type="button" class="pill-btn' + (os === ''    ? ' is-selected' : '') + '" data-action="adv-os" data-model="' + esc(c.model_id) + '" data-os="">BrightSignOS</button>' +
+              '<button type="button" class="pill-btn' + (os === 'win' ? ' is-selected' : '') + '" data-action="adv-os" data-model="' + esc(c.model_id) + '" data-os="win">Windows</button>' +
+            '</div>'
+          : '';
+        return '<div class="adv-model-row' + (qty > 0 ? ' is-active' : '') + '">' +
+          '<div class="adv-model-main">' +
+            '<div class="adv-model-name">' + esc(c.model_id) +
+              (c.model_group ? ' <span class="adv-model-grp">' + esc(c.model_group) + '</span>' : '') + '</div>' +
+            (c.tag ? '<div class="adv-model-tag">' + esc(c.tag) + '</div>' : '') +
+            osPills +
+          '</div>' +
+          '<div class="stepper">' +
+            '<button type="button" data-action="adv-qty" data-model="' + esc(c.model_id) + '" data-delta="-1" aria-label="Decrease"' + (qty <= 0 ? ' disabled' : '') + '>\u2212</button>' +
+            '<span class="stepper-val">' + qty + '</span>' +
+            '<button type="button" data-action="adv-qty" data-model="' + esc(c.model_id) + '" data-delta="1" aria-label="Increase">+</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      return sectionHeader(3, 'Configure', 'Pick exact models and quantities \u2014 no engine, your call. CMS-only deals are fine: leave everything at 0.') +
+        fieldCaption('Players', true) +
+        '<div class="adv-model-grid">' + rows + '</div>' +
+        '<p class="help" style="font-weight:600;margin-top:10px;">' + total + ' player' + (total === 1 ? '' : 's') + ' total</p>';
     }
 
     /* v27.3.0 — Shared LED-screen renderer. Used by Step 3 (CALICO inline)
@@ -23857,17 +24078,19 @@
     /* v27.3.12 — Back-compat alias. Any case-5 callers (none should remain
        in the wizard since Step 5 is unreachable, but the switch statement
        still references it) get the new SX block. Eventually deletable. */
-    function renderStep5(d) {
-      // v1.9.0 — shared section: in Advanced the player total comes from the
-      // cart (which may still be empty at this point in the flow), so the cap
-      // stays permissive (200) until players exist; "0 = one per player"
-      // resolves at build time in STORE.bomLines either way.
+    function renderStepAddons(d) {
+      // v2.0.0 — Step 4 Accessories (common). Both modes set quantities on
+      // Step 3 first, so the player total is known here and the spec rule
+      // "Wi-Fi & SSD cannot exceed player qty in the deal" is a strict cap.
       const total = d.mode === 'advanced'
         ? (d.advancedSelections || []).reduce(function (s, it) { return s + (Number(it.qty) || 0); }, 0)
         : (Number(d.qty_indoor) || 0) + (Number(d.qty_outdoor) || 0);
-      const capMax = total > 0 ? total : (d.mode === 'advanced' ? 200 : 1);
-      // v1.8.0 — reference-design header (badge 5 + serif title).
-      let html = sectionHeader(5, 'Add-ons', 'Optional Wi-Fi and storage. Quantities default to one per player.') +
+      if (total === 0) {
+        return sectionHeader(4, 'Accessories', 'Optional Wi-Fi and storage.') +
+          '<div class="banner info">No players yet — accessories scale with player count, so there is nothing to add. CMS-only deals skip straight to the next step.</div>';
+      }
+      const capMax = total;
+      let html = sectionHeader(4, 'Accessories', 'Optional Wi-Fi and storage. Quantities default to one per player, capped at the player count.') +
         toggleRow('wifi', 'Wi-Fi module (WD105)', 'Dual-band Wi-Fi + Bluetooth', !!d.wifi);
       if (d.wifi) {
         // Clamp any previously-set qty that now exceeds the cap (e.g. user
@@ -24025,16 +24248,19 @@
 
     /* ---------- Step 6: Review & build ---------- */
 
-    function renderStep6(d) {
-      // v1.9.0 — shared section: Advanced total comes from the cart.
+    function renderStepCms(d) {
+      // v2.0.0 — Step 5 CMS (common). License-quantity stepper added
+      // (unset = player total; explicit value wins, can exceed players) and
+      // CMS-only deals are allowed — licenses with zero players (spec p.3).
       const total = d.mode === 'advanced'
         ? (d.advancedSelections || []).reduce(function (s, it) { return s + (Number(it.qty) || 0); }, 0)
         : (Number(d.qty_indoor) || 0) + (Number(d.qty_outdoor) || 0);
 
       // ---- CMS inputs (Step 6 is now CMS-only; Review moved to Step 7) ----
       const cmsChosen = d.cms_vendor && d.cms_vendor !== 'None';
-      // v1.8.0 — reference-design header (badge 6 + serif title).
-      let cms = sectionHeader(6, 'Content management', 'Pick a CMS to bundle its subscription into the quote, or leave as None.') +
+      // v2.0.0 — seed licenses = player total on first vendor pick.
+      if (cmsChosen && !(Number(d.cms_qty) > 0) && total > 0) d.cms_qty = total;
+      let cms = sectionHeader(5, 'Content management', 'Pick a CMS to bundle its subscription into the quote, or leave as None. A deal can be CMS-only — no players needed.') +
         (total > 25 ? '<p class="help"><strong>A CMS is required for more than 25 players.</strong></p>' : '');
       cms += cmsVendorSelect(d.cms_vendor || 'None');
       // When a vendor is chosen, group its options in a tinted sub-panel so the
@@ -24053,6 +24279,11 @@
             { value: '4', label: '4 years' },
             { value: '5', label: '5 years' }
           ], { placeholder: '\u2014 select \u2014' }) +
+          // v2.0.0 — license quantity (spec p.3): seeded to the player total
+          // when the vendor is picked (budget_tier pattern) so the stepper
+          // shows what it will mutate; CMS-only deals step up from 0.
+          stepperRow('cms_qty', 'Licenses', 'Defaulted to player count (' + total + ')',
+            Number(d.cms_qty) || 0, { min: 0, max: 500 }) +
         '</div>';
       }
       return cms;
@@ -24084,34 +24315,52 @@
     }
 
     // v1.6.0 — Step 7: Review & build (split out of the old Step 6).
-    function renderStep7(d) {
-      const total = (Number(d.qty_indoor) || 0) + (Number(d.qty_outdoor) || 0);
+    function renderStepReview(d) {
+      // v2.0.0 — Step 6 Review & build (common). Guided shows the engine
+      // recommendation (ladder picker) + BoM; Advanced shows its model
+      // selections + BoM. Edit links point at the new step numbers.
+      const isAdv = d.mode === 'advanced';
+      const total = isAdv
+        ? (d.advancedSelections || []).reduce(function (s, it) { return s + (Number(it.qty) || 0); }, 0)
+        : (Number(d.qty_indoor) || 0) + (Number(d.qty_outdoor) || 0);
 
-      // ---- review summary ----
       const rows = [];
       const add = function (k, v, step) { rows.push({ k: k, v: v, step: step }); };
       add('Project',  d.project || '\u2014', 1);
       add('End User', d.customer_name || '\u2014', 1);
       add('Stage',    d.stage || '\u2014', 1);
-      const envSummary = (Number(d.qty_indoor) > 0 ? d.qty_indoor + ' indoor' : '') +
-                         (Number(d.qty_indoor) > 0 && Number(d.qty_outdoor) > 0 ? ' + ' : '') +
-                         (Number(d.qty_outdoor) > 0 ? d.qty_outdoor + ' outdoor' : '');
-      add('Deployment', (envSummary || '\u2014') + ' \u00b7 ' + total + ' total', 2);
-      if (d.budget_tier) add('Budget tier', d.budget_tier, 3);
-      add('Resolution', d.resolution || 'FHD', 4);
-      add('HDMI outputs', String(d.outputs || 1), 4);
-      add('Power', d.power === 'poe' ? 'PoE+' : 'DC', 4);
-      const caps = [d.hdmi_in && 'HDMI-in', d.touch && 'Touch', d.gpio && 'GPIO'].filter(Boolean).join(', ');
-      if (caps) add('Capabilities', caps, 4);
+      add('Mode',     isAdv ? 'Advanced' : 'Guided', 2);
+      if (isAdv) {
+        const players = (d.advancedSelections || [])
+          .filter(function (s) { return (Number(s.qty) || 0) > 0; })
+          .map(function (s) { return s.model_id + (s.os === 'win' ? ' (Win)' : '') + ' \u00d7' + s.qty; })
+          .join(', ');
+        add('Players', players || '\u2014 none (CMS-only)', 3);
+      } else {
+        const envSummary = (Number(d.qty_indoor) > 0 ? d.qty_indoor + ' indoor' : '') +
+                           (Number(d.qty_indoor) > 0 && Number(d.qty_outdoor) > 0 ? ' + ' : '') +
+                           (Number(d.qty_outdoor) > 0 ? d.qty_outdoor + ' outdoor' : '');
+        add('Players', (envSummary || 'none (CMS-only)') + ' \u00b7 ' + total + ' total', 3);
+        if (d.budget_tier) add('Budget tier', d.budget_tier, 3);
+        add('Content', d.content === 'audio' ? 'Audio only' : d.content === 'video' ? 'Video only' : 'Audio + Video', 3);
+        if (d.content !== 'audio') {
+          add('Resolution', d.resolution || 'FHD', 3);
+          add('HDMI outputs', String(d.outputs || 1), 3);
+          add('Power', d.power === 'poe' ? 'PoE+' : 'DC', 3);
+          const caps = [d.hdmi_in && 'HDMI-in', d.touch && 'Touch', d.gpio && 'GPIO'].filter(Boolean).join(', ');
+          if (caps) add('Capabilities', caps, 3);
+        }
+      }
       const addons = [
         d.wifi && ('Wi-Fi' + (Number(d.wifi_qty) ? ' \u00d7' + d.wifi_qty : '')),
         d.ssd && ('SSD ' + (d.ssd_size || '') + (Number(d.ssd_qty) ? ' \u00d7' + d.ssd_qty : ''))
       ].filter(Boolean).join(', ');
-      if (addons) add('Add-ons', addons, 5);
+      if (addons) add('Accessories', addons, 4);
       if (d.cms_vendor && d.cms_vendor !== 'None') {
         add('CMS', d.cms_vendor +
           (d.cms_deployment_mode ? ' \u00b7 ' + d.cms_deployment_mode : '') +
-          (d.cms_term ? ' \u00b7 ' + d.cms_term + 'yr' : ''), 6);
+          (d.cms_term ? ' \u00b7 ' + d.cms_term + 'yr' : '') +
+          (Number(d.cms_qty) > 0 ? ' \u00b7 ' + d.cms_qty + ' lic' : ''), 5);
       }
 
       const summaryHtml =
@@ -24125,98 +24374,36 @@
           }).join('') +
         '</div>';
 
-      let recoHtml;
-      try { d.reco = APP.recoForDeal(d); recoHtml = renderBomCard(d); }
-      catch (e) { recoHtml = '<div class="banner warn" style="margin-top:12px">Could not build the recommendation \u2014 ' + esc(e && e.message || 'error') + '</div>'; }
+      let bomHtml;
+      if (isAdv) {
+        // Advanced: no engine — price the selections + shared add-ons/CMS.
+        try {
+          const lines = STORE.bomLines(d);
+          const quote = STORE.computeQuote(lines, d.project_discount || 0);
+          bomHtml = lines.length
+            ? '<div class="card" style="margin-top:8px;padding:12px;">' + renderBomTable(quote, bsCanSeePrices()) + '</div>'
+            : '<div class="banner info">Nothing selected yet \u2014 add players on step 3 or a CMS on step 5.</div>';
+        } catch (e) {
+          bomHtml = '<div class="banner warn">Could not price the selection \u2014 ' + esc(e && e.message || 'error') + '</div>';
+        }
+      } else {
+        try { d.reco = APP.recoForDeal(d); bomHtml = renderBomCard(d); }
+        catch (e) { bomHtml = '<div class="banner warn" style="margin-top:12px">Could not build the recommendation \u2014 ' + esc(e && e.message || 'error') + '</div>'; }
+      }
 
-      // v1.8.0 — reference-design header (badge 7 + serif title).
-      return sectionHeader(7, 'Review & build', 'Check the recommendation, then build the quote.') +
-        fieldCaption('Recommended') + recoHtml +
+      return sectionHeader(6, 'Review & build', 'Check everything, then build the quote.') +
+        fieldCaption(isAdv ? 'Selection' : 'Recommended') + bomHtml +
         '<div class="step6-divider"></div>' +
         fieldCaption('Review') + summaryHtml;
     }
 
     /* ---------- BoM card renderer ---------- */
 
-    function _cartRow(kind, idx, label, qty, sub) {
-      return '<div class="cart-item">' +
-        '<div class="cart-item-info">' +
-          '<div class="cart-item-name">' + esc(label) + '</div>' +
-          (sub ? '<div class="cart-item-sub">' + esc(sub) + '</div>' : '') +
-        '</div>' +
-        '<div class="cart-item-stepper">' +
-          '<button type="button" class="cart-step-btn" data-action="cart-qty" data-kind="' + kind + '" data-idx="' + idx + '" data-delta="-1" aria-label="Decrease">\u2212</button>' +
-          '<span class="cart-item-qty">' + (Number(qty) || 0) + '</span>' +
-          '<button type="button" class="cart-step-btn" data-action="cart-qty" data-kind="' + kind + '" data-idx="' + idx + '" data-delta="1" aria-label="Increase">+</button>' +
-        '</div>' +
-        '<button type="button" class="cart-remove-btn" data-action="cart-remove" data-kind="' + kind + '" data-idx="' + idx + '" aria-label="Remove">\u2715</button>' +
-      '</div>';
-    }
+    // v2.0.0 — _cartRow removed with the cart.
 
-    function renderAdvancedCart(d) {
-      const pb = STORE.getPricebook();
-      if (!pb) {
-        // v1.5.2 - Kick off a fetch and give a manual retry instead of a
-        // dead-end banner. The cart needs the catalog to list players, so
-        // nothing can render until the pricebook lands (slow on throttled
-        // connections). retry-pricebook re-fetches then re-renders.
-        STORE.ensurePricebook().then(function () {
-          if (wizardData && wizardData.step === 7) renderWizard();
-        });
-        return '<div class="banner info">Pricebook loading\u2026</div>' +
-          '<div style="margin-top:12px;"><button type="button" class="btn" data-action="retry-pricebook">Retry now</button></div>';
-      }
-      const showPrices = bsCanSeePrices();
-      const cat = (pb.catalog || []).filter(function (c) { return c.available; })
-                    .sort(function (a, b) { return (Number(a.rank) || 0) - (Number(b.rank) || 0); });
-
-      // v1.9.0 — cart is PLAYERS ONLY. Add-ons + CMS are shared sections
-      // (Steps 5 & 6) for both modes; their lines join the BoM below.
-      let html = sectionHeader(7, 'Build your quote', 'Pick exact player models \u2014 set the quantity, tap Add. Wi-Fi, SSD and CMS from the previous steps are added automatically.');
-
-      // ---- Add player (with qty) ----
-      html += '<div class="cart-add-block">' +
-        '<div class="cart-add-title">Add a player</div>' +
-        '<div class="cart-add-row">' +
-          '<select id="cart-player-sel" class="cart-select">' +
-            cat.map(function (c) { return '<option value="' + esc(c.model_id) + '">' + esc(c.model_id) + ' \u2014 ' + esc(c.model_group) + ' series</option>'; }).join('') +
-          '</select>' +
-          '<input id="cart-player-qty" class="cart-qty-input" type="number" min="1" value="1" inputmode="numeric" aria-label="Quantity">' +
-          '<button type="button" class="btn btn-primary cart-add-btn" data-action="cart-add-player">Add</button>' +
-        '</div>' +
-      '</div>';
-
-      // ---- Cart contents ----
-      const sel = d.advancedSelections || [], acc = d.advancedAccessories || [];
-      if (!sel.length && !acc.length) {
-        html += '<div class="cart-empty">Your cart is empty \u2014 add items above.</div>';
-      } else {
-        html += '<div class="cart-list-head">In your quote</div><div class="cart-list">';
-        sel.forEach(function (it, i) {
-          const c = (pb.catalog || []).find(function (x) { return x.model_id === it.model_id; }) || {};
-          html += _cartRow('player', i, it.model_id, it.qty, c.model_group ? c.model_group + ' series' : 'Player');
-        });
-        acc.forEach(function (it, i) {
-          html += _cartRow('acc', i, it.label || it.id, it.qty, it.kind === 'cms' ? 'CMS plan' : 'Accessory');
-        });
-        html += '</div>';
-      }
-
-      const lines = STORE.bomLines(d);
-      const quote = STORE.computeQuote(lines, d.project_discount || 0);
-      if (lines.length) html += '<div class="card" style="margin-top:14px;padding:12px;">' + renderBomTable(quote, showPrices) + '</div>';
-
-      const totalPlayers = sel.reduce(function (s2, it) { return s2 + (Number(it.qty) || 0); }, 0);
-      // v1.9.0 — CMS now lives on the shared Step 6; legacy cart-cms lines
-      // still satisfy the rule for old drafts.
-      const hasCmsShared = !!(d.cms_vendor && d.cms_vendor !== 'None');
-      const hasCmsLegacy = acc.some(function (a) { return a.kind === 'cms'; });
-      if (totalPlayers > 25 && !hasCmsShared && !hasCmsLegacy) {
-        html += '<div class="banner warn" style="margin-top:10px;">A CMS is required for more than 25 players \u2014 ' +
-          '<button type="button" class="edit-link" data-action="wiz-jump" data-step="6" style="display:inline;">pick one in Content management</button>.</div>';
-      }
-      return html;
-    }
+    // v2.0.0 — renderAdvancedCart removed: Advanced Step 3 is a model grid;
+    // Review (Step 6) prices everything. Legacy advancedAccessories still
+    // price via the read-only fallback in STORE.bomLines.
 
     function bsCanSeePrices() {
       const u = (typeof STORE !== 'undefined' && STORE.currentUser) ? (STORE.currentUser() || {}) : {};
@@ -24225,8 +24412,9 @@
     }
 
     function _bsPill(text) {
-      return '<span style="display:inline-block;font-size:10px;font-weight:600;padding:2px 6px;border-radius:6px;' +
-        'background:var(--accent-soft,rgba(55,35,106,0.12));color:var(--accent-deep,#2C1C55);margin-left:6px;">' + esc(text) + '</span>';
+      // v2.1.0 F4 — classed; old inline style used pre-v2 tokens
+      // (--accent-soft/--accent-deep fallbacks).
+      return '<span class="bs-pill">' + esc(text) + '</span>';
     }
 
     function renderSegmentPicker(d, segKey, seg, qty, showPrices) {
@@ -24239,45 +24427,47 @@
         const unit = STORE.quoteUnit(STORE.unitPriceOf(p.model_id));
         const priceStr = !showPrices ? '' : (unit ? fmtINR(unit * qty) : 'POA');
         const badges = (isReco ? _bsPill('Recommended') : '') + (selected && !isReco ? _bsPill('Selected') : '');
-        return '<button type="button" data-action="bs-pick" data-seg="' + segKey + '" data-model="' + esc(p.model_id) + '"' +
-          ' style="display:flex;width:100%;align-items:center;gap:10px;padding:12px;margin-bottom:8px;cursor:pointer;text-align:left;' +
-                  'border:1px solid ' + (selected ? 'var(--accent,#37236A)' : 'var(--border,#e3e3e3)') + ';border-radius:10px;' +
-                  'background:' + (selected ? 'var(--accent-soft,rgba(55,35,106,0.10))' : 'transparent') + ';">' +
-          '<span style="width:16px;height:16px;border-radius:50%;flex:0 0 auto;border:2px solid ' + (selected ? 'var(--accent,#37236A)' : '#bbb') + ';background:' + (selected ? 'var(--accent,#37236A)' : 'transparent') + ';"></span>' +
-          '<span style="flex:1;min-width:0;">' +
-            '<span style="font-weight:600;">' + esc(p.model_id) + '</span>' + badges +
-            '<span style="display:block;font-size:12px;color:var(--muted,#666);">' + esc(p.tag || (p.model_group + ' series')) + '</span>' +
+        return '<button type="button" class="seg-row' + (selected ? ' is-selected' : '') + '" data-action="bs-pick" data-seg="' + segKey + '" data-model="' + esc(p.model_id) + '">' +
+          '<span class="seg-radio"></span>' +
+          '<span class="seg-main">' +
+            '<span class="seg-name">' + esc(p.model_id) + '</span>' + badges +
+            '<span class="seg-tag">' + esc(p.tag || (p.model_group + ' series')) + '</span>' +
           '</span>' +
-          (priceStr ? '<span style="font-weight:600;font-size:13px;white-space:nowrap;">' + esc(priceStr) + '</span>' : '') +
+          (priceStr ? '<span class="seg-price">' + esc(priceStr) + '</span>' : '') +
         '</button>';
       }).join('');
-      return '<div style="margin-bottom:14px;">' +
-        '<div class="h3" style="font-size:14px;margin-bottom:8px;">' + esc(label) + ' \u00d7 ' + qty + '</div>' +
+      return '<div class="seg-pick">' +
+        '<div class="seg-pick-head">' + esc(label) + ' \u00d7 ' + qty + '</div>' +
         rows +
         '<div class="help">Cheaper rows meet the same spec for less; pricier rows add headroom.</div>' +
       '</div>';
     }
 
     function renderBomTable(quote, showPrices) {
+      // v2.1.0 F4+F6 — classed (.bomt). Old inline styles used the pre-v2
+      // --border/--muted fallbacks (light hexes on dark); totals now read
+      // mono with the Grand total emphasized in accent.
       const body = quote.lines.map(function (l) {
         const amt = !showPrices ? '' : (l.poa
-          ? '<td style="text-align:right;color:var(--muted,#888);padding:6px 4px;">POA</td>'
-          : '<td style="text-align:right;padding:6px 4px;">' + esc(fmtINR(l.line_total_inr)) + '</td>');
-        return '<tr style="border-bottom:1px solid var(--border,#eee);">' +
-          '<td style="padding:6px 4px;">' + esc(l.description) + '<br><span style="font-size:11px;color:var(--muted,#888);">' + esc(l.sku) + '</span></td>' +
-          '<td style="text-align:center;padding:6px 4px;">' + l.qty + '</td>' + amt +
+          ? '<td class="num poa">POA</td>'
+          : '<td class="num">' + esc(fmtINR(l.line_total_inr)) + '</td>');
+        return '<tr>' +
+          '<td>' + esc(l.description) + '<br><span class="bomt-sku">' + esc(l.sku) + '</span></td>' +
+          '<td class="ctr">' + l.qty + '</td>' + amt +
         '</tr>';
       }).join('');
       let totals = '';
       if (showPrices) {
-        const span = '<td colspan="2" style="text-align:right;padding:4px;">';
-        totals += '<tr>' + span + 'Subtotal</td><td style="text-align:right;padding:4px;">' + esc(fmtINR(quote.subtotal)) + '</td></tr>';
-        if (quote.projectDiscountPct) totals += '<tr>' + span + 'Discount ' + quote.projectDiscountPct + '%</td><td style="text-align:right;padding:4px;">\u2212' + esc(fmtINR(quote.subtotal - quote.afterProjectDiscount)) + '</td></tr>';
-        totals += '<tr>' + span + 'GST ' + quote.gstPct + '%</td><td style="text-align:right;padding:4px;">' + esc(fmtINR(quote.gst)) + '</td></tr>';
-        totals += '<tr style="font-weight:700;">' + span + 'Grand total</td><td style="text-align:right;padding:4px;">' + esc(fmtINR(quote.grandTotal)) + '</td></tr>';
+        const totRow = function (cls, lbl, val) {
+          return '<tr class="' + cls + '"><td colspan="2" class="lbl">' + lbl + '</td><td class="num">' + val + '</td></tr>';
+        };
+        totals += totRow('bomt-tot', 'Subtotal', esc(fmtINR(quote.subtotal)));
+        if (quote.projectDiscountPct) totals += totRow('bomt-tot', 'Discount ' + quote.projectDiscountPct + '%', '\u2212' + esc(fmtINR(quote.subtotal - quote.afterProjectDiscount)));
+        totals += totRow('bomt-tot', 'GST ' + quote.gstPct + '%', esc(fmtINR(quote.gst)));
+        totals += totRow('bomt-tot bomt-grand', 'Grand total', esc(fmtINR(quote.grandTotal)));
       }
-      return '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;">' +
-        '<thead><tr style="border-bottom:2px solid var(--border,#ddd);"><th style="text-align:left;padding:4px;">Item</th><th style="text-align:center;padding:4px;">Qty</th>' + (showPrices ? '<th style="text-align:right;padding:4px;">Total</th>' : '') + '</tr></thead>' +
+      return '<table class="bomt">' +
+        '<thead><tr><th>Item</th><th class="ctr">Qty</th>' + (showPrices ? '<th class="num">Total</th>' : '') + '</tr></thead>' +
         '<tbody>' + body + totals + '</tbody></table>' +
         (quote.poaCount ? '<div class="help" style="margin-top:6px;">POA = price on application (pending rate card).</div>' : '');
     }
@@ -24333,16 +24523,10 @@
       // top. Block Next until the user picks one; without a mode the guided
       // deployment fields aren't even shown and the engine can't run.
       if (d.step === 2 && d.mode !== 'guided' && d.mode !== 'advanced') {
-        errors._path = 'Choose Guided or Advanced to continue.';
+        errors.mode = 'Choose Guided or Advanced to continue.';
       }
-      // v1.7.0 — Guided Step 2 also needs a deployment type so the player count
-      // can be assigned to indoor/outdoor (the engine reads those, not total).
-      if (d.step === 2 && d.mode === 'guided') {
-        const it = _inferDeployType(d);
-        if (!d.deployment_type && !it) {
-          errors.deployment_type = 'Pick a deployment type (Indoor / Outdoor / Mixed).';
-        }
-      }
+      // v2.0.0 — deployment_type is gone: Step 3 takes indoor/outdoor
+      // quantities directly (the engine always read those, never the type).
       // Steps 2\u20136 (Deployment, Budget, Technical, Add-ons, CMS & Build) carry
       // no blocking validation \u2014 every field has a sensible default and the
       // recommendation engine (guided) / cart check (advanced) validates the
@@ -24483,11 +24667,10 @@
           const mode = actEl.getAttribute('data-mode');
           const d = wizardData;
           d.mode = (mode === 'advanced') ? 'advanced' : 'guided';
-          // Guided: stay on Step 2 so the deployment fields appear below the
-          // cards. Advanced: enter the shared flow at Add-ons (5), then CMS
-          // (6), then the cart (7 = build). v1.9.0.
-          if (d.mode === 'advanced') {
-            d.step = 5;
+          // v2.0.0 — Step 2 is a pure mode pick; either choice advances to
+          // Step 3 (Configure), which branches guided/advanced internally.
+          if (d.mode) {
+            d.step = 3;
             saveDraft();
             renderWizard();           // step change — full render is fine
           } else {
@@ -24504,9 +24687,6 @@
           const val = actEl.getAttribute('data-val');
           if (key && val != null) {
             wizardData[key] = val;
-            // Deployment type controls how the total player count splits into
-            // indoor/outdoor — redistribute when it changes.
-            if (key === 'deployment_type') _distributeTotal(wizardData);
             // Some icon-card choices reveal conditional sub-panels (e.g. Mixed
             // deployment reveals the indoor/outdoor split), so re-render.
             saveDraft();
@@ -24686,66 +24866,49 @@
             // v1.4.1 — bare-key steppers (e.g. qty_indoor, qty_outdoor on the
             // Deployment step) write directly to the top-level wizard field.
             // Previously this branch was a no-op, so those steppers did nothing.
-            const min = (key === 'qty_total') ? 1 : 0;
+            const min = 0; // v2.0.0 — qty_total retired; all steppers floor at 0
             wizardData[key] = (Number(wizardData[key]) || 0) + (action === 'step-inc' ? 1 : -1);
             if (wizardData[key] < min) wizardData[key] = min;
-            // v1.7.0 — qty_total is the single player count on the Deployment
-            // step; distribute it into qty_indoor/qty_outdoor by deployment_type
-            // (the engine reads indoor/outdoor, not total). Mixed keeps whatever
-            // split the user set in the sub-panel.
-            if (key === 'qty_total') _distributeTotal(wizardData);
           }
           saveDraft();
           rerenderPreservingScroll();
           return;
         }
 
-        // v1.7.0 — Mixed-deployment split inputs (indoor/outdoor qty).
-        if (action === 'split-set') {
-          const key = actEl.getAttribute('data-key');
-          const n = Math.max(0, parseInt(actEl.value, 10) || 0);
-          if (key === 'qty_indoor' || key === 'qty_outdoor') {
-            wizardData[key] = n;
-            wizardData.qty_total = (Number(wizardData.qty_indoor) || 0) + (Number(wizardData.qty_outdoor) || 0);
-            saveDraft();
-            // Don't full re-render on every keystroke (loses focus); the total
-            // line updates on blur/next interaction. But clamp wifi/ssd caps.
-          }
-          return;
-        }
+        // v2.0.0 — split-set removed with the Mixed sub-panel; Step 3 has
+        // direct indoor/outdoor steppers.
 
         // Toggle (tile w/ checkbox)
-        if (action === 'cart-add-player') {
-          const selEl = document.getElementById('cart-player-sel');
-          const qtyEl = document.getElementById('cart-player-qty');
-          const model = selEl && selEl.value;
-          const addQty = Math.max(1, parseInt(qtyEl && qtyEl.value, 10) || 1);
+        // v2.0.0 — cart handlers replaced by the Step-3 model grid.
+        if (action === 'adv-qty') {
+          const model = actEl.getAttribute('data-model');
+          const delta = Number(actEl.getAttribute('data-delta')) || 0;
           if (model) {
             wizardData.advancedSelections = wizardData.advancedSelections || [];
-            const ex = wizardData.advancedSelections.find(function (x) { return x.model_id === model; });
-            if (ex) ex.qty = (Number(ex.qty) || 0) + addQty;
-            else wizardData.advancedSelections.push({ model_id: model, qty: addQty });
-            toast(model + ' \u00d7' + addQty + ' added', 'default');
+            const arr = wizardData.advancedSelections;
+            let ex = arr.find(function (x) { return x.model_id === model; });
+            if (!ex && delta > 0) { ex = { model_id: model, qty: 0 }; arr.push(ex); }
+            if (ex) {
+              ex.qty = Math.max(0, (Number(ex.qty) || 0) + delta);
+              if (ex.qty === 0) arr.splice(arr.indexOf(ex), 1);
+            }
+            saveDraft();
             rerenderPreservingScroll();
           }
           return;
         }
-        // v1.9.0 — cart-add-accessory / cart-add-cms handlers removed:
-        // Add-ons + CMS are shared sections (Steps 5 & 6) in both modes.
-        // cart-qty / cart-remove below still serve legacy accessory rows.
-        if (action === 'cart-qty') {
-          const kind = actEl.getAttribute('data-kind');
-          const idx = Number(actEl.getAttribute('data-idx'));
-          const delta = Number(actEl.getAttribute('data-delta'));
-          const arr = kind === 'player' ? wizardData.advancedSelections : wizardData.advancedAccessories;
-          if (arr && arr[idx]) { arr[idx].qty = Math.max(1, (Number(arr[idx].qty) || 1) + delta); rerenderPreservingScroll(); }
-          return;
-        }
-        if (action === 'cart-remove') {
-          const kind = actEl.getAttribute('data-kind');
-          const idx = Number(actEl.getAttribute('data-idx'));
-          const arr = kind === 'player' ? wizardData.advancedSelections : wizardData.advancedAccessories;
-          if (arr && idx >= 0 && idx < arr.length) { arr.splice(idx, 1); rerenderPreservingScroll(); }
+        if (action === 'adv-os') {
+          const model = actEl.getAttribute('data-model');
+          const os = actEl.getAttribute('data-os') === 'win' ? 'win' : '';
+          if (model) {
+            wizardData.advancedSelections = wizardData.advancedSelections || [];
+            const arr = wizardData.advancedSelections;
+            let ex = arr.find(function (x) { return x.model_id === model; });
+            if (!ex) { ex = { model_id: model, qty: 0 }; arr.push(ex); }
+            if (os) ex.os = 'win'; else delete ex.os;
+            saveDraft();
+            rerenderPreservingScroll();
+          }
           return;
         }
         if (action === 'bs-pick') {
@@ -26527,7 +26690,7 @@
       // assert Step 5 is no longer surfaced.
       computeVisibleSteps,
       renderSxBlock,
-      renderStep5,                // back-compat alias for renderSxBlock
+      renderStep5: renderStepAddons, // v2.0.0 — back-compat export key (smoke asserts it's callable)
       _deriveSxHdbtView: _deriveSxHdbtView,
       _applySxHdbtView:  _applySxHdbtView,
       _deriveSxAocView:  _deriveSxAocView,
@@ -27069,8 +27232,8 @@
         return;
       }
       d.errors = {};
-      // Walk the visible-steps array for the current mode (guided=[1..7],
-      // advanced=[1,7]). Move to the next visible step, or stay put on the last.
+      // v2.0.0 — both modes walk the same [1..6] visible-steps array.
+      // Move to the next visible step, or stay put on the last.
       const vis = UI.computeVisibleSteps(d);
       const idx = vis.indexOf(d.step);
       const nextStep = (idx >= 0 && idx < vis.length - 1) ? vis[idx + 1] : d.step;
@@ -27112,10 +27275,13 @@
         // ---- Advanced: validate cart, no engine ----
         const sel = Array.isArray(d.advancedSelections) ? d.advancedSelections : [];
         const playerQty = sel.reduce(function (n, s) { return n + (Number(s.qty) || 0); }, 0);
-        if (playerQty <= 0) {
+        // v2.0.0 — a deal can be CMS-only (licenses, zero players). Block
+        // only when there is truly nothing to quote.
+        const cmsLic = (d.cms_vendor && d.cms_vendor !== 'None' && Number(d.cms_qty) > 0);
+        if (playerQty <= 0 && !cmsLic) {
           UI.saveDraft();
           UI.renderWizard();
-          UI.toast('Cart is empty \u2014 add at least one player.', 'err');
+          UI.toast('Nothing to quote \u2014 add players on step 3 or CMS licenses on step 5.', 'err');
           return;
         }
         // v1.9.0 — CMS is a shared section: the wizard field is the source
@@ -27318,7 +27484,9 @@
 
       // Blocking errors surface via d.reco.error (Build shows inline, no save).
       let error = null;
-      if (totalPlayers <= 0) error = 'Enter an indoor and/or outdoor quantity.';
+      // v2.0.0 — CMS-only deals: zero players is fine when CMS licenses exist.
+      const cmsLic = (spec.cmsVendor && spec.cmsVendor !== 'None' && (Number(d.cms_qty) > 0));
+      if (totalPlayers <= 0 && !cmsLic) error = 'Add player quantities \u2014 or make it a CMS-only deal (pick a CMS and set licenses on step 5).';
       if (indoor  && indoor.error  === 'no-match') error = (error ? error + ' ' : '') + 'No indoor player meets the spec.';
       if (outdoor && outdoor.error === 'no-match') error = (error ? error + ' ' : '') + 'No outdoor player meets the spec.';
       if (totalPlayers > 25 && (!spec.cmsVendor || spec.cmsVendor === 'None')) {

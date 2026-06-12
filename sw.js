@@ -1,5 +1,16 @@
 // BrightSign Selector — Service Worker
-// v27.16.0 (2026-05-28)
+// v2.1.0 (2026-06-12)
+//
+// Changelog (BrightSign):
+//   v2.1.0  — CACHE_NAME bump for the F1–F6 device-feedback release
+//             (CMS pricing hardening, advanced-grid clipping, full-bleed
+//             footer, dark-theme ladder/BoM legibility, Step-3 caption
+//             rhythm, review uplift). No SW logic change.
+//   v2.0.2 and earlier — CACHE_NAME bumps only.
+//
+// NOTE: the changelog below this line is inherited from the tvONE
+// service worker this file was forked from — kept for archaeology,
+// it does not describe BrightSign releases.
 //
 // Changelog:
 //   v27.16.0 — Home + Dashboard major rebuild ("Command."). Home:
@@ -78,7 +89,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v1.9.2';
+const CACHE_NAME = 'brightsign-v2.1.0';
 const SHELL_URLS = [
   './',
   './index.html'
