@@ -1,7 +1,14 @@
 // BrightSign Selector — Service Worker
-// v2.1.0 (2026-06-12)
+// v2.3.0 (2026-06-13)
 //
 // Changelog (BrightSign):
+//   v2.3.0  — CACHE_NAME bump for the BS close-out (XC-Windows SAP,
+//             graceful no-match concern, Poppulo removal). No SW logic change.
+//   v2.2.0  — CACHE_NAME bump for the result-page / quote-engine /
+//             unified-exports release (hero + quote table + price toggle,
+//             CMS rework + pending-scope customization, per-line disc%,
+//             bomLines-sourced Excel/PDF with SAP-on-Excel-only,
+//             share-sheet PDF). No SW logic change.
 //   v2.1.0  — CACHE_NAME bump for the F1–F6 device-feedback release
 //             (CMS pricing hardening, advanced-grid clipping, full-bleed
 //             footer, dark-theme ladder/BoM legibility, Step-3 caption
@@ -89,7 +96,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v2.1.0';
+const CACHE_NAME = 'brightsign-v2.3.0';
 const SHELL_URLS = [
   './',
   './index.html'

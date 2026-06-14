@@ -6558,47 +6558,83 @@
        below is on the live token vocabulary, defined in BOTH themes.
        F6: selected ladder row gets the accent ring + soft glow (matches
        .adv-model-row.is-active), numerals go mono, Grand total emphasized. */
-    .seg-pick { margin-bottom: 16px; }
-    .seg-pick-head { font-size: 12px; font-weight: 700; letter-spacing: 0.05em;
-      text-transform: uppercase; color: var(--c-fg-mute); margin: 0 0 10px; }
-    .seg-row { display: flex; width: 100%; align-items: center; gap: 10px;
-      padding: 12px; margin-bottom: 8px; cursor: pointer; text-align: left;
-      appearance: none; font-family: inherit;
-      background: var(--c-elev); color: var(--c-fg);
-      border: 1px solid var(--c-border); border-radius: var(--r-md);
-      -webkit-tap-highlight-color: transparent; }
-    .seg-row:active { background: var(--c-sunk); }
-    .seg-row.is-selected { border-color: var(--c-accent);
-      box-shadow: 0 0 0 1px var(--c-accent) inset, 0 0 14px var(--c-accent-lt);
-      background: var(--c-accent-lt); }
-    .seg-radio { width: 16px; height: 16px; border-radius: 50%; flex: 0 0 auto;
-      border: 2px solid var(--c-border-st); background: transparent; }
-    .seg-row.is-selected .seg-radio { border-color: var(--c-accent);
-      background: var(--c-accent); }
-    .seg-main { flex: 1; min-width: 0; }
-    .seg-name { font: 600 15px var(--f-mono); color: var(--c-fg); }
-    .seg-tag { display: block; font-size: 12px; color: var(--c-fg-mute); margin-top: 2px; }
-    .seg-price { font: 600 13px var(--f-mono); white-space: nowrap; color: var(--c-fg); }
+    /* v2.2.0 — Result page: hero card (suggested model + feature pills +
+       step up/down within the tech-spec ladder) and quote table
+       (Sr / model / qty / unit / disc% / total) + with/without-price
+       toggle. Replaces the v2.1.0 radio ladder (.seg-*) and .bomt table.
+       Token-only — every color/radius resolves in BOTH themes. */
+    .bs-hero { background: var(--c-elev); border: 1px solid var(--c-border);
+      border-radius: var(--r-md); padding: 14px 14px 12px; margin-bottom: 12px;
+      box-shadow: var(--sh-card); }
+    .bs-hero-head { display: flex; align-items: center;
+      justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .bs-hero-seg { font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase; color: var(--c-fg-mute); }
+    .bs-hero-steppers { display: flex; gap: 8px; }
+    .bs-step-btn { width: 40px; height: 40px; display: flex; align-items: center;
+      justify-content: center; font-size: 14px; line-height: 1; cursor: pointer;
+      appearance: none; font-family: inherit; padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      background: var(--c-sunk); color: var(--c-fg);
+      border: 1px solid var(--c-border-st); border-radius: var(--r-sm); }
+    .bs-step-btn:active { background: var(--c-accent-lt); border-color: var(--c-accent);
+      color: var(--c-accent); }
+    .bs-step-btn:disabled { opacity: 0.3; cursor: default; }
+    .bs-hero-model { font: 700 22px var(--f-mono); color: var(--c-fg);
+      letter-spacing: 0.01em; }
+    .bs-hero-tag { font-size: 12.5px; color: var(--c-fg-soft); margin-top: 3px; }
+    .bs-hero-rung { font-size: 11px; color: var(--c-fg-mute); font-family: var(--f-mono); }
+    .bs-hero-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .hero-pill { font-size: 11px; font-weight: 600; padding: 3px 9px;
+      border-radius: var(--r-pill); background: var(--c-sunk); color: var(--c-fg-soft);
+      border: 1px solid var(--c-border); white-space: nowrap; }
+    .bs-hero-price { margin-top: 10px; padding-top: 10px;
+      border-top: 1px dashed var(--c-border); display: flex;
+      justify-content: space-between; gap: 8px;
+      font: 600 13px var(--f-mono); color: var(--c-fg); }
+    .bs-hero-price .soft { color: var(--c-fg-mute); font-weight: 400; }
     .bs-pill { display: inline-block; font-size: 10px; font-weight: 700;
       letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 6px;
       border-radius: 6px; background: var(--c-accent-lt); color: var(--c-accent);
-      border: 1px solid var(--c-accent); margin-left: 6px; vertical-align: 1px; }
-    .bomt { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
-    .bomt th { text-align: left; padding: 4px; font-size: 11px; font-weight: 700;
+      border: 1px solid var(--c-accent); margin-left: 6px; vertical-align: 2px; }
+    .price-toggle { display: flex; gap: 0; margin: 12px auto 4px; width: max-content;
+      border: 1px solid var(--c-border-st); border-radius: var(--r-pill);
+      overflow: hidden; }
+    .pt-btn { appearance: none; border: 0; cursor: pointer; padding: 8px 18px;
+      font-family: inherit; font-size: 12.5px; font-weight: 600;
+      background: transparent; color: var(--c-fg-mute);
+      -webkit-tap-highlight-color: transparent; }
+    .pt-btn.is-on { background: var(--c-accent); color: var(--ink-on-brand); }
+    .qt-card { background: var(--c-elev); border: 1px solid var(--c-border);
+      border-radius: var(--r-md); padding: 12px; margin-top: 8px;
+      box-shadow: var(--sh-card); overflow-x: auto; }
+    .qt { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .qt th { text-align: left; padding: 6px 4px; font-size: 10.5px; font-weight: 700;
       letter-spacing: 0.05em; text-transform: uppercase; color: var(--c-fg-mute);
-      border-bottom: 2px solid var(--c-border-st); }
-    .bomt th.num, .bomt td.num { text-align: right; }
-    .bomt th.ctr, .bomt td.ctr { text-align: center; }
-    .bomt td { padding: 8px 4px; border-bottom: 1px solid var(--c-border);
+      border-bottom: 2px solid var(--c-border-st); white-space: nowrap; }
+    .qt th.num, .qt td.num { text-align: right; }
+    .qt th.ctr, .qt td.ctr { text-align: center; }
+    .qt td { padding: 8px 4px; border-bottom: 1px solid var(--c-border);
       vertical-align: top; }
-    .bomt td.num, .bomt td.ctr { font-family: var(--f-mono); }
-    .bomt .bomt-sku { font-family: var(--f-mono); font-size: 11px; color: var(--c-fg-mute); }
-    .bomt td.poa { color: var(--c-fg-mute); }
-    .bomt tr.bomt-tot td { border-bottom: 0; padding: 4px; }
-    .bomt tr.bomt-tot td.lbl { text-align: right; color: var(--c-fg-soft); }
-    .bomt tr.bomt-grand td { border-top: 2px solid var(--c-border-st);
-      padding-top: 8px; font-weight: 700; }
-    .bomt tr.bomt-grand td.num { font: 700 16px var(--f-mono); color: var(--c-accent); }
+    .qt td.num, .qt td.ctr { font-family: var(--f-mono); white-space: nowrap; }
+    .qt-sku { font-family: var(--f-mono); font-size: 10.5px; color: var(--c-fg-mute); }
+    .qt-note { font-size: 10.5px; color: var(--c-fg-mute); }
+    .qt td.qt-poa { color: var(--c-fg-mute); }
+    .qt tr.qt-pending td { color: var(--c-fg-mute); }
+    .qt-disc-input { width: 52px; padding: 5px 6px; text-align: right;
+      font: 600 12.5px var(--f-mono); color: var(--c-fg);
+      background: var(--c-sunk); border: 1px solid var(--c-border-st);
+      border-radius: var(--r-xs); }
+    .qt-price-input { width: 88px; padding: 5px 6px; text-align: right;
+      font: 600 12.5px var(--f-mono); color: var(--c-fg);
+      background: var(--c-sunk); border: 1px solid var(--c-border-st);
+      border-radius: var(--r-xs); }
+    .qt tr.qt-tot td { border-bottom: 0; padding: 5px 4px; }
+    .qt tr.qt-tot td.lbl { text-align: right; color: var(--c-fg-soft); }
+    .qt tr.qt-grand td { border-top: 2px solid var(--c-border-st);
+      padding-top: 9px; font-weight: 700; }
+    .qt tr.qt-grand td.num { font: 700 16px var(--f-mono); color: var(--c-accent); }
+    .qt-foot-note { margin-top: 8px; }
 
     /* v1.4.6 — Budget tier slider */
     .tier-field { margin: 6px 0 14px; }
@@ -7408,18 +7444,103 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v2.3.0  (2026-06-13)  — BS close-out: XC-Windows SAP, graceful no-match, Poppulo
+       XC-Windows SAP (v2.2.0 limitation resolved): BOM player lines now carry
+       variant_key, and STORE.bsSapCodeOf(sku, variant) prefers the requested
+       variant's pricing row before falling back to base. Advanced-cart Windows
+       lines (os 'win') therefore show the correct Windows SAP in the Excel
+       export instead of the base BrightSignOS code. Guided mode is unaffected
+       (it quotes base OS — the OS choice is advanced-only). PDF still carries
+       no SAP (Excel-only, by policy).
+       Graceful no-match: when a segment is requested (qty > 0) but the
+       tech-spec filters leave an empty ladder, the result page now shows a
+       concern that names the likely conflict — instead of silently dropping
+       the hero and falling through to "Nothing selected yet", which read as a
+       bug. PoE+ with 4 outputs gets a precise hint (PoE+ caps at 2 outputs;
+       4-output is the mains-powered XC4055 only). Verified against the live
+       catalog: PoE+ pool maxes at 2 outputs (XT2145); XC4055 is the sole
+       4-output player and is mains-powered.
+       Poppulo removed entirely (not sold): it was already absent from the
+       vendor picker (None / BrightSign / Korbyt / Pickcel) and never in a
+       quote path — only stale comments referenced it. Comments cleaned; the
+       ₹0 cms_pricing DB row is deleted separately by Dipenkumar.
+       Confirmed unchanged (verified, no code needed): WD105 / SSD default
+       quantity is already one-per-player (bomLines uses qty || totalPlayers;
+       the stepper reads "0 = one per player"); ssd_capable has no NULLs in the
+       live catalog; Series-6 models stay available=false until the Sept flip.
+       Deliberately NOT bundled: pruning the tvONE-fork __smoke* console suites.
+       They are gated behind the super health dashboard + a dev panel (hidden,
+       inert in production); removing them is high-surface surgery for zero user
+       benefit, so per the no-patchwork rule it stays out of a deploy-critical
+       cut — a separate isolated pass if ever wanted.
+       Supersedes the staged v2.2.0 (deploy this instead — one deploy, not two).
+       sw.js CACHE_NAME → brightsign-v2.3.0.
+     ------------------------------------------------------------
+     v2.2.0  (2026-06-13)  — result page + quote engine + unified exports
+       Result page rebuilt around ONE renderer (renderSavedDealLoaded serves
+       post-Build #/quote and saved-deal reopen): inputs summary with
+       sd-edit step jumps · hero card per segment (model + tag + feature
+       pills, ▲/▼ steps the pick within the tech-spec ladder — budget never
+       filters the ladder, locked engine rule) · quote table Sr / Suggested
+       model / Qty / Unit Price / Disc % / Total Price with Total → GST →
+       Grand total · with/without-price toggle (default WITH for
+       price-visible roles; Support never sees it; per-view transient,
+       never persisted). Replaces the v2.1.0 radio ladder
+       (renderSegmentPicker), .bomt table (renderBomTable), chip-nav and
+       the tvONE-fork Solution/I-O/LED/SX saved-deal sections.
+       CMS quoting rework (handwritten spec, 12 Jun): cloud → 2 lines
+       (License · Customization — NO implementation line, restoring the
+       v24 rule), local → 3 lines (Implementation · License ·
+       Customization). CMS Customization: qty 1, ₹0 default, price-editable
+       on the result page (owner scope), EXCLUDED from totals while ₹0 —
+       "pending scope", never POA. Persists via
+       raw_submission.cms_customization_price (no DDL).
+       Per-line disc%: inline editors for deal owner / tagged presales /
+       creator / super, cap settings.maxDiscountPct (20). Map persists via
+       raw_submission.line_discounts keyed by vendor-verbatim SKU; capped
+       in computeQuote, carried into project_lines.line_discount_pct.
+       Flat-guard in hydrateWizardFromDeal: re-hydrating an already-flat
+       wizard shape (sd re-render, sd-edit) passes through with a shallow
+       copy instead of resetting every spec/pick/discount to defaults.
+       Unified exports (CP4): excel()+pdf() BOM now renders from
+       STORE.bomLines/computeQuote — the SAME model as the result page
+       (the tvONE-fork reco.cards reader left the BS component table on
+       "(No BoM lines)" with prices only in the appendix). Downloads and
+       the WhatsApp/e-mail share text follow the price toggle via
+       bsResultShowPrices(). Excel SKU cell: two-line richText SKU +
+       "SAP: <code>" (new STORE.bsSapCodeOf — pricing/accessories
+       sap_code already streams through bs_pricebook_get, zero backend
+       change; base-variant SAP shown for XC Windows lines — accepted
+       limitation). The customer PDF carries NO SAP codes. CMS rows keep
+       blank SKU cells (v24.45.16a). Pricing block: NET unit (list − line
+       disc%, v24.45.6 rule), pending-scope row + exclusion note,
+       POA-aware. Logo aspect fixed — the _LOGO_TVONE_DURI constant is a
+       legacy misnomer holding the 432×96 BrightSign wordmark; it was
+       rendered stretched in both exports.
+       sd-whatsapp / sd-email: native share-sheet with the generated BoQ
+       PDF attached (Web Share API L2; Z Fold 7 Chrome primary target);
+       wa.me / mailto text fallback; AbortError (user closed the sheet)
+       stays silent.
+       Known/parked: window.__smoke* console suites are tvONE-fork legacy
+       (CALICO/MV fixtures) — not maintained for BS; prune parked (§9).
+       Validated: 249 headless assertions green (syntax ×4 · CMS 29 ·
+       discounts 14 · render 74 · saved-deal smoke 30 · exports 53 ·
+       round-trip 49) + hook parity 0 unhandled.
+       sw.js CACHE_NAME → brightsign-v2.2.0.
+     ------------------------------------------------------------
      v2.1.0  (2026-06-12)  — device-feedback fixes F1–F6 (12 Jun walk)
        F1 CMS pricing hardened + proven. cmsPriceOf vendor match is now
           strip-' CMS' normalize-equality (live pricebook strings re-verified
-          this session: 'BrightSign CMS'/'Korbyt CMS'/'Pickcel CMS'/'Poppulo
-          CMS'; wizard stores 'Korbyt' etc). Install rows carry term_years
+          this session: 'BrightSign CMS'/'Korbyt CMS'/'Pickcel CMS'; wizard
+          stores 'Korbyt' etc). Install rows carry term_years
           NULL in the DB — matched term-agnostically, qty 1 flat. Subscription:
           exact-term row first, else 1-yr row x term (full-term cost paid
           up-front); only term=1 rows exist today so 2–5yr derive. NOTE: the
           v2.0.x code already substring-matched + null-term install — the
           total device failure most likely came from a stale pre-v2 PWA cache;
           this release re-proves the whole path headlessly with the real DB
-          strings either way. Poppulo stays UI-excluded (0 INR TBD).
+          strings either way. Poppulo removed entirely in v2.3.0 (not sold) \u2014
+          absent from the picker; DB row deleted by Dipenkumar.
        F2 Advanced grid clipping (AU335/LS425 long descriptions):
           .adv-model-row .stepper flex 0 0 auto; .adv-model-main flex:1
           min-width:0; .stepper-val min-width 52→44.
@@ -8433,7 +8554,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.1.0',
+      version: 'brightsign-v2.3.0',
       constants,
       calico,
       mv,
@@ -8871,6 +8992,36 @@
       return r ? { unit_price_inr: Number(r.unit_price_inr) || 0, name: r.name || '', sku: r.sku || idOrSku } : null;
     }
 
+    // v2.2.0 — SAP code lookup for the Excel BOM SKU cell (v24.45.16
+    // carry-forward; EXCEL-ONLY — the customer PDF carries no SAP codes).
+    // pricing + accessories rows stream sap_code through bs_pricebook_get
+    // (to_jsonb passes every column; verified live 13 Jun 2026: 14 player
+    // rows + WD105 populated, SSDs intentionally blank by product policy).
+    // Player lookup prefers the base ('') variant row; XC Windows lines
+    // therefore show the base-variant SAP (BOM line objects don't carry
+    // variant_key — accepted limitation, noted in the changelog).
+    function bsSapCodeOf(sku, variant) {
+      if (!_pricebook || !sku) return '';
+      const s = String(sku).trim();
+      const vk = String(variant || '').trim();
+      const acc = (_pricebook.accessories || []).find(function (a) {
+        return a.accessory_id === s || a.sku === s;
+      });
+      if (acc && acc.sap_code) return String(acc.sap_code).trim();
+      const rows = (_pricebook.pricing || []).filter(function (p) {
+        return p.model_id === s && !p.active_to;
+      });
+      if (!rows.length) return '';
+      // v2.3.0 — prefer the requested variant's row (e.g. 'win' for XC
+      // Windows builds, which carry a distinct SAP code) before falling back
+      // to the base (variant_key '') row, then any row. Resolves the XC-Windows
+      // base-SAP limitation noted in v2.2.0 — advanced-cart Windows lines now
+      // carry variant_key, so the Excel SAP matches the actual OS build.
+      const match = (vk && rows.find(function (p) { return (p.variant_key || '') === vk; }))
+        || rows.find(function (p) { return !p.variant_key; }) || rows[0];
+      return String(match.sap_code || '').trim();
+    }
+
     // CMS row. installation: flat (DB rows carry term_years NULL — matched
     // term-agnostically). subscription: exact term else 1-yr x term (notes:
     // full-term cost paid up-front).
@@ -8879,8 +9030,8 @@
     // session); the wizard stores 'Korbyt' etc. Strip a trailing ' CMS',
     // trim, lowercase, compare for equality. The v2.0.x substring match
     // also resolved these pairs but equality is collision-proof and matches
-    // the diagnosed spec. Poppulo CMS exists in the DB at 0 INR and stays
-    // excluded from the vendor picker.
+    // the diagnosed spec. Poppulo CMS was removed entirely in v2.3.0 (not
+    // sold) \u2014 it is not in the vendor picker; its DB row is deleted.
     function cmsPriceOf(vendor, priceType, term) {
       const rows = (_pricebook && _pricebook.cms_pricing) || [];
       const vkey = function (s) { return String(s == null ? '' : s).replace(/\s*CMS\s*$/i, '').trim().toLowerCase(); };
@@ -8909,6 +9060,12 @@
         : (Number(d.qty_indoor) || 0) + (Number(d.qty_outdoor) || 0);
       const cat = function (id) { return (_pricebook.catalog || []).find(function (c) { return c.model_id === id; }) || {}; };
 
+      // v2.2.0 — per-line discount map (raw_submission: d.line_discounts,
+      // keyed by SKU). Read here so the quote table, exports and persisted
+      // project_lines all see the same disc% the result page edited.
+      // Cap is enforced downstream in computeQuote.
+      const ldOf = function (sku) { return Math.max(0, Number((d.line_discounts || {})[sku]) || 0); };
+
       function playerLine(model_id, qty, seg, variant) {
         if (!model_id || qty <= 0) return;
         const c = cat(model_id);
@@ -8917,7 +9074,7 @@
           product_family: 'Player', sku: model_id,
           description: (c.model_group ? c.model_group + ' series' : 'Player') +
             (variant === 'win' ? ' \u00b7 Windows' : '') + (seg ? ' \u00b7 ' + seg : ''),
-          model_no: model_id, qty: qty, unit_price_inr: unit, line_discount_pct: 0,
+          model_no: model_id, variant_key: variant || '', qty: qty, unit_price_inr: unit, line_discount_pct: ldOf(model_id),
           is_service: false, notes: c.tag || '', line_total_inr: unit * qty
         });
       }
@@ -8925,16 +9082,16 @@
         const unit = quoteUnit(unitBp);
         lines.push({
           product_family: 'Accessory', sku: sku, description: label, model_no: sku,
-          qty: qty, unit_price_inr: unit, line_discount_pct: 0, is_service: false,
+          qty: qty, unit_price_inr: unit, line_discount_pct: ldOf(sku), is_service: false,
           notes: note || (unit ? '' : 'POA \u2014 pending rate card'), line_total_inr: unit * qty
         });
       }
-      function cmsLine(sku, label, qty, unitBp) {
+      function cmsLine(sku, label, qty, unitBp, note) {
         const unit = quoteUnit(unitBp);
         lines.push({
           product_family: 'CMS', sku: sku, description: label, model_no: '',
-          qty: qty, unit_price_inr: unit, line_discount_pct: 0, is_service: true,
-          notes: '', line_total_inr: unit * qty
+          qty: qty, unit_price_inr: unit, line_discount_pct: ldOf(sku), is_service: true,
+          notes: note || '', line_total_inr: unit * qty
         });
       }
 
@@ -8981,16 +9138,33 @@
         accLine(sku, 'SSD ' + size, Number(d.ssd_qty) || totalPlayers, ap ? ap.unit_price_inr : 0);
       }
       if (d.cms_vendor && d.cms_vendor !== 'None') {
+        // v2.2.0 — CMS quoting rework (handwritten spec, 12 Jun):
+        //   cloud -> 2 lines: License (tenure shown) + Customization
+        //   local -> 3 lines: On-premise Implementation + License + Customization
+        // CHANGE #1: cloud carries NO implementation line. The v2-rebuild added
+        // install for both modes — a regression; the v24 app already quoted
+        // cloud as subscription-only. Restored here.
+        // CHANGE #2: CMS Customization is a new manual line: qty 1, default
+        // ₹0, priced on the result page (owner scope), EXCLUDED from totals
+        // while zero. It is NOT a POA line — POA means "pending rate card";
+        // this is intentionally zero until scoped. Price lives in
+        // d.cms_customization_price (raw_submission; no DDL).
         // v2.0.0 — explicit license count wins; unset falls back to the player
         // total. Zero licenses (and zero players) = no CMS lines at all.
         const licQty = Number(d.cms_qty) > 0 ? Number(d.cms_qty) : totalPlayers;
         if (licQty > 0) {
-          const inst = cmsPriceOf(d.cms_vendor, 'installation', null);
-          if (inst) cmsLine(d.cms_vendor + '-install', d.cms_vendor + ' installation', 1, inst.unit_price_inr);
-          const subType = d.cms_deployment_mode === 'cloud' ? 'cloud_subscription' : 'onpremise_subscription';
+          const cloud = d.cms_deployment_mode === 'cloud';
           const term = Number(d.cms_term) || 1;
-          const sub = cmsPriceOf(d.cms_vendor, subType, term);
-          if (sub) cmsLine(d.cms_vendor + '-sub', d.cms_vendor + ' subscription \u00b7 ' + term + 'yr \u00b7 ' + (d.cms_deployment_mode || 'local'), licQty, sub.unit_price_inr);
+          if (!cloud) {
+            const inst = cmsPriceOf(d.cms_vendor, 'installation', null);
+            if (inst) cmsLine(d.cms_vendor + '-install', 'CMS On-premise Implementation', 1, inst.unit_price_inr, 'One-time');
+          }
+          const sub = cmsPriceOf(d.cms_vendor, cloud ? 'cloud_subscription' : 'onpremise_subscription', term);
+          if (sub) cmsLine(d.cms_vendor + '-sub',
+            'CMS License \u2014 ' + (cloud ? 'Cloud' : 'On-premise') + ' \u00b7 ' + term + 'yr',
+            licQty, sub.unit_price_inr, 'Recurring');
+          cmsLine(d.cms_vendor + '-custom', 'CMS Customization', 1,
+            Number(d.cms_customization_price) || 0, 'Based on scope of customization');
         }
       }
       return lines;
@@ -9006,10 +9180,16 @@
         const unit = Number(l.unit_price_inr) || 0;
         const qty = Number(l.qty) || 0;
         const ld = Math.max(0, Math.min(maxD, Number(l.line_discount_pct) || 0));
-        const isPoa = unit <= 0;
-        const net = isPoa ? 0 : Math.round(unit * qty * (1 - ld / 100));
-        if (isPoa) poaCount++; else subtotal += net;
-        return Object.assign({}, l, { line_total_inr: net, poa: isPoa });
+        // v2.2.0 — a zero-priced CMS Customization line is "pending scope",
+        // not POA: excluded from subtotal/GST like POA, but never labeled
+        // POA (POA = missing rate card; this is intentionally zero until
+        // manually priced). Once priced it behaves like any other line.
+        const isCustom = l.product_family === 'CMS' && /-custom$/.test(String(l.sku || ''));
+        const isPoa = unit <= 0 && !isCustom;
+        const pendingScope = isCustom && unit <= 0;
+        const net = (isPoa || pendingScope) ? 0 : Math.round(unit * qty * (1 - ld / 100));
+        if (isPoa) poaCount++; else if (!pendingScope) subtotal += net;
+        return Object.assign({}, l, { line_total_inr: net, poa: isPoa, pending_scope: pendingScope });
       });
       const afterProject = Math.round(subtotal * (1 - pd / 100));
       const gst = Math.round(afterProject * s.gstPct / 100);
@@ -9936,6 +10116,10 @@
       fetchPricebook, getPricebook, ensurePricebook, clearPricebook,
       // v1.0.0 — BrightSign pricing + BoM assembly
       quoteUnit, unitPriceOf, accessoryPriceOf, cmsPriceOf, bomLines, computeQuote,
+      // v2.2.0 — UI mirrors the disc% cap on the inline editor (computeQuote
+      // stays the enforcing source of truth).
+      bsMaxDiscountPct: function () { return _bsSettings().maxDiscountPct; },
+      bsSapCodeOf: bsSapCodeOf,
       // v27.3.0 — notifications
       notifList, notifMarkRead, notifCreate,
       // v27.3.0 — audit log + revisions (D4, D5 silent-drop restores)
@@ -10197,16 +10381,15 @@
       // sheet because no pricing data exists yet. Mode is carried through to
       // the filename so the user knows what they got.
       const mode = (opts && opts.mode) || 'boq';
-      // v1.1.0 — BrightSign HAS dealer prices (DP read verbatim from pricebook).
-      // Show pricing in BoQ mode for roles permitted to see prices (Super/OEM/
-      // BU Head/Sales/Presales; Support excluded). BoM (spec sheet) stays
-      // unpriced by design. This replaces the tvONE never-price stopgap (tvONE
-      // had no price data). The priced summary renders as an appended totals
-      // block below the component list, so the 4-column grid is unchanged.
+      // v2.2.0 — downloads follow the result-page price toggle: BoQ is
+      // priced only when bsResultShowPrices() is true (price-visible role
+      // AND toggle on "With price"; Support is always false). BoM (spec
+      // sheet) stays unpriced by design. The priced summary renders as an
+      // appended block below the component list — 4-column grid unchanged.
       let showPricing = false;
       try {
         showPricing = (mode === 'boq') &&
-          (typeof UI !== 'undefined' && UI.bsCanSeePrices && UI.bsCanSeePrices());
+          (typeof UI !== 'undefined' && UI.bsResultShowPrices && UI.bsResultShowPrices());
       } catch (_e) { showPricing = false; }
       const ExcelJS = await loadExcelJS();
 
@@ -10257,7 +10440,7 @@
       ];
 
       // ---- Logo header (v27.3.14c) — co-branded, side-by-side ----
-      // tvONE left, Cavitak right. ExcelJS's addImage expects raw base64
+      // BrightSign left, Cavitak right. ExcelJS's addImage expects raw base64
       // (no data: prefix), so split off the prefix from _LOGO_*_DURI.
       const tvoneB64   = _LOGO_TVONE_DURI.split(',')[1];
       const cavitakB64 = _LOGO_CAVITAK_DURI.split(',')[1];
@@ -10272,11 +10455,13 @@
       ws.mergeCells('A1:D4');
       const hdrBg = ws.getCell('A1');
       hdrBg.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: WHITE } };
-      // tvONE: top-left, ~30pt x 9pt cell-units (ExcelJS uses col/row fractions).
-      // Image dimensions: 332x100 source; render around 145x44 px to fit the band.
+      // BrightSign wordmark: top-left (the _LOGO_TVONE_DURI constant name is
+      // a legacy misnomer from the tvONE fork — the PNG inside is the BS logo,
+      // 432x96). v2.2.0: render at 145x32 to keep the true 4.5:1 aspect
+      // (was 145x44 = vertically stretched).
       ws.addImage(tvoneImgId, {
         tl: { col: 0.2, row: 0.3 },
-        ext: { width: 145, height: 44 }
+        ext: { width: 145, height: 32 }
       });
       // Cavitak: top-right, anchored relative to rightmost data column.
       // We have cols A-D; Cavitak goes into col C-D zone.
@@ -10394,39 +10579,47 @@
       headerRow.height = 22;
 
       // ---- Line rows ----
-      // Build from reco (matches UI BoM card). Chassis prepended if not in cards.
-      const fam = (deal.solutionType || '').toUpperCase();
-      const lineRows = [];
-      if (reco) {
-        if (reco.chassis) {
-          const chassisLabel = (reco.meta && reco.meta.chassisLabel) || reco.chassis;
-          lineRows.push({ sku: reco.chassis, desc: chassisLabel, qty: 1 });
-        }
-        if (Array.isArray(reco.cards)) {
-          reco.cards.forEach(function(c) {
-            // Skip if it's the chassis already (defence-in-depth)
-            if (reco.chassis && c.sku === reco.chassis) return;
-            lineRows.push({
-              sku: c.sku,
-              desc: c.desc || c.label || c.sku,
-              qty: c.qty != null ? c.qty : 1
-            });
-          });
-        }
-      }
-      // Fallback: persisted lines (if reco didn't produce anything)
-      if (lineRows.length === 0 && Array.isArray(deal.lines)) {
-        deal.lines.forEach(function(l) {
-          lineRows.push({
-            sku: l.model_no || l.sku || '\u2014',
-            desc: l.description || l.desc || '\u2014',
-            qty: l.qty != null ? l.qty : 1
-          });
-        });
-      }
+      // v2.2.0 — unified source: STORE.bomLines is THE quote model, the same
+      // lines the on-screen result page and the PDF render. The v2.1 reader
+      // built rows from reco.chassis/reco.cards (tvONE-fork shape — BS reco
+      // has segments, not cards) so the BOM table always fell through to a
+      // nonexistent deal.lines and printed "(No BoM lines)" while the priced
+      // appendix below showed everything. One source now; computed up-front
+      // so the component table renders in BOTH modes.
+      let bsLines = [];
+      try { bsLines = (typeof STORE !== 'undefined' && STORE.bomLines) ? STORE.bomLines(deal) : []; }
+      catch (_e) { bsLines = []; }
+      let quote = null;
+      try { quote = (typeof STORE !== 'undefined' && STORE.computeQuote)
+        ? STORE.computeQuote(bsLines, deal.project_discount || 0) : null; }
+      catch (_e) { quote = null; }
+      const qLines = (quote && Array.isArray(quote.lines)) ? quote.lines : [];
+      const xlINR = function (n) {
+        return '\u20b9' + Math.round(Number(n) || 0).toLocaleString('en-IN');
+      };
+
+      // v2.2.0 — SAP-aware SKU cell (v24.45.16 / v24.70.0 carry-forward).
+      // EXCEL-ONLY: the customer PDF carries no SAP codes (internal data).
+      // No SKU (CMS / service rows: model_no '') -> '' — no dash, no SAP line.
+      // SKU without a SAP code on file -> plain SKU string (no placeholder).
+      // SKU with SAP -> two-line richText: bold SKU + small grey "SAP: <code>".
+      const skuCellValue = function (sku, variant) {
+        const s = String(sku || '').trim();
+        if (!s) return '';
+        let sap = '';
+        try { sap = (typeof STORE !== 'undefined' && STORE.bsSapCodeOf) ? STORE.bsSapCodeOf(s, variant) : ''; }
+        catch (_e) { sap = ''; }
+        if (!sap) return s;
+        return { richText: [
+          { text: s,
+            font: { name: 'Consolas', size: 10, bold: true, color: { argb: INK_STRONG } } },
+          { text: '\nSAP: ' + sap,
+            font: { name: 'Consolas', size: 8, bold: false, color: { argb: INK_SOFT } } }
+        ] };
+      };
 
       let curRow = 21;
-      if (lineRows.length === 0) {
+      if (qLines.length === 0) {
         ws.mergeCells(curRow, 1, curRow, 4);
         const empty = ws.getCell(curRow, 1);
         empty.value = '(No BoM lines \u2014 complete the spec and rebuild)';
@@ -10435,148 +10628,155 @@
         ws.getRow(curRow).height = 22;
         curRow++;
       } else {
-        lineRows.forEach(function(line, i) {
+        qLines.forEach(function(l, i) {
           const r = ws.getRow(curRow);
           const isAlt = (i % 2 === 1);
           const fill = isAlt
             ? { type:'pattern', pattern:'solid', fgColor:{ argb: AMBER_PALE } }
             : null;
+          const desc = String(l.description || '\u2014') +
+            (l.notes ? '\n' + String(l.notes) : '');
+          const skuVal = skuCellValue(l.model_no, l.variant_key);
           r.getCell(1).value = i + 1;
           r.getCell(1).font = { name:'Calibri', size: 10.5, color: { argb: INK_SOFT } };
           r.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
-          r.getCell(2).value = line.desc;
+          r.getCell(2).value = desc;
           r.getCell(2).font = { name:'Calibri', size: 10.5, color: { argb: INK_STRONG } };
           r.getCell(2).alignment = { wrapText: true, vertical: 'middle', indent: 1 };
-          r.getCell(3).value = line.sku;
-          r.getCell(3).alignment = { vertical: 'middle' };
+          r.getCell(3).value = skuVal;
+          // wrapText so the 2-line SKU+SAP richText stacks (v24.45.16).
+          r.getCell(3).alignment = { wrapText: true, vertical: 'middle' };
           r.getCell(3).font = { name: 'Consolas', size: 10, color: { argb: INK_STRONG } };
-          r.getCell(4).value = line.qty;
+          r.getCell(4).value = l.qty;
           r.getCell(4).font = { name:'Calibri', size: 10.5, bold: true, color: { argb: AMBER_DEEP } };
           r.getCell(4).alignment = { horizontal: 'right', vertical: 'middle' };
-          // Apply fill + light amber bottom border on each row
           [1,2,3,4].forEach(function(c) {
             if (fill) r.getCell(c).fill = fill;
             r.getCell(c).border = { bottom: { style: 'hair', color: { argb: AMBER_LIGHT } } };
           });
-          // v27.3.7 — Auto-estimate row height so wrapped descriptions
-          // don't clip vertically. Same formula as concerns/value-adds
-          // blocks (Math.ceil(len / chars-per-line) * 14px baseline).
-          // Description column is now 60 chars wide; estimate at ~52
-          // visible chars after indent + padding.
-          const descLen = String(line.desc || '').length;
-          r.height = Math.max(20, Math.ceil(descLen / 52) * 16);
+          // Row height: wrapped description lines (~52 visible chars/line at
+          // 60-wide col) + a notes line + the 2-line SKU cell, whichever wins.
+          const descLen = String(l.description || '').length;
+          let estLines = Math.max(1, Math.ceil(descLen / 52));
+          if (l.notes) estLines += 1;
+          const sapTwoLine = (skuVal && typeof skuVal === 'object');
+          r.height = Math.max(sapTwoLine ? 30 : 20, estLines * 16);
           curRow++;
         });
       }
 
-      // ---- v1.1.0 — Priced summary (BoQ + permitted role only) ----
-      // Renders below the component list using the 4-col grid: a per-line
-      // DP/discount/total table, then Subtotal / Project discount / GST /
-      // Grand total. POA lines (DP 0) are flagged and excluded from totals.
-      // BoM (spec sheet) mode and Support role skip this entirely.
-      if (showPricing) {
-        let bsLines = [];
-        try { bsLines = (typeof STORE !== 'undefined' && STORE.bomLines) ? STORE.bomLines(deal) : []; }
-        catch (_e) { bsLines = []; }
-        let quote = null;
-        try { quote = (typeof STORE !== 'undefined' && STORE.computeQuote)
-          ? STORE.computeQuote(bsLines, deal.project_discount || 0) : null; }
-        catch (_e) { quote = null; }
+      // ---- v2.2.0 — Pricing block (BoQ + price toggle ON) ----
+      // Per-line NET dealer price (list minus the line's disc%, the v24.45.6
+      // rule: figures must add up to the discounted total), then Subtotal /
+      // Project discount / GST / GRAND TOTAL. POA lines and the \u20b90 CMS
+      // Customization "pending scope" line are flagged and excluded.
+      if (showPricing && quote && qLines.length > 0) {
+        curRow += 1;
+        ws.mergeCells(curRow, 1, curRow, 4);
+        const pb = ws.getCell(curRow, 1);
+        pb.value = 'PRICING  (Dealer Price, INR)';
+        pb.font  = { name:'Calibri', size: 11.5, bold: true, color: { argb: WHITE } };
+        pb.fill  = { type:'pattern', pattern:'solid', fgColor: { argb: AMBER_DEEP } };
+        pb.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+        ws.getRow(curRow).height = 22;
+        curRow++;
 
-        if (quote && Array.isArray(quote.lines) && quote.lines.length > 0) {
-          const fmtINR = function (n) {
-            return '\u20b9' + Math.round(Number(n) || 0).toLocaleString('en-IN');
-          };
-          curRow += 1;
-          // Pricing band
-          ws.mergeCells(curRow, 1, curRow, 4);
-          const pb = ws.getCell(curRow, 1);
-          pb.value = 'PRICING  (Dealer Price, INR)';
-          pb.font  = { name:'Calibri', size: 11.5, bold: true, color: { argb: WHITE } };
-          pb.fill  = { type:'pattern', pattern:'solid', fgColor: { argb: AMBER_DEEP } };
-          pb.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
-          ws.getRow(curRow).height = 22;
-          curRow++;
-
-          // Sub-header: Item | Unit DP | Qty | Line total  (cols 1..4)
-          const ph = ws.getRow(curRow);
-          [['ITEM','left'],['UNIT DP','right'],['QTY','right'],['LINE TOTAL','right']]
-            .forEach(function (pair, i) {
-              const c = ph.getCell(i + 1);
-              c.value = pair[0];
-              c.font = { name:'Calibri', size: 9.5, bold: true, color: { argb: INK_SOFT } };
-              c.alignment = { horizontal: pair[1], vertical: 'middle', indent: i === 0 ? 1 : 0 };
-              c.border = { bottom: { style: 'thin', color: { argb: AMBER_LIGHT } } };
-            });
-          ph.height = 18;
-          curRow++;
-
-          quote.lines.forEach(function (l) {
-            const r = ws.getRow(curRow);
-            r.getCell(1).value = (l.description || l.sku || '\u2014');
-            r.getCell(1).font = { name:'Calibri', size: 10, color: { argb: INK_STRONG } };
-            r.getCell(1).alignment = { wrapText: true, vertical: 'middle', indent: 1 };
-            if (l.poa) {
-              ws.mergeCells(curRow, 2, curRow, 4);
-              const pc = r.getCell(2);
-              pc.value = 'POA (price on application)';
-              pc.font = { name:'Calibri', size: 9.5, italic: true, color: { argb: INK_SOFT } };
-              pc.alignment = { horizontal: 'right', vertical: 'middle' };
-            } else {
-              r.getCell(2).value = fmtINR(l.unit_price_inr);
-              r.getCell(2).font = { name:'Consolas', size: 10, color: { argb: INK_STRONG } };
-              r.getCell(2).alignment = { horizontal: 'right', vertical: 'middle' };
-              r.getCell(3).value = l.qty;
-              r.getCell(3).font = { name:'Calibri', size: 10, color: { argb: INK_STRONG } };
-              r.getCell(3).alignment = { horizontal: 'right', vertical: 'middle' };
-              r.getCell(4).value = fmtINR(l.line_total_inr);
-              r.getCell(4).font = { name:'Consolas', size: 10, bold: true, color: { argb: INK_STRONG } };
-              r.getCell(4).alignment = { horizontal: 'right', vertical: 'middle' };
-            }
-            r.height = 18;
-            curRow++;
+        // Sub-header: Item | Unit DP | Qty | Line total  (cols 1..4)
+        const ph = ws.getRow(curRow);
+        [['ITEM','left'],['UNIT DP','right'],['QTY','right'],['LINE TOTAL','right']]
+          .forEach(function (pair, i) {
+            const c = ph.getCell(i + 1);
+            c.value = pair[0];
+            c.font = { name:'Calibri', size: 9.5, bold: true, color: { argb: INK_SOFT } };
+            c.alignment = { horizontal: pair[1], vertical: 'middle', indent: i === 0 ? 1 : 0 };
+            c.border = { bottom: { style: 'thin', color: { argb: AMBER_LIGHT } } };
           });
+        ph.height = 18;
+        curRow++;
 
-          // Totals
-          function totalRow(label, value, opts2) {
-            opts2 = opts2 || {};
-            const r = ws.getRow(curRow);
-            ws.mergeCells(curRow, 1, curRow, 3);
-            const lc = r.getCell(1);
-            lc.value = label;
-            lc.font = { name:'Calibri', size: opts2.big ? 11.5 : 10,
-              bold: !!opts2.big, color: { argb: opts2.big ? AMBER_DEEP : INK_SOFT } };
-            lc.alignment = { horizontal: 'right', vertical: 'middle' };
-            const vc = r.getCell(4);
-            vc.value = value;
-            vc.font = { name:'Consolas', size: opts2.big ? 12 : 10,
-              bold: true, color: { argb: opts2.big ? AMBER_DEEP : INK_STRONG } };
-            vc.alignment = { horizontal: 'right', vertical: 'middle' };
-            if (opts2.big) {
-              [1,2,3,4].forEach(function (ci) {
-                r.getCell(ci).border = { top: { style: 'thin', color: { argb: AMBER_DEEP } } };
-              });
-            }
-            r.height = opts2.big ? 22 : 18;
-            curRow++;
+        qLines.forEach(function (l) {
+          const r = ws.getRow(curRow);
+          r.getCell(1).value = (l.description || l.sku || '\u2014');
+          r.getCell(1).font = { name:'Calibri', size: 10, color: { argb: INK_STRONG } };
+          r.getCell(1).alignment = { wrapText: true, vertical: 'middle', indent: 1 };
+          if (l.pending_scope) {
+            // \u20b90 CMS Customization — intentionally unpriced, not POA.
+            ws.mergeCells(curRow, 2, curRow, 4);
+            const pc = r.getCell(2);
+            pc.value = 'Pending scope \u2014 excluded until priced';
+            pc.font = { name:'Calibri', size: 9.5, italic: true, color: { argb: INK_SOFT } };
+            pc.alignment = { horizontal: 'right', vertical: 'middle' };
+          } else if (l.poa) {
+            ws.mergeCells(curRow, 2, curRow, 4);
+            const pc = r.getCell(2);
+            pc.value = 'POA (price on application)';
+            pc.font = { name:'Calibri', size: 9.5, italic: true, color: { argb: INK_SOFT } };
+            pc.alignment = { horizontal: 'right', vertical: 'middle' };
+          } else {
+            const ld = Number(l.line_discount_pct) || 0;
+            const netUnit = Math.round((Number(l.unit_price_inr) || 0) * (1 - ld / 100));
+            r.getCell(2).value = xlINR(netUnit);
+            r.getCell(2).font = { name:'Consolas', size: 10, color: { argb: INK_STRONG } };
+            r.getCell(2).alignment = { horizontal: 'right', vertical: 'middle' };
+            r.getCell(3).value = l.qty;
+            r.getCell(3).font = { name:'Calibri', size: 10, color: { argb: INK_STRONG } };
+            r.getCell(3).alignment = { horizontal: 'right', vertical: 'middle' };
+            r.getCell(4).value = xlINR(l.line_total_inr);
+            r.getCell(4).font = { name:'Consolas', size: 10, bold: true, color: { argb: INK_STRONG } };
+            r.getCell(4).alignment = { horizontal: 'right', vertical: 'middle' };
           }
-          totalRow('Subtotal', fmtINR(quote.subtotal));
-          if (quote.projectDiscountPct > 0) {
-            totalRow('Project discount (' + quote.projectDiscountPct + '%)',
-              '\u2212' + fmtINR(quote.subtotal - quote.afterProjectDiscount));
+          r.height = 18;
+          curRow++;
+        });
+
+        // Totals
+        function totalRow(label, value, opts2) {
+          opts2 = opts2 || {};
+          const r = ws.getRow(curRow);
+          ws.mergeCells(curRow, 1, curRow, 3);
+          const lc = r.getCell(1);
+          lc.value = label;
+          lc.font = { name:'Calibri', size: opts2.big ? 11.5 : 10,
+            bold: !!opts2.big, color: { argb: opts2.big ? AMBER_DEEP : INK_SOFT } };
+          lc.alignment = { horizontal: 'right', vertical: 'middle' };
+          const vc = r.getCell(4);
+          vc.value = value;
+          vc.font = { name:'Consolas', size: opts2.big ? 12 : 10,
+            bold: true, color: { argb: opts2.big ? AMBER_DEEP : INK_STRONG } };
+          vc.alignment = { horizontal: 'right', vertical: 'middle' };
+          if (opts2.big) {
+            [1,2,3,4].forEach(function (ci) {
+              r.getCell(ci).border = { top: { style: 'thin', color: { argb: AMBER_DEEP } } };
+            });
           }
-          totalRow('GST (' + quote.gstPct + '%)', fmtINR(quote.gst));
-          totalRow('GRAND TOTAL', fmtINR(quote.grandTotal), { big: true });
-          if (quote.poaCount > 0) {
-            ws.mergeCells(curRow, 1, curRow, 4);
-            const note = ws.getCell(curRow, 1);
-            note.value = quote.poaCount + ' line' + (quote.poaCount === 1 ? '' : 's') +
-              ' marked POA \u2014 not included in the total.';
-            note.font = { name:'Calibri', size: 9, italic: true, color: { argb: INK_SOFT } };
-            note.alignment = { horizontal: 'right', vertical: 'middle' };
-            ws.getRow(curRow).height = 16;
-            curRow++;
-          }
+          r.height = opts2.big ? 22 : 18;
+          curRow++;
+        }
+        totalRow('Subtotal', xlINR(quote.subtotal));
+        if (quote.projectDiscountPct > 0) {
+          totalRow('Project discount (' + quote.projectDiscountPct + '%)',
+            '\u2212' + xlINR(quote.subtotal - quote.afterProjectDiscount));
+        }
+        totalRow('GST (' + quote.gstPct + '%)', xlINR(quote.gst));
+        totalRow('GRAND TOTAL', xlINR(quote.grandTotal), { big: true });
+        if (quote.poaCount > 0) {
+          ws.mergeCells(curRow, 1, curRow, 4);
+          const note = ws.getCell(curRow, 1);
+          note.value = quote.poaCount + ' line' + (quote.poaCount === 1 ? '' : 's') +
+            ' marked POA \u2014 not included in the total.';
+          note.font = { name:'Calibri', size: 9, italic: true, color: { argb: INK_SOFT } };
+          note.alignment = { horizontal: 'right', vertical: 'middle' };
+          ws.getRow(curRow).height = 16;
+          curRow++;
+        }
+        if (qLines.some(function (l) { return l.pending_scope; })) {
+          ws.mergeCells(curRow, 1, curRow, 4);
+          const pnote = ws.getCell(curRow, 1);
+          pnote.value = 'CMS Customization is excluded from totals until priced \u2014 based on scope of customization.';
+          pnote.font = { name:'Calibri', size: 9, italic: true, color: { argb: INK_SOFT } };
+          pnote.alignment = { horizontal: 'right', vertical: 'middle' };
+          ws.getRow(curRow).height = 16;
+          curRow++;
         }
       }
 
@@ -10825,13 +11025,12 @@
       if (!deal) throw new Error('pdf: deal required');
       // v27.3.0 — see excel() above for mode semantics.
       const mode = (opts && opts.mode) || 'boq';
-      // v1.1.0 — BrightSign HAS dealer prices. Mirror excel(): priced BoQ for
-      // permitted roles; BoM spec sheet stays unpriced. Renders as an appended
-      // pricing block below the component table.
+      // v2.2.0 — mirror excel(): downloads follow the result-page price
+      // toggle via bsResultShowPrices(). BoM spec sheet stays unpriced.
       let showPricing = false;
       try {
         showPricing = (mode === 'boq') &&
-          (typeof UI !== 'undefined' && UI.bsCanSeePrices && UI.bsCanSeePrices());
+          (typeof UI !== 'undefined' && UI.bsResultShowPrices && UI.bsResultShowPrices());
       } catch (_e) { showPricing = false; }
       const jspdf = await loadJsPDF();
       const JsPDFCtor = jspdf.jsPDF;
@@ -10866,15 +11065,17 @@
       const stroke = function(rgb) { doc.setDrawColor(rgb[0], rgb[1], rgb[2]); };
       const ink    = function(rgb) { doc.setTextColor(rgb[0], rgb[1], rgb[2]); };
 
-      // ---- Logo header (v27.3.14c) — co-branded, tvONE left + Cavitak right ----
+      // ---- Logo header (v27.3.14c) — co-branded, BrightSign left + Cavitak right ----
       // jsPDF addImage accepts data URIs directly. Image dimensions:
-      // tvONE 332x100 → render at 130x39 pt · Cavitak 235x64 → 92x25 pt.
+      // BrightSign 432x96 → render at 130x29 pt · Cavitak 235x64 → 92x25 pt.
       // White background band (60pt tall) with hair amber rule beneath.
       fill(WHITE);
       doc.rect(0, 0, W, 60, 'F');
-      // tvONE logo on the left, vertically centered in the 60pt band.
+      // BrightSign logo on the left (legacy _LOGO_TVONE_DURI constant name),
+      // vertically centered in the 60pt band. v2.2.0: 130x29 keeps the true
+      // 4.5:1 aspect of the 432x96 PNG (was 130x39 = stretched).
       try {
-        doc.addImage(_LOGO_TVONE_DURI, 'PNG', M, 11, 130, 39);
+        doc.addImage(_LOGO_TVONE_DURI, 'PNG', M, 16, 130, 29);
       } catch (_e) { /* if image embed fails, header falls back to text below */ }
       // Cavitak logo on the right, vertically centered.
       try {
@@ -11020,37 +11221,23 @@
       y += 22;
 
       // ---- Line items ----
-      const lineRows = [];
-      if (reco) {
-        if (reco.chassis) {
-          const chassisLabel = (reco.meta && reco.meta.chassisLabel) || reco.chassis;
-          lineRows.push({ sku: reco.chassis, desc: chassisLabel, qty: 1 });
-        }
-        if (Array.isArray(reco.cards)) {
-          reco.cards.forEach(function(c) {
-            if (reco.chassis && c.sku === reco.chassis) return;
-            lineRows.push({
-              sku: c.sku,
-              desc: c.desc || c.label || c.sku,
-              qty: c.qty != null ? c.qty : 1
-            });
-          });
-        }
-      }
-      if (lineRows.length === 0 && Array.isArray(deal.lines)) {
-        deal.lines.forEach(function(l) {
-          lineRows.push({
-            sku: l.model_no || l.sku || '\u2014',
-            desc: l.description || l.desc || '\u2014',
-            qty: l.qty != null ? l.qty : 1
-          });
-        });
-      }
+      // v2.2.0 — unified source: STORE.bomLines / computeQuote (same model as
+      // the on-screen result page and the Excel). Replaces the tvONE-fork
+      // reco.cards reader that left the BS component table empty.
+      // The PDF deliberately carries NO SAP codes (internal data; Excel-only).
+      let bsLines = [];
+      try { bsLines = (typeof STORE !== 'undefined' && STORE.bomLines) ? STORE.bomLines(deal) : []; }
+      catch (_e) { bsLines = []; }
+      let quote = null;
+      try { quote = (typeof STORE !== 'undefined' && STORE.computeQuote)
+        ? STORE.computeQuote(bsLines, deal.project_discount || 0) : null; }
+      catch (_e) { quote = null; }
+      const qLines = (quote && Array.isArray(quote.lines)) ? quote.lines : [];
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
 
-      if (lineRows.length === 0) {
+      if (qLines.length === 0) {
         checkPageBreak(20);
         doc.setFont('helvetica', 'italic');
         ink(INK_SOFT);
@@ -11061,13 +11248,14 @@
         doc.setFont('helvetica', 'normal');
         ink(INK_STRONG);
       } else {
-        lineRows.forEach(function(line, i) {
+        qLines.forEach(function(l, i) {
+          const descStr = String(l.description || '\u2014') +
+            (l.notes ? '  \u00b7  ' + String(l.notes) : '');
           const descWidth = colModel - colDesc - 10;
-          const descLines = doc.splitTextToSize(String(line.desc), descWidth);
+          const descLines = doc.splitTextToSize(descStr, descWidth);
           const rowHeight = Math.max(18, descLines.length * 12 + 6);
           checkPageBreak(rowHeight + 4);
 
-          // Alt-row banding
           if (i % 2 === 1) {
             fill(AMBER_PALE);
             doc.rect(M, y, W - 2 * M, rowHeight, 'F');
@@ -11082,15 +11270,15 @@
           doc.setFontSize(10);
           doc.text(descLines, colDesc, y + 13);
 
+          // CMS/service rows carry model_no '' — cell stays blank (no dash).
           doc.setFont('courier', 'normal');
           ink(INK_STRONG);
-          doc.text(String(line.sku), colModel, y + 13);
+          doc.text(String(l.model_no || ''), colModel, y + 13);
 
           doc.setFont('helvetica', 'bold');
           ink(AMBER_DEEP);
-          doc.text(String(line.qty), colQty, y + 13, { align: 'right' });
+          doc.text(String(l.qty), colQty, y + 13, { align: 'right' });
 
-          // Thin amber-light bottom border
           stroke(AMBER_LIGHT);
           doc.setLineWidth(0.5);
           doc.line(M, y + rowHeight, W - M, y + rowHeight);
@@ -11103,112 +11291,119 @@
       ink(INK_STRONG);
       doc.setFont('helvetica', 'normal');
 
-      // ---- v1.1.0 — Priced summary (BoQ + permitted role only) ----
-      // Mirrors the Excel pricing block: per-line DP/qty/total, then
-      // Subtotal / Project discount / GST / Grand total. POA-aware.
-      if (showPricing) {
-        let bsLines = [];
-        try { bsLines = (typeof STORE !== 'undefined' && STORE.bomLines) ? STORE.bomLines(deal) : []; }
-        catch (_e) { bsLines = []; }
-        let quote = null;
-        try { quote = (typeof STORE !== 'undefined' && STORE.computeQuote)
-          ? STORE.computeQuote(bsLines, deal.project_discount || 0) : null; }
-        catch (_e) { quote = null; }
+      // ---- v2.2.0 — Pricing block (BoQ + price toggle ON) ----
+      // Mirrors the Excel pricing block: per-line NET dealer price (list
+      // minus the line's disc% — v24.45.6 rule), qty, line total, then
+      // Subtotal / Project discount / GST / Grand total. POA and the \u20b90
+      // CMS Customization "pending scope" line are flagged + excluded.
+      if (showPricing && quote && qLines.length > 0) {
+        const fmtINR = function (n) {
+          return '\u20b9' + Math.round(Number(n) || 0).toLocaleString('en-IN');
+        };
+        // x anchors for the pricing sub-table
+        const pUnitX = W - M - 200;   // unit DP (right-aligned)
+        const pQtyX  = W - M - 110;   // qty (right-aligned)
+        const pTotX  = W - M - 5;     // line total (right-aligned)
 
-        if (quote && Array.isArray(quote.lines) && quote.lines.length > 0) {
-          const fmtINR = function (n) {
-            return '\u20b9' + Math.round(Number(n) || 0).toLocaleString('en-IN');
-          };
-          // x anchors for the pricing sub-table
-          const pUnitX = W - M - 200;   // unit DP (right-aligned)
-          const pQtyX  = W - M - 110;   // qty (right-aligned)
-          const pTotX  = W - M - 5;     // line total (right-aligned)
+        y += 14;
+        checkPageBreak(40);
+        // Pricing band
+        fill(AMBER_DEEP);
+        doc.rect(M, y, W - 2 * M, 22, 'F');
+        ink(WHITE);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text('PRICING  (Dealer Price, INR)', M + 8, y + 15);
+        y += 22;
 
-          y += 14;
-          checkPageBreak(40);
-          // Pricing band
-          fill(AMBER_DEEP);
-          doc.rect(M, y, W - 2 * M, 22, 'F');
-          ink(WHITE);
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(11);
-          doc.text('PRICING  (Dealer Price, INR)', M + 8, y + 15);
-          y += 22;
+        // Sub-header
+        checkPageBreak(20);
+        ink(INK_SOFT);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.text('ITEM', colDesc, y + 12);
+        doc.text('UNIT DP', pUnitX, y + 12, { align: 'right' });
+        doc.text('QTY', pQtyX, y + 12, { align: 'right' });
+        doc.text('LINE TOTAL', pTotX, y + 12, { align: 'right' });
+        stroke(AMBER_LIGHT); doc.setLineWidth(0.5);
+        doc.line(M, y + 16, W - M, y + 16);
+        y += 18;
 
-          // Sub-header
-          checkPageBreak(20);
-          ink(INK_SOFT);
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(8.5);
-          doc.text('ITEM', colDesc, y + 12);
-          doc.text('UNIT DP', pUnitX, y + 12, { align: 'right' });
-          doc.text('QTY', pQtyX, y + 12, { align: 'right' });
-          doc.text('LINE TOTAL', pTotX, y + 12, { align: 'right' });
-          stroke(AMBER_LIGHT); doc.setLineWidth(0.5);
-          doc.line(M, y + 16, W - M, y + 16);
-          y += 18;
-
-          quote.lines.forEach(function (l) {
-            const nameW = (pUnitX - 20) - colDesc;
-            const nameLines = doc.splitTextToSize(String(l.description || l.sku || '\u2014'), nameW);
-            const rowH = Math.max(16, nameLines.length * 11 + 5);
-            checkPageBreak(rowH + 2);
-            ink(INK_STRONG);
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9.5);
-            doc.text(nameLines, colDesc, y + 11);
-            if (l.poa) {
-              ink(INK_SOFT);
-              doc.setFont('helvetica', 'italic');
-              doc.text('POA', pTotX, y + 11, { align: 'right' });
-            } else {
-              doc.setFont('courier', 'normal');
-              ink(INK_STRONG);
-              doc.text(fmtINR(l.unit_price_inr), pUnitX, y + 11, { align: 'right' });
-              doc.setFont('helvetica', 'normal');
-              doc.text(String(l.qty), pQtyX, y + 11, { align: 'right' });
-              doc.setFont('courier', 'bold');
-              doc.text(fmtINR(l.line_total_inr), pTotX, y + 11, { align: 'right' });
-            }
-            stroke(AMBER_LIGHT); doc.setLineWidth(0.4);
-            doc.line(colDesc, y + rowH, W - M, y + rowH);
-            y += rowH;
-          });
-
-          // Totals
-          function totalLine(label, value, big) {
-            checkPageBreak(20);
-            if (big) { stroke(AMBER_DEEP); doc.setLineWidth(1); doc.line(pUnitX - 20, y + 2, W - M, y + 2); }
-            ink(big ? AMBER_DEEP : INK_SOFT);
-            doc.setFont('helvetica', big ? 'bold' : 'normal');
-            doc.setFontSize(big ? 11 : 9.5);
-            doc.text(label, pQtyX, y + (big ? 16 : 13), { align: 'right' });
-            ink(big ? AMBER_DEEP : INK_STRONG);
-            doc.setFont('courier', 'bold');
-            doc.setFontSize(big ? 12 : 9.5);
-            doc.text(value, pTotX, y + (big ? 16 : 13), { align: 'right' });
-            y += big ? 22 : 17;
-          }
-          y += 4;
-          totalLine('Subtotal', fmtINR(quote.subtotal), false);
-          if (quote.projectDiscountPct > 0) {
-            totalLine('Project discount (' + quote.projectDiscountPct + '%)',
-              '\u2212' + fmtINR(quote.subtotal - quote.afterProjectDiscount), false);
-          }
-          totalLine('GST (' + quote.gstPct + '%)', fmtINR(quote.gst), false);
-          totalLine('GRAND TOTAL', fmtINR(quote.grandTotal), true);
-          if (quote.poaCount > 0) {
-            checkPageBreak(16);
-            ink(INK_SOFT);
-            doc.setFont('helvetica', 'italic');
-            doc.setFontSize(8.5);
-            doc.text(quote.poaCount + ' line' + (quote.poaCount === 1 ? '' : 's') +
-              ' marked POA \u2014 not included in the total.', pTotX, y + 11, { align: 'right' });
-            y += 14;
-          }
+        qLines.forEach(function (l) {
+          const nameW = (pUnitX - 20) - colDesc;
+          const nameLines = doc.splitTextToSize(String(l.description || l.sku || '\u2014'), nameW);
+          const rowH = Math.max(16, nameLines.length * 11 + 5);
+          checkPageBreak(rowH + 2);
           ink(INK_STRONG);
           doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9.5);
+          doc.text(nameLines, colDesc, y + 11);
+          if (l.pending_scope) {
+            ink(INK_SOFT);
+            doc.setFont('helvetica', 'italic');
+            doc.text('Pending scope \u2014 excluded until priced', pTotX, y + 11, { align: 'right' });
+          } else if (l.poa) {
+            ink(INK_SOFT);
+            doc.setFont('helvetica', 'italic');
+            doc.text('POA', pTotX, y + 11, { align: 'right' });
+          } else {
+            const ld = Number(l.line_discount_pct) || 0;
+            const netUnit = Math.round((Number(l.unit_price_inr) || 0) * (1 - ld / 100));
+            doc.setFont('courier', 'normal');
+            ink(INK_STRONG);
+            doc.text(fmtINR(netUnit), pUnitX, y + 11, { align: 'right' });
+            doc.setFont('helvetica', 'normal');
+            doc.text(String(l.qty), pQtyX, y + 11, { align: 'right' });
+            doc.setFont('courier', 'bold');
+            doc.text(fmtINR(l.line_total_inr), pTotX, y + 11, { align: 'right' });
+          }
+          stroke(AMBER_LIGHT); doc.setLineWidth(0.4);
+          doc.line(colDesc, y + rowH, W - M, y + rowH);
+          y += rowH;
+        });
+
+        // Totals
+        function totalLine(label, value, big) {
+          checkPageBreak(20);
+          if (big) { stroke(AMBER_DEEP); doc.setLineWidth(1); doc.line(pUnitX - 20, y + 2, W - M, y + 2); }
+          ink(big ? AMBER_DEEP : INK_SOFT);
+          doc.setFont('helvetica', big ? 'bold' : 'normal');
+          doc.setFontSize(big ? 11 : 9.5);
+          doc.text(label, pQtyX, y + (big ? 16 : 13), { align: 'right' });
+          ink(big ? AMBER_DEEP : INK_STRONG);
+          doc.setFont('courier', 'bold');
+          doc.setFontSize(big ? 12 : 9.5);
+          doc.text(value, pTotX, y + (big ? 16 : 13), { align: 'right' });
+          y += big ? 22 : 17;
         }
+        y += 4;
+        totalLine('Subtotal', fmtINR(quote.subtotal), false);
+        if (quote.projectDiscountPct > 0) {
+          totalLine('Project discount (' + quote.projectDiscountPct + '%)',
+            '\u2212' + fmtINR(quote.subtotal - quote.afterProjectDiscount), false);
+        }
+        totalLine('GST (' + quote.gstPct + '%)', fmtINR(quote.gst), false);
+        totalLine('GRAND TOTAL', fmtINR(quote.grandTotal), true);
+        if (quote.poaCount > 0) {
+          checkPageBreak(16);
+          ink(INK_SOFT);
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(8.5);
+          doc.text(quote.poaCount + ' line' + (quote.poaCount === 1 ? '' : 's') +
+            ' marked POA \u2014 not included in the total.', pTotX, y + 11, { align: 'right' });
+          y += 14;
+        }
+        if (qLines.some(function (l) { return l.pending_scope; })) {
+          checkPageBreak(16);
+          ink(INK_SOFT);
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(8.5);
+          doc.text('CMS Customization excluded from totals until priced \u2014 based on scope of customization.',
+            pTotX, y + 11, { align: 'right' });
+          y += 14;
+        }
+        ink(INK_STRONG);
+        doc.setFont('helvetica', 'normal');
       }
 
       // ---- Concerns block (red band) ----
@@ -14225,6 +14420,8 @@
         cms_vendor: 'None',             // BrightSign|Korbyt|Pickcel|None
         cms_deployment_mode: '',        // 'local' | 'cloud'
         cms_term: 0,                    // 1..5 years
+        cms_customization_price: 0,    // v2.2.0 — manual result-page line; 0 = pending scope
+        line_discounts: {},            // v2.2.0 — per-line disc% by SKU (result-page inline edit)
         // advanced (cart) mode
         advancedSelections: [],         // [{ model_id, qty }]
         advancedAccessories: [],        // [{ kind:'accessory'|'cms', id, qty }]
@@ -14314,6 +14511,16 @@
       if (!deal || typeof deal !== 'object') {
         throw new Error('hydrateWizardFromDeal: deal required');
       }
+      // v2.2.0 — flat-guard. Hydrating an already-FLAT wizard shape is
+      // LOSSY: spec fields live only in deal.bs_specs and engine state only
+      // in deal.raw_submission, so a flat deal (which has neither) would
+      // reset every spec/pick/discount to defaults. Saved-deal re-renders
+      // and sd-edit both pass the flat _savedDealData back in — pass it
+      // through with only the standard reset fields applied.
+      if (!deal.bs_specs && !deal.raw_submission &&
+          (deal.mode === 'guided' || deal.mode === 'advanced')) {
+        return Object.assign({}, deal, { reco: null, errors: {}, step: 1 });
+      }
       const w = defaultWizard();
 
       // ---- 1. Deal header columns (bs_deal_get top level) ----
@@ -14388,6 +14595,13 @@
         // raw catch-all sweeps every non-transient wizard key); only this
         // hydrate side was missing.
         if (raw.cms_qty != null)  w.cms_qty  = Number(raw.cms_qty) || 0;
+        // v2.2.0 — manual CMS Customization price must round-trip the same
+        // way (raw_submission only; no DDL). Without this, reopening a deal
+        // would re-seed it to 0 and silently drop the priced line on resave.
+        if (raw.cms_customization_price != null) w.cms_customization_price = Number(raw.cms_customization_price) || 0;
+        // v2.2.0 — per-line disc% map round-trips via raw_submission the
+        // same way (buildSavePayload's raw catch-all sweeps it on save).
+        if (raw.line_discounts && typeof raw.line_discounts === 'object') w.line_discounts = raw.line_discounts;
       }
 
       // v1.4.0 — Mode fallback for older deals saved before mode was persisted.
@@ -19554,8 +19768,9 @@
           const name = l.description || l.model_no || l.sku || 'Item';
           out.push('  \u2022 ' + qty + ' \u00d7 ' + name);
         });
+        // v2.2.0 — share text follows the result-page price toggle too.
         let canSee = false;
-        try { canSee = !!(UI.bsCanSeePrices && UI.bsCanSeePrices()); } catch (e) { canSee = false; }
+        try { canSee = !!(UI.bsResultShowPrices && UI.bsResultShowPrices()); } catch (e) { canSee = false; }
         if (canSee) {
           try {
             const q = STORE.computeQuote(lines, deal.project_discount || 0);
@@ -22444,110 +22659,36 @@
       // _savedDealData was hydrated to the flat wizard shape in the autosave-
       // init block above; reuse it so the +/- steppers, Rebuild, and exports
       // all mutate/read the same object the BoM card was built from.
-      let reco = null;
-      let recoErr = null;
       const bomDeal = _savedDealData;
+      let bomHtml;
       try {
-        bomDeal.reco = (typeof APP !== 'undefined' && APP.recoForDeal)
-          ? APP.recoForDeal(bomDeal)
-          : null;
-        reco = bomDeal.reco;
+        // v2.2.0 — guided needs a fresh engine pass for the hero ladders;
+        // advanced has no engine (renderBomCard skips heroes there).
+        if (bomDeal.mode !== 'advanced') {
+          bomDeal.reco = (typeof APP !== 'undefined' && APP.recoForDeal)
+            ? APP.recoForDeal(bomDeal) : null;
+        }
+        bomHtml = renderBomCard(bomDeal, 'sd');
       } catch (e) {
-        recoErr = (e && e.message) ? e.message : String(e);
-      }
-      const bomHtml = reco
-        ? renderBomCard(bomDeal)
-        : '<div class="bom-card empty-bom">' +
-            '<div class="bom-chassis-sku">BOM UNAVAILABLE</div>' +
+        bomHtml = '<div class="bom-card empty-bom">' +
+            '<div class="bom-chassis-sku">QUOTE UNAVAILABLE</div>' +
             '<div class="bom-chassis-label">Couldn\u2019t compute</div>' +
-            '<div class="bom-meta">' + esc(recoErr || 'Incomplete spec.') + '</div>' +
+            '<div class="bom-meta">' + esc((e && e.message) || 'Incomplete spec.') + '</div>' +
           '</div>';
+      }
 
-      // ---- Section visibility ----
-      const hasLed = !!(deal && deal.hasLed);
-      // v27.3.12 — hasSx forced TRUE per Dipenkumar 2026-05-26 (Photo 4).
-      // The user-facing toggle is gone; SX section is always rendered in
-      // saved-deal view. Legacy deals saved with hasSx:false get the SX
-      // section as well (zero-count display if nothing was configured).
-      const hasSx  = true;
-
-      // ---- Field-count badges ----
+      // ---- Field-count badge ----
+      // v2.2.0 — only Project context remains; the tvONE-fork Solution /
+      // I-O / LED / SX sections are gone from the BS saved view.
       const ctxFields = SOFT_FIELDS; // exactly the editable fields below
       const ctxCount = ctxFields.filter(f => deal && deal[f] != null && deal[f] !== '').length;
 
-      const ioCount = (function() {
-        if (!deal) return 0;
-        if (deal.solutionType === 'calico') {
-          return countNonZero(deal.calico_inputs) + countNonZero(deal.calico_outputs) +
-                 (deal.calico_audio ? 1 : 0);
-        }
-        if (deal.solutionType === 'mv') {
-          return (Array.isArray(deal.mv_inputs) ? deal.mv_inputs.filter(r => r && Number(r.qty) > 0).length : 0) +
-                 (deal.mv_outputSignal ? 1 : 0);
-        }
-        if (deal.solutionType === 'corio') {
-          return countNonZero(deal.corio_sig_inputs) + countNonZero(deal.corio_sig_outputs) +
-                 (deal.corio_audio ? 1 : 0);
-        }
-        return 0;
-      })();
-
-      // v27.3.0 — Count of LED screen SLOTS (not filled fields). When LED is
-      // on but W/H/pitch are blank, we still want the section to show "1
-      // screen" so the user knows there's a screen to fill in — not "0
-      // fields" which reads as broken.
-      const ledCount = (hasLed && Array.isArray(deal.screens))
-        ? deal.screens.length
-        : 0;
-      // v27.3.0 — SX count = sum of detail lines across all 4 families.
-      // Falls back to legacy sx_data sums when detail arrays absent (old deals).
-      const sxCount = (function () {
-        if (!hasSx) return 0;
-        const hdbtN = Array.isArray(deal.sx_hdbt_lines) ? deal.sx_hdbt_lines.filter(l => Number(l.qty) > 0).length : 0;
-        const da = deal.sx_da_counts || {};
-        const daN  = ((da['612']|0) > 0 ? 1 : 0) + ((da['614']|0) > 0 ? 1 : 0) + ((da['618']|0) > 0 ? 1 : 0);
-        const apN  = (Number(deal.sx_ap_qty) > 0) ? 1 : 0;
-        const aocN = Array.isArray(deal.sx_aoc_lines) ? deal.sx_aoc_lines.filter(l => Number(l.qty) > 0).length : 0;
-        const newTotal = hdbtN + daN + apN + aocN;
-        if (newTotal > 0) return newTotal;
-        // Legacy fallback
-        return deal.sx_data ? Object.values(deal.sx_data).filter(v => Number(v) > 0).length : 0;
-      })();
-
       // v27.3.0 — section icons. Lucide-style strokes, 18×18, currentColor.
       const SD_ICON = {
-        ctx: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
-        sol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M7 7V4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v3"/></svg>',
-        io:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><polyline points="15 17 20 12 15 7"/></svg>',
-        led: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
-        sx:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="9" width="8" height="6" rx="1"/><rect x="14" y="9" width="8" height="6" rx="1"/><line x1="10" y1="12" x2="14" y2="12" stroke-dasharray="2 2"/></svg>'
+        ctx: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>'
       };
 
-      // ---- Chip nav (sticky) ----
-      const chips = [
-        { id:'sec-ctx', label:'Context',  icon: SD_ICON.ctx },
-        { id:'sec-sol', label:'Solution', icon: SD_ICON.sol },
-        { id:'sec-io',  label:'I/O',      icon: SD_ICON.io }
-      ];
-      if (hasLed) chips.push({ id:'sec-led', label:'LED', icon: SD_ICON.led });
-      if (hasSx)  chips.push({ id:'sec-sx',  label:'SX',  icon: SD_ICON.sx });
-      const chipNavHtml = '<nav class="sd-chipnav" aria-label="Section nav">' +
-        chips.map(c =>
-          '<button class="sd-chip" type="button" data-action="sd-jump" data-target="' + esc(c.id) + '">' +
-            '<span class="sd-chip-icon">' + c.icon + '</span>' +
-            esc(c.label) +
-          '</button>'
-        ).join('') +
-      '</nav>';
-
-      // ---- Helpers (read-only row for structural sections) ----
-      function row(label, value) {
-        const v = (value == null || value === '') ? '\u2014' : String(value);
-        return '<div class="sd-row">' +
-            '<div class="sd-row-k">' + esc(label) + '</div>' +
-            '<div class="sd-row-v">' + esc(v) + '</div>' +
-          '</div>';
-      }
+      // ---- Helpers ----
       function sectionHeader(title, count, unit, iconSvg) {
         const unitWord = unit || 'field';
         const icon = iconSvg
@@ -22598,128 +22739,23 @@
           sdTextarea('external_notes', 'External notes', deal.external_notes, { rows: 3, placeholder: 'Shown in Excel/PDF exports to customer/partner' }) +
         '</form>';
 
-      // ---- Read-only sections (structural — see below for I/O which IS editable in CALICO mode) ----
-      const solBody = row('Family', familyLabel(deal.solutionType)) +
-        '<div class="sd-edit-note small soft">Changing solution family is intentionally read-only \u2014 start a new quote if you need a different family.</div>';
-
-      const ioBody = renderSavedDealIoSection(deal);
-      // v27.3.10 — Removed "Edits set the Rebuild banner above..." help line per
-      // Dipenkumar 2026-05-26 (screenshot 135582.jpg). The Rebuild banner itself
-      // (top of saved-deal view) is sufficient affordance; redundant inline note
-      // was visual noise.
-
-      const ledBody = hasLed
-        ? (function() {
-            // Defensive: ensure screens exists.
-            if (!Array.isArray(deal.screens)) deal.screens = [];
-            const cards = deal.screens.length === 0
-              ? '<div class="muted small" style="padding:12px 0">No screens yet. Tap \u201c+ Add screen\u201d.</div>'
-              : deal.screens.map((s, idx) => {
-                  const px = (Number(s.w) || 0) * (Number(s.h) || 0);
-                  return '<div class="card" style="margin-bottom:8px">' +
-                    '<div class="row between" style="margin:0 0 6px">' +
-                      '<strong>Screen ' + (idx + 1) + '</strong>' +
-                      '<button class="btn btn-text" type="button" data-action="sd-screen-remove" data-idx="' + idx + '">Remove</button>' +
-                    '</div>' +
-                    '<div class="row gap-2">' +
-                      '<div class="field" style="flex:1;margin:0">' +
-                        '<label>Width (px)</label>' +
-                        '<input type="text" inputmode="numeric" value="' + esc(s.w == null ? '' : s.w) + '"' +
-                          ' data-action="sd-screen-w" data-idx="' + idx + '">' +
-                      '</div>' +
-                      '<div class="field" style="flex:1;margin:0">' +
-                        '<label>Height (px)</label>' +
-                        '<input type="text" inputmode="numeric" value="' + esc(s.h == null ? '' : s.h) + '"' +
-                          ' data-action="sd-screen-h" data-idx="' + idx + '">' +
-                      '</div>' +
-                    '</div>' +
-                    (px > 0 ? '<div class="help mono" style="margin-top:6px">= ' +
-                      px.toLocaleString('en-US') + ' pixels</div>' : '') +
-                  '</div>';
-                }).join('');
-            return cards +
-              '<button class="btn btn-ghost btn-block" type="button" data-action="sd-screen-add">+ Add screen</button>';
-              // v27.3.10 — removed redundant "Edits set the Rebuild banner above..." note
-          })()
-        : '';
-
-      const sxBody = hasSx
-        ? (function() {
-            // v27.3.0 — Show the new per-variant detail. Read-only summary
-            // because editing per-variant pickers inline in the saved-deal
-            // accordion would explode the layout. To edit details, user taps
-            // "Edit" in the action bar which re-enters the wizard.
-            const lines = [];
-            // HDBaseT lines
-            const hdbtLines = Array.isArray(deal.sx_hdbt_lines) ? deal.sx_hdbt_lines : [];
-            hdbtLines.forEach(function (l) {
-              if (Number(l.qty) <= 0) return;
-              const dirLbl = l.direction === 'tx' ? 'TX only' : l.direction === 'rx' ? 'RX only' : 'Kit (TX+RX)';
-              lines.push({
-                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><rect x="2" y="9" width="8" height="6" rx="1"/><rect x="14" y="9" width="8" height="6" rx="1"/><line x1="10" y1="12" x2="14" y2="12" stroke-dasharray="2 2"/></svg>',
-                title: 'HDBaseT ' + dirLbl,
-                sub: l.signal + ' \u00b7 ' + (l.resolution || '1080p'),
-                qty: l.qty
-              });
-            });
-            // Splitter counts
-            const da = deal.sx_da_counts || {};
-            [['612','1×2'], ['614','1×4'], ['618','1×8']].forEach(function (p) {
-              const q = Number(da[p[0]]) || 0;
-              if (q <= 0) return;
-              lines.push({
-                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><rect x="2" y="10" width="6" height="4" rx="1"/><path d="M8 12h4M12 12v-4h4M12 12v4h4M16 6h6M16 12h6M16 18h6"/></svg>',
-                title: 'HDMI Splitter ' + p[1],
-                sub: 'MG-DA-' + p[0] + ' \u00b7 4K60 HDMI 2.0',
-                qty: q
-              });
-            });
-            // AP-536
-            if (Number(deal.sx_ap_qty) > 0) {
-              lines.push({
-                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
-                title: 'AP-536 Audio Extractor',
-                sub: 'HDMI audio de-embedder',
-                qty: deal.sx_ap_qty
-              });
-            }
-            // AOC lines
-            const aocLines = Array.isArray(deal.sx_aoc_lines) ? deal.sx_aoc_lines : [];
-            aocLines.forEach(function (l) {
-              if (Number(l.qty) <= 0) return;
-              lines.push({
-                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M4 6c0-2 3-3 8-3s8 1 8 3v12c0 2-3 3-8 3s-8-1-8-3z"/><line x1="4" y1="10" x2="20" y2="10"/><line x1="4" y1="14" x2="20" y2="14"/></svg>',
-                title: 'AOC ' + (l.signal || 'HDMI'),
-                sub: (l.jacket || 'Standard') + ' \u00b7 ' + (l.length || 10) + ' m',
-                qty: l.qty
-              });
-            });
-            // Legacy fallback — old deals with just sx_data sums
-            if (lines.length === 0) {
-              const sx = deal.sx_data || {};
-              if (Number(sx.hdmi)  > 0) lines.push({ icon:'', title:'HDBaseT Extender (legacy)', sub:'\u2014', qty: sx.hdmi });
-              if (Number(sx.sdi)   > 0) lines.push({ icon:'', title:'HDMI Splitter (legacy)',    sub:'\u2014', qty: sx.sdi });
-              if (Number(sx.ap536) > 0) lines.push({ icon:'', title:'AP-536 (legacy)',           sub:'\u2014', qty: sx.ap536 });
-              if (Number(sx.avip)  > 0) lines.push({ icon:'', title:'AOC Cables (legacy)',      sub:'\u2014', qty: sx.avip });
-            }
-            if (lines.length === 0) {
-              return '<div class="muted small" style="padding:12px 0">No SX lines configured. Tap <strong>Edit</strong> to add.</div>';
-            }
-            return '<div class="sd-sx-list">' +
-              lines.map(function (l) {
-                return '<div class="sd-sx-row">' +
-                  '<span class="sd-sx-icon">' + l.icon + '</span>' +
-                  '<div class="sd-sx-text">' +
-                    '<div class="sd-sx-title">' + esc(l.title) + '</div>' +
-                    '<div class="sd-sx-sub">' + esc(l.sub) + '</div>' +
-                  '</div>' +
-                  '<div class="sd-sx-qty">\u00d7' + l.qty + '</div>' +
-                '</div>';
-              }).join('') +
-            '</div>' +
-            '<div class="sd-edit-note small soft">Tap <strong>Edit</strong> in the action bar to change SX configuration.</div>';
-          })()
-        : '';
+      // ---- v2.2.0: User-inputs summary (shared rows w/ Step-6 Review) ----
+      // Edit links re-enter the wizard at the owning step (sd-edit reads
+      // data-step). Defensive try: a malformed legacy deal must not take
+      // down the whole saved view over a summary block.
+      let inputsSummaryHtml = '';
+      try {
+        inputsSummaryHtml =
+          '<div class="card wiz-summary" style="margin-top:12px">' +
+            buildReviewRows(bomDeal).map(function (r) {
+              return '<div class="sum-row">' +
+                '<div><div class="sum-key">' + esc(r.k) + '</div>' +
+                '<button class="edit-link" type="button" data-action="sd-edit" data-step="' + r.step + '">Edit step ' + r.step + '</button></div>' +
+                '<div class="sum-val">' + esc(r.v) + '</div>' +
+              '</div>';
+            }).join('') +
+          '</div>';
+      } catch (e) { inputsSummaryHtml = ''; }
 
       // ---- Assemble ----
       return '<div class="v sd-view">' +
@@ -22741,7 +22777,10 @@
             line6Html +
           '</div>' +
 
-          // BoM hero
+          // v2.2.0 — User inputs summary (edit-step jumps into the wizard)
+          inputsSummaryHtml +
+
+          // Result page core — hero card(s) + quote table + price toggle
           '<section class="sd-bom-wrap">' + bomHtml + '</section>' +
 
           // Rebuild banner — shown when _structuralDirty is true (alpha.7.3)
@@ -22785,9 +22824,6 @@
             '</div>' +
           '</div>' +
 
-          // Sticky chip nav
-          chipNavHtml +
-
           // Accordion sections
           '<div class="sd-accordion">' +
 
@@ -22796,35 +22832,11 @@
               '<div class="sd-section-body">' + ctxBody + '</div>' +
             '</details>' +
 
-            '<details class="sd-section" id="sec-sol">' +
-              sectionHeader('Solution type', deal.solutionType ? 1 : 0, 'field', SD_ICON.sol) +
-              '<div class="sd-section-body">' + solBody + '</div>' +
-            '</details>' +
-
-            '<details class="sd-section" id="sec-io">' +
-              sectionHeader('Inputs & outputs', ioCount, 'field', SD_ICON.io) +
-              '<div class="sd-section-body">' + ioBody + '</div>' +
-            '</details>' +
-
-            (hasLed
-              ? '<details class="sd-section" id="sec-led">' +
-                  sectionHeader('LED screens', ledCount, 'screen', SD_ICON.led) +
-                  '<div class="sd-section-body">' + ledBody + '</div>' +
-                '</details>'
-              : '') +
-
-            (hasSx
-              ? '<details class="sd-section" id="sec-sx">' +
-                  sectionHeader('Signal extension', sxCount, 'line', SD_ICON.sx) +
-                  '<div class="sd-section-body">' + sxBody + '</div>' +
-                '</details>'
-              : '') +
-
           '</div>' +
 
           // Bottom escape
           '<div style="margin-top:18px; text-align:center">' +
-            '<button class="btn btn-ghost" type="button" data-nav="#/history">\u2190 Back to History</button>' +
+            '<button class="btn btn-ghost" type="button" data-nav="#/history">Close</button>' +
           '</div>' +
         '</div>';
     }
@@ -23029,6 +23041,15 @@
     function rerenderPreservingScroll() {
       const y = window.scrollY || window.pageYOffset || 0;
       renderWizard();
+      window.scrollTo(0, y);
+    }
+
+    // v2.2.0 — saved-deal twin: hero ▲/▼, disc%, customization price and
+    // the price toggle all land mid-page; bare setRoot would jump to top.
+    function _rerenderSavedDealPreservingScroll() {
+      if (!_savedDealData) return;
+      const y = window.scrollY || window.pageYOffset || 0;
+      setRoot(renderSavedDealLoaded(_savedDealData));
       window.scrollTo(0, y);
     }
 
@@ -24315,10 +24336,10 @@
     }
 
     // v1.6.0 — Step 7: Review & build (split out of the old Step 6).
-    function renderStepReview(d) {
-      // v2.0.0 — Step 6 Review & build (common). Guided shows the engine
-      // recommendation (ladder picker) + BoM; Advanced shows its model
-      // selections + BoM. Edit links point at the new step numbers.
+    function buildReviewRows(d) {
+      // v2.2.0 — shared by Step-6 Review and the saved-deal inputs summary.
+      // Each row carries the wizard step that owns it (edit-jump target).
+      // Verbatim extraction of the v2.0.0 Step-6 rows builder.
       const isAdv = d.mode === 'advanced';
       const total = isAdv
         ? (d.advancedSelections || []).reduce(function (s, it) { return s + (Number(it.qty) || 0); }, 0)
@@ -24362,6 +24383,16 @@
           (d.cms_term ? ' \u00b7 ' + d.cms_term + 'yr' : '') +
           (Number(d.cms_qty) > 0 ? ' \u00b7 ' + d.cms_qty + ' lic' : ''), 5);
       }
+      return rows;
+    }
+
+    function renderStepReview(d) {
+      // v2.0.0 — Step 6 Review & build (common). v2.2.0 — rows extracted to
+      // buildReviewRows (shared with the saved-deal inputs summary); the BoM
+      // block is unified through renderBomCard (hero card + quote table +
+      // price toggle) for BOTH modes — Advanced just skips the heroes.
+      const isAdv = d.mode === 'advanced';
+      const rows = buildReviewRows(d);
 
       const summaryHtml =
         '<div class="card wiz-summary">' +
@@ -24375,20 +24406,11 @@
         '</div>';
 
       let bomHtml;
-      if (isAdv) {
-        // Advanced: no engine — price the selections + shared add-ons/CMS.
-        try {
-          const lines = STORE.bomLines(d);
-          const quote = STORE.computeQuote(lines, d.project_discount || 0);
-          bomHtml = lines.length
-            ? '<div class="card" style="margin-top:8px;padding:12px;">' + renderBomTable(quote, bsCanSeePrices()) + '</div>'
-            : '<div class="banner info">Nothing selected yet \u2014 add players on step 3 or a CMS on step 5.</div>';
-        } catch (e) {
-          bomHtml = '<div class="banner warn">Could not price the selection \u2014 ' + esc(e && e.message || 'error') + '</div>';
-        }
-      } else {
-        try { d.reco = APP.recoForDeal(d); bomHtml = renderBomCard(d); }
-        catch (e) { bomHtml = '<div class="banner warn" style="margin-top:12px">Could not build the recommendation \u2014 ' + esc(e && e.message || 'error') + '</div>'; }
+      try {
+        if (!isAdv) d.reco = APP.recoForDeal(d);
+        bomHtml = renderBomCard(d, 'wiz');
+      } catch (e) {
+        bomHtml = '<div class="banner warn" style="margin-top:12px">Could not build the quote \u2014 ' + esc(e && e.message || 'error') + '</div>';
       }
 
       return sectionHeader(6, 'Review & build', 'Check everything, then build the quote.') +
@@ -24417,77 +24439,244 @@
       return '<span class="bs-pill">' + esc(text) + '</span>';
     }
 
-    function renderSegmentPicker(d, segKey, seg, qty, showPrices) {
+    /* ============================================================
+       v2.2.0 — Result page core (post-Build Step 6 + saved-deal view).
+       Hero card per segment: model + tag + feature pills, with ▲/▼
+       stepping the pick within the tech-spec ladder (budget never
+       filters the ladder — locked engine rule). Quote table:
+       Sr · Suggested model · Qty · Unit Price · Disc % · Total Price,
+       footer Total → GST → Grand total. With/without-price toggle
+       (default WITH for price-visible roles; Support never sees it;
+       exports follow the toggle). Replaces the v2.1.0 radio ladder
+       (renderSegmentPicker) and .bomt table (renderBomTable).
+       ============================================================ */
+
+    // Price-toggle state — per-view, transient (never persisted). null =
+    // unresolved; resolves WITH prices for price-visible roles, forced
+    // false for Support. CP4 exports read bsResultShowPrices().
+    let _resultShowPrices = null;
+
+    function bsResultShowPrices() {
+      if (!bsCanSeePrices()) return false;
+      if (_resultShowPrices == null) _resultShowPrices = true;
+      return _resultShowPrices;
+    }
+
+    function bsCanEditDiscount(d) {
+      // disc% / customization-price edit scope: deal owner (sales person),
+      // tagged presales, creator — plus super. Everyone else read-only.
+      const u = (typeof STORE !== 'undefined' && STORE.currentUser) ? (STORE.currentUser() || {}) : {};
+      if (String(u.permission_tier || '').toLowerCase() === 'super') return true;
+      const uid = String(u.id || '');
+      if (!uid) return false;
+      return uid === String((d && d.sales_person_id)    || '') ||
+             uid === String((d && d.presales_person_id) || '') ||
+             uid === String((d && d.created_by)         || '');
+    }
+
+    function _heroPills(c) {
+      // Feature pills straight off the catalog row carried by the ladder:
+      // res_csv · outputs · poe · hdmi_in · touch · gpio · chassis.
+      // (No SSD pill — ssd_capable tri-state is an OPEN engine decision.)
+      const yes = function (v) {
+        if (v === true) return true;
+        const s = String(v == null ? '' : v).trim().toLowerCase();
+        return s === 'true' || s === 't' || s === 'yes' || Number(s) >= 1;
+      };
+      const pills = [];
+      const res = String(c.res_csv || '').toUpperCase();
+      if (res.indexOf('8K') !== -1) pills.push('8K');
+      else if (res.indexOf('4K') !== -1) pills.push('4K');
+      else if (res) pills.push('FHD');
+      const outs = Number(c.outputs) || 0;
+      if (outs > 0) pills.push(outs + ' output' + (outs === 1 ? '' : 's'));
+      if (yes(c.poe))     pills.push('PoE+');
+      if (yes(c.hdmi_in)) pills.push('HDMI in');
+      if (yes(c.touch))   pills.push('Touch');
+      if (yes(c.gpio))    pills.push('GPIO');
+      const ch = String(c.chassis || '').trim();
+      if (ch) pills.push(ch.charAt(0).toUpperCase() + ch.slice(1) + ' chassis');
+      return pills;
+    }
+
+    function renderHeroCard(d, segKey, seg, qty, showPrices, ctx) {
       let pick = (segKey === 'indoor' ? d.pickIndoor : d.pickOutdoor) || seg.recommendedId;
       if (!seg.ladder.some(function (p) { return p.model_id === pick; })) pick = seg.recommendedId;
+      const ids = seg.ladder.map(function (p) { return p.model_id; });
+      const idx = Math.max(0, ids.indexOf(pick));
+      const p = seg.ladder[idx] || {};
+      const isReco = p.model_id === seg.recommendedId;
+      const badge = isReco ? _bsPill('Recommended') : _bsPill('Selected');
       const label = segKey === 'indoor' ? 'Indoor player' : 'Outdoor player';
-      const rows = seg.ladder.map(function (p) {
-        const selected = p.model_id === pick;
-        const isReco = p.model_id === seg.recommendedId;
-        const unit = STORE.quoteUnit(STORE.unitPriceOf(p.model_id));
-        const priceStr = !showPrices ? '' : (unit ? fmtINR(unit * qty) : 'POA');
-        const badges = (isReco ? _bsPill('Recommended') : '') + (selected && !isReco ? _bsPill('Selected') : '');
-        return '<button type="button" class="seg-row' + (selected ? ' is-selected' : '') + '" data-action="bs-pick" data-seg="' + segKey + '" data-model="' + esc(p.model_id) + '">' +
-          '<span class="seg-radio"></span>' +
-          '<span class="seg-main">' +
-            '<span class="seg-name">' + esc(p.model_id) + '</span>' + badges +
-            '<span class="seg-tag">' + esc(p.tag || (p.model_group + ' series')) + '</span>' +
-          '</span>' +
-          (priceStr ? '<span class="seg-price">' + esc(priceStr) + '</span>' : '') +
-        '</button>';
+      const pills = _heroPills(p).map(function (t) {
+        return '<span class="hero-pill">' + esc(t) + '</span>';
       }).join('');
-      return '<div class="seg-pick">' +
-        '<div class="seg-pick-head">' + esc(label) + ' \u00d7 ' + qty + '</div>' +
-        rows +
-        '<div class="help">Cheaper rows meet the same spec for less; pricier rows add headroom.</div>' +
+      const unit = STORE.quoteUnit(STORE.unitPriceOf(p.model_id));
+      const priceHtml = !showPrices ? '' :
+        '<div class="bs-hero-price">' +
+          (unit
+            ? '<span class="soft">' + esc(fmtINR(unit)) + ' \u00d7 ' + qty + '</span><span>' + esc(fmtINR(unit * qty)) + '</span>'
+            : '<span class="soft">POA \u2014 pending rate card</span>') +
+        '</div>';
+      const stepBtn = function (dir, glyph, title, disabled) {
+        return '<button type="button" class="bs-step-btn" data-action="bs-step"' +
+          ' data-seg="' + segKey + '" data-dir="' + dir + '" data-ctx="' + ctx + '"' +
+          (disabled ? ' disabled' : '') +
+          ' title="' + title + '" aria-label="' + title + '">' + glyph + '</button>';
+      };
+      return '<div class="bs-hero">' +
+        '<div class="bs-hero-head">' +
+          '<span class="bs-hero-seg">' + esc(label) + ' \u00d7 ' + qty + '</span>' +
+          '<span class="bs-hero-steppers">' +
+            stepBtn(-1, '\u25bc', 'Step down \u2014 cheaper, same spec', idx <= 0) +
+            stepBtn(1, '\u25b2', 'Step up \u2014 more headroom', idx >= seg.ladder.length - 1) +
+          '</span>' +
+        '</div>' +
+        '<div class="bs-hero-model">' + esc(p.model_id || '\u2014') + badge + '</div>' +
+        '<div class="bs-hero-tag">' + esc(p.tag || (p.model_group ? p.model_group + ' series' : '')) +
+          ' <span class="bs-hero-rung">\u00b7 rung ' + (idx + 1) + ' of ' + seg.ladder.length + '</span></div>' +
+        (pills ? '<div class="bs-hero-pills">' + pills + '</div>' : '') +
+        priceHtml +
       '</div>';
     }
 
-    function renderBomTable(quote, showPrices) {
-      // v2.1.0 F4+F6 — classed (.bomt). Old inline styles used the pre-v2
-      // --border/--muted fallbacks (light hexes on dark); totals now read
-      // mono with the Grand total emphasized in accent.
-      const body = quote.lines.map(function (l) {
-        const amt = !showPrices ? '' : (l.poa
-          ? '<td class="num poa">POA</td>'
-          : '<td class="num">' + esc(fmtINR(l.line_total_inr)) + '</td>');
-        return '<tr>' +
-          '<td>' + esc(l.description) + '<br><span class="bomt-sku">' + esc(l.sku) + '</span></td>' +
-          '<td class="ctr">' + l.qty + '</td>' + amt +
+    function renderQuoteTable(quote, opts) {
+      // Priced columns: Sr · Suggested model · Qty · Unit Price · Disc % ·
+      // Total Price; without prices: Sr · Suggested model · Qty.
+      // CMS rows render a BLANK SKU (v24.45.16a carry-forward). The CMS
+      // Customization row is price-editable (owner scope) and stays greyed
+      // + excluded while ₹0 — "pending scope", intentionally NOT POA.
+      const show = !!(opts && opts.showPrices);
+      const canEdit = !!(opts && opts.canEditDisc);
+      const ctx = (opts && opts.ctx) || 'wiz';
+      const head = '<thead><tr>' +
+        '<th class="ctr">Sr</th><th>Suggested model</th><th class="ctr">Qty</th>' +
+        (show ? '<th class="num">Unit Price</th><th class="num">Disc %</th><th class="num">Total Price</th>' : '') +
+      '</tr></thead>';
+      const body = quote.lines.map(function (l, i) {
+        const isCms = l.product_family === 'CMS';
+        const isCustom = isCms && /-custom$/.test(String(l.sku || ''));
+        const pending = !!l.pending_scope;
+        const skuHtml = isCms ? '' : '<br><span class="qt-sku">' + esc(l.sku) + '</span>';
+        const noteHtml = l.notes ? '<br><span class="qt-note">' + esc(l.notes) + '</span>' : '';
+        let unitCell = '', discCell = '', totCell = '';
+        if (show && isCustom) {
+          unitCell = '<td class="num">' + (canEdit
+            ? '<input type="text" inputmode="numeric" class="qt-price-input" value="' + (Number(l.unit_price_inr) || 0) + '" data-action="qt-custom-set" data-ctx="' + ctx + '" aria-label="Customization price (INR)">'
+            : (pending ? '\u2014' : esc(fmtINR(l.unit_price_inr)))) + '</td>';
+          discCell = '<td class="num">\u2014</td>';
+          totCell = pending
+            ? '<td class="num qt-poa">\u2014</td>'
+            : '<td class="num">' + esc(fmtINR(l.line_total_inr)) + '</td>';
+        } else if (show && l.poa) {
+          unitCell = '<td class="num qt-poa">POA</td>';
+          discCell = '<td class="num">\u2014</td>';
+          totCell  = '<td class="num qt-poa">POA</td>';
+        } else if (show) {
+          unitCell = '<td class="num">' + esc(fmtINR(l.unit_price_inr)) + '</td>';
+          const ld = Number(l.line_discount_pct) || 0;
+          discCell = '<td class="num">' + (canEdit
+            ? '<input type="text" inputmode="numeric" class="qt-disc-input" value="' + ld + '" data-action="qt-disc-set" data-sku="' + esc(l.sku) + '" data-ctx="' + ctx + '" aria-label="Line discount percent">'
+            : (ld ? ld + '%' : '\u2014')) + '</td>';
+          totCell = '<td class="num">' + esc(fmtINR(l.line_total_inr)) + '</td>';
+        }
+        return '<tr' + (pending ? ' class="qt-pending"' : '') + '>' +
+          '<td class="ctr">' + (i + 1) + '</td>' +
+          '<td>' + esc(l.description) + skuHtml + noteHtml + '</td>' +
+          '<td class="ctr">' + l.qty + '</td>' +
+          unitCell + discCell + totCell +
         '</tr>';
       }).join('');
       let totals = '';
-      if (showPrices) {
+      if (show) {
         const totRow = function (cls, lbl, val) {
-          return '<tr class="' + cls + '"><td colspan="2" class="lbl">' + lbl + '</td><td class="num">' + val + '</td></tr>';
+          return '<tr class="' + cls + '"><td colspan="5" class="lbl">' + lbl + '</td><td class="num">' + val + '</td></tr>';
         };
-        totals += totRow('bomt-tot', 'Subtotal', esc(fmtINR(quote.subtotal)));
-        if (quote.projectDiscountPct) totals += totRow('bomt-tot', 'Discount ' + quote.projectDiscountPct + '%', '\u2212' + esc(fmtINR(quote.subtotal - quote.afterProjectDiscount)));
-        totals += totRow('bomt-tot', 'GST ' + quote.gstPct + '%', esc(fmtINR(quote.gst)));
-        totals += totRow('bomt-tot bomt-grand', 'Grand total', esc(fmtINR(quote.grandTotal)));
+        if (quote.projectDiscountPct) {
+          totals += totRow('qt-tot', 'Project discount ' + quote.projectDiscountPct + '%', '\u2212' + esc(fmtINR(quote.subtotal - quote.afterProjectDiscount)));
+        }
+        totals += totRow('qt-tot', 'Total', esc(fmtINR(quote.afterProjectDiscount)));
+        totals += totRow('qt-tot', 'GST ' + quote.gstPct + '%', esc(fmtINR(quote.gst)));
+        totals += totRow('qt-tot qt-grand', 'Grand total', esc(fmtINR(quote.grandTotal)));
       }
-      return '<table class="bomt">' +
-        '<thead><tr><th>Item</th><th class="ctr">Qty</th>' + (showPrices ? '<th class="num">Total</th>' : '') + '</tr></thead>' +
-        '<tbody>' + body + totals + '</tbody></table>' +
-        (quote.poaCount ? '<div class="help" style="margin-top:6px;">POA = price on application (pending rate card).</div>' : '');
+      const notes = [];
+      if (show && quote.poaCount) notes.push('POA = price on application (pending rate card) \u2014 excluded from totals.');
+      if (show && quote.lines.some(function (l) { return l.pending_scope; })) {
+        notes.push('CMS Customization is excluded from totals until priced \u2014 based on scope of customization.');
+      }
+      return '<table class="qt">' + head + '<tbody>' + body + totals + '</tbody></table>' +
+        (notes.length ? '<div class="help qt-foot-note">' + notes.join('<br>') + '</div>' : '');
     }
 
-    function renderBomCard(d) {
-      const reco = d && d.reco;
-      if (!reco) return '<div class="banner info">Complete the spec to see the recommendation.</div>';
-      if (reco.error) return '<div class="banner warn">' + esc(reco.error) + '</div>';
-      const showPrices = bsCanSeePrices();
+    function renderPriceToggle(ctx) {
+      if (!bsCanSeePrices()) return '';   // Support never sees the toggle
+      const on = bsResultShowPrices();
+      const btn = function (val, lbl, active) {
+        return '<button type="button" class="pt-btn' + (active ? ' is-on' : '') + '"' +
+          ' data-action="res-price-toggle" data-val="' + val + '" data-ctx="' + ctx + '">' + lbl + '</button>';
+      };
+      return '<div class="price-toggle" role="group" aria-label="Price visibility">' +
+        btn('1', 'With price', on) + btn('0', 'Without price', !on) +
+      '</div>';
+    }
+
+    function renderBomCard(d, ctx) {
+      // v2.2.0 — shared result-page core: hero card(s) + quote table +
+      // price toggle. ctx 'wiz' (Step 6) | 'sd' (saved deal) routes the
+      // step/toggle/disc handlers at the state object + re-render they own.
+      ctx = ctx || 'wiz';
+      const showPrices = bsResultShowPrices();
       let html = '';
-      const segs = reco.segments || {};
-      if (segs.indoor && segs.indoor.ladder && segs.indoor.ladder.length && (Number(d.qty_indoor) || 0) > 0) {
-        html += renderSegmentPicker(d, 'indoor', segs.indoor, Number(d.qty_indoor) || 0, showPrices);
-      }
-      if (segs.outdoor && segs.outdoor.ladder && segs.outdoor.ladder.length && (Number(d.qty_outdoor) || 0) > 0) {
-        html += renderSegmentPicker(d, 'outdoor', segs.outdoor, Number(d.qty_outdoor) || 0, showPrices);
+      if (d.mode !== 'advanced') {
+        const reco = d && d.reco;
+        if (!reco) return '<div class="banner info">Complete the spec to see the recommendation.</div>';
+        if (reco.error) return '<div class="banner warn">' + esc(reco.error) + '</div>';
+        const segs = reco.segments || {};
+        const spec = reco.spec || {};
+        // v2.3.0 — graceful no-match. When a segment was requested (qty > 0)
+        // but the tech-spec filters left an empty ladder, the hero used to
+        // silently vanish and the BoM fell through to "Nothing selected yet",
+        // which reads as a bug to someone who *did* spec players. Surface a
+        // concern naming the likely conflict instead. The tightest BS
+        // constraints are PoE+ (XD/XT only, max 2 outputs) and 4-output (only
+        // the mains-powered XC4055), so a PoE+/high-output combo is the usual
+        // culprit and earns a precise hint.
+        const segNoMatch = function (segKey, seg, qty) {
+          if (!(qty > 0)) return '';
+          if (seg && seg.ladder && seg.ladder.length) return '';
+          const lbl = segKey === 'indoor' ? 'indoor' : 'outdoor';
+          let why = 'No BrightSign player matches the ' + lbl + ' spec.';
+          if (spec.power === 'poe' && (Number(spec.outputs) || 0) >= 4) {
+            why += ' PoE+ players top out at 2 outputs; 4 outputs needs the XC4055, which is mains-powered. Switch Power to DC or reduce HDMI outputs on steps 3\u20134.';
+          } else if (spec.power === 'poe') {
+            why += ' The PoE+ filter (XD/XT only) plus the other constraints leave no model. Relax PoE+ or another requirement on steps 3\u20134.';
+          } else {
+            why += ' Loosen resolution, HDMI outputs, or the feature toggles on steps 3\u20134.';
+          }
+          return '<div class="banner warn">' + esc(why) + '</div>';
+        };
+        if (segs.indoor && segs.indoor.ladder && segs.indoor.ladder.length && (Number(d.qty_indoor) || 0) > 0) {
+          html += renderHeroCard(d, 'indoor', segs.indoor, Number(d.qty_indoor) || 0, showPrices, ctx);
+        } else {
+          html += segNoMatch('indoor', segs.indoor, Number(d.qty_indoor) || 0);
+        }
+        if (segs.outdoor && segs.outdoor.ladder && segs.outdoor.ladder.length && (Number(d.qty_outdoor) || 0) > 0) {
+          html += renderHeroCard(d, 'outdoor', segs.outdoor, Number(d.qty_outdoor) || 0, showPrices, ctx);
+        } else {
+          html += segNoMatch('outdoor', segs.outdoor, Number(d.qty_outdoor) || 0);
+        }
       }
       const lines = STORE.bomLines(d);
+      if (!lines.length) {
+        // v2.3.0 — if a no-match concern was already surfaced above, that IS
+        // the explanation; don't also show the generic "nothing selected".
+        return html || '<div class="banner info">Nothing selected yet \u2014 add players on step 3 or a CMS on step 5.</div>';
+      }
       const quote = STORE.computeQuote(lines, d.project_discount || 0);
-      html += '<div class="card" style="margin-top:8px;padding:12px;">' + renderBomTable(quote, showPrices) + '</div>';
+      html += '<div class="qt-card">' + renderQuoteTable(quote, {
+        showPrices: showPrices, canEditDisc: showPrices && bsCanEditDiscount(d), ctx: ctx
+      }) + '</div>';
+      html += renderPriceToggle(ctx);
       return html;
     }
 
@@ -24911,12 +25100,35 @@
           }
           return;
         }
-        if (action === 'bs-pick') {
+        // v2.2.0 — hero-card ▲/▼: swap the model within the tech-spec
+        // ladder (replaces bs-pick; the radio rows are gone). ctx 'wiz'
+        // mutates wizardData + draft; 'sd' mutates _savedDealData +
+        // autosaves, then re-renders the saved view preserving scroll.
+        if (action === 'bs-step') {
           const seg = actEl.getAttribute('data-seg');
-          const model = actEl.getAttribute('data-model');
-          if (seg === 'indoor')  wizardData.pickIndoor = model;
-          if (seg === 'outdoor') wizardData.pickOutdoor = model;
-          rerenderPreservingScroll();
+          const dir = parseInt(actEl.getAttribute('data-dir'), 10) || 0;
+          const ctx = actEl.getAttribute('data-ctx') || 'wiz';
+          const d = (ctx === 'sd') ? _savedDealData : wizardData;
+          if (!d || !seg || !dir) return;
+          const segObj = d.reco && d.reco.segments && d.reco.segments[seg];
+          if (!segObj || !Array.isArray(segObj.ladder) || !segObj.ladder.length) return;
+          const ids = segObj.ladder.map(function (p) { return p.model_id; });
+          const key = seg === 'indoor' ? 'pickIndoor' : 'pickOutdoor';
+          let idx = ids.indexOf(d[key] || segObj.recommendedId);
+          if (idx === -1) idx = Math.max(0, ids.indexOf(segObj.recommendedId));
+          const next = Math.max(0, Math.min(ids.length - 1, idx + dir));
+          if (next === idx) return;
+          d[key] = ids[next];
+          if (ctx === 'sd') { scheduleAutosave(); _rerenderSavedDealPreservingScroll(); }
+          else { saveDraft(); rerenderPreservingScroll(); }
+          return;
+        }
+        // v2.2.0 — with/without-price toggle (per-view, transient; exports
+        // follow it via bsResultShowPrices).
+        if (action === 'res-price-toggle') {
+          _resultShowPrices = actEl.getAttribute('data-val') === '1';
+          if ((actEl.getAttribute('data-ctx') || 'wiz') === 'sd') _rerenderSavedDealPreservingScroll();
+          else rerenderPreservingScroll();
           return;
         }
         if (action === 'toggle') {
@@ -25602,28 +25814,47 @@
         }
 
         // v27.3.0 — WhatsApp share (opens wa.me URL with prefilled message)
-        if (action === 'sd-whatsapp') {
+        // v2.2.0 — WhatsApp / e-mail share via the native share-sheet with
+        // the generated BoQ PDF attached (Web Share API Level 2; primary
+        // target Z Fold 7 Chrome). The PDF itself follows the price toggle
+        // through bsResultShowPrices() inside EXPORT.pdf. Platforms that
+        // can't share files (or a generation failure) fall back to the
+        // v27.3.0 wa.me / mailto text links. A user cancelling the share
+        // sheet (AbortError) is silent — not an error, not a fallback.
+        if (action === 'sd-whatsapp' || action === 'sd-email') {
           if (!_savedDealData) return;
-          try {
-            const url = _buildWhatsAppUrl(_savedDealData);
-            window.open(url, '_blank');
-            toast('Opening WhatsApp\u2026 attach Excel/PDF before sending', 'ok');
-          } catch (err) {
-            toast('WhatsApp share failed: ' + (err && err.message || String(err)), 'err');
-          }
-          return;
-        }
-
-        // v27.3.0 — Email share (opens mailto: URL with prefilled subject/body)
-        if (action === 'sd-email') {
-          if (!_savedDealData) return;
-          try {
-            const url = _buildMailtoUrl(_savedDealData);
-            window.location.href = url;
-            toast('Opening email draft\u2026 attach Excel + PDF before sending', 'ok');
-          } catch (err) {
-            toast('Email share failed: ' + (err && err.message || String(err)), 'err');
-          }
+          const isWa = action === 'sd-whatsapp';
+          const shareFallback = function () {
+            try {
+              if (isWa) {
+                window.open(_buildWhatsAppUrl(_savedDealData), '_blank');
+                toast('Opening WhatsApp\u2026 attach Excel/PDF before sending', 'ok');
+              } else {
+                window.location.href = _buildMailtoUrl(_savedDealData);
+                toast('Opening email draft\u2026 attach Excel + PDF before sending', 'ok');
+              }
+            } catch (err) {
+              toast((isWa ? 'WhatsApp' : 'Email') + ' share failed: ' +
+                (err && err.message || String(err)), 'err');
+            }
+          };
+          if (!(navigator.canShare && navigator.share)) { shareFallback(); return; }
+          toast('Preparing PDF\u2026', 'ok');
+          EXPORT.pdf(_savedDealData, { mode: 'boq' }).then(function (blob) {
+            const fn = EXPORT.filename(_savedDealData, 'pdf', { mode: 'boq' });
+            const file = new File([blob], fn, { type: 'application/pdf' });
+            if (!navigator.canShare({ files: [file] })) { shareFallback(); return; }
+            const ref = _savedDealData.display_ref || _savedDealData.ref || '';
+            return navigator.share({
+              files: [file],
+              title: 'BrightSign Quote ' + ref,
+              text: 'BrightSign quote ' + ref +
+                (_savedDealData.project ? ' \u2014 ' + _savedDealData.project : '')
+            }).then(function () { toast('Shared \u2713', 'ok'); });
+          }).catch(function (err) {
+            if (err && err.name === 'AbortError') return;  // user closed the sheet
+            shareFallback();
+          });
           return;
         }
 
@@ -25689,7 +25920,10 @@
           }
           try {
             wizardData = hydrateWizardFromDeal(_savedDealData);
-            wizardData.step = 1;
+            // v2.2.0 — inputs-summary "Edit step N" links jump straight to
+            // the owning step; the action-bar Edit still lands on step 1.
+            const tStep = parseInt(actEl.getAttribute('data-step'), 10);
+            wizardData.step = (tStep >= 1 && tStep <= 6) ? tStep : 1;
             wizardData.errors = {};
             // Persist edit-target refId on wizardData so wiz-save can detect
             // update-vs-insert without relying solely on the hash (hash may
@@ -26330,6 +26564,28 @@
         const t = e.target;
         if (!t) return;
         const action = t.getAttribute('data-action');
+        // v2.2.0 — quote-table inline edits (result page). disc% capped to
+        // settings.max_discount_pct (computeQuote stays the enforcing source
+        // of truth); values live on the deal (line_discounts by SKU /
+        // cms_customization_price) and round-trip via raw_submission.
+        if (action === 'qt-disc-set' || action === 'qt-custom-set') {
+          const qctx = t.getAttribute('data-ctx') || 'wiz';
+          const qd = (qctx === 'sd') ? _savedDealData : wizardData;
+          if (!qd) return;
+          if (action === 'qt-disc-set') {
+            const sku = t.getAttribute('data-sku') || '';
+            let cap = 20;
+            try { cap = Number(STORE.bsMaxDiscountPct()) || 20; } catch (_) {}
+            const v = Math.max(0, Math.min(cap, Number(t.value) || 0));
+            if (!qd.line_discounts || typeof qd.line_discounts !== 'object') qd.line_discounts = {};
+            if (v > 0) qd.line_discounts[sku] = v; else delete qd.line_discounts[sku];
+          } else {
+            qd.cms_customization_price = Math.max(0, Math.round(Number(t.value) || 0));
+          }
+          if (qctx === 'sd') { scheduleAutosave(); _rerenderSavedDealPreservingScroll(); }
+          else { saveDraft(); rerenderPreservingScroll(); }
+          return;
+        }
         // v27.3.0 §10 — AOC length select handler (signal/jacket use pill clicks)
         if (action === 'sx-aoc-set') {
           const idx = parseInt(t.getAttribute('data-idx'), 10);
@@ -26626,6 +26882,8 @@
       // v1.1.0 — EXPORT (separate IIFE) needs the price-visibility role gate
       // to decide whether priced BoQ columns render. Same gate the BoM card uses.
       bsCanSeePrices,
+      // v2.2.0 — exports follow the result-page with/without-price toggle.
+      bsResultShowPrices,
       // alpha.7.4: APP.wizSave needs the same payload-builder used by autosave
       buildSavePayload,
       // alpha.9.1: APP exposes these to __smokeIntegration. APP's IIFE has no
