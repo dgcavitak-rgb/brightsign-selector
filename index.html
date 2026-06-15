@@ -7444,6 +7444,15 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v2.4.0  (2026-06-15)  — USD-master pricing (frontend half). Player / accessory /
+       CMS price reads now prefer the RPC-derived quote_price_inr (from bs_pricebook_get)
+       and fall back to legacy unit_price_inr when it is NULL. Backend derivation + schema
+       shipped to Supabase in the v2.4.0 backend ship. PRICE-SAFE TODAY: bp_usd is NULL on
+       all pricing rows, so quote_price_inr is NULL and every quote falls back to
+       unit_price_inr (byte-identical output). Once BrightSign's USD buy list is written to
+       bp_usd, quotes go live at the +35% margin with no further frontend change. Swap
+       sites: unitPriceOf / accessoryPriceOf / cmsPriceOf. sw.js CACHE_NAME →
+       brightsign-v2.4.0. No other behaviour change.
      v2.3.1  (2026-06-14)  — Wizard hotfix: CMS step crash + Build button + jump bound
        THE BUG (reported: "CMS step does not come up, can't go forward"):
        reaching Step 5 (Content management) threw a runtime ReferenceError and
@@ -9011,13 +9020,14 @@
         });
       };
       const r = match(v) || (v ? match('') : null);
-      return r ? Number(r.unit_price_inr) || 0 : 0;
+      // v2.4.0 — USD-master: prefer RPC-derived quote_price_inr; fall back to legacy unit_price_inr.
+      return r ? (Number(r.quote_price_inr) || Number(r.unit_price_inr) || 0) : 0;
     }
 
     function accessoryPriceOf(idOrSku) {
       const rows = (_pricebook && _pricebook.accessories) || [];
       const r = rows.find(function (a) { return a.accessory_id === idOrSku || a.sku === idOrSku; });
-      return r ? { unit_price_inr: Number(r.unit_price_inr) || 0, name: r.name || '', sku: r.sku || idOrSku } : null;
+      return r ? { unit_price_inr: Number(r.quote_price_inr) || Number(r.unit_price_inr) || 0, name: r.name || '', sku: r.sku || idOrSku } : null;
     }
 
     // v2.2.0 — SAP code lookup for the Excel BOM SKU cell (v24.45.16
@@ -9066,12 +9076,14 @@
       const want = vkey(vendor);
       const cand = rows.filter(function (r) { return r.price_type === priceType && vkey(r.vendor) === want && !r.active_to; });
       if (!cand.length) return null;
-      if (priceType === 'installation') return { unit_price_inr: Number(cand[0].unit_price_inr) || 0 };
+      // v2.4.0 — USD-master: prefer derived quote_price_inr, fall back to legacy unit_price_inr.
+      const qp = function (row) { return Number(row.quote_price_inr) || Number(row.unit_price_inr) || 0; };
+      if (priceType === 'installation') return { unit_price_inr: qp(cand[0]) };
       const exact = cand.find(function (r) { return Number(r.term_years) === Number(term); });
-      if (exact) return { unit_price_inr: Number(exact.unit_price_inr) || 0 };
+      if (exact) return { unit_price_inr: qp(exact) };
       const oneYr = cand.find(function (r) { return Number(r.term_years) === 1; });
-      if (oneYr) return { unit_price_inr: (Number(oneYr.unit_price_inr) || 0) * (Number(term) || 1) };
-      return { unit_price_inr: Number(cand[0].unit_price_inr) || 0 };
+      if (oneYr) return { unit_price_inr: qp(oneYr) * (Number(term) || 1) };
+      return { unit_price_inr: qp(cand[0]) };
     }
 
     // Assemble priced BoM lines (project_lines shape) from a built deal.

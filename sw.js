@@ -2,6 +2,10 @@
 // v2.3.0 (2026-06-13)
 //
 // Changelog (BrightSign):
+//   v2.4.0  — CACHE_NAME bump for USD-master pricing (frontend half):
+//             player/accessory/CMS price reads prefer RPC-derived
+//             quote_price_inr with unit_price_inr fallback. Price-safe
+//             today (bp_usd NULL -> fallback). No SW logic change.
 //   v2.3.1  — CACHE_NAME bump: wizard hotfix (CMS-step crash fix, Build
 //             button on Step 6, wiz-jump bound). Frontend-only.
 //   v2.3.0  — CACHE_NAME bump for the BS close-out (XC-Windows SAP,
@@ -98,7 +102,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v2.3.1';
+const CACHE_NAME = 'brightsign-v2.4.0';
 const SHELL_URLS = [
   './',
   './index.html'
