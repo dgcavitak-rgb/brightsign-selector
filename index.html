@@ -7444,6 +7444,14 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v2.5.0-beta1  (2026-06-15)  — DASHBOARD REBUILD (chunk 1). New "Pipeline Command"
+       dashboard replaces the v4 board: KPI strip, tapering funnel, region/source,
+       sales/presales, days-in-stage, attention, recent — all live off STORE.listDeals,
+       themed on app tokens (self-contained <style>, app CSS untouched), dark + light.
+       BETA / INCOMPLETE: Top-products / CMS / family panels + cross-filter are chunk 2
+       (need per-deal project_lines). Includes all of v2.4.0 (price read-swap). Old
+       showDashboard body retained but unreachable (return PC5_show(u) at its top).
+       sw.js CACHE_NAME → brightsign-v2.5.0-beta1.
      v2.4.0  (2026-06-15)  — USD-master pricing (frontend half). Player / accessory /
        CMS price reads now prefer the RPC-derived quote_price_inr (from bs_pricebook_get)
        and fall back to legacy unit_price_inr when it is NULL. Backend derivation + schema
@@ -8591,7 +8599,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.3.1',
+      version: 'brightsign-v2.5.0-beta1',
       constants,
       calico,
       mv,
@@ -18067,10 +18075,269 @@
        state only; actual deal filtering uses Phase 3 scope helpers
        baseline (user role determines what's visible).
        ============================================================ */
+    /* ============================================================
+       PIPELINE COMMAND — v5 dashboard (chunk 1)
+       Self-contained renderer: header-data widgets from live deals,
+       injected via setRoot, themed on production tokens. Every app
+       global is guarded so a miss degrades gracefully (never throws
+       a blank screen). Line-item widgets (Top products / CMS /
+       family) + cross-filter land in chunk 2.
+       ============================================================ */
+    var PC5_STAGES = [
+      { name: 'Qualified',          tok: 'var(--stage-lead)',     open: true,  w: 0.25, sla: 14 },
+      { name: 'Proposal',           tok: 'var(--stage-proposal)', open: true,  w: 0.45, sla: 21 },
+      { name: 'Budget Approval',    tok: 'var(--stage-budget)',   open: true,  w: 0.50, sla: 14 },
+      { name: 'Technical Approval', tok: 'var(--stage-tech)',     open: true,  w: 0.55, sla: 14 },
+      { name: 'Negotiation',        tok: 'var(--stage-nego)',     open: true,  w: 0.65, sla: 10 },
+      { name: 'Awarded',            tok: 'var(--stage-awarded)',  open: true,  w: 0.85, sla: 7  },
+      { name: 'Closed Won',         tok: 'var(--stage-won)',      open: false, w: 1.00, sla: null },
+      { name: 'Closed Lost',        tok: 'var(--stage-lost)',     open: false, w: 0.00, sla: null }
+    ];
+    function PC5_stageOf(nm) { for (var i = 0; i < PC5_STAGES.length; i++) { if (PC5_STAGES[i].name === nm) return PC5_STAGES[i]; } return null; }
+    function PC5_inr(n) { return '\u20b9' + Math.round(Number(n) || 0).toLocaleString('en-IN'); }
+    function PC5_pad(n) { return String(n).padStart(2, '0'); }
+    function PC5_esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    function PC5_name(id) {
+      if (!id) return 'Unassigned';
+      try { var m = (typeof usersById !== 'undefined' && usersById) ? usersById : {}; var u = m[id]; if (u) return u.full_name || u.name || ('User ' + String(id).slice(0, 6)); } catch (e) {}
+      return 'User ' + String(id).slice(0, 6);
+    }
+    function PC5_region(d) { try { var z = regionForState(d.state); return z && z !== 'unknown' ? z : 'unknown'; } catch (e) { return 'unknown'; } }
+
+    async function PC5_show(u) {
+      setRoot('<div style="padding:56px 20px;text-align:center;color:var(--ink-soft);font:14px/1.5 var(--f-sans, system-ui)">Loading pipeline\u2026</div>');
+      var rows = [];
+      try { var r = await STORE.listDeals({ limit: 500, offset: 0 }); rows = (r && r.rows) || []; } catch (e) { rows = []; }
+      var rs = null, ss = null;
+      try { rs = getRegionScope(u); ss = getSalesScope(u); } catch (e) {}
+      var deals = rows.filter(function (d) { return d && !d.deleted_at; })
+                      .filter(function (d) { try { return dealMatchesScope(d, rs, ss); } catch (e) { return true; } });
+      try { setRoot(PC5_html(u, deals, rows.length)); }
+      catch (e) { setRoot('<div style="padding:36px;color:var(--danger);font:13px var(--f-mono,monospace)">Dashboard render error: ' + PC5_esc(e && e.message) + '</div>'); }
+    }
+
+    function PC5_html(u, deals, totalSeen) {
+      var isSuper = !!(u && u.permission_tier === 'super');
+      var CLOSED = { 'Closed Won': 1, 'Closed Lost': 1 };
+      var val = function (d) { return Number(d.deal_value_inr) || 0; };
+      var open = deals.filter(function (d) { return !CLOSED[d.stage]; });
+      var won = deals.filter(function (d) { return d.stage === 'Closed Won'; });
+      var lost = deals.filter(function (d) { return d.stage === 'Closed Lost'; });
+      var closed = won.length + lost.length;
+      var openVal = open.reduce(function (a, d) { return a + val(d); }, 0);
+      var weighted = deals.reduce(function (a, d) { var s = PC5_stageOf(d.stage); return a + val(d) * ((s && s.w) || 0); }, 0);
+      var wonRate = closed ? Math.round(won.length / closed * 100) : null;
+      var avg = deals.length ? deals.reduce(function (a, d) { return a + val(d); }, 0) / deals.length : 0;
+      var gv = function (txt) { return isSuper ? txt : '<span style="color:var(--ink-faint);letter-spacing:.04em">\u2022\u2022\u2022\u2022 \u20b9</span>'; };
+
+      // per-stage counts/values
+      var cnt = {}, vsum = {};
+      PC5_STAGES.forEach(function (s) { cnt[s.name] = 0; vsum[s.name] = 0; });
+      deals.forEach(function (d) { if (cnt[d.stage] !== undefined) { cnt[d.stage]++; vsum[d.stage] += val(d); } });
+
+      // scope label
+      var scopeLbl = 'All visible';
+      if (isSuper) scopeLbl = 'Pan-India';
+      else if (u && u.org_function === 'BU Head') scopeLbl = (String(u.region || '').trim() || 'Pan-India');
+      else if (u && (u.org_function === 'Sales' || u.org_function === 'Presales' || u.org_function === 'OEM')) scopeLbl = 'My deals';
+
+      var now = Date.now(), DAY = 86400000;
+      var curM = (function () { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })();
+
+      // ---- KPI strip ----
+      var kpis = ''
+        + PC5_kpiCell('Active cases', PC5_pad(open.length), open.length ? '\u25cf open in pipeline' : 'none in scope', false, isSuper)
+        + PC5_kpiCell('Open pipeline', gv(PC5_inr(openVal)), open.length + ' deal' + (open.length !== 1 ? 's' : '') + ' \u00b7 gross', true, isSuper)
+        + PC5_kpiCell('Weighted', gv(PC5_inr(weighted)), '\u03a3 value \u00d7 win-weight', true, isSuper)
+        + PC5_kpiCell('Won rate', (wonRate === null ? '\u2014' : wonRate + '<span style="font-size:.6em;color:var(--ink-faint)">%</span>'), closed ? (won.length + '/' + closed + ' closed') : 'none closed yet', false, isSuper)
+        + PC5_kpiCell('Avg deal', (isSuper ? (deals.length ? PC5_inr(avg) : '\u2014') : gv('')), deals.length ? ('across ' + deals.length) : 'no deals', true, isSuper);
+
+      // ---- Funnel (taper) ----
+      var openStages = PC5_STAGES.filter(function (s) { return s.open; });
+      var funnel = openStages.map(function (s, i) {
+        var c = cnt[s.name], v = vsum[s.name], w = 100 - i * 11;
+        var filled = c > 0;
+        var bg = filled ? s.tok : 'color-mix(in srgb,' + s.tok + ' 12%, transparent)';
+        var bd = filled ? s.tok : 'color-mix(in srgb,' + s.tok + ' 34%, transparent)';
+        var tx = filled ? 'var(--ink-on-brand,#fff)' : 'var(--ink-soft)';
+        return '<div class="pc5-fnseg"><div class="pc5-fnbar" style="width:' + w + '%;background:' + bg + ';border-color:' + bd + '">'
+          + '<span class="pc5-fnname" style="color:' + tx + '">' + PC5_esc(s.name) + '</span>'
+          + '<span class="pc5-fnmeta" style="color:' + tx + '"><b>' + PC5_pad(c) + '</b><small>' + (v ? PC5_inr(v) : '\u2014') + '</small></span>'
+          + '</div></div>';
+      }).join('');
+      var outc = function (nm, tok) {
+        var c = cnt[nm], v = vsum[nm];
+        return '<div class="pc5-outc" style="background:color-mix(in srgb,' + tok + ' ' + (c ? '14' : '6') + '%, transparent);border-color:color-mix(in srgb,' + tok + ' ' + (c ? '55' : '22') + '%, transparent)">'
+          + '<span style="color:' + tok + ';font:700 10px/1 var(--f-mono,monospace);letter-spacing:.08em">' + nm.replace('Closed ', '').toUpperCase() + '</span>'
+          + '<span style="display:flex;gap:8px;align-items:baseline"><b style="font:700 18px/1 var(--f-mono,monospace);color:' + (c ? 'var(--ink-strong)' : 'var(--ink-faint)') + '">' + PC5_pad(c) + '</b><small style="font:600 11px/1 var(--f-mono,monospace);color:var(--ink-soft)">' + (v ? PC5_inr(v) : '\u2014') + '</small></span>'
+          + '</div>';
+      };
+      var funnelBlock = '<div class="pc5-funnel">' + funnel + '<div class="pc5-fnout">' + outc('Closed Won', 'var(--stage-won)') + outc('Closed Lost', 'var(--stage-lost)') + '</div></div>';
+
+      // ---- Region split ----
+      var REG = ['west', 'north', 'south', 'east'];
+      var rc = {}; REG.forEach(function (r) { rc[r] = 0; });
+      var rUnknown = 0;
+      deals.forEach(function (d) { var z = PC5_region(d); if (rc[z] !== undefined) rc[z]++; else rUnknown++; });
+      var rMax = Math.max(1, REG.reduce(function (m, r) { return Math.max(m, rc[r]); }, 0));
+      var regionBlock = REG.map(function (r) {
+        return PC5_bar(r.charAt(0).toUpperCase() + r.slice(1), PC5_pad(rc[r]), rc[r] / rMax, rc[r] ? 'var(--info)' : 'var(--border-mid)');
+      }).join('') + (rUnknown ? PC5_bar('Unspecified', PC5_pad(rUnknown), rUnknown / rMax, 'var(--border-mid)') : '');
+
+      // ---- Source ----
+      var srcMap = {}; deals.forEach(function (d) { var k = String(d.lead_source || 'Unspecified'); srcMap[k] = (srcMap[k] || 0) + 1; });
+      var srcRows = Object.keys(srcMap).map(function (k) { return { k: k, n: srcMap[k] }; }).sort(function (a, b) { return b.n - a.n; });
+      var srcMax = Math.max(1, srcRows.reduce(function (m, x) { return Math.max(m, x.n); }, 0));
+      var srcPal = ['var(--stage-awarded)', 'var(--stage-nego)', 'var(--stage-lead)', 'var(--stage-budget)'];
+      var sourceBlock = srcRows.length ? srcRows.map(function (x, i) {
+        return PC5_bar(PC5_esc(x.k), PC5_pad(x.n), x.n / srcMax, srcPal[i % srcPal.length]);
+      }).join('') : PC5_empty('No source data in scope.');
+
+      // ---- Sales / Presales ----
+      var salesBlock = PC5_owners(deals, 'sales_person_id', isSuper, val, 'var(--stage-awarded)');
+      var presBlock = PC5_owners(deals, 'presales_person_id', isSuper, val, 'var(--stage-budget)');
+
+      // ---- Days in stage ----
+      var aging = open.slice().map(function (d) {
+        var s = PC5_stageOf(d.stage); var sla = (s && s.sla) || 21;
+        var t = Date.parse(d.updated_at || d.created_at || '') || now;
+        var age = Math.max(0, Math.round((now - t) / DAY));
+        return { stage: d.stage, tok: (s ? s.tok : 'var(--ink-faint)'), age: age, sla: sla };
+      }).sort(function (a, b) { return b.age - a.age; }).slice(0, 8);
+      var agingBlock = aging.length ? aging.map(function (a) {
+        var ratio = Math.min(1, a.age / a.sla);
+        var col = a.age > a.sla ? 'var(--danger)' : a.age > a.sla * 0.7 ? 'var(--warning)' : 'var(--success)';
+        return '<div class="pc5-age"><span class="pc5-agename"><i style="background:' + a.tok + '"></i>' + PC5_esc(a.stage) + '</span>'
+          + '<span class="pc5-agetrack"><span style="width:' + (ratio * 100) + '%;background:' + col + '"></span></span>'
+          + '<span class="pc5-agev">' + PC5_pad(a.age) + ' / ' + PC5_pad(a.sla) + 'd</span></div>';
+      }).join('') : PC5_empty('No open deals in scope to age.');
+
+      // ---- Attention ----
+      var stuck = open.filter(function (d) { var t = Date.parse(d.updated_at || d.created_at || ''); return t && (now - t) > 30 * DAY; });
+      var slipped = open.filter(function (d) { var s = String(d.close_month || '').slice(0, 7); return s && s < curM; });
+      var closingM = open.filter(function (d) { return String(d.close_month || '').slice(0, 7) === curM; });
+      var ready = open.filter(function (d) { return d.stage === 'Awarded'; });
+      var attnBad = stuck.length + slipped.length;
+      var attentionBlock = attnBad
+        ? '<div class="pc5-attn">'
+            + PC5_attnTile('Slipped', slipped.length, 'var(--danger)')
+            + PC5_attnTile('Stuck 30d+', stuck.length, 'var(--warning)')
+            + PC5_attnTile('Closing this month', closingM.length, 'var(--info)')
+            + PC5_attnTile('Ready to confirm', ready.length, 'var(--success)')
+          + '</div>'
+        : '<div class="pc5-good"><b>Nothing needs attention in scope.</b> ' + (open.length ? (open.length + ' open deal' + (open.length !== 1 ? 's' : '') + ' tracking, ' + closingM.length + ' closing this month.') : 'No open deals in scope.') + '</div>';
+
+      // ---- Recent ----
+      var recent = deals.slice().sort(function (a, b) { return (Date.parse(b.created_at || '') || 0) - (Date.parse(a.created_at || '') || 0); }).slice(0, 6);
+      var recentBlock = recent.length ? recent.map(function (d) {
+        var s = PC5_stageOf(d.stage);
+        return '<div class="pc5-deal">'
+          + '<span class="pc5-sbadge" style="color:' + (s ? s.tok : 'var(--ink-soft)') + ';background:color-mix(in srgb,' + (s ? s.tok : 'var(--ink-soft)') + ' 16%,transparent);border-color:color-mix(in srgb,' + (s ? s.tok : 'var(--ink-soft)') + ' 45%,transparent)">' + PC5_esc(d.stage || '\u2014').toUpperCase() + '</span>'
+          + '<div class="pc5-dmid"><div class="pc5-dt">' + PC5_esc(d.customer_name || d.display_ref || 'Untitled deal') + '</div>'
+          + '<div class="pc5-ds"><span>' + PC5_esc(PC5_name(d.sales_person_id)) + '</span><span>\u29bf ' + PC5_esc((PC5_region(d) || '\u2014')) + '</span>' + (d.close_month ? '<span>\u229e ' + PC5_esc(String(d.close_month).slice(0, 7)) + '</span>' : '') + '</div></div>'
+          + '<div class="pc5-dv">' + (isSuper ? PC5_inr(val(d)) : '\u2022\u2022\u2022\u2022 \u20b9') + '</div>'
+          + '</div>';
+      }).join('') : PC5_empty('No deals in scope.');
+
+      // ---- assemble ----
+      return PC5_CSS()
+        + '<div class="pc5-root">'
+        + '<div class="pc5-top"><div class="pc5-brand"><span class="pc5-mark"></span><b>BRIGHTSIGN</b><span>\u00b7 PIPELINE COMMAND</span></div>'
+        +   '<div class="pc5-scope">SCOPE <b>' + PC5_esc(scopeLbl) + '</b></div>'
+        +   '<div class="pc5-shown">' + deals.length + (typeof totalSeen === 'number' ? ' / ' + totalSeen : '') + ' deals</div></div>'
+        + '<div class="pc5-kpis">' + kpis + '</div>'
+        + PC5_sec('Pipeline by stage', '8 stages \u00b7 6 open') + funnelBlock
+        + '<div class="pc5-grid2">' + PC5_panel('Region', 'BU zones', regionBlock) + PC5_panel('Source', 'origin', sourceBlock) + '</div>'
+        + '<div class="pc5-grid2">' + PC5_panel('Sales owner', '', salesBlock) + PC5_panel('Presales owner', '', presBlock) + '</div>'
+        + PC5_sec('Days in stage', 'live age vs SLA') + '<div class="pc5-panel">' + agingBlock + '</div>'
+        + PC5_sec('Needs attention', 'SLA \u00b7 closing') + attentionBlock
+        + PC5_sec('Recent deals', deals.length + ' in scope') + '<div class="pc5-recent">' + recentBlock + '</div>'
+        + '<div class="pc5-foot">Pipeline Command v5 \u00b7 chunk 1 (header widgets live) \u00b7 Top products / CMS / family land in chunk 2</div>'
+        + '</div>';
+    }
+
+    // ---- small builders ----
+    function PC5_kpiCell(label, value, sub, isSuperTag, isSuper) {
+      return '<div class="pc5-kpi"><div class="pc5-klabel">' + PC5_esc(label) + (isSuperTag ? '<span class="pc5-tag">SUPER</span>' : '') + '</div>'
+        + '<div class="pc5-kval">' + value + '</div><div class="pc5-ksub">' + PC5_esc(sub) + '</div></div>';
+    }
+    function PC5_bar(label, meta, ratio, col) {
+      return '<div class="pc5-brow"><span class="pc5-blabel">' + label + '</span><span class="pc5-bmeta">' + meta + '</span>'
+        + '<span class="pc5-btrack"><span style="width:' + Math.round(Math.max(0, Math.min(1, ratio)) * 100) + '%;background:' + col + '"></span></span></div>';
+    }
+    function PC5_owners(deals, key, isSuper, val, col) {
+      var agg = {}, cn = {};
+      deals.forEach(function (d) { var k = d[key]; if (k) { agg[k] = (agg[k] || 0) + val(d); cn[k] = (cn[k] || 0) + 1; } });
+      var rows = Object.keys(agg).map(function (k) { return { k: k, v: agg[k], n: cn[k] }; }).sort(function (a, b) { return b.v - a.v || b.n - a.n; }).slice(0, 6);
+      if (!rows.length) return PC5_empty('No owner in scope.');
+      var mx = Math.max(1, rows.reduce(function (m, r) { return Math.max(m, r.v || r.n); }, 0));
+      return rows.map(function (r) {
+        var meta = (isSuper ? PC5_inr(r.v) : '\u2022\u2022\u2022\u2022') + ' <i style="color:var(--ink-faint);font-style:normal;font-size:10px">' + PC5_pad(r.n) + '</i>';
+        return PC5_bar(PC5_esc(PC5_name(r.k)), meta, (r.v || r.n) / mx, col);
+      }).join('');
+    }
+    function PC5_attnTile(label, n, col) {
+      return '<div class="pc5-attile" style="border-color:color-mix(in srgb,' + col + ' 40%,transparent)"><div class="pc5-atn" style="color:' + (n ? col : 'var(--ink-faint)') + '">' + PC5_pad(n) + '</div><div class="pc5-atl">' + PC5_esc(label) + '</div></div>';
+    }
+    function PC5_sec(t, s) { return '<div class="pc5-sec"><h3>' + PC5_esc(t) + '</h3><span>' + PC5_esc(s) + '</span></div>'; }
+    function PC5_panel(t, s, body) { return '<div class="pc5-panel"><div class="pc5-phd"><h4>' + PC5_esc(t) + '</h4>' + (s ? '<span>' + PC5_esc(s) + '</span>' : '') + '</div>' + body + '</div>'; }
+    function PC5_empty(msg) { return '<div class="pc5-empty">' + PC5_esc(msg) + '</div>'; }
+
+    function PC5_CSS() {
+      return '<style>'
+        + '.pc5-root{font-family:var(--f-sans,system-ui);color:var(--ink-strong);padding:14px 14px 40px;max-width:1180px;margin:0 auto}'
+        + '.pc5-root *{box-sizing:border-box}'
+        + '.pc5-top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:4px 2px 14px;border-bottom:1px solid var(--border-soft);margin-bottom:14px}'
+        + '.pc5-brand{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:.03em}'
+        + '.pc5-brand b{color:var(--ink-strong)}.pc5-brand span{color:var(--ink-soft);font-weight:600}'
+        + '.pc5-mark{width:16px;height:16px;border-radius:4px;background:var(--accent,#37236A)}'
+        + '.pc5-scope{font-size:10.5px;color:var(--ink-soft);letter-spacing:.04em}.pc5-scope b{color:var(--accent,#37236A);font-family:var(--f-mono,monospace);margin-left:4px}'
+        + '.pc5-shown{margin-left:auto;font:600 10.5px var(--f-mono,monospace);color:var(--ink-faint)}'
+        + '.pc5-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border-soft);border:1px solid var(--border-soft);border-radius:12px;overflow:hidden;margin-bottom:18px}'
+        + '.pc5-kpi{background:var(--bg-card);padding:14px 14px}'
+        + '.pc5-klabel{font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;gap:6px;margin-bottom:8px}'
+        + '.pc5-tag{font:700 8px/1 var(--f-mono,monospace);letter-spacing:.07em;color:var(--accent,#37236A);border:1px solid color-mix(in srgb,var(--accent,#37236A) 45%,transparent);border-radius:3px;padding:2px 4px}'
+        + '.pc5-kval{font:700 24px/1 var(--f-mono,monospace);letter-spacing:-.02em;color:var(--ink-strong)}'
+        + '.pc5-ksub{font-size:10.5px;color:var(--ink-soft);margin-top:7px}'
+        + '.pc5-sec{display:flex;align-items:baseline;gap:10px;margin:6px 2px 12px}.pc5-sec h3{font-size:12px;font-weight:700;color:var(--ink-strong)}.pc5-sec span{font:10px var(--f-mono,monospace);color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em}'
+        + '.pc5-funnel{display:flex;flex-direction:column;gap:5px;align-items:center;margin-bottom:18px}'
+        + '.pc5-fnseg{width:100%;display:flex;justify-content:center}'
+        + '.pc5-fnbar{height:44px;border-radius:8px;display:flex;align-items:center;justify-content:space-between;padding:0 15px;gap:10px;border:1px solid transparent;min-width:0}'
+        + '.pc5-fnname{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+        + '.pc5-fnmeta{display:flex;gap:9px;align-items:baseline;white-space:nowrap;flex:0 0 auto}.pc5-fnmeta b{font:700 15px/1 var(--f-mono,monospace)}.pc5-fnmeta small{font:600 10px/1 var(--f-mono,monospace);opacity:.8}'
+        + '.pc5-fnout{display:grid;grid-template-columns:1fr 1fr;gap:9px;width:100%;margin-top:10px}'
+        + '.pc5-outc{border:1px solid var(--border-soft);border-radius:9px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between}'
+        + '.pc5-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:6px}'
+        + '.pc5-panel{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;padding:15px;margin-bottom:12px}'
+        + '.pc5-phd{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:13px}.pc5-phd h4{font-size:12px;font-weight:700;color:var(--ink-strong)}.pc5-phd span{font:10px var(--f-mono,monospace);color:var(--ink-faint);text-transform:uppercase}'
+        + '.pc5-brow{display:grid;grid-template-columns:1fr auto;gap:6px 8px;align-items:center;padding:5px 0}'
+        + '.pc5-blabel{font-size:11.5px;color:var(--ink-mid);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+        + '.pc5-bmeta{font:700 12px/1 var(--f-mono,monospace);color:var(--ink-strong);text-align:right}'
+        + '.pc5-btrack{grid-column:1/-1;height:5px;background:var(--bg-subtle,rgba(0,0,0,.06));border-radius:3px;overflow:hidden}.pc5-btrack>span{display:block;height:100%;border-radius:3px}'
+        + '.pc5-age{display:grid;grid-template-columns:130px 1fr auto;gap:10px;align-items:center;padding:6px 0;font-size:11.5px}'
+        + '.pc5-agename{color:var(--ink-mid);display:flex;align-items:center;gap:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pc5-agename i{width:7px;height:7px;border-radius:2px;flex:0 0 auto}'
+        + '.pc5-agetrack{height:5px;background:var(--bg-subtle,rgba(0,0,0,.06));border-radius:3px;overflow:hidden}.pc5-agetrack>span{display:block;height:100%;border-radius:3px}'
+        + '.pc5-agev{font:600 11px/1 var(--f-mono,monospace);color:var(--ink-soft);white-space:nowrap}'
+        + '.pc5-attn{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}'
+        + '.pc5-attile{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:10px;padding:13px 14px}.pc5-atn{font:700 22px/1 var(--f-mono,monospace)}.pc5-atl{font-size:10.5px;color:var(--ink-soft);margin-top:6px}'
+        + '.pc5-good{background:color-mix(in srgb,var(--success) 10%,transparent);border:1px solid color-mix(in srgb,var(--success) 30%,transparent);border-radius:10px;padding:14px;font-size:11.5px;color:var(--ink-mid);margin-bottom:12px}.pc5-good b{color:var(--success)}'
+        + '.pc5-recent{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}'
+        + '.pc5-deal{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:var(--bg-card);border:1px solid var(--border-soft);border-radius:10px;padding:12px}'
+        + '.pc5-sbadge{font:700 9.5px/1 var(--f-mono,monospace);letter-spacing:.04em;padding:5px 7px;border-radius:5px;border:1px solid;white-space:nowrap}'
+        + '.pc5-dt{font-size:13px;font-weight:600;color:var(--ink-strong)}.pc5-ds{font-size:10.5px;color:var(--ink-soft);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap}'
+        + '.pc5-dv{font:700 14px/1 var(--f-mono,monospace);color:var(--ink-strong);text-align:right;white-space:nowrap}'
+        + '.pc5-empty{border:1px dashed var(--border-mid);border-radius:8px;background:var(--bg-subtle,transparent);padding:14px;font-size:11.5px;color:var(--ink-soft)}'
+        + '.pc5-foot{font:10.5px var(--f-mono,monospace);color:var(--ink-faint);padding-top:14px;border-top:1px solid var(--border-soft);margin-top:6px}'
+        + '@media(max-width:760px){.pc5-kpis{grid-template-columns:repeat(2,1fr)}.pc5-kval{font-size:19px}.pc5-grid2{grid-template-columns:1fr}.pc5-attn{grid-template-columns:repeat(2,1fr)}.pc5-age{grid-template-columns:96px 1fr auto}.pc5-fnbar{height:40px;padding:0 11px}}'
+        + '</style>';
+    }
+
+
     function showDashboard() {
       showChrome(true);
       updateNavActive('#/dashboard');
       const u = STORE.currentUser() || {};
+      return PC5_show(u);  // v5 dashboard (Pipeline Command) chunk-1 — legacy body below is now unreachable
       // v27.4.3 — if URL hash carries ?period=...&region=... etc, apply them
       // before loadDashboardV4 reads from sessionStorage. Enables shareable
       // links from the Share view button.

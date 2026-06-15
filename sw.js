@@ -102,7 +102,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v2.4.0';
+const CACHE_NAME = 'brightsign-v2.5.0-beta1';
 const SHELL_URLS = [
   './',
   './index.html'
