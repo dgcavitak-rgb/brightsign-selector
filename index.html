@@ -7444,6 +7444,11 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v2.5.0-beta2  (2026-06-16)  — DASHBOARD chunk 2: line-item widgets. Top-players
+       (units quoted) + CMS-attach (with-CMS vs Standalone + platform leader), both
+       parsed from each deal's raw_submission (no extra fetch). New grid row sits after
+       the owner panels. Cross-filter interactivity is next. CATALOG.version + sw.js
+       -> brightsign-v2.5.0-beta2.
      v2.5.0-beta1  (2026-06-15)  — DASHBOARD REBUILD (chunk 1). New "Pipeline Command"
        dashboard replaces the v4 board: KPI strip, tapering funnel, region/source,
        sales/presales, days-in-stage, attention, recent — all live off STORE.listDeals,
@@ -8599,7 +8604,8 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.5.0-beta1',
+      version: 'brightsign-v2.5.0-beta2',
+      build_date: '2026-06-17',
       constants,
       calico,
       mv,
@@ -15859,7 +15865,7 @@
             '</div>' +
             '<div class="about-row">' +
               '<div class="about-key">Build date</div>' +
-              '<div class="about-val">' + esc(new Date().toISOString().slice(0,10)) + '</div>' +
+              '<div class="about-val">' + esc((typeof CATALOG !== 'undefined' && CATALOG.build_date) || new Date().toISOString().slice(0,10)) + '</div>' +
             '</div>' +
             '<div class="about-row">' +
               '<div class="about-key">Distributor</div>' +
@@ -18104,6 +18110,21 @@
     }
     function PC5_region(d) { try { var z = regionForState(d.state); return z && z !== 'unknown' ? z : 'unknown'; } catch (e) { return 'unknown'; } }
 
+    // chunk 2 — derive players + CMS from each deal's quote spec (raw_submission); no extra fetch
+    function PC5_parseLines(d) {
+      var raw = (d && d.raw_submission) || {};
+      var players = [];
+      if (String(raw.mode) === 'advanced' && Array.isArray(raw.advancedSelections)) {
+        raw.advancedSelections.forEach(function (sel) { if (sel && (sel.model_id || sel.id || sel.sku)) players.push({ model: String(sel.model_id || sel.id || sel.sku), qty: Number(sel.qty) || 0 }); });
+      } else {
+        if (raw.pickIndoor)  players.push({ model: String(raw.pickIndoor),  qty: Number(raw.qty_indoor)  || 0 });
+        if (raw.pickOutdoor) players.push({ model: String(raw.pickOutdoor), qty: Number(raw.qty_outdoor) || 0 });
+      }
+      var cms = String(raw.cms_vendor || '').trim();
+      var hasCms = !!cms && cms.toLowerCase() !== 'none';
+      return { players: players, cms: cms, hasCms: hasCms };
+    }
+
     async function PC5_show(u) {
       setRoot('<div style="padding:56px 20px;text-align:center;color:var(--ink-soft);font:14px/1.5 var(--f-sans, system-ui)">Loading pipeline\u2026</div>');
       var rows = [];
@@ -18197,6 +18218,28 @@
       var salesBlock = PC5_owners(deals, 'sales_person_id', isSuper, val, 'var(--stage-awarded)');
       var presBlock = PC5_owners(deals, 'presales_person_id', isSuper, val, 'var(--stage-budget)');
 
+      // chunk 2 — Top players + CMS attach (parsed from raw_submission)
+      var prodAgg = {}, cmsWith = 0, cmsStand = 0, cmsByVendor = {};
+      deals.forEach(function (d) {
+        var ln = PC5_parseLines(d);
+        ln.players.forEach(function (p) { if (!p.model) return; if (!prodAgg[p.model]) prodAgg[p.model] = { units: 0, deals: 0 }; prodAgg[p.model].units += p.qty; prodAgg[p.model].deals += 1; });
+        if (ln.hasCms) { cmsWith++; cmsByVendor[ln.cms] = (cmsByVendor[ln.cms] || 0) + 1; } else { cmsStand++; }
+      });
+      var prodRows = Object.keys(prodAgg).map(function (m) { return { m: m, u: prodAgg[m].units, d: prodAgg[m].deals }; }).sort(function (a, b) { return b.u - a.u || b.d - a.d; }).slice(0, 7);
+      var prodMax = Math.max(1, prodRows.reduce(function (mx, r) { return Math.max(mx, r.u); }, 0));
+      var productsBlock = prodRows.length ? prodRows.map(function (r) {
+        return PC5_bar(PC5_esc(r.m), r.u + '<i style="color:var(--ink-faint);font-style:normal;font-size:10px"> u / ' + PC5_pad(r.d) + '</i>', r.u / prodMax, 'var(--info)');
+      }).join('') : PC5_empty('No player specs in scope.');
+      var cmsTot = cmsWith + cmsStand;
+      var cmsMax = Math.max(1, cmsWith, cmsStand);
+      var vendLabel = function (v) { return /bright/i.test(v) ? 'BrightAuthor' : String(v || ''); };
+      var vendKeys = Object.keys(cmsByVendor).sort(function (a, b) { return cmsByVendor[b] - cmsByVendor[a]; });
+      var cmsBlock = cmsTot
+        ? (PC5_bar('With CMS', PC5_pad(cmsWith), cmsWith / cmsMax, 'var(--stage-budget)')
+           + PC5_bar('Standalone', PC5_pad(cmsStand), cmsStand / cmsMax, 'var(--ink-soft)')
+           + (cmsWith ? '<div class="pc5-cmslead">Platform: <b>' + PC5_esc(vendLabel(vendKeys[0])) + '</b>' + (vendKeys.length > 1 ? ' +' + (vendKeys.length - 1) + ' more' : '') + '</div>' : ''))
+        : PC5_empty('No deals in scope.');
+
       // ---- Days in stage ----
       var aging = open.slice().map(function (d) {
         var s = PC5_stageOf(d.stage); var sla = (s && s.sla) || 21;
@@ -18249,10 +18292,11 @@
         + PC5_sec('Pipeline by stage', '8 stages \u00b7 6 open') + funnelBlock
         + '<div class="pc5-grid2">' + PC5_panel('Region', 'BU zones', regionBlock) + PC5_panel('Source', 'origin', sourceBlock) + '</div>'
         + '<div class="pc5-grid2">' + PC5_panel('Sales owner', '', salesBlock) + PC5_panel('Presales owner', '', presBlock) + '</div>'
+        + PC5_sec('Products & CMS', 'from quote specs') + '<div class="pc5-grid2">' + PC5_panel('Top players', 'units quoted', productsBlock) + PC5_panel('CMS attach', 'platform split', cmsBlock) + '</div>'
         + PC5_sec('Days in stage', 'live age vs SLA') + '<div class="pc5-panel">' + agingBlock + '</div>'
         + PC5_sec('Needs attention', 'SLA \u00b7 closing') + attentionBlock
         + PC5_sec('Recent deals', deals.length + ' in scope') + '<div class="pc5-recent">' + recentBlock + '</div>'
-        + '<div class="pc5-foot">Pipeline Command v5 \u00b7 chunk 1 (header widgets live) \u00b7 Top products / CMS / family land in chunk 2</div>'
+        + '<div class="pc5-foot">Pipeline Command v5 \u00b7 chunk 2 (line-item widgets live) \u00b7 cross-filter is next</div>'
         + '</div>';
     }
 
@@ -18328,6 +18372,7 @@
         + '.pc5-dv{font:700 14px/1 var(--f-mono,monospace);color:var(--ink-strong);text-align:right;white-space:nowrap}'
         + '.pc5-empty{border:1px dashed var(--border-mid);border-radius:8px;background:var(--bg-subtle,transparent);padding:14px;font-size:11.5px;color:var(--ink-soft)}'
         + '.pc5-foot{font:10.5px var(--f-mono,monospace);color:var(--ink-faint);padding-top:14px;border-top:1px solid var(--border-soft);margin-top:6px}'
+        + '.pc5-cmslead{font-size:11px;color:var(--ink-soft);padding-top:9px;margin-top:5px;border-top:1px solid var(--border-soft)}.pc5-cmslead b{color:var(--ink-strong)}'
         + '@media(max-width:760px){.pc5-kpis{grid-template-columns:repeat(2,1fr)}.pc5-kval{font-size:19px}.pc5-grid2{grid-template-columns:1fr}.pc5-attn{grid-template-columns:repeat(2,1fr)}.pc5-age{grid-template-columns:96px 1fr auto}.pc5-fnbar{height:40px;padding:0 11px}}'
         + '</style>';
     }
