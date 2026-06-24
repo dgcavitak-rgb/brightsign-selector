@@ -6623,6 +6623,7 @@
       letter-spacing: 0.05em; text-transform: uppercase; color: var(--c-fg-mute);
       border-bottom: 2px solid var(--c-border-st); white-space: nowrap; }
     .qt th.num, .qt td.num { text-align: right; }
+    .qt th.qt-disc-col, .qt td.qt-disc-col { width: 84px; }
     .qt th.ctr, .qt td.ctr { text-align: center; }
     .qt td { padding: 8px 4px; border-bottom: 1px solid var(--c-border);
       vertical-align: top; }
@@ -6631,11 +6632,11 @@
     .qt-note { font-size: 10.5px; color: var(--c-fg-mute); }
     .qt td.qt-poa { color: var(--c-fg-mute); }
     .qt tr.qt-pending td { color: var(--c-fg-mute); }
-    .qt-disc-input { width: 52px; padding: 5px 6px; text-align: right;
+    input.qt-disc-input { width: 56px; padding: 5px 6px; text-align: right; box-sizing: border-box;
       font: 600 12.5px var(--f-mono); color: var(--c-fg);
       background: var(--c-sunk); border: 1px solid var(--c-border-st);
       border-radius: var(--r-xs); }
-    .qt-price-input { width: 88px; padding: 5px 6px; text-align: right;
+    input.qt-price-input { width: 92px; padding: 5px 6px; text-align: right; box-sizing: border-box;
       font: 600 12.5px var(--f-mono); color: var(--c-fg);
       background: var(--c-sunk); border: 1px solid var(--c-border-st);
       border-radius: var(--r-xs); }
@@ -7454,6 +7455,12 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v2.5.0-beta5  (2026-06-23)  — Quote-builder fixes:
+       (1) SSD lines showed POA — code built the SKU as BS-SSD-{size} -> 'BS-SSD-256GB', but the
+           price-book rows are BS-SSD-128/256/512/1024. Strip the unit suffix so the lookup hits.
+       (2) Discount field too wide — global input[type=text]{width:100%} (specificity 0,1,1) beat
+           .qt-disc-input (0,1,0) and stretched it. Raised to input.qt-disc-input{56px}+box-sizing,
+           tightened the Disc % column to 84px; same for the price input. sw.js -> beta5.
      v2.5.0-beta4  (2026-06-18)  — FIX: Cavitak logo invisible in dark mode. The official
        Cavitak PNG is a dark wordmark on a transparent bg, so on the dark header only the red
        dot showed. Now sits on a white chip, mirroring the BrightSign mark (.mark-tvone).
@@ -8623,8 +8630,8 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.5.0-beta4',
-      build_date: '2026-06-18',
+      version: 'brightsign-v2.5.0-beta5',
+      build_date: '2026-06-23',
       constants,
       calico,
       mv,
@@ -9206,7 +9213,7 @@
       }
       if (d.ssd) {
         const size = d.ssd_size || '256GB';
-        const sku = 'BS-SSD-' + size;
+        const sku = 'BS-SSD-' + String(size).replace(/GB$/i, '');  // DB SKUs are BS-SSD-128/256/512/1024 (no unit suffix)
         const ap = accessoryPriceOf(sku);
         accLine(sku, 'SSD ' + size, Number(d.ssd_qty) || totalPlayers, ap ? ap.unit_price_inr : 0);
       }
@@ -24930,7 +24937,7 @@
       const ctx = (opts && opts.ctx) || 'wiz';
       const head = '<thead><tr>' +
         '<th class="ctr">Sr</th><th>Suggested model</th><th class="ctr">Qty</th>' +
-        (show ? '<th class="num">Unit Price</th><th class="num">Disc %</th><th class="num">Total Price</th>' : '') +
+        (show ? '<th class="num">Unit Price</th><th class="num qt-disc-col">Disc %</th><th class="num">Total Price</th>' : '') +
       '</tr></thead>';
       const body = quote.lines.map(function (l, i) {
         const isCms = l.product_family === 'CMS';
