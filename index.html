@@ -6905,11 +6905,16 @@
       margin: 0 -16px 16px;
     }
     .about-logo {
-      display: inline-block;
-      padding: 8px 14px;
-      background: var(--accent-soft);
-      border-radius: var(--r-md);
-      margin-bottom: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 6px;
+      margin-bottom: 10px;
+    }
+    .about-logo-img {
+      height: 30px;
+      width: auto;
+      display: block;
     }
     .about-grid {
       display: flex; flex-direction: column;
@@ -7455,6 +7460,31 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v2.5.0-rc1  (2026-06-24)  — Release candidate. Supersedes beta5. Bundles five
+       fixes; cross-filter + dead-code cleanup remain (hence rc, not final).
+       (1) EXCEL CLIPPING. The four BOM columns (A=5/B=60/C=28/D=8) were reused by
+           every other section as label/value columns, so info-grid labels clipped
+           ('PROJEC…','SALESP…') and large ₹-totals lost the ₹-sign + leading digit
+           ('₹10,81,977'→'81,977'). Widened to A=16/B=54/C=24/D=16 (Σ110, fitToWidth
+           scales); priced rows are now height-aware so item names wrapped in col A
+           render fully. BOM SKUs stay short → C=24/B=54(wrapText) never truncate.
+       (2) DASHBOARD ₹ ROLE-GATE. PC5 keyed ₹ visibility off super alone. Now it
+           follows the rest of the app: every role except Support sees ₹ (bsCanSee
+           Prices) AND the persistent toggle must be ON (bsPricesVisible). All mask
+           sites (KPIs, funnel, owners, recent) switched from isSuper to showPrices.
+       (3) PERSISTENT PRICE TOGGLE. The with/without-price toggle was per-view and
+           transient; now persisted app-wide (localStorage 'bs.pricesVisible') like
+           the tvONE app. Hiding ₹ on the quote page also hides them on the dashboard
+           and survives reload. bsResultShowPrices() now delegates to bsPricesVisible().
+       (4) DAYS-IN-STAGE. Dashboard aging + "Stuck 30d+" now count from current_stage_
+           entered_at (when the deal entered its current stage), not the last row edit;
+           fall back to updated_at/created_at only when missing.
+       (5) ABOUT-SHEET LOGO + SUPER TAG. The About sheet still drew the old hand-coded
+           ">>" chevron (a tvONE-fork leftover the v27.3.14d cleanup replaced in login/
+           topbar/exports but missed here) — now the real BrightSign wordmark, same PNG
+           asset (EXPORT.LOGO_TVONE_DURI). Also removed the always-on "SUPER" KPI tag.
+       Desktop share: WhatsApp/Email now go straight to wa.me/mailto on desktop (the
+       native share sheet stays on mobile). CATALOG.version + sw.js → brightsign-v2.5.0-rc1.
      v2.5.0-beta5  (2026-06-23)  — Quote-builder fixes:
        (1) SSD lines showed POA — code built the SKU as BS-SSD-{size} -> 'BS-SSD-256GB', but the
            price-book rows are BS-SSD-128/256/512/1024. Strip the unit suffix so the lookup hits.
@@ -8630,8 +8660,8 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.5.0-beta5',
-      build_date: '2026-06-23',
+      version: 'brightsign-v2.5.0-rc1',
+      build_date: '2026-06-24',
       constants,
       calico,
       mv,
@@ -10504,15 +10534,18 @@
       const DANGER     = 'FFB91C1C';
       const SUCCESS    = 'FF15803D';
 
-      // Column widths — v27.3.7: widened Description (50→60) and Model
-      // (22→28) so long SKUs like 'CV-HDBT-SC-2OUT-1ETH-FF' and product
-       // descriptions like 'CORIOview HDBaseT 2-IN + Ethernet module' don't
-       // truncate. Sr/Qty unchanged. wrapText already on Description.
+      // Column widths — v2.5.0-rc1: the four BOM columns are REUSED by every
+      // other section (info grid, pricing table, T&C) as label/value columns,
+      // so the old A=5/D=8 clipped labels ('PROJEC…','SALESP…') and lost the
+      // ₹-sign + leading digit on large totals ('₹10,81,977'→'81,977'). Widened
+      // to A=16/B=54/C=24/D=16 (Σ110, fitToWidth:1 scales): labels render full,
+      // totals stay single-line, item names in col A wrap to ≤2 readable lines.
+      // BOM SKUs are short enough that C=24 + B=54 (wrapText) never truncate.
       ws.columns = [
-        { width:  5 },   // Sr
-        { width: 60 },   // Description (was 50)
-        { width: 28 },   // Model (was 22)
-        { width:  8 }    // Qty
+        { width: 16 },   // Sr (BOM) / label col (info, pricing item, T&C)
+        { width: 54 },   // Description (BOM) / value col
+        { width: 24 },   // Model (BOM) / label col (pricing/T&C right side)
+        { width: 16 }    // Qty (BOM) / totals col (₹ amounts)
       ];
 
       // ---- Logo header (v27.3.14c) — co-branded, side-by-side ----
@@ -10801,7 +10834,11 @@
             r.getCell(4).font = { name:'Consolas', size: 10, bold: true, color: { argb: INK_STRONG } };
             r.getCell(4).alignment = { horizontal: 'right', vertical: 'middle' };
           }
-          r.height = 18;
+          // v2.5.0-rc1: col A is now 16 wide, so longer item names wrap to 2
+          // lines. Grow the row height to fit (~14 usable chars/line) instead
+          // of the fixed 18 that vertically clipped the 2nd line.
+          var _nm = String(l.description || l.sku || '');
+          r.height = Math.max(18, Math.ceil(_nm.length / 14) * 14);
           curRow++;
         });
 
@@ -15876,10 +15913,11 @@
         '<div class="notif-sheet" style="padding:0 16px 16px">' +
           '<div class="about-head">' +
             '<div class="about-logo">' +
-              '<svg viewBox="0 0 96 32" width="96" height="32" fill="none" stroke="#37236A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">' +
-                '<path d="M8 8 L20 16 L8 24"/>' +
-                '<path d="M24 8 L36 16 L24 24"/>' +
-              '</svg>' +
+              // v2.5.0-rc1: was a hand-coded ">>" chevron SVG (a tvONE-fork
+              // leftover the v27.3.14d cleanup replaced in login/topbar/exports
+              // but missed here). Now the real BrightSign wordmark — same PNG
+              // asset used everywhere else, via EXPORT.LOGO_TVONE_DURI.
+              '<img class="about-logo-img" src="' + EXPORT.LOGO_TVONE_DURI + '" alt="BrightSign" />' +
             '</div>' +
             '<h3 style="margin:6px 0 2px;font-size:18px">BrightSign Product Selector</h3>' +
             '<div style="font-size:12px;color:var(--ink-soft)">Cavitak Marketing Pvt Ltd</div>' +
@@ -18165,6 +18203,15 @@
 
     function PC5_html(u, deals, totalSeen) {
       var isSuper = !!(u && u.permission_tier === 'super');
+      // v2.5.0-rc1: dashboard ₹ visibility is no longer super-only. It now
+      // follows the same gate as the rest of the app — every role except
+      // Support can see prices (bsCanSeePrices) AND the persistent app-wide
+      // price toggle must be ON (bsPricesVisible). isSuper below is kept ONLY
+      // for the data-scope label ('Pan-India' vs region vs 'My deals'), which
+      // is about which deals are in scope, not whether ₹ is shown.
+      var showPrices = (function () {
+        try { return bsPricesVisible(); } catch (_) { return isSuper; }
+      })();
       var CLOSED = { 'Closed Won': 1, 'Closed Lost': 1 };
       var val = function (d) { return Number(d.deal_value_inr) || 0; };
       var open = deals.filter(function (d) { return !CLOSED[d.stage]; });
@@ -18175,7 +18222,7 @@
       var weighted = deals.reduce(function (a, d) { var s = PC5_stageOf(d.stage); return a + val(d) * ((s && s.w) || 0); }, 0);
       var wonRate = closed ? Math.round(won.length / closed * 100) : null;
       var avg = deals.length ? deals.reduce(function (a, d) { return a + val(d); }, 0) / deals.length : 0;
-      var gv = function (txt) { return isSuper ? txt : '<span style="color:var(--ink-faint);letter-spacing:.04em">\u2022\u2022\u2022\u2022 \u20b9</span>'; };
+      var gv = function (txt) { return showPrices ? txt : '<span style="color:var(--ink-faint);letter-spacing:.04em">\u2022\u2022\u2022\u2022 \u20b9</span>'; };
 
       // per-stage counts/values
       var cnt = {}, vsum = {};
@@ -18197,7 +18244,7 @@
         + PC5_kpiCell('Open pipeline', gv(PC5_inr(openVal)), open.length + ' deal' + (open.length !== 1 ? 's' : '') + ' \u00b7 gross', true, isSuper)
         + PC5_kpiCell('Weighted', gv(PC5_inr(weighted)), '\u03a3 value \u00d7 win-weight', true, isSuper)
         + PC5_kpiCell('Won rate', (wonRate === null ? '\u2014' : wonRate + '<span style="font-size:.6em;color:var(--ink-faint)">%</span>'), closed ? (won.length + '/' + closed + ' closed') : 'none closed yet', false, isSuper)
-        + PC5_kpiCell('Avg deal', (isSuper ? (deals.length ? PC5_inr(avg) : '\u2014') : gv('')), deals.length ? ('across ' + deals.length) : 'no deals', true, isSuper);
+        + PC5_kpiCell('Avg deal', (showPrices ? (deals.length ? PC5_inr(avg) : '\u2014') : gv('')), deals.length ? ('across ' + deals.length) : 'no deals', true, isSuper);
 
       // ---- Funnel (taper) ----
       var openStages = PC5_STAGES.filter(function (s) { return s.open; });
@@ -18209,14 +18256,14 @@
         var tx = filled ? 'var(--ink-on-brand,#fff)' : 'var(--ink-soft)';
         return '<div class="pc5-fnseg"><div class="pc5-fnbar" style="width:' + w + '%;background:' + bg + ';border-color:' + bd + '">'
           + '<span class="pc5-fnname" style="color:' + tx + '">' + PC5_esc(s.name) + '</span>'
-          + '<span class="pc5-fnmeta" style="color:' + tx + '"><b>' + PC5_pad(c) + '</b>' + (isSuper ? '<small>' + (v ? PC5_inr(v) : '\u2014') + '</small>' : '') + '</span>'
+          + '<span class="pc5-fnmeta" style="color:' + tx + '"><b>' + PC5_pad(c) + '</b>' + (showPrices ? '<small>' + (v ? PC5_inr(v) : '\u2014') + '</small>' : '') + '</span>'
           + '</div></div>';
       }).join('');
       var outc = function (nm, tok) {
         var c = cnt[nm], v = vsum[nm];
         return '<div class="pc5-outc" style="background:color-mix(in srgb,' + tok + ' ' + (c ? '14' : '6') + '%, transparent);border-color:color-mix(in srgb,' + tok + ' ' + (c ? '55' : '22') + '%, transparent)">'
           + '<span style="color:' + tok + ';font:700 10px/1 var(--f-mono,monospace);letter-spacing:.08em">' + nm.replace('Closed ', '').toUpperCase() + '</span>'
-          + '<span style="display:flex;gap:8px;align-items:baseline"><b style="font:700 18px/1 var(--f-mono,monospace);color:' + (c ? 'var(--ink-strong)' : 'var(--ink-faint)') + '">' + PC5_pad(c) + '</b>' + (isSuper ? '<small style="font:600 11px/1 var(--f-mono,monospace);color:var(--ink-soft)">' + (v ? PC5_inr(v) : '\u2014') + '</small>' : '') + '</span>'
+          + '<span style="display:flex;gap:8px;align-items:baseline"><b style="font:700 18px/1 var(--f-mono,monospace);color:' + (c ? 'var(--ink-strong)' : 'var(--ink-faint)') + '">' + PC5_pad(c) + '</b>' + (showPrices ? '<small style="font:600 11px/1 var(--f-mono,monospace);color:var(--ink-soft)">' + (v ? PC5_inr(v) : '\u2014') + '</small>' : '') + '</span>'
           + '</div>';
       };
       var funnelBlock = '<div class="pc5-funnel">' + funnel + '<div class="pc5-fnout">' + outc('Closed Won', 'var(--stage-won)') + outc('Closed Lost', 'var(--stage-lost)') + '</div></div>';
@@ -18241,8 +18288,8 @@
       }).join('') : PC5_empty('No source data in scope.');
 
       // ---- Sales / Presales ----
-      var salesBlock = PC5_owners(deals, 'sales_person_id', isSuper, val, 'var(--stage-awarded)');
-      var presBlock = PC5_owners(deals, 'presales_person_id', isSuper, val, 'var(--stage-budget)');
+      var salesBlock = PC5_owners(deals, 'sales_person_id', showPrices, val, 'var(--stage-awarded)');
+      var presBlock = PC5_owners(deals, 'presales_person_id', showPrices, val, 'var(--stage-budget)');
 
       // chunk 2 — Top players + CMS attach (parsed from raw_submission)
       var prodAgg = {}, cmsWith = 0, cmsStand = 0, cmsByVendor = {};
@@ -18269,7 +18316,10 @@
       // ---- Days in stage ----
       var aging = open.slice().map(function (d) {
         var s = PC5_stageOf(d.stage); var sla = (s && s.sla) || 21;
-        var t = Date.parse(d.updated_at || d.created_at || '') || now;
+        // v2.5.0-rc1: age from when the deal entered its CURRENT stage, not the
+        // last row edit. current_stage_entered_at is the truth; fall back to
+        // updated_at/created_at only when it's missing (older rows).
+        var t = Date.parse(d.current_stage_entered_at || d.updated_at || d.created_at || '') || now;
         var age = Math.max(0, Math.round((now - t) / DAY));
         return { stage: d.stage, tok: (s ? s.tok : 'var(--ink-faint)'), age: age, sla: sla };
       }).sort(function (a, b) { return b.age - a.age; }).slice(0, 8);
@@ -18282,7 +18332,9 @@
       }).join('') : PC5_empty('No open deals in scope to age.');
 
       // ---- Attention ----
-      var stuck = open.filter(function (d) { var t = Date.parse(d.updated_at || d.created_at || ''); return t && (now - t) > 30 * DAY; });
+      // v2.5.0-rc1: "stuck" = 30d+ in the CURRENT stage (stage-entry time),
+      // not 30d since the last edit. Falls back to updated_at/created_at.
+      var stuck = open.filter(function (d) { var t = Date.parse(d.current_stage_entered_at || d.updated_at || d.created_at || ''); return t && (now - t) > 30 * DAY; });
       var slipped = open.filter(function (d) { var s = String(d.close_month || '').slice(0, 7); return s && s < curM; });
       var closingM = open.filter(function (d) { return String(d.close_month || '').slice(0, 7) === curM; });
       var ready = open.filter(function (d) { return d.stage === 'Awarded'; });
@@ -18304,7 +18356,7 @@
           + '<span class="pc5-sbadge" style="color:' + (s ? s.tok : 'var(--ink-soft)') + ';background:color-mix(in srgb,' + (s ? s.tok : 'var(--ink-soft)') + ' 16%,transparent);border-color:color-mix(in srgb,' + (s ? s.tok : 'var(--ink-soft)') + ' 45%,transparent)">' + PC5_esc(d.stage || '\u2014').toUpperCase() + '</span>'
           + '<div class="pc5-dmid"><div class="pc5-dt">' + PC5_esc(d.customer_name || d.display_ref || 'Untitled deal') + '</div>'
           + '<div class="pc5-ds"><span>' + PC5_esc(PC5_name(d.sales_person_id)) + '</span><span>\u29bf ' + PC5_esc((PC5_region(d) || '\u2014')) + '</span>' + (d.close_month ? '<span>\u229e ' + PC5_esc(String(d.close_month).slice(0, 7)) + '</span>' : '') + '</div></div>'
-          + '<div class="pc5-dv">' + (isSuper ? PC5_inr(val(d)) : '\u2022\u2022\u2022\u2022 \u20b9') + '</div>'
+          + '<div class="pc5-dv">' + (showPrices ? PC5_inr(val(d)) : '\u2022\u2022\u2022\u2022 \u20b9') + '</div>'
           + '</div>';
       }).join('') : PC5_empty('No deals in scope.');
 
@@ -18328,7 +18380,10 @@
 
     // ---- small builders ----
     function PC5_kpiCell(label, value, sub, isSuperTag, isSuper) {
-      return '<div class="pc5-kpi"><div class="pc5-klabel">' + PC5_esc(label) + (isSuperTag ? '<span class="pc5-tag">SUPER</span>' : '') + '</div>'
+      // v2.5.0-rc1: SUPER tag removed — it added visual noise and the dashboard
+      // no longer keys ₹ visibility off super alone. isSuperTag/isSuper params
+      // left in the signature (harmless) to avoid touching every call site.
+      return '<div class="pc5-kpi"><div class="pc5-klabel">' + PC5_esc(label) + '</div>'
         + '<div class="pc5-kval">' + value + '</div><div class="pc5-ksub">' + PC5_esc(sub) + '</div></div>';
     }
     function PC5_bar(label, meta, ratio, col) {
@@ -24837,15 +24892,44 @@
        (renderSegmentPicker) and .bomt table (renderBomTable).
        ============================================================ */
 
-    // Price-toggle state — per-view, transient (never persisted). null =
-    // unresolved; resolves WITH prices for price-visible roles, forced
-    // false for Support. CP4 exports read bsResultShowPrices().
-    let _resultShowPrices = null;
+    // Price-toggle state — v2.5.0-rc1: now PERSISTENT and app-wide (browser
+    // localStorage, key 'bs.pricesVisible'), matching the tvONE app. Hiding
+    // prices on the quote page also hides them on the dashboard, and the
+    // choice survives reload. Default ON for price-visible roles; Support is
+    // always forced off (and never sees the toggle). _resultShowPrices is an
+    // in-memory mirror so a view doesn't re-hit storage on every render, but
+    // the persisted pref is the source of truth.
+    var _BS_PRICE_PREF_KEY = 'bs.pricesVisible';
+    var _resultShowPrices = null;  // in-memory mirror of the persisted pref
 
+    function _bsPricePrefRaw() {
+      // Raw persisted preference (default true), independent of role.
+      if (_resultShowPrices != null) return _resultShowPrices;
+      var v = true;
+      try {
+        var s = window.localStorage.getItem(_BS_PRICE_PREF_KEY);
+        if (s === '0' || s === 'false') v = false;
+        else if (s === '1' || s === 'true') v = true;
+      } catch (_) { /* storage unavailable — default ON */ }
+      _resultShowPrices = v;
+      return v;
+    }
+
+    function _bsSetPricePref(on) {
+      _resultShowPrices = !!on;
+      try { window.localStorage.setItem(_BS_PRICE_PREF_KEY, on ? '1' : '0'); }
+      catch (_) { /* storage unavailable — keep in-memory only */ }
+    }
+
+    // Canonical "are prices visible right now": role gate AND user toggle.
+    function bsPricesVisible() {
+      return bsCanSeePrices() && _bsPricePrefRaw();
+    }
+
+    // Back-compat alias — every existing caller (EXPORT, renderQuoteTable, the
+    // dashboard) routes through this. Delegates to bsPricesVisible().
     function bsResultShowPrices() {
-      if (!bsCanSeePrices()) return false;
-      if (_resultShowPrices == null) _resultShowPrices = true;
-      return _resultShowPrices;
+      return bsPricesVisible();
     }
 
     function bsCanEditDiscount(d) {
@@ -25509,10 +25593,11 @@
           else { saveDraft(); rerenderPreservingScroll(); }
           return;
         }
-        // v2.2.0 — with/without-price toggle (per-view, transient; exports
-        // follow it via bsResultShowPrices).
+        // v2.5.0-rc1 — with/without-price toggle is now PERSISTENT and
+        // app-wide (writes localStorage via _bsSetPricePref); the dashboard
+        // and exports both read it through bsPricesVisible().
         if (action === 'res-price-toggle') {
-          _resultShowPrices = actEl.getAttribute('data-val') === '1';
+          _bsSetPricePref(actEl.getAttribute('data-val') === '1');
           if ((actEl.getAttribute('data-ctx') || 'wiz') === 'sd') _rerenderSavedDealPreservingScroll();
           else rerenderPreservingScroll();
           return;
@@ -26224,7 +26309,22 @@
                 (err && err.message || String(err)), 'err');
             }
           };
-          if (!(navigator.canShare && navigator.share)) { shareFallback(); return; }
+          // v2.5.0-rc1: the native share sheet is the natural flow on mobile
+          // (Z Fold / Android / iOS) but an unwanted extra hop on desktop —
+          // there it just opens the Windows share picker when the user only
+          // wants WhatsApp/email. Detect mobile; on desktop go straight to the
+          // wa.me / mailto fallback. Reversible: delete the _isMobileShare
+          // gate below to restore always-native behaviour.
+          var _isMobileShare = (function () {
+            try {
+              var ua = navigator.userAgent || '';
+              var iOS = (EXPORT && EXPORT._isIOS && EXPORT._isIOS()) ||
+                        /iPad|iPhone|iPod/.test(ua);
+              var android = /Android/i.test(ua);
+              return !!(iOS || android);
+            } catch (_) { return false; }
+          })();
+          if (!_isMobileShare || !(navigator.canShare && navigator.share)) { shareFallback(); return; }
           toast('Preparing PDF\u2026', 'ok');
           EXPORT.pdf(_savedDealData, { mode: 'boq' }).then(function (blob) {
             const fn = EXPORT.filename(_savedDealData, 'pdf', { mode: 'boq' });
@@ -27270,6 +27370,9 @@
       bsCanSeePrices,
       // v2.2.0 — exports follow the result-page with/without-price toggle.
       bsResultShowPrices,
+      // v2.5.0-rc1 — canonical price-visibility gate (role AND persistent
+      // app-wide toggle). Dashboard + exports read this.
+      bsPricesVisible,
       // alpha.7.4: APP.wizSave needs the same payload-builder used by autosave
       buildSavePayload,
       // alpha.9.1: APP exposes these to __smokeIntegration. APP's IIFE has no

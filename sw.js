@@ -2,6 +2,10 @@
 // v2.3.0 (2026-06-13)
 //
 // Changelog (BrightSign):
+//   v2.5.0-rc1 — CACHE_NAME bump for the rc1 bundle (Excel clipping fix,
+//             dashboard ₹ role-gate + persistent price toggle, days-in-stage
+//             from current_stage_entered_at, About-sheet BrightSign wordmark,
+//             desktop share → wa.me/mailto). No SW logic change.
 //   v2.4.0  — CACHE_NAME bump for USD-master pricing (frontend half):
 //             player/accessory/CMS price reads prefer RPC-derived
 //             quote_price_inr with unit_price_inr fallback. Price-safe
@@ -102,7 +106,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v2.5.0-beta5';
+const CACHE_NAME = 'brightsign-v2.5.0-rc1';
 const SHELL_URLS = [
   './',
   './index.html'
