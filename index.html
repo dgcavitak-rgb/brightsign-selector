@@ -2402,6 +2402,16 @@
       flex-shrink: 0;
     }
     .mark-cavitak img { height: 22px; width: auto; display: block; }
+    /* The official Cavitak PNG is a dark wordmark on transparent bg, so in dark mode
+       only the red dot survives. Sit it on a white chip — mirrors .mark-tvone above;
+       the brand asset itself is untouched. Separator dropped (chip self-delimits). */
+    html[data-theme="dark"] .mark-cavitak {
+      background: #fff;
+      border-left: none;
+      padding: 4px 9px;
+      border-radius: 9px;
+      margin-left: var(--s-3);
+    }
     @media (max-width: 720px) { .mark-cavitak { display: none; } }
     .topbar-subtitle { display: none; }  /* superseded by .mark-cavitak */
     .topbar-spacer { flex: 1; }
@@ -7444,6 +7454,15 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v2.5.0-beta4  (2026-06-18)  — FIX: Cavitak logo invisible in dark mode. The official
+       Cavitak PNG is a dark wordmark on a transparent bg, so on the dark header only the red
+       dot showed. Now sits on a white chip, mirroring the BrightSign mark (.mark-tvone).
+       Light mode unchanged. sw.js -> brightsign-v2.5.0-beta4.
+     v2.5.0-beta3  (2026-06-18)  — FIX: rupee leak on the dashboard. Stage value in the
+       funnel (e.g. ₹2,23,437) and the Won/Lost tiles was visible to non-super users
+       even though the KPIs, owner panels and recent cards correctly masked it. Now gated
+       behind isSuper, so ₹ is consistently super-only across the whole board.
+       CATALOG.version + sw.js -> brightsign-v2.5.0-beta3.
      v2.5.0-beta2  (2026-06-16)  — DASHBOARD chunk 2: line-item widgets. Top-players
        (units quoted) + CMS-attach (with-CMS vs Standalone + platform leader), both
        parsed from each deal's raw_submission (no extra fetch). New grid row sits after
@@ -8604,8 +8623,8 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.5.0-beta2',
-      build_date: '2026-06-17',
+      version: 'brightsign-v2.5.0-beta4',
+      build_date: '2026-06-18',
       constants,
       calico,
       mv,
@@ -18183,14 +18202,14 @@
         var tx = filled ? 'var(--ink-on-brand,#fff)' : 'var(--ink-soft)';
         return '<div class="pc5-fnseg"><div class="pc5-fnbar" style="width:' + w + '%;background:' + bg + ';border-color:' + bd + '">'
           + '<span class="pc5-fnname" style="color:' + tx + '">' + PC5_esc(s.name) + '</span>'
-          + '<span class="pc5-fnmeta" style="color:' + tx + '"><b>' + PC5_pad(c) + '</b><small>' + (v ? PC5_inr(v) : '\u2014') + '</small></span>'
+          + '<span class="pc5-fnmeta" style="color:' + tx + '"><b>' + PC5_pad(c) + '</b>' + (isSuper ? '<small>' + (v ? PC5_inr(v) : '\u2014') + '</small>' : '') + '</span>'
           + '</div></div>';
       }).join('');
       var outc = function (nm, tok) {
         var c = cnt[nm], v = vsum[nm];
         return '<div class="pc5-outc" style="background:color-mix(in srgb,' + tok + ' ' + (c ? '14' : '6') + '%, transparent);border-color:color-mix(in srgb,' + tok + ' ' + (c ? '55' : '22') + '%, transparent)">'
           + '<span style="color:' + tok + ';font:700 10px/1 var(--f-mono,monospace);letter-spacing:.08em">' + nm.replace('Closed ', '').toUpperCase() + '</span>'
-          + '<span style="display:flex;gap:8px;align-items:baseline"><b style="font:700 18px/1 var(--f-mono,monospace);color:' + (c ? 'var(--ink-strong)' : 'var(--ink-faint)') + '">' + PC5_pad(c) + '</b><small style="font:600 11px/1 var(--f-mono,monospace);color:var(--ink-soft)">' + (v ? PC5_inr(v) : '\u2014') + '</small></span>'
+          + '<span style="display:flex;gap:8px;align-items:baseline"><b style="font:700 18px/1 var(--f-mono,monospace);color:' + (c ? 'var(--ink-strong)' : 'var(--ink-faint)') + '">' + PC5_pad(c) + '</b>' + (isSuper ? '<small style="font:600 11px/1 var(--f-mono,monospace);color:var(--ink-soft)">' + (v ? PC5_inr(v) : '\u2014') + '</small>' : '') + '</span>'
           + '</div>';
       };
       var funnelBlock = '<div class="pc5-funnel">' + funnel + '<div class="pc5-fnout">' + outc('Closed Won', 'var(--stage-won)') + outc('Closed Lost', 'var(--stage-lost)') + '</div></div>';
