@@ -2,6 +2,9 @@
 // v2.3.0 (2026-06-13)
 //
 // Changelog (BrightSign):
+//   v2.5.0-rc2 — CACHE_NAME bump for dark-mode contrast fixes (LIVE badge
+//             white-on-purple, saved-deal status pills, SX hint strips).
+//             CSS-only. No SW logic change.
 //   v2.5.0-rc1 — CACHE_NAME bump for the rc1 bundle (Excel clipping fix,
 //             dashboard ₹ role-gate + persistent price toggle, days-in-stage
 //             from current_stage_entered_at, About-sheet BrightSign wordmark,
@@ -106,7 +109,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v2.5.0-rc1';
+const CACHE_NAME = 'brightsign-v2.5.0-rc2';
 const SHELL_URLS = [
   './',
   './index.html'

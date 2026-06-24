@@ -2165,6 +2165,11 @@
       color: #B91C1C;
       border: 1px solid #B91C1C;
     }
+    /* v2.5.0-rc2: the edited/saved/error pills hardcoded dark text that
+       vanished on the dark tinted backgrounds in dark mode. Brighten in dark. */
+    html[data-theme="dark"] .sd-status-edited { color: #FBBF24; }
+    html[data-theme="dark"] .sd-status-saved  { color: #4ADE80; }
+    html[data-theme="dark"] .sd-status-error  { color: #F87171; border-color: #F87171; }
     .sd-status .spinner-sm {
       animation: ptr-spin 0.8s linear infinite;
     }
@@ -3418,6 +3423,14 @@
       border-color: rgba(55,35,106, 0.24);
     }
     html[data-theme="dark"] .sx-hint-strip svg { color: #9186AD; }
+    /* v2.5.0-rc2: success/warn variants — replace the two inline hardcoded
+       hint strips so they theme correctly (were light strips in dark mode). */
+    .sx-hint-strip.is-success { background: rgba(34,197,94,0.10);  border-color: rgba(34,197,94,0.26);  color: #15803D; }
+    .sx-hint-strip.is-warn    { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.32); color: #92400E; }
+    html[data-theme="dark"] .sx-hint-strip.is-success     { background: rgba(34,197,94,0.14);  border-color: rgba(74,222,128,0.30); color: #4ADE80; }
+    html[data-theme="dark"] .sx-hint-strip.is-success svg { color: #4ADE80; }
+    html[data-theme="dark"] .sx-hint-strip.is-warn        { background: rgba(245,158,11,0.16); border-color: rgba(251,191,36,0.30); color: #FBBF24; }
+    html[data-theme="dark"] .sx-hint-strip.is-warn svg    { color: #FBBF24; }
     .sx-da-row {
       display: flex; align-items: center; gap: var(--s-3);
       padding: var(--s-3) 0;
@@ -4792,7 +4805,7 @@
     .v15-ticker-badge {
       flex-shrink: 0; padding: 0 14px; height: 100%;
       display: flex; align-items: center; gap: 6px;
-      background: var(--brand); color: #1A1815;
+      background: var(--brand); color: #FFFFFF;
       font-family: var(--font-mono); font-size: 10px; font-weight: 700;
       letter-spacing: 0.1em; text-transform: uppercase;
       z-index: 3; position: relative;
@@ -7460,6 +7473,19 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v2.5.0-rc2  (2026-06-24)  — Dark-mode contrast fixes (CSS-only; verified by
+       rendering the Home view in both themes).
+       (1) HOME "LIVE" badge (.v15-ticker-badge) hardcoded near-black text (#1A1815)
+           on the purple brand pill — ~1.5:1 contrast, unreadable in BOTH light and
+           dark. Now #FFFFFF (white on purple, high contrast in both themes).
+       (2) Saved-deal status pills (edited/saved/error) hardcoded dark text that
+           vanished on their dark tinted backgrounds in dark mode — added dark-mode
+           overrides with brightened text (amber-400 / green-400 / red-400).
+       (3) Wizard SX hint strips (Kit-recommended / Individual TX+RX) used inline
+           hardcoded light colors that overrode the theme-aware .sx-hint-strip class,
+           leaving light strips in dark mode. Replaced with .is-success / .is-warn
+           modifier classes that style correctly in both themes.
+       No JS logic change. CATALOG.version + sw.js → brightsign-v2.5.0-rc2.
      v2.5.0-rc1  (2026-06-24)  — Release candidate. Supersedes beta5. Bundles five
        fixes; cross-filter + dead-code cleanup remain (hence rc, not final).
        (1) EXCEL CLIPPING. The four BOM columns (A=5/B=60/C=28/D=8) were reused by
@@ -7484,7 +7510,7 @@
            topbar/exports but missed here) — now the real BrightSign wordmark, same PNG
            asset (EXPORT.LOGO_TVONE_DURI). Also removed the always-on "SUPER" KPI tag.
        Desktop share: WhatsApp/Email now go straight to wa.me/mailto on desktop (the
-       native share sheet stays on mobile). CATALOG.version + sw.js → brightsign-v2.5.0-rc1.
+       native share sheet stays on mobile). CATALOG.version + sw.js → brightsign-v2.5.0-rc2.
      v2.5.0-beta5  (2026-06-23)  — Quote-builder fixes:
        (1) SSD lines showed POA — code built the SKU as BS-SSD-{size} -> 'BS-SSD-256GB', but the
            price-book rows are BS-SSD-128/256/512/1024. Strip the unit suffix so the lookup hits.
@@ -8660,7 +8686,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.5.0-rc1',
+      version: 'brightsign-v2.5.0-rc2',
       build_date: '2026-06-24',
       constants,
       calico,
@@ -24363,12 +24389,12 @@
         { v: '4K',    lbl: '4K' }
       ];
       const kitHint = (hdbtView.tx > 0 && hdbtView.rx > 0 && hdbtView.tx === hdbtView.rx)
-        ? '<div class="sx-hint-strip" role="note" style="background:#dcfce7;border-color:#86efac;color:#166534">' +
+        ? '<div class="sx-hint-strip is-success" role="note">' +
             '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
             '<span><strong>Kit</strong> recommended (Tx = Rx)</span>' +
           '</div>'
         : (hdbtView.tx > 0 || hdbtView.rx > 0)
-          ? '<div class="sx-hint-strip" role="note" style="background:#fef3c7;border-color:#fcd34d;color:#92400e">' +
+          ? '<div class="sx-hint-strip is-warn" role="note">' +
               '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="10"/></svg>' +
               '<span><strong>Individual TX + RX</strong> (Tx \u2260 Rx)</span>' +
             '</div>'
