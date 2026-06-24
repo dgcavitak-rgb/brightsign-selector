@@ -7473,6 +7473,17 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v2.6.0-rc1  (2026-06-24)  — NEW: User management admin panel (Super-only).
+       Adds a "Users" entry to the avatar menu → full list of all users with
+       create / edit / enable-disable / reset-password, wired to the existing
+       Super-gated RPCs (user_list, user_create, user_update, user_set_active,
+       user_admin_reset). New STORE wrappers usersListAll / userCreate /
+       userUpdate / userSetActive / userAdminReset compute salt + hash with the
+       same scheme as login (randomHex(16) + sha256Hex(pw+salt)). New users get
+       must_change=true (set their own password on first login). Region +
+       professional_title are create-only (user_update doesn't modify them).
+       Additive — no change to any existing flow. STORE export surface 62→67.
+       CATALOG.version + sw.js → brightsign-v2.6.0-rc1.
      v2.5.0-rc2  (2026-06-24)  — Dark-mode contrast fixes (CSS-only; verified by
        rendering the Home view in both themes).
        (1) HOME "LIVE" badge (.v15-ticker-badge) hardcoded near-black text (#1A1815)
@@ -7485,7 +7496,7 @@
            hardcoded light colors that overrode the theme-aware .sx-hint-strip class,
            leaving light strips in dark mode. Replaced with .is-success / .is-warn
            modifier classes that style correctly in both themes.
-       No JS logic change. CATALOG.version + sw.js → brightsign-v2.5.0-rc2.
+       No JS logic change. CATALOG.version + sw.js → brightsign-v2.6.0-rc1.
      v2.5.0-rc1  (2026-06-24)  — Release candidate. Supersedes beta5. Bundles five
        fixes; cross-filter + dead-code cleanup remain (hence rc, not final).
        (1) EXCEL CLIPPING. The four BOM columns (A=5/B=60/C=28/D=8) were reused by
@@ -7510,7 +7521,7 @@
            topbar/exports but missed here) — now the real BrightSign wordmark, same PNG
            asset (EXPORT.LOGO_TVONE_DURI). Also removed the always-on "SUPER" KPI tag.
        Desktop share: WhatsApp/Email now go straight to wa.me/mailto on desktop (the
-       native share sheet stays on mobile). CATALOG.version + sw.js → brightsign-v2.5.0-rc2.
+       native share sheet stays on mobile). CATALOG.version + sw.js → brightsign-v2.6.0-rc1.
      v2.5.0-beta5  (2026-06-23)  — Quote-builder fixes:
        (1) SSD lines showed POA — code built the SKU as BS-SSD-{size} -> 'BS-SSD-256GB', but the
            price-book rows are BS-SSD-128/256/512/1024. Strip the unit suffix so the lookup hits.
@@ -8686,7 +8697,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.5.0-rc2',
+      version: 'brightsign-v2.6.0-rc1',
       build_date: '2026-06-24',
       constants,
       calico,
@@ -9932,6 +9943,56 @@
       return r;
     }
 
+    /* v2.6.0 — User management (Super-only). Backend RPCs already exist:
+       user_list / user_create / user_update / user_set_active / user_admin_reset.
+       Salt + hash use the identical scheme as login & change-password
+       (randomHex(16) salt, sha256Hex(password + salt)). All are Super-gated
+       server-side; these wrappers just shape the payload + compute credentials. */
+    async function usersListAll() {
+      const r = await rpc('user_list', { p_include_inactive: true });
+      return (r && r.users) || (Array.isArray(r) ? r : []);
+    }
+    async function userCreate(payload, password) {
+      const u = currentUser();
+      const salt = randomHex(16);
+      const hash = await sha256Hex(String(password || '') + salt);
+      const r = await rpc('user_create', {
+        p_payload:        payload,
+        p_actor:          (u && u.id) || null,
+        p_salt:           salt,
+        p_password_hash:  hash
+      });
+      if (!r || r.ok !== true) throw new Error((r && r.error) || 'create failed');
+      return r;
+    }
+    async function userUpdate(payload) {
+      const u = currentUser();
+      const r = await rpc('user_update', { p_payload: payload, p_actor: (u && u.id) || null });
+      if (!r || r.ok !== true) throw new Error((r && r.error) || 'update failed');
+      return r;
+    }
+    async function userSetActive(username, active) {
+      const u = currentUser();
+      const r = await rpc('user_set_active', {
+        p_target: username, p_active: !!active, p_actor: (u && u.id) || null
+      });
+      if (!r || r.ok !== true) throw new Error((r && r.error) || 'toggle failed');
+      return r;
+    }
+    async function userAdminReset(username, newPassword) {
+      const u = currentUser();
+      const salt = randomHex(16);
+      const hash = await sha256Hex(String(newPassword || '') + salt);
+      const r = await rpc('user_admin_reset', {
+        p_target:            username,
+        p_actor:             (u && u.id) || null,
+        p_new_salt:          salt,
+        p_new_password_hash: hash
+      });
+      if (!r || r.ok !== true) throw new Error((r && r.error) || 'reset failed');
+      return r;
+    }
+
     /* v27.3.0 — Duplicate a deal (v27.7-alpha3: backend RPC landed).
        The deal_duplicate RPC requires p_actor (any existing user.id); without
        it the RPC returns {ok:false, error:'invalid_actor'}. Older wrapper
@@ -10262,6 +10323,7 @@
       auditLogList, revisionsList,
       // v27.3.0 — reset password (D10, D11 silent-drop restores)
       resetPasswordRequest, resetPasswordListPending, resetPasswordApprove,
+      usersListAll, userCreate, userUpdate, userSetActive, userAdminReset,
       // v27.3.0 — duplicate + custom stages (v27.7 partial restore)
       duplicateDeal, stageList,
       // v27.7-alpha1 — Pipeline stages CRUD (Session A backend)
@@ -15454,6 +15516,8 @@
           act: 'um-changepw' }
       ];
       if (isSuper) {
+        items.push({ label: 'Users', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+          act: 'um-users' });
         items.push({ label: 'Audit log', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/></svg>',
           act: 'um-audit' });
         items.push({ label: 'Password resets', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="16" r="1"/><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
@@ -15688,6 +15752,209 @@
        _stagesCache, sends full ordered ID array to backend. Backend uses a
        two-phase swap (seq += 10000 then 1..N) to dodge the UNIQUE(seq)
        constraint, so we don't need any client-side intermediate state. */
+    /* ============================================================
+       v2.6.0 — USER MANAGEMENT (Super-only admin panel)
+       List / create / edit / enable-disable / reset-password, wired to
+       STORE.usersListAll / userCreate / userUpdate / userSetActive /
+       userAdminReset. Mirrors the Pipeline-stages admin sheet pattern.
+       Region + professional_title are set at creation only (the
+       user_update RPC does not modify them server-side).
+       ============================================================ */
+    let _usersCache = [];
+    const USER_ROLES = ['Sales', 'Presales', 'BU Head', 'Support', 'OEM'];
+
+    function _roleOf(u) {
+      return (u && u.permission_tier === 'super') ? 'super' : ((u && u.org_function) || '');
+    }
+    function _roleLabel(role) {
+      return role === 'super' ? 'Super' : (role || '\u2014');
+    }
+
+    async function showUsersSheet() {
+      openSheet(
+        '<div class="notif-sheet">' +
+          '<div class="notif-sheet-head"><h3>Users</h3><span class="chip-v3 chip-accent">SUPER</span></div>' +
+          '<div style="padding:8px 16px;color:var(--ink-soft);font-size:13px">Loading\u2026</div>' +
+        '</div>'
+      );
+      let users;
+      try { users = await STORE.usersListAll(); } catch (e) { users = []; }
+      _usersCache = Array.isArray(users) ? users : [];
+      const me = STORE.currentUser();
+      const myUn = (me && me.username) || '';
+      const inactiveCount = _usersCache.filter(function (x) { return x.is_active === false; }).length;
+
+      const rowHtml = _usersCache.length
+        ? _usersCache.map(function (x) {
+            const isActive = x.is_active !== false;
+            const isSelf = x.username === myUn;
+            const role = _roleOf(x);
+            const roleBadge = '<span class="chip-v3" style="background:rgba(55,35,106,0.14);color:var(--accent);font-size:11px;padding:2px 8px">' + esc(_roleLabel(role)) + '</span>';
+            const regionBadge = x.region
+              ? '<span class="chip-v3" style="background:rgba(148,163,184,0.15);color:var(--ink-soft);font-size:11px;padding:2px 8px;margin-left:4px">' + esc(x.region) + '</span>'
+              : '';
+            const inactiveBadge = !isActive
+              ? '<span class="chip-v3" style="background:rgba(239,68,68,0.15);color:#ef4444;font-size:11px;padding:2px 8px;margin-left:4px">DISABLED</span>'
+              : '';
+            const rowStyle = 'display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);' +
+                             (isActive ? '' : 'opacity:0.55;');
+            const unEsc = esc(x.username || '');
+            const editBtn = '<button type="button" class="v4-sum-act" data-action="um-users-edit" data-username="' + unEsc + '" title="Edit" style="padding:6px 10px">Edit</button>';
+            const resetBtn = '<button type="button" class="v4-sum-act" data-action="um-users-reset" data-username="' + unEsc + '" title="Reset password" style="padding:6px 10px">Reset PW</button>';
+            const toggleLabel = isActive ? 'Disable' : 'Enable';
+            const toggleBtn = isSelf
+              ? ''
+              : '<button type="button" class="v4-sum-act" data-action="um-users-toggle" data-username="' + unEsc + '" data-active="' + (isActive ? '1' : '0') + '" title="' + toggleLabel + '" style="padding:6px 10px">' + toggleLabel + '</button>';
+            const initials = (String(x.full_name || x.username || '?').trim().charAt(0) || '?').toUpperCase();
+            return '<div style="' + rowStyle + '">' +
+              '<div style="width:30px;height:30px;flex:0 0 30px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">' + esc(initials) + '</div>' +
+              '<div style="flex:1;min-width:0">' +
+                '<div style="font-weight:600;color:var(--ink-strong);font-size:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
+                  esc(x.full_name || x.username || '(unnamed)') + roleBadge + regionBadge + inactiveBadge +
+                '</div>' +
+                '<div style="font-size:11px;color:var(--ink-soft);margin-top:2px">@' + unEsc + (x.email ? ' \u00b7 ' + esc(x.email) : '') + '</div>' +
+              '</div>' +
+              '<div style="display:flex;gap:4px;flex:0 0 auto;flex-wrap:wrap;justify-content:flex-end">' +
+                editBtn + resetBtn + toggleBtn +
+              '</div>' +
+            '</div>';
+          }).join('')
+        : '<div style="padding:16px;text-align:center;color:var(--ink-soft);font-size:13px">No users found.</div>';
+
+      openSheet(
+        '<div class="notif-sheet" style="padding-bottom:0">' +
+          '<div class="notif-sheet-head"><h3>Users</h3><span class="chip-v3 chip-accent">SUPER</span></div>' +
+          '<div style="padding:6px 16px 10px;color:var(--ink-soft);font-size:12px;line-height:1.5">' +
+            _usersCache.length + ' user' + (_usersCache.length === 1 ? '' : 's') +
+            (inactiveCount ? ' \u00b7 ' + inactiveCount + ' disabled' : '') +
+            '. New users set their own password on first login.' +
+          '</div>' +
+          '<div style="border-top:1px solid var(--border);max-height:55vh;overflow-y:auto">' + rowHtml + '</div>' +
+          '<div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end">' +
+            '<button type="button" class="btn-v3 btn-primary btn-md" data-action="um-users-add">+ New user</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    function showUserEditSheet(user) {
+      const isEdit = !!user;
+      const curUn     = isEdit ? (user.username || '') : '';
+      const curFull   = isEdit ? (user.full_name || '') : '';
+      const curRole   = isEdit ? _roleOf(user) : 'Sales';
+      const curEmail  = isEdit ? (user.email || '') : '';
+      const curPhone  = isEdit ? (user.phone || '') : '';
+      const curTitle  = isEdit ? (user.professional_title || '') : '';
+      const curRegion = isEdit ? (user.region || '') : '';
+      const curActive = isEdit ? (user.is_active !== false) : true;
+
+      const roleOpts = USER_ROLES.map(function (r) {
+        return '<option value="' + esc(r) + '"' + (curRole === r ? ' selected' : '') + '>' + esc(r) + '</option>';
+      }).join('') +
+        '<option value="super"' + (curRole === 'super' ? ' selected' : '') + '>Super \u2014 full admin</option>';
+
+      openSheet(
+        '<div class="notif-sheet" style="padding:0 16px 16px">' +
+          '<div class="notif-sheet-head" style="padding-left:0;padding-right:0">' +
+            '<h3>' + (isEdit ? 'Edit user' : 'New user') + '</h3><span class="chip-v3 chip-accent">SUPER</span>' +
+          '</div>' +
+          '<div class="field-v3"><label>Username *</label>' +
+            '<input class="input-v3" id="ue-username" type="text" maxlength="40" autocomplete="off" value="' + esc(curUn) + '"' + (isEdit ? ' disabled' : ' placeholder="e.g. arvind"') + '>' +
+            (isEdit ? '<div style="font-size:11px;color:var(--ink-soft);margin-top:4px">Username can\'t be changed.</div>' : '') +
+          '</div>' +
+          '<div class="field-v3"><label>Full name *</label>' +
+            '<input class="input-v3" id="ue-full" type="text" maxlength="80" value="' + esc(curFull) + '" placeholder="e.g. Arvind Kumar" autocomplete="off">' +
+          '</div>' +
+          '<div class="field-v3"><label>Role *</label><select class="input-v3" id="ue-role">' + roleOpts + '</select></div>' +
+          '<div class="field-v3"><label>Region' + (isEdit ? '' : ' (BU Head)') + '</label>' +
+            '<input class="input-v3" id="ue-region" type="text" maxlength="40" value="' + esc(curRegion) + '"' + (isEdit ? ' disabled' : ' placeholder="e.g. South or South,East"') + '>' +
+            (isEdit
+              ? '<div style="font-size:11px;color:var(--ink-soft);margin-top:4px">Region is set at creation (not editable here).</div>'
+              : '<div style="font-size:11px;color:var(--ink-soft);margin-top:4px">Only BU Head deals filter by region. Comma-separate for multi-region.</div>') +
+          '</div>' +
+          '<div class="field-v3"><label>Email</label>' +
+            '<input class="input-v3" id="ue-email" type="email" maxlength="120" value="' + esc(curEmail) + '" placeholder="name@cavitak.com" autocomplete="off">' +
+          '</div>' +
+          '<div class="field-v3"><label>Phone</label>' +
+            '<input class="input-v3" id="ue-phone" type="text" maxlength="20" value="' + esc(curPhone) + '" placeholder="10-digit mobile" autocomplete="off">' +
+          '</div>' +
+          (isEdit ? '' :
+            '<div class="field-v3"><label>Professional title</label>' +
+              '<input class="input-v3" id="ue-title" type="text" maxlength="60" value="' + esc(curTitle) + '" placeholder="optional" autocomplete="off"></div>') +
+          (isEdit
+            ? '<div class="field-v3"><label>Status</label><select class="input-v3" id="ue-active">' +
+                '<option value="true"' + (curActive ? ' selected' : '') + '>Active</option>' +
+                '<option value="false"' + (!curActive ? ' selected' : '') + '>Disabled</option>' +
+              '</select></div>'
+            : '<div class="field-v3"><label>Temporary password *</label>' +
+                '<input class="input-v3" id="ue-pw" type="text" maxlength="64" value="cavitak@123" autocomplete="off">' +
+                '<div style="font-size:11px;color:var(--ink-soft);margin-top:4px">User must change this on first login.</div></div>') +
+          '<div style="display:flex;gap:8px;margin-top:12px">' +
+            '<button class="btn-v3 btn-ghost btn-md" type="button" data-action="um-users-cancel" style="flex:1">Cancel</button>' +
+            '<button class="btn-v3 btn-primary btn-md" type="button" data-action="um-users-save"' + (isEdit ? ' data-username="' + esc(curUn) + '"' : '') + ' style="flex:2">' + (isEdit ? 'Update user' : 'Create user') + '</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    function showUserResetSheet(username) {
+      openSheet(
+        '<div class="notif-sheet" style="padding:0 16px 16px">' +
+          '<div class="notif-sheet-head" style="padding-left:0;padding-right:0"><h3>Reset password</h3><span class="chip-v3 chip-accent">SUPER</span></div>' +
+          '<div style="padding:0 0 10px;color:var(--ink-soft);font-size:13px">Set a new temporary password for <b>@' + esc(username) + '</b>. They\'ll be asked to change it on next login.</div>' +
+          '<div class="field-v3"><label>New temporary password *</label>' +
+            '<input class="input-v3" id="ur-pw" type="text" maxlength="64" value="cavitak@123" autocomplete="off"></div>' +
+          '<div style="display:flex;gap:8px;margin-top:12px">' +
+            '<button class="btn-v3 btn-ghost btn-md" type="button" data-action="um-users-cancel" style="flex:1">Cancel</button>' +
+            '<button class="btn-v3 btn-primary btn-md" type="button" data-action="um-users-reset-submit" data-username="' + esc(username) + '" style="flex:2">Reset password</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    async function _handleUserSave(username) {
+      const isEdit = !!username;
+      const un = isEdit ? username : (($('ue-username') && $('ue-username').value || '').trim().toLowerCase());
+      const full = ($('ue-full') && $('ue-full').value || '').trim();
+      const role = ($('ue-role') && $('ue-role').value || '').trim();
+      if (!un) { toast('Username is required', 'err'); return; }
+      if (!full) { toast('Full name is required', 'err'); return; }
+      const email = ($('ue-email') && $('ue-email').value || '').trim();
+      const phone = ($('ue-phone') && $('ue-phone').value || '').trim();
+      if (isEdit) {
+        const active = ($('ue-active') && $('ue-active').value) === 'true';
+        try {
+          await STORE.userUpdate({ username: un, full_name: full, role: role, email: email, phone: phone, active: active ? 'true' : 'false' });
+          toast('User updated', 'ok'); showUsersSheet();
+        } catch (e) { toast('Update failed: ' + (e && e.message || String(e)), 'err'); }
+      } else {
+        const region = ($('ue-region') && $('ue-region').value || '').trim();
+        const title  = ($('ue-title') && $('ue-title').value || '').trim();
+        const pw     = ($('ue-pw') && $('ue-pw').value || '');
+        if (!pw) { toast('Temporary password is required', 'err'); return; }
+        try {
+          await STORE.userCreate({ username: un, full_name: full, role: role, region: region, email: email, phone: phone, professional_title: title, active: 'true' }, pw);
+          toast('User created', 'ok'); showUsersSheet();
+        } catch (e) { toast('Create failed: ' + (e && e.message || String(e)), 'err'); }
+      }
+    }
+
+    async function _handleUserToggle(username, currentlyActive) {
+      try {
+        await STORE.userSetActive(username, !currentlyActive);
+        toast(currentlyActive ? 'User disabled' : 'User enabled', 'ok'); showUsersSheet();
+      } catch (e) { toast('Failed: ' + (e && e.message || String(e)), 'err'); }
+    }
+
+    async function _handleUserReset(username) {
+      const pw = ($('ur-pw') && $('ur-pw').value || '');
+      if (!pw) { toast('Password is required', 'err'); return; }
+      try {
+        await STORE.userAdminReset(username, pw);
+        toast('Password reset', 'ok'); showUsersSheet();
+      } catch (e) { toast('Reset failed: ' + (e && e.message || String(e)), 'err'); }
+    }
+
     async function _handleStageMove(id, direction) {
       const rows = _stagesCache.slice().sort(function (a, b) {
         return (a.seq || 0) - (b.seq || 0);
@@ -26201,6 +26468,39 @@
           showPipelineStagesSheet();
           return;
         }
+        // v2.6.0 — User management (Super-only)
+        if (action === 'um-users') { showUsersSheet(); return; }
+        if (action === 'um-users-add') { showUserEditSheet(null); return; }
+        if (action === 'um-users-edit') {
+          const un = actEl.getAttribute('data-username');
+          if (!un) return;
+          const user = _usersCache.find(function (x) { return x.username === un; });
+          if (!user) { toast('User not in cache \u2014 refreshing', 'warn'); showUsersSheet(); return; }
+          showUserEditSheet(user);
+          return;
+        }
+        if (action === 'um-users-toggle') {
+          const un = actEl.getAttribute('data-username');
+          const activeStr = actEl.getAttribute('data-active');
+          if (un) _handleUserToggle(un, activeStr === '1');
+          return;
+        }
+        if (action === 'um-users-reset') {
+          const un = actEl.getAttribute('data-username');
+          if (un) showUserResetSheet(un);
+          return;
+        }
+        if (action === 'um-users-reset-submit') {
+          const un = actEl.getAttribute('data-username');
+          if (un) _handleUserReset(un);
+          return;
+        }
+        if (action === 'um-users-save') {
+          const un = actEl.getAttribute('data-username');  // null for create
+          _handleUserSave(un || null);
+          return;
+        }
+        if (action === 'um-users-cancel') { showUsersSheet(); return; }
         // v27.7-alpha1 — Pipeline stages admin (Super-only)
         if (action === 'um-stages-add') {
           showStageEditSheet(null);
