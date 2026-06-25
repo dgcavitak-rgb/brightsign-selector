@@ -7483,6 +7483,22 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v2.7.3  (2026-06-25)  — Saved-deal autosave fix (🔴 systemic). Edits on a
+       saved deal (line discount %, ladder steppers) recomputed live but NEVER
+       persisted: every BS deal sat at row_version=1, edited_at=null. The cause
+       was purely client-side — deal_save was proven correct (a faithful replay
+       bumped row_version 1->2 and applied the discounts: deal_value 1,168,167 ->
+       1,102,626). The qt-disc-set / bs-step handlers call scheduleAutosave()
+       (sets a 1s debounce timer) THEN _rerenderSavedDealPreservingScroll(); that
+       re-render runs renderSavedDealLoaded, which unconditionally cleared
+       _autosaveTimer at the top of EVERY render — cancelling the save it had just
+       scheduled. (Soft fields dodged it: they autosave with no re-render; a
+       price-toggle re-render inside the debounce window would have killed it too.)
+       Fix: capture the previously-loaded deal ref and clear the pending timer
+       ONLY when loading a DIFFERENT deal (the genuine stale-save guard), never on
+       a same-deal re-render. Headless control-flow sim confirms buggy=save never
+       fires, fixed=save fires with correct line_discounts and no cross-deal stale
+       save. CATALOG.version + sw.js -> v2.7.3.
      v2.7.2  (2026-06-25)  — BUG-4 fix (🔴 blocker, verified). Advanced-mode
        deals reloaded from a saved ref were rendering/exporting the recommended
        single-player path instead of the saved cart. Root cause: showSavedDeal
@@ -8749,7 +8765,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.7.2',
+      version: 'brightsign-v2.7.3',
       build_date: '2026-06-25',
       constants,
       calico,
@@ -23417,6 +23433,11 @@ function DSH_CSS(){ return '<style>'+[
       // Excel/PDF exports, BoM card, +/- steppers) reads top-level fields. We
       // hydrate once here; the raw `deal` param is kept for header display
       // (created/updated/confirmed timestamps that the wizard shape drops).
+      // v2.7.3 — capture the previously-loaded deal ref BEFORE overwriting it,
+      // so the stale-autosave guard below fires ONLY on a genuine new-deal load,
+      // not on a same-deal re-render (which would cancel a just-scheduled save —
+      // the root cause of saved-deal edits, e.g. disc %, never persisting).
+      const _prevSdRefId = _savedDealRefId;
       let _hydratedDeal;
       try { _hydratedDeal = hydrateWizardFromDeal(deal); }
       catch (_) { _hydratedDeal = deal; }
@@ -23429,7 +23450,13 @@ function DSH_CSS(){ return '<style>'+[
         sales:    (deal && deal.sales_person_id) ? String(deal.sales_person_id) : null,
         presales: (deal && deal.presales_person_id) ? String(deal.presales_person_id) : null
       };
-      if (_autosaveTimer) { clearTimeout(_autosaveTimer); _autosaveTimer = null; }
+      // v2.7.3 — only cancel a pending autosave when LOADING A DIFFERENT deal
+      // (stale-save guard). On a same-deal re-render (disc %, ladder stepper,
+      // price toggle) the timer MUST survive, or the scheduled save is silently
+      // dropped — the bug behind "discounts don't persist" (row_version stuck at 1).
+      if (_autosaveTimer && _prevSdRefId && _prevSdRefId !== _savedDealRefId) {
+        clearTimeout(_autosaveTimer); _autosaveTimer = null;
+      }
 
       const refId    = _savedDealRefId || '\u2014';
       const project  = (deal && deal.project)       || '\u2014';

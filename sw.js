@@ -2,6 +2,10 @@
 // v2.3.0 (2026-06-13)
 //
 // Changelog (BrightSign):
+//   v2.7.3 — CACHE_NAME bump for the saved-deal autosave fix: edits (line
+//     discount %, ladder steppers) recomputed live but never persisted because
+//     the re-render cleared the just-scheduled autosave timer. Guarded so the
+//     timer is only cancelled when loading a different deal.
 //   v2.7.2 — CACHE_NAME bump for BUG-4: advanced-mode deals lost their cart on
 //            reload (showSavedDeal deleted raw_submission before re-hydration).
 //            Fixed; advanced render + PDF + Excel now use advancedSelections.
@@ -121,7 +125,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v2.7.2';
+const CACHE_NAME = 'brightsign-v2.7.3';
 const SHELL_URLS = [
   './',
   './index.html'
