@@ -2,6 +2,9 @@
 // v2.3.0 (2026-06-13)
 //
 // Changelog (BrightSign):
+//   v2.7.2 — CACHE_NAME bump for BUG-4: advanced-mode deals lost their cart on
+//            reload (showSavedDeal deleted raw_submission before re-hydration).
+//            Fixed; advanced render + PDF + Excel now use advancedSelections.
 //   v2.7.1 — CACHE_NAME bump for Phase 2: BoQ table mobile scroll (BUG-6),
 //            History ₹ gated for Support + toggle parity (BUG-3), OEM =
 //            external all-deals viewer (CHANGE-1).
@@ -118,7 +121,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v2.7.1';
+const CACHE_NAME = 'brightsign-v2.7.2';
 const SHELL_URLS = [
   './',
   './index.html'

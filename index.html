@@ -7483,6 +7483,22 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v2.7.2  (2026-06-25)  — BUG-4 fix (🔴 blocker, verified). Advanced-mode
+       deals reloaded from a saved ref were rendering/exporting the recommended
+       single-player path instead of the saved cart. Root cause: showSavedDeal
+       deleted deal.raw_submission after flattening, but renderSavedDealLoaded
+       re-hydrates via hydrateWizardFromDeal, which recovers engine state (mode,
+       advancedSelections, power, budget_tier, cms_qty, line_discounts) ONLY from
+       raw_submission. Because bs_deal_get also returns a populated bs_specs, the
+       hydrate flat-guard (needs BOTH bs_specs AND raw_submission absent) never
+       fired, full hydration ran against an empty raw, mode fell back to 'guided',
+       and the cart was lost. Fix: stop deleting raw_submission in showSavedDeal
+       (one line) — the flatten already gives the renderer its flat shape and
+       buildSavePayload rebuilds raw_submission on save. Headless replay of the
+       live BS-18700544 shape confirms the flip: guided/0 selections -> advanced/
+       4 selections, with power/tier/discounts/cms also recovered. Also fixes a
+       latent guided-deal bug (engine state was being dropped on reload too).
+       CATALOG.version + sw.js -> v2.7.2.
      v2.7.1  (2026-06-25)  — Phase 2 fixes (verified). (1) BUG-6: the priced
        BoQ table on the result page is wrapped in a horizontal-scroll container
        + tighter mobile padding, so the Total Price column no longer clips on
@@ -8733,7 +8749,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.7.1',
+      version: 'brightsign-v2.7.2',
       build_date: '2026-06-25',
       constants,
       calico,
@@ -23309,8 +23325,15 @@ function DSH_CSS(){ return '<style>'+[
               deal[k] = raw[k];
             }
           });
-          // Drop the nested copy — buildSavePayload will rebuild it on save.
-          delete deal.raw_submission;
+          // BUG-4 (v2.7.2): do NOT delete raw_submission. renderSavedDealLoaded
+          // re-hydrates via hydrateWizardFromDeal, which recovers engine state
+          // (mode, advancedSelections, power, budget_tier, cms_qty, line_discounts)
+          // ONLY from raw_submission. bs_deal_get also returns a populated bs_specs,
+          // so hydrate's flat-guard (needs BOTH bs_specs AND raw_submission absent)
+          // never fires — deleting raw_submission here made advanced deals lose
+          // their cart and fall back to 'guided' (the recommend path). The flatten
+          // above is enough for the renderer; the retained nested copy is harmless
+          // (buildSavePayload rebuilds it on save).
         }
 
         // v27.1.0 B3 — deal_get returns close_month as 'YYYY-MM-DD' (DATE).
