@@ -2,6 +2,12 @@
 // v2.3.0 (2026-06-13)
 //
 // Changelog (BrightSign):
+//   v2.7.1 — CACHE_NAME bump for Phase 2: BoQ table mobile scroll (BUG-6),
+//            History ₹ gated for Support + toggle parity (BUG-3), OEM =
+//            external all-deals viewer (CHANGE-1).
+//   v2.7.0 — CACHE_NAME bump for the restored "Pipeline Command" dashboard
+//            (deep analytics: India zone+state map, forecast, heatmap, CMS
+//            analysis, cross-filter). Old PC5 render block removed.
 //   v2.6.0-rc1 — CACHE_NAME bump for the Users admin panel (Super-only
 //             user management: list/create/edit/enable-disable/reset).
 //             Additive frontend feature. No SW logic change.
@@ -112,7 +118,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v2.6.0-rc1';
+const CACHE_NAME = 'brightsign-v2.7.1';
 const SHELL_URLS = [
   './',
   './index.html'
