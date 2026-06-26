@@ -2,6 +2,13 @@
 // v2.3.0 (2026-06-13)
 //
 // Changelog (BrightSign):
+//   v2.8.9 — CACHE_NAME bump: Customer/party directory wired into the
+//     wizard (Step-1 End user / Partner / Consultant pickers backed by
+//     party_search / party_upsert RPCs). No SW logic change.
+//   v2.8.8 — CACHE_NAME bump: dead-code sweep (8 unused fns + dead
+//     .entity-tile component). No SW logic change.
+//   v2.8.7 — CACHE_NAME bump: design-consistency pass (cross-theme brand
+//     colour fixes + load font weight 800). No SW logic change.
 //   v2.8.6 — CACHE_NAME bump so the corrected About build-date (2026-06-26)
 //     reaches clients. No SW logic change.
 //   v2.8.5 — CACHE_NAME bump: lazy-load ECharts (was eager) + History
@@ -157,7 +164,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v2.8.6';
+const CACHE_NAME = 'brightsign-v2.8.9';
 const SHELL_URLS = [
   './',
   './index.html'
