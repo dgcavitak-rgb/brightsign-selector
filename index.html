@@ -101,7 +101,7 @@
        NOT enabled by default because shipping a placeholder hash would
        break the app — browser refuses to execute on hash mismatch.
        Trade-off: minor CDN compromise risk vs guaranteed-working baseline. -->
-  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js" defer></script>
+  <!-- v2.8.5 - ECharts lazy-loads on first dashboard chart (see _waitForECharts); eager <script> removed to trim cold-load + parse. -->
   <!--
     v27.7.0 — PIPELINE STAGES ADMIN + EMAIL POLISH + DUPLICATE DEAL (2026-05-27)
     The "till 4.6" deferral list is closed. v27.7 delivers what v27.5 and
@@ -1619,6 +1619,7 @@
       --c-bg: var(--bg-page); --c-elev: var(--bg-card); --c-sunk: var(--bg-subtle);
       --c-border: var(--border-mid); --c-border-st: var(--border-strong);
       --c-accent: var(--accent); --c-accent-dk: var(--accent-deep); --c-accent-lt: var(--accent-soft);
+      --c-accent-text: #37236A; --c-tile-border: rgba(15,14,12,0.10);
       --c-gold: #C8A04A; --c-gold-lt: #F5ECD5;
       --c-ok: var(--success); --c-ok-lt: var(--success-soft);
       --c-warn: var(--warning); --c-warn-lt: var(--warning-soft);
@@ -1632,7 +1633,7 @@
       --bg-input: #1C1A16; --bg-input-focus: #24221D; --bg-elevated: #201E19; --bg-subtle: #1B1915;
       --border-soft: rgba(255,255,255,0.05); --border-mid: rgba(255,255,255,0.09); --border-strong: rgba(255,255,255,0.16);
       --border-brand: rgba(247,169,61,0.45);
-      --ink-strong: #F5F4F1; --ink-mid: #C2C0B7; --ink-soft: #8A887E; --ink-faint: #5A584F;
+      --ink-strong: #F5F4F1; --ink-mid: #C2C0B7; --ink-soft: #A3A199; --ink-faint: #5A584F;
       --ink-on-brand: #0E0D0B; --ink-brand: #63538B;
       --accent: var(--amber-400); --accent-deep: var(--amber-500); --accent-soft: rgba(55,35,106,0.16);
       --brand-grad: linear-gradient(135deg, #37236A 0%, #2C1C55 100%);
@@ -1664,6 +1665,7 @@
       --c-bg: var(--bg-page); --c-elev: var(--bg-card); --c-sunk: var(--bg-subtle);
       --c-border: var(--border-mid); --c-border-st: var(--border-strong);
       --c-accent: var(--accent); --c-accent-dk: var(--accent-deep); --c-accent-lt: var(--accent-soft);
+      --c-accent-text: #A99BC9; --c-tile-border: rgba(0,0,0,0.12);
       --c-gold: #C8A04A; --c-gold-lt: rgba(200,160,74,0.15);
       --c-ok: var(--success); --c-ok-lt: var(--success-soft);
       --c-warn: var(--warning); --c-warn-lt: var(--warning-soft);
@@ -1777,7 +1779,7 @@
       gap: 2px; padding: 8px 4px;
       font: 600 11px var(--f-sans);
       -webkit-tap-highlight-color: transparent; }
-    .bottom-nav button[aria-current="page"] { color: var(--c-accent); }
+    .bottom-nav button[aria-current="page"] { color: var(--c-accent-text); }
     .bottom-nav button:active { background: var(--c-sunk); }
     .bottom-nav button .icon { width: 22px; height: 22px; stroke: currentColor;
       fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -1797,12 +1799,12 @@
       text-decoration: none; transition: background 80ms; }
     .btn:active { background: var(--c-accent-dk); }
     .btn[disabled] { background: var(--c-sunk); color: var(--c-fg-mute); cursor: not-allowed; }
-    .btn.btn-ghost { background: transparent; color: var(--c-accent); border: 1px solid var(--c-border-st); }
+    .btn.btn-ghost { background: transparent; color: var(--c-accent-text); border: 1px solid var(--c-border-st); }
     .btn.btn-ghost:active { background: var(--c-sunk); }
     .btn.btn-ghost[disabled] { color: var(--c-fg-mute); border-color: var(--c-border); background: transparent; }
     .btn.btn-danger { background: var(--c-err); }
     .btn.btn-danger:active { background: #8a1f15; }
-    .btn.btn-text { background: transparent; color: var(--c-accent); padding: 10px 12px; }
+    .btn.btn-text { background: transparent; color: var(--c-accent-text); padding: 10px 12px; }
     .btn.btn-block { width: 100%; }
 
     /* Inputs */
@@ -1853,11 +1855,58 @@
     .adv-model-row .stepper { flex: 0 0 auto; } /* v2.1.0 F2 — stepper never shrinks; was clipping on long-description rows (AU335, LS425) */
     .adv-model-main { flex: 1; min-width: 0; }  /* v2.1.0 F2 — text column absorbs the squeeze instead */
     .adv-model-name { font: 600 15px var(--f-mono); color: var(--c-fg); }
-    .adv-model-grp { font: 600 10px var(--f-mono); color: var(--c-accent);
+    .adv-model-grp { font: 600 10px var(--f-mono); color: var(--c-accent-text);
       border: 1px solid var(--c-accent); border-radius: 4px; padding: 1px 5px;
       margin-left: 6px; vertical-align: 1px; }
     .adv-model-tag { font-size: 12px; color: var(--c-fg-mute); margin-top: 2px; }
     .adv-os-row { display: flex; gap: 6px; margin-top: 8px; }
+
+    /* v2.8.0 — Advanced cart/canvas composer (Step 3). Catalog grouped by
+       family on the left; a live "Your build" canvas on the right. Reuses
+       .adv-model-row / .stepper / .pill-btn / .adv-os-row. Fold = two panes
+       side by side; phone = build collapses to a sticky summary on top. */
+    .adv-composer { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; align-items: start; }
+    .adv-cat { min-width: 0; }
+    .adv-fam { margin-bottom: 14px; }
+    .adv-fam:last-child { margin-bottom: 0; }
+    .adv-fam-label { display: flex; align-items: center; gap: 8px;
+      font: 700 11px var(--f-mono); letter-spacing: .06em; text-transform: uppercase;
+      color: var(--c-fg-mute); margin: 0 2px 8px; }
+    .adv-fam-label .ct { color: var(--c-accent-text); font-weight: 700; }
+    .adv-fam-label .ln { flex: 1; height: 1px; background: var(--c-border); }
+    .adv-build { position: sticky; top: 8px; border: 1px solid var(--c-border);
+      border-radius: 16px; overflow: hidden; background: var(--c-elev); }
+    .adv-build-head { display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px; background: var(--cta-grad); color: #fff; }
+    .adv-build-head .t { font: 700 12px var(--f-mono); letter-spacing: .05em; text-transform: uppercase; }
+    .adv-build-head .n { font-size: 12px; font-weight: 700; background: rgba(255,255,255,.20);
+      padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+    .adv-build-body { padding: 4px 14px; }
+    .adv-build-item { display: flex; align-items: center; gap: 10px; padding: 9px 0;
+      border-bottom: 1px solid var(--c-border); }
+    .adv-build-item:last-child { border-bottom: 0; }
+    .adv-build-item .bi-info { flex: 1; min-width: 0; }
+    .adv-build-item .bi-name { font: 600 13.5px var(--f-mono); color: var(--c-fg); }
+    .adv-build-item .bi-sub { font-size: 11px; color: var(--c-fg-mute); margin-top: 1px; }
+    .adv-build-item .bi-qty { font: 700 14px var(--f-mono); color: var(--c-fg); }
+    .adv-build-item .bi-rm { border: 0; background: transparent; color: var(--c-fg-mute); cursor: pointer;
+      font-size: 15px; line-height: 1; padding: 4px 6px; border-radius: 6px; flex: 0 0 auto;
+      -webkit-tap-highlight-color: transparent; }
+    .adv-build-item .bi-rm:active { color: var(--c-accent-text); background: var(--c-sunk); }
+    .adv-build-empty { text-align: center; color: var(--c-fg-mute); font-size: 12.5px;
+      padding: 24px 12px; line-height: 1.5; }
+    .adv-build-empty svg { width: 30px; height: 30px; opacity: .4; margin-bottom: 6px; display: inline-block; }
+    .adv-build-foot { display: flex; align-items: baseline; justify-content: space-between;
+      padding: 12px 14px; border-top: 1px dashed var(--c-border); }
+    .adv-build-foot .lbl { font: 700 11px var(--f-mono); letter-spacing: .04em; text-transform: uppercase; color: var(--c-fg-mute); }
+    .adv-build-foot .big { font: 800 24px var(--f-mono); color: var(--c-accent-text); }
+    .adv-build-foot .big small { font-size: 12px; color: var(--c-fg-mute); font-weight: 600; margin-left: 5px; }
+    @media (max-width: 720px) {
+      .adv-composer { grid-template-columns: 1fr; gap: 12px; }
+      .adv-build { position: sticky; top: 0; order: -1; z-index: 5; box-shadow: 0 3px 12px rgba(0,0,0,.14); }
+      .adv-build-body { display: none; }
+      .adv-build-foot { padding: 9px 14px; }
+    }
 
     /* Tile selector */
     .tile-group { display: grid; gap: 10px; }
@@ -1959,7 +2008,7 @@
     .wiz-summary .sum-key { font-weight: 600; color: var(--c-fg-soft); font-size: 13px; }
     .wiz-summary .sum-val { text-align: right; font-size: 14px; }
     .wiz-summary .edit-link { display: inline-block; margin: 4px 0 0;
-      font-size: 12px; color: var(--c-accent); cursor: pointer;
+      font-size: 12px; color: var(--c-accent-text); cursor: pointer;
       background: transparent; border: 0; padding: 0; font-weight: 600; }
 
     /* Chassis hero (BoM) */
@@ -1971,7 +2020,7 @@
       pointer-events: none; }
     .bom-card.empty-bom { background: var(--c-sunk); border: 1px dashed var(--c-border-st); }
     .bom-chassis-sku { font: 700 11px/1 var(--f-mono); letter-spacing: 0.08em;
-      color: var(--c-accent-dk); text-transform: uppercase; }
+      color: var(--c-accent-text); text-transform: uppercase; }
     .bom-chassis-label { font-size: 22px; font-weight: 700; margin: 4px 0 2px;
       letter-spacing: -0.01em; }
     /* v27.1.2 #4b — I/O port summary, sits below chassisLabel above bom-meta */
@@ -1994,12 +2043,12 @@
       text-transform: uppercase; letter-spacing: 0.05em; color: var(--c-warn); }
     .bom-valueadds { background: var(--c-accent-lt); border-left: 3px solid var(--c-accent); }
     .bom-valueadds h4 { margin: 0 0 4px; font-size: 12px;
-      text-transform: uppercase; letter-spacing: 0.05em; color: var(--c-accent); }
+      text-transform: uppercase; letter-spacing: 0.05em; color: var(--c-accent-text); }
     .bom-concerns ul, .bom-valueadds ul { margin: 0; padding-left: 18px; font-size: 13px; }
 
     /* ----- Saved-deal view (alpha.7.1) ----- */
     /* Header band: ref + project + customer/stage */
-    .sd-view { padding-bottom: 24px; }
+    .sd-view { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
     .sd-header { margin-bottom: 14px; }
     .sd-ref { font: 700 11px/1 var(--f-mono); letter-spacing: 0.08em;
       color: var(--c-fg-soft); text-transform: uppercase; margin-bottom: 6px; }
@@ -2267,7 +2316,7 @@
     .dash-tile:active { background: var(--c-sunk); }
     .dash-tile h3 { margin: 0 0 4px; font-size: 14px; font-weight: 700; }
     .dash-tile p { margin: 0; font-size: 12px; color: var(--c-fg-mute); }
-    .dash-tile .big-num { font: 700 22px var(--f-mono); color: var(--c-accent); }
+    .dash-tile .big-num { font: 700 22px var(--f-mono); color: var(--c-accent-text); }
 
     /* History row */
     .history-row { background: var(--c-elev); border: 1px solid var(--c-border);
@@ -2275,7 +2324,7 @@
       cursor: pointer; -webkit-tap-highlight-color: transparent;
       display: block; width: 100%; text-align: left; }
     .history-row:active { background: var(--c-sunk); }
-    .history-row .ref { font: 600 12px var(--f-mono); color: var(--c-accent); }
+    .history-row .ref { font: 600 12px var(--f-mono); color: var(--c-accent-text); }
     .history-row .proj { font-weight: 600; margin: 2px 0; font-size: 15px; }
     .history-row .meta { font-size: 12px; color: var(--c-fg-mute);
       display: flex; gap: 10px; flex-wrap: wrap; }
@@ -2312,7 +2361,7 @@
       font: 600 11px/1.4 var(--f-sans); background: var(--c-sunk); color: var(--c-fg-soft); }
     .tag.ok { background: var(--c-ok-lt); color: var(--c-ok); }
     .tag.warn { background: var(--c-warn-lt); color: var(--c-warn); }
-    .tag.accent { background: var(--c-accent-lt); color: var(--c-accent); }
+    .tag.accent { background: var(--c-accent-lt); color: var(--c-accent-text); }
     code { font-family: var(--f-mono); font-size: 13px;
       background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 3px; }
     pre { background: #0e1c14; color: #d5e5db; padding: 14px;
@@ -2988,66 +3037,55 @@
       overflow-x: auto;
     }
     .bom-action-bar-inner::-webkit-scrollbar { display: none; }
-    .action-btn-v3 {
-      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-      padding: 10px 14px; min-height: 38px;
-      font-family: var(--font-display); font-weight: 600; font-size: var(--t-body-sm);
-      color: var(--ink-strong);
-      background: var(--bg-card);
-      border: 1px solid var(--border-soft);
-      border-radius: var(--r-sm);
-      cursor: pointer;
+    /* v2.7.6 — redesigned result action bar: Confirm primary, Edit ghost,
+       neutral export/share cluster, separated muted Delete. */
+    .abtn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 10px 14px; min-height: 42px;
+      font-family: var(--font-display); font-weight: 650; font-size: var(--t-body-sm);
+      color: var(--ink-strong); background: var(--bg-card);
+      border: 1px solid var(--border-soft); border-radius: 12px;
+      cursor: pointer; white-space: nowrap; flex-shrink: 0;
       -webkit-tap-highlight-color: transparent;
-      white-space: nowrap;
-      position: relative;
-      overflow: hidden;
-      flex-shrink: 0;
-      transition:
-        transform var(--dur-fast) var(--ease-spring),
+      transition: transform var(--dur-fast) var(--ease-spring),
         background var(--dur-base) var(--ease-out),
         border-color var(--dur-base) var(--ease-out),
-        box-shadow var(--dur-base) var(--ease-out);
+        box-shadow var(--dur-base) var(--ease-out), filter var(--dur-base) var(--ease-out);
     }
-    .action-btn-v3::before {
-      content: ''; position: absolute; inset: 0;
-      background: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 50%);
-      pointer-events: none;
-      opacity: 0.6;
-      transition: opacity var(--dur-base) var(--ease-out);
+    .abtn .abtn-ico { width: 17px; height: 17px; stroke: currentColor; fill: none;
+      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    .abtn:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--border-mid); background: var(--bg-card-hover); }
+    .abtn:active:not(:disabled) { transform: scale(0.97); }
+    .abtn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .abtn-ghost { background: transparent; }
+    .abtn-primary { background: var(--cta-grad); color: #fff; border-color: transparent;
+      box-shadow: 0 4px 14px rgba(55,35,106,0.34); }
+    .abtn-primary:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.06);
+      border-color: transparent; background: var(--cta-grad); }
+    .abar-div { width: 1px; align-self: stretch; background: var(--border-mid); margin: 2px; flex-shrink: 0; }
+    .abar-cluster { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+    .iconbtn {
+      display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+      width: 50px; padding: 7px 4px; flex-shrink: 0;
+      background: transparent; border: 1px solid transparent; border-radius: 11px;
+      cursor: pointer; color: var(--ink-mid); -webkit-tap-highlight-color: transparent;
+      transition: background var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out),
+        border-color var(--dur-base) var(--ease-out), transform var(--dur-fast) var(--ease-spring);
     }
-    html[data-theme="dark"] .action-btn-v3::before {
-      background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 50%);
-      opacity: 1;
-    }
-    .action-btn-v3:hover:not(:disabled) {
-      transform: translateY(-1px);
-      border-color: var(--border-mid);
-      background: var(--bg-card-hover);
-      box-shadow: 0 4px 14px rgba(15,14,12,0.08), 0 1px 2px rgba(15,14,12,0.04);
-    }
-    html[data-theme="dark"] .action-btn-v3:hover:not(:disabled) {
-      box-shadow: 0 4px 14px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.20);
-    }
-    .action-btn-v3:active:not(:disabled) { transform: scale(0.97); }
-    .action-btn-v3:disabled { opacity: 0.5; cursor: not-allowed; }
-    .action-btn-v3 .icon {
-      width: 16px; height: 16px;
-      stroke: currentColor; fill: none;
-      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
-      flex-shrink: 0;
-      position: relative; z-index: 1;
-      color: var(--ink-mid);
-    }
-    .action-btn-v3 .label { position: relative; z-index: 1; }
-    .action-btn-v3.act-confirm .icon { color: var(--success); }
-    .action-btn-v3.act-excel   .icon { color: #16A34A; }
-    .action-btn-v3.act-pdf     .icon { color: #DC2626; }
-    .action-btn-v3.act-wa      .icon { color: #25D366; }
-    .action-btn-v3.act-email   .icon { color: #7C3AED; }
-    @media (max-width: 720px) {
-      .action-btn-v3 .label { display: none; }
-      .action-btn-v3 { padding: 10px; min-width: 38px; }
-      .action-btn-v3 .icon { width: 18px; height: 18px; }
+    .iconbtn .iconbtn-ico { width: 18px; height: 18px; stroke: currentColor; fill: none;
+      stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+    .iconbtn small { font-size: 9.5px; font-weight: 600; color: var(--ink-soft); letter-spacing: 0.01em; line-height: 1; }
+    .iconbtn:hover:not(:disabled) { background: var(--bg-card); border-color: var(--border-soft); color: var(--ink-strong); }
+    .iconbtn:hover:not(:disabled) small { color: var(--ink-strong); }
+    .iconbtn:active:not(:disabled) { transform: scale(0.95); }
+    .iconbtn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .iconbtn-del { color: var(--ink-soft); }
+    .iconbtn-del:hover:not(:disabled) { color: var(--danger); background: rgba(185,28,28,0.12); border-color: transparent; }
+    html[data-theme="dark"] .iconbtn-del:hover:not(:disabled) { background: rgba(251,113,133,0.14); }
+    @media (max-width: 540px) {
+      .abtn-ghost .abtn-label { display: none; }
+      .abtn-ghost { padding: 10px; }
+      .iconbtn { width: 46px; }
     }
 
     /* --- v27.3.10 SAVED-DEAL-OPEN STATE: hide global bottom-nav + dock action bar ---
@@ -6291,6 +6329,20 @@
     }
     .sd-stage-link:hover { filter: brightness(0.96); transform: translateY(-1px); }
     .sd-stage-link:active { transform: scale(0.97); }
+    /* v2.8.3 - Stage-move dropdown (saved-deal stage chip). */
+    .sd-stage-sheet h3 { margin: 0 0 12px; }
+    .sd-stage-opts { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+    .sd-stage-opt { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px;
+      border: 1px solid var(--c-border, rgba(127,127,127,0.18)); border-radius: 12px;
+      background: var(--c-elev, transparent); color: var(--ink-strong, inherit);
+      font-family: var(--font-display, inherit); text-align: left; cursor: pointer;
+      transition: background .12s ease, transform .12s ease; -webkit-tap-highlight-color: transparent; }
+    .sd-stage-opt:hover:not(.is-current) { background: var(--c-hover, rgba(127,127,127,0.08)); }
+    .sd-stage-opt:active:not(.is-current) { transform: scale(0.99); }
+    .sd-stage-opt.is-current { cursor: default; opacity: 0.6; }
+    .sd-stage-mini { padding: 3px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700; line-height: 1.6; }
+    .sd-stage-opt-tag { margin-left: auto; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-faint, rgba(127,127,127,0.7)); }
+    .sd-stage-hist { width: 100%; }
 
     /* --- v27.3.0 Pull-to-refresh --- */
     .ptr-indicator {
@@ -6392,12 +6444,12 @@
       display: inline-flex;
     }
     .icard-ico svg { width: 100%; height: 100%; }
-    .icard.is-selected .icard-ico { color: var(--c-accent); }
+    .icard.is-selected .icard-ico { color: var(--c-accent-text); }
     .icard-label { font-size: 15px; font-weight: 700; color: var(--c-fg); }
     .icard-sub { font-size: 12px; color: var(--c-fg-mute); line-height: 1.3; }
     .icard-check {
       position: absolute; top: 10px; right: 12px;
-      color: var(--c-accent); font-weight: 700; font-size: 16px;
+      color: var(--c-accent-text); font-weight: 700; font-size: 16px;
     }
 
     /* Conditional sub-panel (e.g. Split for mixed deployment) */
@@ -6408,7 +6460,7 @@
     }
     .field-subpanel-title {
       font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
-      text-transform: uppercase; color: var(--c-accent-deep, var(--c-accent));
+      text-transform: uppercase; color: var(--c-accent-text);
       margin-bottom: 12px;
     }
     .split-row { display: flex; gap: 12px; }
@@ -6511,19 +6563,41 @@
       box-shadow: 0 0 0 2px var(--c-accent), 0 4px 12px rgba(15,14,12,0.08);
       background: var(--c-accent-soft, rgba(55,35,106,0.05));
     }
-    .cms-vendor-logo {
-      height: 30px; width: auto; max-width: 100%;
-      object-fit: contain; border-radius: 6px; align-self: flex-start;
+    .cms-vtile {
+      height: 56px; display: flex; align-items: center; justify-content: center;
+      background: #FFFFFF; border: 1px solid var(--c-tile-border, rgba(15,14,12,0.10));
+      border-radius: 12px; padding: 8px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.06);
     }
-    .cms-vendor-logo-none {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 56px; height: 30px; background: var(--c-border);
-      color: var(--c-fg-mute); font-weight: 700; border-radius: 6px;
+    .cms-vtile img { max-height: 30px; max-width: 100%; width: auto; object-fit: contain; display: block; }
+    .cms-vtile-none {
+      background: var(--c-sunk); border-style: dashed; border-color: var(--c-border-st);
     }
-    .cms-vendor-name { font-size: 13px; font-weight: 600; color: var(--c-fg); }
+    .cms-vtile-none svg { width: 30px; height: 30px; color: var(--c-fg-mute); }
+    .cms-vmeta { display: flex; flex-direction: column; gap: 2px; }
+    .cms-vendor-name { font-size: 14.5px; font-weight: 650; color: var(--c-fg); line-height: 1.1; }
+    .cms-vendor-desc { font-size: 12px; color: var(--c-fg-mute); line-height: 1.3; }
     .cms-vendor-check {
-      position: absolute; top: 8px; right: 10px;
-      color: var(--c-accent); font-weight: 700; font-size: 15px;
+      position: absolute; top: 11px; right: 11px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--c-accent); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 13px; box-shadow: 0 2px 6px rgba(55,35,106,0.40);
+    }
+    /* v2.7.5 — CMS subscription block (top of Step 5); dims when None */
+    .cms-subblock {
+      margin-top: 22px; padding: 18px;
+      background: var(--c-elev); border: 1.5px solid var(--c-border);
+      border-radius: 18px; transition: opacity 140ms;
+    }
+    .cms-subblock.is-disabled { opacity: 0.5; pointer-events: none; }
+    .cms-subblock-title {
+      font-size: 12.5px; font-weight: 800; letter-spacing: 0.05em;
+      text-transform: uppercase; color: var(--c-accent-text, var(--c-accent));
+      margin-bottom: 16px;
+    }
+    .cms-subblock .field:last-child { margin-bottom: 0; }
+    .cms-subblock-note {
+      margin-top: 4px; font-size: 12px; color: var(--c-fg-mute); line-height: 1.45;
     }
 
     /* v1.5.4 — Step 6 section dividers (separate CMS / Recommended / Review) */
@@ -6540,7 +6614,7 @@
     }
     .cms-subpanel-title {
       font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
-      text-transform: uppercase; color: var(--c-accent-deep, var(--c-accent));
+      text-transform: uppercase; color: var(--c-accent-text);
       margin-bottom: 10px;
     }
     .cms-subpanel .field:last-child { margin-bottom: 0; }
@@ -6601,7 +6675,7 @@
       background: var(--c-sunk); color: var(--c-fg);
       border: 1px solid var(--c-border-st); border-radius: var(--r-sm); }
     .bs-step-btn:active { background: var(--c-accent-lt); border-color: var(--c-accent);
-      color: var(--c-accent); }
+      color: var(--c-accent-text); }
     .bs-step-btn:disabled { opacity: 0.3; cursor: default; }
     .bs-hero-model { font: 700 22px var(--f-mono); color: var(--c-fg);
       letter-spacing: 0.01em; }
@@ -6618,7 +6692,7 @@
     .bs-hero-price .soft { color: var(--c-fg-mute); font-weight: 400; }
     .bs-pill { display: inline-block; font-size: 10px; font-weight: 700;
       letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 6px;
-      border-radius: 6px; background: var(--c-accent-lt); color: var(--c-accent);
+      border-radius: 6px; background: var(--c-accent-lt); color: var(--c-accent-text);
       border: 1px solid var(--c-accent); margin-left: 6px; vertical-align: 2px; }
     .price-toggle { display: flex; gap: 0; margin: 12px auto 4px; width: max-content;
       border: 1px solid var(--c-border-st); border-radius: var(--r-pill);
@@ -6657,7 +6731,7 @@
     .qt tr.qt-tot td.lbl { text-align: right; color: var(--c-fg-soft); }
     .qt tr.qt-grand td { border-top: 2px solid var(--c-border-st);
       padding-top: 9px; font-weight: 700; }
-    .qt tr.qt-grand td.num { font: 700 16px var(--f-mono); color: var(--c-accent); }
+    .qt tr.qt-grand td.num { font: 700 16px var(--f-mono); color: var(--c-accent-text); }
     .qt-foot-note { margin-top: 8px; }
     /* BUG-6 (v2.7.0): on narrow screens (Fold inner/cover) the priced 6-col
        BoQ exceeds the card width and the Total Price column clipped. Wrap the
@@ -6707,47 +6781,54 @@
     }
     .tier-tick:first-child { text-align: left; }
     .tier-tick:last-child { text-align: right; }
-    .tier-tick.is-active { color: var(--c-accent); }
+    .tier-tick.is-active { color: var(--c-accent-text); }
 
     /* v1.4.1 — Inline path choice (Guided / Advanced) at top of Step 2 */
     .path-pick-label {
       font-size: 13px; font-weight: 600; color: var(--ink-soft);
       text-transform: uppercase; letter-spacing: 0.04em; margin: 2px 0 12px;
     }
-    .path-pick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width: 560px) { .path-pick-grid { grid-template-columns: 1fr; } }
-    .path-pick-card {
-      appearance: none; font-family: inherit; cursor: pointer; position: relative;
-      background: var(--bg-card); border: 1.5px solid var(--border-soft);
-      border-radius: var(--r-md); padding: 16px;
-      display: flex; align-items: flex-start; gap: 12px; text-align: left;
-      transition: transform var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+    /* v2.8.1 — Step 2 "Choose your path" rebuilt as a segmented Guided/Advanced
+       switch + live preview (replaces the old .path-pick-* cards). Toggle =
+       path-mode (select only); the preview "Continue with X" CTA = path-pick
+       (advance). Tokens: --bg-card / --accent* / --ink-* / --success / --cta-grad. */
+    .path-seg { display: flex; gap: 4px; padding: 4px; margin-bottom: 14px;
+      background: var(--c-sunk); border: 1.5px solid var(--border-soft); border-radius: 12px; }
+    .path-seg-btn { flex: 1; appearance: none; font-family: var(--font-display); cursor: pointer;
+      border: 0; background: transparent; color: var(--ink-mid); font-size: 14px; font-weight: 700;
+      padding: 11px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
       -webkit-tap-highlight-color: transparent;
-    }
-    .path-pick-card:hover {
-      transform: translateY(-2px); border-color: var(--accent);
-      box-shadow: 0 6px 18px rgba(15,14,12,0.07);
-    }
-    .path-pick-card:active { transform: scale(0.985); }
-    .path-pick-card.is-selected {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-      box-shadow: 0 0 0 2px var(--accent), 0 6px 18px rgba(15,14,12,0.10);
-    }
-    .path-pick-card.is-selected .path-pick-title { color: var(--accent-deep); }
-    .path-pick-icon {
-      width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
-      background: var(--accent-soft); color: var(--accent-deep);
+      transition: background var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out); }
+    .path-seg-btn .path-seg-ic { width: 17px; height: 17px; display: inline-flex; flex: 0 0 auto; }
+    .path-seg-ic svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .path-seg-btn:hover:not(.is-on) { color: var(--ink-strong); }
+    .path-seg-btn.is-on { background: var(--cta-grad); color: #fff; box-shadow: 0 2px 8px rgba(55,35,106,0.30); }
+    .path-prev { display: flex; gap: 14px; align-items: flex-start;
+      background: var(--bg-card); border: 1.5px solid var(--border-soft); border-radius: 16px; padding: 18px; }
+    .path-prev-ic { width: 48px; height: 48px; border-radius: 13px; flex: 0 0 auto;
       display: inline-flex; align-items: center; justify-content: center;
-    }
-    .path-pick-card.is-selected .path-pick-icon { background: var(--bg-card); }
-    .path-pick-icon svg { width: 20px; height: 20px; }
-    .path-pick-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
-    .path-pick-title { font-size: 15px; font-weight: 700; color: var(--ink); }
-    .path-pick-sub { font-size: 12.5px; color: var(--ink-soft); line-height: 1.4; }
-    .path-pick-check {
-      position: absolute; top: 10px; right: 12px;
-      color: var(--accent-deep); font-weight: 800; font-size: 15px;
+      background: var(--accent-soft); color: var(--accent-deep); }
+    .path-prev-ic svg { width: 25px; height: 25px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .path-prev-body { flex: 1; min-width: 0; }
+    .path-prev-h { display: flex; align-items: center; gap: 9px; font-family: var(--font-display);
+      font-size: 17px; font-weight: 800; color: var(--ink-strong); }
+    .path-prev-rec { font-size: 9.5px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+      color: #fff; background: var(--success); padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+    .path-prev-d { font-size: 13px; color: var(--ink-mid); line-height: 1.45; margin: 6px 0 12px; }
+    .path-prev-list { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+    .path-prev-list li { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; color: var(--ink-mid); line-height: 1.35; }
+    .path-prev-list li svg { width: 15px; height: 15px; flex: 0 0 auto; margin-top: 1px; color: var(--success); stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+    .path-prev-cta { width: 100%; appearance: none; cursor: pointer; border: 0; border-radius: 12px;
+      background: var(--cta-grad); color: #fff; font-family: var(--font-display); font-weight: 700; font-size: 14px;
+      padding: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      -webkit-tap-highlight-color: transparent;
+      transition: filter var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out); }
+    .path-prev-cta:hover { filter: brightness(1.06); }
+    .path-prev-cta:active { transform: scale(0.985); }
+    .path-prev-cta svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+    @media (max-width: 480px) {
+      .path-prev { padding: 16px; gap: 12px; }
+      .path-prev-ic { width: 42px; height: 42px; }
     }
     .export-mode-card:hover {
       transform: translateY(-2px);
@@ -6860,6 +6941,9 @@
       letter-spacing: 0.005em;
     }
     /* --- v27.3.0 History sort row --- */
+    /* v2.8.5 - History "Load more" footer */
+    .hist-load-more { display: flex; justify-content: center; padding: 16px 0 8px; }
+    .hist-load-more .btn-v3 { min-width: 160px; }
     .hist-sort-row {
       display: flex; align-items: center; gap: 8px;
       margin: 0 0 10px 0;
@@ -7483,6 +7567,133 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v2.8.5  (2026-06-26)  — Perf quick wins (batch 1).
+       (1) ECharts is now lazy-loaded on the first dashboard chart instead of an
+       eager <script> in <head> — _waitForECharts injects the CDN on demand
+       (guarded), so sessions that never open the dashboard skip ~1 MB of
+       download + parse. (2) History "Load more": loadHistoryList shows a Load
+       more button when the backend has more rows than the current page; it
+       grows the limit and re-fetches, restoring scroll so new rows appear in
+       place. Frontend-only. CATALOG.version and sw.js to v2.8.5.
+     v2.8.4  (2026-06-26)  — Code sanity + hint consistency.
+       Removed ~880 lines of unreachable / tvONE-fork dead code: the
+       unreachable showDashboard legacy body (after the early return DSH_show),
+       the showDashboardLegacy revert copy and its kpiTile helper, and the
+       unused renderStep3Corio / renderLedScreens / _ledAspectRatio functions.
+       None had a live caller; the live DSH_show + loadDashboardV4 dashboard is
+       untouched (verified). Hints: unified the phone helper text to one phrasing
+       everywhere and fixed a saved-view placeholder that still said CALICO.
+       Frontend-only. CATALOG.version and sw.js to v2.8.4.
+     v2.8.3  (2026-06-26)  — One-tap stage move on the saved-deal stage chip.
+       The chip now opens a "Move stage" dropdown (every stage, current marked;
+       Closed Won / Closed Lost gated by the stage allow_won / allow_lost flags
+       and guarded by a confirm). Picking a stage sets the deal stage and fires
+       scheduleAutosave, so persistence, the stage_transitions audit row, and
+       stakeholder notifications all reuse the existing pipeline (no new RPC).
+       Stage history is still reachable as a link inside the sheet. Frontend-only.
+       CATALOG.version and sw.js to v2.8.3.
+     v2.8.2  (2026-06-26)  — BUG-2 close-out: the Super-admin Users panel
+       create/edit phone field was maxlength=20 (the last field still
+       accepting more than 10 digits); capped to 10 and made numeric
+       (type=tel + inputmode=numeric) to match every other phone field
+       in the app. Frontend-only. CATALOG.version and sw.js to v2.8.2.
+     v2.8.1  (2026-06-26)  — Step 2 "Choose your path" rebuilt (Option 2). The two
+       select-and-advance cards became a segmented Guided/Advanced switch with a
+       live preview card (icon, title, a "Recommended" badge on Guided, a one-line
+       pitch, and a 3-point "what you get" list) plus an explicit "Continue with X"
+       CTA. New select-only handler path-mode sets the mode + repaints the preview
+       WITHOUT advancing; the CTA reuses path-pick (set mode + go to Step 3).
+       Default selection is Guided (recommended). The wizard's bottom Next button
+       is suppressed on Step 2 only (the in-card CTA is the single forward action;
+       Back stays). Replaced the .path-pick-* card CSS with .path-seg / .path-prev*
+       (on the --bg-card, --accent, --ink, --success and --cta-grad token families,
+       light and dark).
+       Verified with a 16-check headless render. CATALOG.version + sw.js -> v2.8.1.
+     v2.8.0  (2026-06-26)  — Phase 5: advanced-mode "cart/canvas composer". The
+       advanced Step 3 was a single flat scroll of every available model with a
+       stepper each — your actual build was invisible. Reworked into a Fold-first
+       composer: the catalog (now grouped by family LS/HD/XD/XT/XC, each family
+       showing its running unit count) on the left, and a live "Your build"
+       canvas on the right that lists every player you've added with qty + OS and
+       a prominent total, so the configuration is always in view. On a phone the
+       build collapses to a sticky summary (head + total) pinned above the
+       catalog. The +/- steppers and the XC BrightSignOS/Windows OS pills are
+       preserved verbatim; the cart "remove" (X) reuses the adv-qty handler with
+       data-delta="-qty" (it already clamps to 0 + splices, then re-renders both
+       panes). advancedSelections shape [{model_id, qty, os?}] is UNCHANGED — pure
+       presentation change over the same handlers. Reuses .adv-model-row /
+       .stepper / .pill-btn / .adv-os-row; adds .adv-composer / .adv-fam /
+       .adv-build* CSS (all on --c-* tokens, so light + dark both inherit).
+       Verified with a 23-check headless render (grouping, live cart, remove
+       deltas, totals, empty state). CATALOG.version + sw.js -> v2.8.0.
+     v2.7.7  (2026-06-26)  — FIX (client-facing): quote PDF rupee glyph + column
+       clipping. The native-jsPDF PDF formats prices with helvetica, which has no
+       rupee glyph (U+20B9); its low byte 0xB9 maps to "\u00b9" (superscript one)
+       in WinAnsi, so every price showed a tiny "1" instead of the sign — and the
+       missing glyph threw off jsPDF's string-width measurement, so right-aligned
+       UNIT DP / LINE TOTAL / Subtotal / GST / GRAND TOTAL overshot and clipped off
+       the right edge of the page (reported via a WhatsApp-shared quote). Switched
+       the PDF currency prefix from the rupee sign to the plain "Rs" abbreviation
+       (basic WinAnsi — correct glyphs + metrics, so alignment is exact); the
+       pricing header already states "(Dealer Price, INR)". Single-line change in
+       the PDF fmtINR helper. Excel export is untouched (ExcelJS uses system fonts
+       that include the symbol, so its rupee renders fine). Embedding a rupee-
+       capable font was rejected: ~150KB onto an already-1.8MB file risks the
+       mobile GitHub-upload truncation. CATALOG.version + sw.js -> v2.7.7.
+     v2.7.6  (2026-06-25)  — Result-page bottom action bar redesign. The bar was
+       7 equal-weight buttons with multicoloured icons (green/red/green/purple/
+       red) and no hierarchy, and its tail covered the price toggle. Reworked
+       into: Confirm = primary (filled --cta-grad brand button); Edit = quiet
+       ghost; the four export/share actions (Excel/PDF/WhatsApp/Email) collapsed
+       into one neutral-icon cluster (icons inherit --ink-mid, tiny always-on
+       labels so Excel vs PDF stay clear icon-only) — rainbow gone; Delete moved
+       behind a divider, muted --ink-soft, only goes red (--danger) on hover/
+       press so it's hard to mis-tap. Same glass pill / positioning / handlers
+       (every data-action + id preserved). Excel glyph changed to an "X" mark to
+       distinguish it from PDF's down-arrow. Replaced the .action-btn-v3 class
+       (bar-only) with .abtn / .iconbtn / .abar-div / .abar-cluster. Also bumped
+       .sd-view padding-bottom 24px -> calc(78px + safe-area) so the docked bar
+       no longer overlaps the price toggle / grand total. CATALOG.version +
+       sw.js -> v2.7.6.
+     v2.7.5  (2026-06-25)  — CMS Step-5 redesign + app-wide dark-contrast fix.
+       (1) Step 5 reworked: every CMS brand now sits on a uniform white logo
+       tile (consistent in light + dark, since each logo keeps the white bg it
+       was drawn for). The BrightSign asset was rebuilt — the old PNG was a
+       dark-lockup screenshot (purple "Bright" + white "Sign" on a black pill
+       with white padding), which rendered as a black box on the card; stripped
+       the pill and re-inked "Sign" dark so it reads on white like Korbyt/
+       Pickcel. None gets a monitor glyph in a dashed tile; each card gained a
+       one-line descriptor + a circular accent check badge. (2) Layout reordered
+       per request: the subscription block (Deployment / Term / Licenses) moved
+       to the TOP, brand cards LAST; when None is chosen the subscription block
+       dims + goes non-interactive. (3) Deployment & Term switched from native
+       <select> dropdowns to segmented pills (existing pillGroup pattern); the
+       "Cloud (hosted)" label is now "Cloud (remote)" (stored value still
+       'cloud'). (4) App-wide dark-mode contrast: muted/caption text token
+       --ink-soft #8A887E -> #A3A199 (≈4.7:1 -> ≈6.4:1 on cards), and a new
+       --c-accent-text token (#37236A light / #A99BC9 dark) repointed across 18
+       accent-coloured TEXT usages (dashboard big-numbers, history refs, quote
+       grand-total, ghost/text buttons, nav, section captions, tier ticks) so
+       no brand-purple text sits on a dark background at ~2.5:1 anymore; fills/
+       borders (15 -color: usages) untouched. Light theme visually unchanged.
+       CATALOG.version + sw.js -> v2.7.5.
+     v2.7.4  (2026-06-25)  — Phase 4 close-out. (a) BUG-1 (ticker actor names):
+       the home-screen activity ticker showed "Someone moved a deal" for every
+       row because it read snake_case keys (transitioned_by, to_stage) while
+       stage_transition_list returns camelCase (transitionedBy = COALESCE(
+       full_name, username), toStage, transitionedAt) with the actor resolved
+       server-side. Switched both ticker render spots to the camelCase keys —
+       real names + correct stage tail + relative time now render. (b) BUG-2
+       (phone >10 digits): the first-login profile gate was the only phone input
+       without a length cap (it accepted +91/spaces/hyphens then normalized on
+       save). Hard-capped it to 10 digits (maxlength=10 + pattern + numeric) to
+       match the app-wide standard already used by the deal contact phone and the
+       Settings profile field; help/error text aligned. Submit still strips non-
+       digits + validates exactly 10 (parity with Settings). BUG-5 (export color)
+       was already unified to brand purple by the v27.3.0 palette pass — no change
+       needed. The advanced-mode ▲▼ stepper was already removed by the v2.7.2
+       BUG-4 fix (advanced deals no longer mis-render as guided hero cards).
+       CATALOG.version + sw.js -> v2.7.4.
      v2.7.3  (2026-06-25)  — Saved-deal autosave fix (🔴 systemic). Edits on a
        saved deal (line discount %, ladder steppers) recomputed live but NEVER
        persisted: every BS deal sat at row_version=1, edited_at=null. The cause
@@ -8765,7 +8976,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.7.3',
+      version: 'brightsign-v2.8.5',
       build_date: '2026-06-25',
       constants,
       calico,
@@ -11321,10 +11532,10 @@
 
       // v27.3.0 — Polished palette helpers. RGB triplets for jsPDF.
       // Use these instead of forest-green legacy colors throughout.
-      const AMBER       = [232, 115, 28];     // brand amber #2C1C55
-      const AMBER_DEEP  = [180, 83, 9];       // deep amber #2C1C55
-      const AMBER_LIGHT = [252, 231, 200];    // soft amber band #FCE7C8
-      const AMBER_PALE  = [255, 247, 237];    // alt-row pale #FFF7ED
+      const AMBER       = [55, 35, 106];      // primary brand purple #37236A (matches Excel)
+      const AMBER_DEEP  = [44, 28, 85];       // deep brand purple #2C1C55 (column header)
+      const AMBER_LIGHT = [235, 232, 242];    // accent-soft band #EBE8F2 (purple tint)
+      const AMBER_PALE  = [255, 247, 237];    // alt-row pale #FFF7ED (matches Excel)
       const INK_STRONG  = [17, 24, 39];
       const INK_SOFT    = [107, 114, 128];
       const WHITE       = [255, 255, 255];
@@ -11567,7 +11778,14 @@
       // CMS Customization "pending scope" line are flagged + excluded.
       if (showPricing && quote && qLines.length > 0) {
         const fmtINR = function (n) {
-          return '\u20b9' + Math.round(Number(n) || 0).toLocaleString('en-IN');
+          // v2.7.7 — jsPDF's helvetica has no rupee glyph (U+20B9). Its low byte
+          // is 0xB9, which in WinAnsi is "\u00b9" (superscript one) — so the sign
+          // rendered as a tiny "1" AND broke jsPDF's width measurement, throwing
+          // off the right-alignment so the LINE TOTAL column clipped off-page.
+          // "Rs" is plain WinAnsi: correct glyphs + metrics, aligns cleanly. The
+          // table header already states "(Dealer Price, INR)". Excel keeps the
+          // real symbol (ExcelJS uses system fonts that include it).
+          return 'Rs ' + Math.round(Number(n) || 0).toLocaleString('en-IN');
         };
         // x anchors for the pricing sub-table
         const pUnitX = W - M - 200;   // unit DP (right-aligned)
@@ -15329,7 +15547,7 @@
               esc(previewTxt) +
             '</div>' +
             '<label style="display:block;font-size:12px;color:var(--ink-soft);margin-bottom:6px">View name (max 32 chars)</label>' +
-            '<input id="v4-sv-name" type="text" maxlength="32" placeholder="e.g. North Q1 CALICO" autocomplete="off" ' +
+            '<input id="v4-sv-name" type="text" maxlength="32" placeholder="e.g. North Q1 pipeline" autocomplete="off" ' +
               'style="width:100%;padding:10px 12px;border:1px solid var(--border-soft);border-radius:8px;font-size:14px;font-family:inherit;background:var(--bg-card);color:var(--ink-strong);box-sizing:border-box">' +
             '<div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">' +
               '<button class="btn-v3 btn-ghost btn-md" type="button" data-action="v4-saved-cancel">Cancel</button>' +
@@ -15944,7 +16162,7 @@
             '<input class="input-v3" id="ue-email" type="email" maxlength="120" value="' + esc(curEmail) + '" placeholder="name@cavitak.com" autocomplete="off">' +
           '</div>' +
           '<div class="field-v3"><label>Phone</label>' +
-            '<input class="input-v3" id="ue-phone" type="text" maxlength="20" value="' + esc(curPhone) + '" placeholder="10-digit mobile" autocomplete="off">' +
+            '<input class="input-v3" id="ue-phone" type="tel" inputmode="numeric" maxlength="10" value="' + esc(curPhone) + '" placeholder="10-digit mobile" autocomplete="off">' +
           '</div>' +
           (isEdit ? '' :
             '<div class="field-v3"><label>Professional title</label>' +
@@ -16815,10 +17033,9 @@
           '</div>' +
           '<div class="field" id="f-prof-phone">' +
             '<label for="i-prof-phone">Phone</label>' +
-            '<input id="i-prof-phone" type="tel" inputmode="numeric" ' +
+            '<input id="i-prof-phone" type="tel" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" ' +
                    'placeholder="10-digit number" value="' + p + '">' +
-            '<div class="help">+91 prefix, spaces, and hyphens accepted &mdash; ' +
-              'stored as 10 digits.</div>' +
+            '<div class="help">10-digit mobile (no country code or spaces)</div>' +
             '<div class="err" hidden></div>' +
           '</div>' +
           '<div class="field" id="f-prof-email">' +
@@ -17946,31 +18163,26 @@
       const usersById = (typeof STORE.usersById === 'function') ? STORE.usersById() : {};
       // Top 8 most recent transitions
       const items = trans.slice(0, 8).map(function(tr) {
-        const refId  = tr.ref_id || tr.display_ref || '';
+        // v2.7.4 (BUG-1) — stage_transition_list returns camelCase keys
+        // (refId / transitionedBy / toStage / transitionedAt) with the actor
+        // already resolved to full_name server-side. The old snake_case reads
+        // (ref_id / transitioned_by / to_stage / transitioned_at) silently
+        // returned undefined — which is why every actor showed "Someone", the
+        // stage tail was blank, and the relative time was wrong.
+        const refId  = tr.refId || '';
         const deal   = dealByRef[refId] || {};
-        // v27.13.1 — Better null-safe project label: try project, customer_name,
-        // refId, then fall back to a clearly-marked unnamed deal. Avoids
-        // the "moved (unnamed)" render seen when project was literally empty.
         const proj   = String(deal.project || deal.customer_name || refId ||
                               'a deal').trim() || 'a deal';
-        const actorId = tr.transitioned_by || tr.actor || '';
-        const actorRow = usersById[actorId] || {};
-        // v27.13.1 — Defensive cascade for actor name. Display_name first
-        // (the field shown elsewhere), then full_name, username, finally
-        // 'Someone' — never 'Unknown' anywhere user-facing.
-        const _actorRaw = String(
-          actorRow.display_name || actorRow.full_name ||
-          actorRow.username     || tr.actor || ''
-        ).trim();
+        const _actorRaw = String(tr.transitionedBy || '').trim();
         const actorName = _actorRaw ? _actorRaw.split(' ')[0] : 'Someone';
-        const toStage = tr.to_stage || tr.to_stage_name || '';
+        const toStage = tr.toStage || '';
         const verb = (toStage === 'Closed Won')  ? 'won '
                    : (toStage === 'Closed Lost') ? 'lost '
                    : 'moved ';
         const tail = (toStage && toStage !== 'Closed Won' && toStage !== 'Closed Lost')
                        ? (' \u2192 ' + toStage) : '';
         return {
-          time:  _timeAgo(tr.transitioned_at),
+          time:  _timeAgo(tr.transitionedAt),
           actor: actorName,
           msg:   verb + String(proj).slice(0, 40) + tail
         };
@@ -18457,19 +18669,20 @@
       scopedDeals.forEach(function(d) { var r = d.display_ref || d.ref_id; if (r) dealByRef[r] = d; });
       var usersById = (typeof STORE.usersById === 'function') ? STORE.usersById() : {};
       var items = trans.slice(0, 10).map(function(tr) {
-        var refId = tr.ref_id || tr.display_ref || '';
+        // v2.7.4 (BUG-1) — read camelCase keys from stage_transition_list
+        // (actor pre-resolved to full_name). Old snake_case reads were undefined.
+        var refId = tr.refId || '';
         var deal = dealByRef[refId] || {};
         var proj = String(deal.project || deal.customer_name || refId || 'a deal').trim() || 'a deal';
-        var actorRow = usersById[tr.transitioned_by || tr.actor || ''] || {};
-        var actorRaw = String(actorRow.display_name || actorRow.full_name || actorRow.username || tr.actor || '').trim();
+        var actorRaw = String(tr.transitionedBy || '').trim();
         var actorName = actorRaw ? actorRaw.split(' ')[0] : 'Someone';
-        var toStage = tr.to_stage || tr.to_stage_name || '';
+        var toStage = tr.toStage || '';
         var verb, dotCls;
         if (toStage === 'Closed Won') { verb = 'won'; dotCls = 'win'; }
         else if (toStage === 'Closed Lost') { verb = 'lost'; dotCls = 'lose'; }
         else { verb = 'moved'; dotCls = 'stage'; }
         var tail = (toStage && toStage !== 'Closed Won' && toStage !== 'Closed Lost') ? (' \u2192 ' + toStage) : '';
-        return { time: _timeAgo(tr.transitioned_at), actor: actorName,
+        return { time: _timeAgo(tr.transitionedAt), actor: actorName,
                  proj: String(proj).slice(0, 36), verb: verb, tail: tail, dot: dotCls };
       });
       if (!items.length) return;
@@ -18903,519 +19116,7 @@ function DSH_CSS(){ return '<style>'+[
       showChrome(true);
       updateNavActive('#/dashboard');
       const u = STORE.currentUser() || {};
-      return DSH_show(u);  // v5 dashboard (Pipeline Command) chunk-1 — legacy body below is now unreachable
-      // v27.4.3 — if URL hash carries ?period=...&region=... etc, apply them
-      // before loadDashboardV4 reads from sessionStorage. Enables shareable
-      // links from the Share view button.
-      try { _applyFiltersFromUrl(); } catch (e) {}
-      const today = (function() {
-        const d = new Date();
-        const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-        const mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        return days[d.getDay()] + ', ' + d.getDate() + ' ' + mons[d.getMonth()] + ' ' + d.getFullYear();
-      })();
-
-      const sIco = {
-        funnel:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>',
-        pie:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="2" x2="12" y2="12"/><line x1="12" y1="12" x2="20" y2="12"/></svg>',
-        map:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
-        users:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>',
-        grid:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
-        trend:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>',
-        cal:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
-        pin:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
-        user:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
-        stack:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
-        box:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
-        search:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
-        starF:    '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
-        warn:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
-        bolt:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
-        plus:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
-        chev:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
-        kOpen:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/></svg>',
-        kCurr:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
-        kEnd:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>',
-        kPart:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 7V5a3 3 0 0 0-3-3H11a3 3 0 0 0-3 3v2"/></svg>',
-        kCon:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
-        kPie:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>'
-      };
-
-      function kpiTile(grad, id, label, ico, isSplit) {
-        return '<button type="button" class="v4-kpi ' + grad + '">' +
-          '<div class="v4-kpi-top">' +
-            '<div class="v4-kpi-label">' + esc(label) + '</div>' +
-            '<div class="v4-kpi-ico">' + ico + '</div>' +
-          '</div>' +
-          '<div>' +
-            '<div class="v4-kpi-value-row">' +
-              '<div class="v4-kpi-value" data-v4-kpi-d="' + id + '">\u2014</div>' +
-            '</div>' +
-            '<div class="v4-kpi-sub" data-v4-kpi-d-sub="' + id + '">\u2014</div>' +
-            '<div class="v4-kpi-chip" data-v4-kpi-d-chip="' + id + '" data-tone="unknown" style="display:none">\u2014</div>' +
-            (isSplit
-              ? '<div class="v4-split-bar" data-v4-kpi-d-bar="' + id + '"></div>' +
-                '<div class="v4-split-legend" data-v4-kpi-d-legend="' + id + '"></div>'
-              : '<div class="v4-kpi-spark" data-v4-kpi-d-spark="' + id + '"></div>'
-            ) +
-          '</div>' +
-        '</button>';
-      }
-      function funnelRow(klass, name) {
-        // v27.20.0 — clickable: filters dashboard to this stage.
-        return '<div class="v4-funnel-row" data-action="v4-funnel-filter" data-stage="' + esc(name) + '" role="button" tabindex="0" style="cursor:pointer">' +
-          '<span class="v4-chip ' + klass + '">' + esc(name) + '</span>' +
-          '<div class="v4-funnel-bar-wrap"><div class="v4-funnel-bar ' + klass + '" data-v4-d-funnel="' + esc(name) + '" style="width:0%">0</div></div>' +
-          '<span class="v4-funnel-meta" data-v4-d-funnel-pct="' + esc(name) + '">0%</span>' +
-        '</div>';
-      }
-
-      // v27.13.1 — Cleaner organic blob shapes. Same 4-zone abstraction but
-      // with smoother curves (fewer hard corners), tighter bounding box per
-      // zone, and consistent opacity so a region with 0 deals doesn't read
-      // as "empty" — it just reads as "this region". Zone counts still drive
-      // opacity in loadHomeV4 (higher count = more saturated).
-      function indiaSvg() {
-        return '<svg class="v4-india-svg" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg" aria-label="Regional distribution map of India by zone">' +
-          // NORTH — top, wider, smoother
-          '<path class="v4-zone-blob" data-v4-zone-blob="north" d="M50,32 C50,18 78,12 100,14 C130,12 152,20 154,38 C156,52 148,62 132,64 L78,66 C62,66 50,54 50,42 Z" fill="#3B82F6" opacity="0.55"/>' +
-          // WEST — Cavitak HQ — densest
-          '<path class="v4-zone-blob" data-v4-zone-blob="west" d="M42,80 C36,90 36,110 40,128 C46,144 60,150 76,144 C90,134 92,116 90,98 C88,82 78,72 62,72 C50,72 44,76 42,80 Z" fill="#37236A" opacity="0.9"/>' +
-          // EAST — right side, smaller
-          '<path class="v4-zone-blob" data-v4-zone-blob="east" d="M138,80 C148,78 162,82 168,94 C172,108 168,122 158,128 C146,132 134,126 130,114 C126,100 130,86 138,80 Z" fill="#8B5CF6" opacity="0.4"/>' +
-          // SOUTH — bottom peninsula, tapered
-          '<path class="v4-zone-blob" data-v4-zone-blob="south" d="M88,148 C82,160 80,178 86,194 C92,206 104,208 110,196 C116,180 114,160 108,148 C100,142 92,144 88,148 Z" fill="#10B981" opacity="0.65"/>' +
-          // labels with white text + soft shadow for legibility
-          '<text x="102" y="44"  text-anchor="middle" font-family="\'General Sans\', sans-serif" font-size="10"  font-weight="800" fill="#fff" letter-spacing="0.08em" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,0.25))" data-v4-zone-lbl="north">N \u00b7 0</text>' +
-          '<text x="64"  y="115" text-anchor="middle" font-family="\'General Sans\', sans-serif" font-size="12"  font-weight="800" fill="#fff" letter-spacing="0.04em" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3))"  data-v4-zone-lbl="west">W \u00b7 0</text>' +
-          '<text x="150" y="106" text-anchor="middle" font-family="\'General Sans\', sans-serif" font-size="10"  font-weight="800" fill="#fff" letter-spacing="0.08em" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,0.25))" data-v4-zone-lbl="east">E \u00b7 0</text>' +
-          '<text x="98"  y="178" text-anchor="middle" font-family="\'General Sans\', sans-serif" font-size="10.5" font-weight="800" fill="#fff" letter-spacing="0.06em" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,0.25))" data-v4-zone-lbl="south">S \u00b7 0</text>' +
-        '</svg>';
-      }
-      function zoneRow(zone, name, color, meta) {
-        return '<button type="button" class="v4-zone-row">' +
-          '<div class="v4-zone-pip" style="background:' + color + '"></div>' +
-          '<div>' +
-            '<div class="v4-zname">' + esc(name) + '</div>' +
-            '<div class="v4-zmeta">' + esc(meta) + '</div>' +
-          '</div>' +
-          '<div class="v4-zcount" data-v4-zcount="' + zone + '">0</div>' +
-          '<svg class="v4-zspark" viewBox="0 0 50 22" preserveAspectRatio="none">' +
-            '<path d="M0,16 L10,12 L20,14 L30,8 L40,6 L50,4" fill="none" stroke="' + color + '" stroke-width="1.8" stroke-linecap="round"/>' +
-          '</svg>' +
-        '</button>';
-      }
-      // v27.14.0 — Horizontal bar row for Regional Distribution redesign
-      // (Option B: dropped abstract India SVG in favor of clean scannable
-      // bars). Preserves the same data-v4-zcount and data-v4-zone-lbl
-      // attributes used by loadDashboardV4 zone update logic, so no
-      // wiring change needed in the data layer.
-      function regionBarRow(zone, name, color, meta) {
-        return '<div class="v4-rbar-row" data-v4-rbar-row="' + zone + '">' +
-          '<div class="v4-rbar-label">' +
-            '<div class="v4-rbar-dot" style="background:' + color + '"></div>' +
-            '<div class="v4-rbar-text">' +
-              '<div class="v4-rbar-name">' + esc(name) + '</div>' +
-              '<div class="v4-rbar-meta">' + esc(meta) + '</div>' +
-            '</div>' +
-          '</div>' +
-          '<div class="v4-rbar-track">' +
-            '<div class="v4-rbar-fill" data-v4-rbar-fill="' + zone + '" ' +
-              'style="width:0%;background:' + color + '"></div>' +
-          '</div>' +
-          '<div class="v4-rbar-stats">' +
-            '<span class="v4-rbar-count" data-v4-zcount="' + zone + '">0</span>' +
-            '<span class="v4-rbar-pct" data-v4-zone-lbl="' + zone + '">0%</span>' +
-          '</div>' +
-        '</div>';
-      }
-      // v27.16.1 — Region pin cluster (replaces the hand-drawn India
-      // silhouette, which never read as recognizable India). A compass-style
-      // N/W/E/S layout with a faint cross; each pin's radius + glow + count
-      // are set by loadDashboardV4. Honest and clean — communicates the
-      // geographic split via pin size without faking a map outline.
-      function mcIndiaMap() {
-        return '<svg class="mc-india" viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg" aria-label="Regional distribution by zone">' +
-          '<line x1="120" y1="28" x2="120" y2="172" stroke="currentColor" stroke-opacity="0.07" stroke-width="1"/>' +
-          '<line x1="36" y1="100" x2="204" y2="100" stroke="currentColor" stroke-opacity="0.07" stroke-width="1"/>' +
-          mcPin('north', 120, 50,  '#3B82F6') +
-          mcPin('west',  62,  100, '#37236A') +
-          mcPin('east',  178, 100, '#8B5CF6') +
-          mcPin('south', 120, 150, '#10B981') +
-        '</svg>';
-      }
-      function mcPin(zone, cx, cy, color) {
-        var nm = zone.toUpperCase();
-        return '<g class="mc-pin" data-mc-pin="' + zone + '" transform="translate(' + cx + ',' + cy + ')">' +
-          '<circle class="mc-pin-glow" data-mc-pin-glow="' + zone + '" r="14" fill="' + color + '" opacity="0.18"/>' +
-          '<circle class="mc-pin-core" data-mc-pin-core="' + zone + '" r="9" fill="' + color + '"/>' +
-          '<text class="mc-pin-num" data-mc-pin-lbl="' + zone + '" x="0" y="3.5" text-anchor="middle" ' +
-            'font-family="var(--font-mono)" font-size="10" font-weight="700" fill="#fff">0</text>' +
-          '<text class="mc-pin-zone" x="0" y="30" text-anchor="middle" ' +
-            'font-family="var(--font-mono)" font-size="9" font-weight="700" fill="var(--ink-soft)" letter-spacing="0.5">' + nm + '</text>' +
-        '</g>';
-      }
-      function hmRow(klass, name, zones) {
-        // zones = ['west','north','south','east'] in column order
-        return '<div class="v4-hm-rowlbl"><span class="v4-chip ' + klass + '">' + esc(name) + '</span></div>' +
-          zones.map(z => '<div class="v4-hm-cell h0" data-v4-hm="' + esc(name) + '|' + z + '">0</div>').join('');
-      }
-      // v27.16.0 — Velocity grid tile (8 secondary KPIs). Each carries a
-      // data-mc-v selector populated by loadDashboardV4, plus a sparkline
-      // host. LED tone is the default; loader may override via class swap.
-      function mcVTile(id, label, unit, ledTone) {
-        return '<div class="mc-vt">' +
-          '<div class="mc-vt-hd">' +
-            '<div class="mc-vt-label">' + esc(label) + '</div>' +
-            '<div class="mc-vt-led ' + esc(ledTone) + '" data-mc-v-led="' + esc(id) + '"></div>' +
-          '</div>' +
-          '<div class="mc-vt-val" data-mc-v="' + esc(id) + '">\u2014<span class="u">' + esc(unit) + '</span></div>' +
-          '<div class="mc-vt-sub" data-mc-v-sub="' + esc(id) + '">\u2014</div>' +
-          '<div class="mc-vt-spark" data-mc-v-spark="' + esc(id) + '"></div>' +
-        '</div>';
-      }
-
-      // Sample ticker items — Phase 5 ship has hardcoded sample. Wire to
-      // real stage_transitions feed in v27.4.1.
-      const tickerItems = [
-        ['3m',  'Vipul',     'moved Hilton DLF \u2192 Negotiation'],
-        ['12m', 'Mohit',     'added CALICO BoM to ITC Grand'],
-        ['28m', 'Arvind',    'won Marriott Pune'],
-        ['1h',  'Faiz',      'created Trident Bandra'],
-        ['2h',  'Ranjith K', 'escalated 2 deals to Shashank'],
-        ['3h',  'Tausif',    'updated CORIO config in Hyatt Goa']
-      ];
-      const tickerHTML = tickerItems.map(t =>
-        '<span class="v4-ticker-item"><span class="v4-ti-time">' + esc(t[0]) +
-        '</span><span class="v4-ti-actor">' + esc(t[1]) + '</span>' + esc(t[2]) + '</span>'
-      ).join('');
-
-      setRoot(
-        '<div class="app-shell">' +
-        // Hero
-        '<div class="v4-hero">' +
-          '<div class="v4-hero-row">' +
-            '<div>' +
-              '<div class="v4-hero-greeting">Dashboard</div>' +
-              '<div class="v4-hero-sub">' + esc(today) + ' \u00b7 <span data-v4-d-scopelbl>loading\u2026</span></div>' +
-            '</div>' +
-            '<div class="v4-live-pill">' +
-              '<span class="v4-live-dot"></span>' +
-              '<span>Live</span>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-
-        // v27.22.0 — Decorative mission-control strip removed (MISSION/STATUS/
-        // CHANNEL/FY). It was eye-candy: MISSION + CHANNEL + FY were hardcoded
-        // labels, and the only live value (STATUS via data-mc-status) is already
-        // shown by the Signal panel's health indicator below. The loader's
-        // data-mc-status write is null-guarded → harmless no-op.
-
-        // HERO TELEMETRY (4 hero KPIs — instrument panel)
-        // v27.25.0 — FILTERS: relocated here as a top toolbar (was mid-report).
-        '<div class="v4-saved-views">' +
-          '<button type="button" class="v4-saved-pill" data-action="v4-saved-apply" data-saved-key="mine">' + sIco.starF + 'My pipeline</button>' +
-          '<button type="button" class="v4-saved-pill" data-action="v4-saved-apply" data-saved-key="west">' + sIco.pin + 'West region</button>' +
-          '<button type="button" class="v4-saved-pill" data-action="v4-saved-apply" data-saved-key="qclose">' + sIco.warn + 'This quarter close</button>' +
-          '<span data-v4-d-saved-custom></span>' +
-          '<button type="button" class="v4-saved-pill add" data-action="v4-saved-new">' + sIco.plus + 'Save view</button>' +
-        '</div>' +
-
-        // Filter bar — v27.4.2: chips cycle through filter values on tap
-        '<div class="v4-filter-bar">' +
-          '<button type="button" class="v4-filter-chip" data-action="v4-filter-cycle" data-v4-filter-chip="period" data-filter-key="period">' + sIco.cal + '<span data-v4-filter-label>This quarter</span>' + sIco.chev + '</button>' +
-          '<button type="button" class="v4-filter-chip" data-action="v4-filter-cycle" data-v4-filter-chip="region" data-filter-key="region">' + sIco.pin + '<span data-v4-filter-label>Region</span></button>' +
-          '<button type="button" class="v4-filter-chip" data-action="v4-filter-cycle" data-v4-filter-chip="stage"  data-filter-key="stage">' + sIco.stack + '<span data-v4-filter-label>Stage</span></button>' +
-          '<button type="button" class="v4-filter-chip" data-action="v4-filter-cycle" data-v4-filter-chip="product" data-filter-key="product">' + sIco.box + '<span data-v4-filter-label>Product</span></button>' +
-          '<button type="button" class="v4-filter-clear" data-action="v4-filter-clear" data-v4-filter-clear style="display:none">Clear all</button>' +
-        '</div>' +
-
-        // Filter summary line
-        '<div class="v4-filter-summary">' +
-          '<div>Showing <span class="v4-sum-n" data-v4-d-shown>\u2014</span> of <span class="v4-sum-n" data-v4-d-total>\u2014</span> deals \u00b7 <span data-v4-d-sumdetail>No filters</span></div>' +
-          '<div style="display:flex;gap:8px"><button type="button" class="v4-sum-act" data-action="v4-share-view">Share view</button></div>' +
-        '</div>' +
-
-        '<div class="mc-telemetry">' +
-          '<div class="mc-tel-hd">' +
-            '<div class="mc-tel-hd-l">Signal</div>' +
-            '<div class="mc-tel-hd-r" data-mc-health-status>\u2014</div>' +
-          '</div>' +
-          '<div class="mc-tel-grid">' +
-            '<div class="mc-tel-cell">' +
-              '<div class="mc-tel-label"><span class="mc-led green"></span>OPEN CASES</div>' +
-              '<div class="mc-tel-val" data-mc-tel="open">\u2014</div>' +
-              '<div class="mc-tel-delta" data-mc-tel-delta="open">\u2014</div>' +
-            '</div>' +
-            '<div class="mc-tel-cell">' +
-              '<div class="mc-tel-label"><span class="mc-led amber"></span>PIPELINE \u20b9</div>' +
-              '<div class="mc-tel-val amber" data-mc-tel="pipeline">\u2014</div>' +
-              '<div class="mc-tel-delta">pricing not enabled</div>' +
-            '</div>' +
-            '<div class="mc-tel-cell">' +
-              '<div class="mc-tel-label"><span class="mc-led red"></span>SLIPPED</div>' +
-              '<div class="mc-tel-val red" data-mc-tel="slipped">\u2014</div>' +
-              '<div class="mc-tel-delta down" data-mc-tel-delta="slipped">\u2014</div>' +
-            '</div>' +
-            '<div class="mc-tel-cell">' +
-              '<div class="mc-tel-label"><span class="mc-led amber"></span>CLOSING / MONTH</div>' +
-              '<div class="mc-tel-val amber" data-mc-tel="closing">\u2014</div>' +
-              '<div class="mc-tel-delta" data-mc-tel-delta="closing">\u2014</div>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-
-        // Velocity grid (8 secondary KPIs with sparklines)
-        '<div class="v15-section v15-group"><i class="sec-ico">' + sIco.bolt + '</i><h2>Pipeline health</h2></div>' +
-        '<div class="v15-section"><i class="sec-ico">' + sIco.grid + '</i><h2>Key metrics</h2></div>' +
-        '<div class="mc-velocity">' +
-          mcVTile('age',    'AVG DEAL AGE',  'days',  'amber') +
-          mcVTile('stuck',  'STUCK > 30D',   'deals', 'off') +
-          mcVTile('newwk',  'NEW THIS WEEK', 'deals', 'green') +
-          mcVTile('wonwk',  'WON / WEEK',    'deals', 'off') +
-          mcVTile('lostwk', 'LOST / WEEK',   'deal',  'red') +
-          mcVTile('closeqtr','CLOSING / QTR','deals', 'amber') +
-          mcVTile('reps',   'ACTIVE REPS',   'people','green') +
-          mcVTile('qpd',    'QUOTES / DEAL', 'avg',   'green') +
-        '</div>' +
-
-        // v27.24.0 CUT -- Instruments gauges (Win rate + Health). Decorative:
-        // Win rate already shows in Analysis > Win rate; Health in the Signal
-        // panel status. Full markup preserved in the v27.23.0 backup. Reversible.
-        '' +
-
-        // v27.24.0 CUT -- Month segment stacked bar. Redundant: the identical
-        // Won/Closing/At-risk/Open counts are the pipeline summary bar above.
-        // Full markup preserved in the v27.23.0 backup. Reversible.
-        '' +
-
-        // v27.16.1 — Old attention strip REMOVED (duplicated the mission-control
-        // hero + velocity grid). Slipped → hero; Won → velocity (wonwk); Stuck →
-        // velocity (stuck); Dormant dropped (redundant with stuck). The loader's
-        // data-v4-d-attn writes are now harmless no-ops (null-guarded).
-
-        // Saved views — v27.4.2-rc1: 3 pre-defined wired, 2 disabled (need v27.6
-        // richer primitives), custom views from localStorage render in
-        // data-v4-d-saved-custom slot.
-        // v27.25.0 — filter toolbar (saved views + chips + summary) MOVED up
-        // to just under the hero, so the report sections below read as one story.
-        '' +
-
-        // v27.16.1 — Old dashboard activity ticker REMOVED. It rendered
-        // hardcoded "Someone moved a deal" placeholder text (never wired to
-        // real data). The real activity ticker lives on the Home view
-        // (_populateHomeTicker, data-v15-ticker). tickerItems/tickerHTML
-        // builders above are now unused but harmless.
-
-        // v27.16.1 — Relationships strip. The old 6-tile KPI grid had Open +
-        // Pipeline (now in the mission-control hero) plus 4 metrics with no
-        // other home: end-users / partners / consultants / Cavitak-OEM split.
-        // Open + Pipeline removed (de-duped); the other 4 kept as a compact
-        // strip so the data survives. data-v4-kpi-d writes for open/pipeline
-        // become harmless no-ops.
-        '<div class="v15-section v15-group"><i class="sec-ico">' + sIco.users + '</i><h2>Relationships</h2><span class="section-hint">active \u00b7 open cases</span></div>' +
-        '<div class="v4-kpi-grid v4-stagger">' +
-          kpiTile('g4', 'endusers',    'Active end-users',   sIco.kEnd,  false) +
-          kpiTile('g4', 'partners',    'Active partners',    sIco.kPart, false) +
-          kpiTile('g4', 'consultants', 'Active consultants', sIco.kCon,  false) +
-          kpiTile('g3', 'split',       'Cavitak / OEM',      sIco.kPie,  true) +
-        '</div>' +
-        // v27.17.0 — Relationships donut (heavy graphics) below the count tiles
-        '<div class="v4-card v4-col-12" style="margin-top:12px">' +
-          '<div class="v4-card-hd"><h3>Relationship mix</h3><span class="v4-hint">end-users \u00b7 partners \u00b7 consultants</span></div>' +
-          '<div class="v4-card-bd"><div id="chart-rel" class="dash-chart-canvas short"></div></div>' +
-        '</div>' +
-
-        '<div style="height:20px"></div>' +
-
-        // Two-column dash grid
-        '<div class="v4-dash-grid">' +
-
-          '<div class="v4-col-12 v4-group-div"><i class="sec-ico">' + sIco.funnel + '</i><span>Pipeline</span><small>where are the deals</small></div>' +
-
-          // v27.14.0 — Stage funnel promoted to full-width top position.
-          // Per owner-perspective feedback: pipeline funnel is the most
-          // important strategic view, deserves prominence over attention
-          // cards / product mix / regional. Now spans 12 cols (full width).
-          '<div class="v4-card v4-col-12">' +
-            '<div class="v4-card-hd">' +
-              '<h3>Pipeline by stage</h3>' +
-              '<span class="v4-hint" data-v4-d-funnel-total>\u2014 open</span>' +
-            '</div>' +
-            '<div class="v4-card-bd">' +
-              '<div class="v4-funnel">' +
-                funnelRow('v4-s-lead',     'Qualified') +
-                funnelRow('v4-s-proposal', 'Proposal') +
-                funnelRow('v4-s-budget',   'Budget Approval') +
-                funnelRow('v4-s-tech',     'Technical Approval') +
-                funnelRow('v4-s-nego',     'Negotiation') +
-                funnelRow('v4-s-awarded',  'Awarded') +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-
-          // v27.14.0 — Original funnel position (v4-col-4) retired; the new
-          // full-width promotion above replaces it. Other cards shift up.
-
-          '<div class="v4-col-12 v4-group-div"><i class="sec-ico">' + sIco.pie + '</i><span>Distribution</span><small>how it splits</small></div>' +
-
-          // v27.4.1 W2 — Product Mix tile (CALICO / MV / CORIO / SX overlay)
-          // v27.14.0 — Promoted from col-4 to col-6 since funnel moved to col-12 above
-          '<div class="v4-card v4-col-6">' +
-            '<div class="v4-card-hd"><h3>Product mix</h3><span class="v4-hint">chassis families \u00b7 CALICO / CORIO / MV</span></div>' +
-            '<div class="v4-card-bd">' +
-              '<div id="chart-prodmix" class="dash-chart-canvas"></div>' +
-            '</div>' +
-          '</div>' +
-
-          // Donut
-          // v27.14.0 — Promoted from col-4 to col-6 since funnel moved to col-12 above
-          '<div class="v4-card v4-col-6">' +
-            '<div class="v4-card-hd"><h3>Origin split</h3><span class="v4-hint">Cavitak vs OEM</span></div>' +
-            '<div class="v4-card-bd">' +
-              '<div id="chart-origin" class="dash-chart-canvas"></div>' +
-            '</div>' +
-          '</div>' +
-
-          // Region (full width)
-          // v27.14.0 — Redesigned per Option B: dropped abstract India SVG
-          // blobs + 4 zone tile rows. Replaced with single clean horizontal
-          // bar chart. Owner-perspective: faster scan, no decorative map,
-          // bars sorted by count descending so the dominant region reads first.
-          // Same data wiring: data-v4-zcount + data-v4-zone-lbl preserved
-          // so loadDashboardV4 zone update (L16780) keeps working unchanged.
-          '<div class="v4-card v4-col-12">' +
-            '<div class="v4-card-hd"><h3>Regional distribution</h3><span class="v4-hint">open cases by zone</span></div>' +
-            '<div class="v4-card-bd">' +
-              // v27.22.0 — Region consolidated to ONE visual. The interactive
-              // ECharts bar (chart-region) is the single source; the decorative
-              // India pin map + duplicate SVG bars were removed (they re-showed
-              // the same 4 zone counts three ways). The loader's data-v4-zcount /
-              // data-v4-zone-lbl / data-mc-pin writes are null-guarded, so they
-              // become harmless no-ops; the chart renders from its data argument.
-              '<button type="button" class="v4-region-banner" data-action="v4-region-unknown" data-v4-d-region-banner>' +
-                '<span class="v4-region-banner-ico">\u26a0</span>' +
-                '<span class="v4-region-banner-text" data-v4-d-region-banner-text>0 deals have unknown region. Tap to fix.</span>' +
-                '<span class="v4-region-banner-arrow">\u2192</span>' +
-              '</button>' +
-              '<div id="chart-region" class="dash-chart-canvas short"></div>' +
-            '</div>' +
-          '</div>' +
-
-          '<div class="v4-col-12 v4-group-div"><i class="sec-ico">' + sIco.user + '</i><span>People</span><small>who is driving it</small></div>' +
-
-          // Sales table
-          '<div class="v4-card v4-col-6">' +
-            '<div class="v4-card-hd"><h3>Sales performance</h3><span class="v4-hint">FY26-27 \u00b7 tap to filter</span></div>' +
-            '<div class="v4-card-bd" style="padding:0">' +
-              '<div id="chart-sales" class="dash-chart-canvas short" style="margin:8px 8px 12px"></div>' +
-            '</div>' +
-          '</div>' +
-
-          // Heatmap
-          '<div class="v4-card v4-col-6">' +
-            '<div class="v4-card-hd"><h3>Stalled deals</h3><span class="v4-hint">&gt; 30 days in stage \u00b7 by region</span></div>' +
-            '<div class="v4-card-bd">' +
-              '<div class="v4-heatmap">' +
-                '<div></div>' +
-                '<div class="v4-hm-hd">W</div><div class="v4-hm-hd">N</div><div class="v4-hm-hd">S</div><div class="v4-hm-hd">E</div>' +
-                hmRow('v4-s-lead',     'Qualified',          ['west','north','south','east']) +
-                hmRow('v4-s-proposal', 'Proposal',           ['west','north','south','east']) +
-                hmRow('v4-s-budget',   'Budget',             ['west','north','south','east']) +
-                hmRow('v4-s-tech',     'Technical',          ['west','north','south','east']) +
-                hmRow('v4-s-nego',     'Negotiation',        ['west','north','south','east']) +
-              '</div>' +
-              '<div class="v4-hm-legend">' +
-                '<span>Stuck count</span>' +
-                '<div class="v4-hm-scale">' +
-                  '<span>low</span>' +
-                  '<div class="v4-hm-scale-cell" style="background:var(--bg-subtle)"></div>' +
-                  '<div class="v4-hm-scale-cell" style="background:rgba(55,35,106,0.18)"></div>' +
-                  '<div class="v4-hm-scale-cell" style="background:rgba(55,35,106,0.36)"></div>' +
-                  '<div class="v4-hm-scale-cell" style="background:rgba(55,35,106,0.56)"></div>' +
-                  '<div class="v4-hm-scale-cell" style="background:var(--brand)"></div>' +
-                  '<span>high</span>' +
-                '</div>' +
-                '<span style="margin-left:auto">Total: <strong style="color:var(--ink-strong)" data-v4-d-hm-total>0</strong> stuck</span>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-
-          // v27.4.1 W4 — Partner + Consultant leaderboards (channel performance).
-          // Hidden for OEM users via [data-v4-d-channel-row][data-show="false"].
-          '<div class="v4-card v4-col-6" data-v4-d-channel-card="partner" style="display:none">' +
-            '<div class="v4-card-hd"><h3>Partner performance</h3><span class="v4-hint">FY26-27 \u00b7 ranked by open deals</span></div>' +
-            '<div class="v4-card-bd" style="padding:0">' +
-              '<div id="chart-partner" class="dash-chart-canvas short" style="margin:8px 8px 12px"></div>' +
-            '</div>' +
-          '</div>' +
-          '<div class="v4-card v4-col-6" data-v4-d-channel-card="consultant" style="display:none">' +
-            '<div class="v4-card-hd"><h3>Consultant performance</h3><span class="v4-hint">FY26-27 \u00b7 ranked by open deals</span></div>' +
-            '<div class="v4-card-bd" style="padding:0">' +
-              '<div id="chart-consultant" class="dash-chart-canvas short" style="margin:8px 8px 12px"></div>' +
-            '</div>' +
-          '</div>' +
-
-          // v27.16.2 — Presales-person-wise cases (spec item 5c). Mirrors the
-          // Sales performance table but groups by presales_person_id.
-          '<div class="v4-card v4-col-12">' +
-            '<div class="v4-card-hd"><h3>Presales performance</h3><span class="v4-hint">FY26-27 \u00b7 by presales owner</span></div>' +
-            '<div class="v4-card-bd" style="padding:0">' +
-              '<div id="chart-presales" class="dash-chart-canvas short" style="margin:8px 8px 12px"></div>' +
-            '</div>' +
-          '</div>' +
-
-          '<div class="v4-col-12 v4-group-div"><i class="sec-ico">' + sIco.warn + '</i><span>Analysis</span><small>what needs attention</small></div>' +
-
-          // v27.16.2 — Won rate by region + by sales-person (spec item 6).
-          // Two horizontal-bar blocks; each bar = win % with won/closed count.
-          '<div class="v4-card v4-col-12">' +
-            '<div class="v4-card-hd"><h3>Win rate</h3><span class="v4-hint">by region & sales-person \u00b7 FY26-27</span></div>' +
-            '<div class="v4-card-bd">' +
-              '<div class="v4-winrate-block">' +
-                '<div class="v4-winrate-sub">By region</div>' +
-                '<div data-v4-d-winrate-region><div class="v4-winrate-empty">Win rate forms after first closes</div></div>' +
-              '</div>' +
-              '<div class="v4-winrate-block" style="margin-top:16px">' +
-                '<div class="v4-winrate-sub">By sales person</div>' +
-                '<div data-v4-d-winrate-person><div class="v4-winrate-empty">Win rate forms after first closes</div></div>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-
-          // v27.16.2 — Days-in-stage analysis (spec item 7). Per-stage average
-          // dwell time (days a deal currently sits in each stage), longest
-          // stage flagged. Plus a "longest-stuck cases" mini-list.
-          '<div class="v4-card v4-col-12">' +
-            '<div class="v4-card-hd"><h3>Days in stage</h3><span class="v4-hint">average days in stage \u00b7 longest first</span></div>' +
-            '<div class="v4-card-bd">' +
-              '<div data-v4-d-dwell-bars><div class="v4-winrate-empty">Computing stage dwell\u2026</div></div>' +
-              '<div class="v4-dwell-stuck" data-v4-d-dwell-stuck></div>' +
-            '</div>' +
-          '</div>' +
-
-          '<div class="v4-col-12 v4-group-div"><i class="sec-ico">' + sIco.trend + '</i><span>Trend</span><small>momentum over time</small></div>' +
-
-          // Newly added line chart (full width)
-          '<div class="v4-card v4-col-12">' +
-            '<div class="v4-card-hd"><h3>Newly added cases</h3><span class="v4-hint">last 6 months</span></div>' +
-            '<div class="v4-card-bd">' +
-              '<div class="v4-chart-stats">' +
-                '<div><div class="v4-cs-label">Total new</div><div class="v4-cs-value" data-v4-d-line-total>0</div></div>' +
-                '<div><div class="v4-cs-label">Won so far</div><div class="v4-cs-value" data-v4-d-line-won>0</div></div>' +
-                '<div><div class="v4-cs-label">Avg per month</div><div class="v4-cs-value" data-v4-d-line-avg>0</div></div>' +
-                '<div><div class="v4-cs-label">Best month</div><div class="v4-cs-value" data-v4-d-line-best>\u2014</div></div>' +
-              '</div>' +
-              '<div data-v4-d-line-host></div>' +
-            '</div>' +
-          '</div>' +
-
-        '</div>' +
-        '</div>'
-      );
-
-      loadDashboardV4(u);
+      return DSH_show(u);  // v5 "Pipeline Command" dashboard
     }
 
     /* v27.16.0 — Mission-control helpers shared by loadDashboardV4.
@@ -20336,213 +20037,6 @@ function DSH_CSS(){ return '<style>'+[
       }
     }
 
-    /* ============================================================
-       VIEW: Dashboard (LEGACY, kept for revert)
-       v27.4.0-beta2 replaces this with showDashboard (hero-tech) below.
-       This function is no longer routed to; the export references the
-       new showDashboard by name. Rename this back and the new one to
-       showDashboardV4 to roll back without diff archaeology.
-       ============================================================ */
-    function showDashboardLegacy() {
-      showChrome(true);
-      updateNavActive('#/dashboard');
-      const u = STORE.currentUser() || {};
-      const isSuper = u.permission_tier === 'super';
-      const isBuHead = u.org_function === 'BU Head';
-      const showRegions = isSuper || isBuHead;
-      setRoot(
-        '<div class="v273-page">' +
-          '<header class="page-header">' +
-            '<span class="eyebrow">' + (isSuper ? 'PAN-INDIA' : isBuHead ? 'REGION DASHBOARD' : 'MY PIPELINE') + '</span>' +
-            '<h1>' + (isSuper ? 'All deals at a glance' : 'Deals at a glance') + '</h1>' +
-            '<p>Open deals, deals due to close this month, and items needing attention.</p>' +
-          '</header>' +
-
-          '<section class="kpi-grid kpi-grid-8">' +
-            kpiTile('open',    'kpi-tile-blue',   'OPEN PIPELINE',     'Active deals',
-              '<path d="M3 7h18M3 12h18M3 17h12"/><circle cx="20" cy="17" r="2"/>',
-              '#/history?filter=open') +
-            kpiTile('won',     'kpi-tile-green',  'WON THIS QUARTER',  'Closed wins',
-              '<path d="M6 9H4.5A2.5 2.5 0 0 1 2 6.5V5h4"/><path d="M18 9h1.5A2.5 2.5 0 0 0 22 6.5V5h-4"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
-              '#/history?filter=won') +
-            kpiTile('wr',      'kpi-tile-purple', 'WIN RATE',          'last 90 days',
-              '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
-              null) +
-            kpiTile('cm',      'kpi-tile-amber',  'CLOSING THIS MONTH', 'Due in current month',
-              '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
-              '#/history?filter=closing-this-month') +
-            kpiTile('stuck',   'kpi-tile-red',    'STUCK > 14d',       'No update in 14+ days',
-              '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
-              '#/history?filter=stuck') +
-            kpiTile('lost',    'kpi-tile-gray',   'LOST THIS QUARTER', 'Closed losses',
-              '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
-              '#/history?filter=lost') +
-            kpiTile('cycle',   'kpi-tile-cyan',   'AVG SALES CYCLE',   'Created \u2192 closed',
-              '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
-              null) +
-            kpiTile('velocity','kpi-tile-pink',   'VELOCITY',          'Closed / month',
-              '<polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/>',
-              null) +
-          '</section>' +
-
-          '<section class="attention-row">' +
-            '<a class="attention-card attention-card-danger" data-nav="#/history?filter=closing-this-month">' +
-              '<div class="attention-head">' +
-                '<span class="attention-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/></svg></span>' +
-                '<span class="attention-title">Closing this month</span>' +
-                '<span class="attention-count" id="att-closing">0</span>' +
-              '</div>' +
-              '<div class="attention-empty" id="att-closing-empty">No deals here \u2713</div>' +
-            '</a>' +
-            '<a class="attention-card attention-card-warning" data-nav="#/history?filter=stuck">' +
-              '<div class="attention-head">' +
-                '<span class="attention-icon"><svg viewBox="0 0 24 24"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/></svg></span>' +
-                '<span class="attention-title">Stuck &gt;14 days</span>' +
-                '<span class="attention-count" id="att-stuck">0</span>' +
-              '</div>' +
-              '<div class="attention-empty" id="att-stuck-empty">No deals here \u2713</div>' +
-            '</a>' +
-            '<a class="attention-card attention-card-stale" data-nav="#/history?filter=stale">' +
-              '<div class="attention-head">' +
-                '<span class="attention-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="10" y1="14" x2="14" y2="18"/></svg></span>' +
-                '<span class="attention-title">Stale &gt;30 days</span>' +
-                '<span class="attention-count" id="att-stale">0</span>' +
-              '</div>' +
-              '<div class="attention-empty" id="att-stale-empty">No deals here \u2713</div>' +
-            '</a>' +
-          '</section>' +
-
-          /* v27.3.1 — Pipeline trend hero chart (weekly area, full-width).
-             Shows open-pipeline value over last 26 weeks. */
-          '<section class="dash-chart-grid">' +
-            '<div class="dash-chart-card full">' +
-              '<div class="dash-chart-head">' +
-                '<h3>Pipeline momentum</h3>' +
-                '<span class="badge-pill">' +
-                  '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="3 17 9 11 13 15 21 7"/></svg>' +
-                  ' WEEKLY' +
-                '</span>' +
-              '</div>' +
-              '<div id="chart-trend" class="dash-chart-canvas tall"></div>' +
-            '</div>' +
-          '</section>' +
-
-          /* v27.3.1 — Two-up: win-rate gauge + lead source donut */
-          '<section class="dash-chart-grid">' +
-            '<div class="dash-chart-card">' +
-              '<div class="dash-chart-head">' +
-                '<h3>Win rate</h3>' +
-                '<span class="meta">Last 90 days</span>' +
-              '</div>' +
-              '<div id="chart-winrate" class="dash-chart-canvas"></div>' +
-            '</div>' +
-            '<div class="dash-chart-card">' +
-              '<div class="dash-chart-head">' +
-                '<h3>Lead source mix</h3>' +
-                '<span class="meta">Active pipeline</span>' +
-              '</div>' +
-              '<div id="chart-source" class="dash-chart-canvas"></div>' +
-            '</div>' +
-          '</section>' +
-
-          /* v27.3.1 — Two-up: stage velocity + sales leaderboard */
-          '<section class="dash-chart-grid">' +
-            '<div class="dash-chart-card">' +
-              '<div class="dash-chart-head">' +
-                '<h3>Stage velocity</h3>' +
-                '<span class="meta">Avg days waiting</span>' +
-              '</div>' +
-              '<div id="chart-velocity" class="dash-chart-canvas"></div>' +
-            '</div>' +
-            '<div class="dash-chart-card">' +
-              '<div class="dash-chart-head">' +
-                '<h3>' + (isSuper || isBuHead ? 'Sales leaderboard' : 'My win value') + '</h3>' +
-                '<span class="meta">Won this quarter</span>' +
-              '</div>' +
-              '<div id="chart-leaderboard" class="dash-chart-canvas"></div>' +
-            '</div>' +
-          '</section>' +
-
-          /* v27.3.3 — Product family case-count breakdown per spec image 2 */
-          '<section class="dash-section">' +
-            '<header class="dash-section-head">' +
-              '<h2>Cases by solution</h2>' +
-              '<span class="meta">Active pipeline</span>' +
-            '</header>' +
-            '<div class="entity-tile-grid" id="fam-tile-grid">' +
-              entityTile('fam-mv',     'Multiviewer', '#06B6D4',
-                '<rect x="3" y="4" width="18" height="14" rx="2"/><line x1="12" y1="4" x2="12" y2="18"/><line x1="3" y1="11" x2="21" y2="11"/>') +
-              entityTile('fam-calico', 'CALICO',      '#A855F7',
-                '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="7" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="17" cy="12" r="1.5"/>') +
-              entityTile('fam-corio',  'CORIO',       '#EC4899',
-                '<rect x="3" y="3" width="18" height="6" rx="1"/><rect x="3" y="13" width="18" height="6" rx="1"/><line x1="7" y1="6" x2="9" y2="6"/><line x1="7" y1="16" x2="9" y2="16"/>') +
-            '</div>' +
-          '</section>' +
-
-          /* v27.3.3 — Active entity counts per spec image 1 */
-          '<section class="dash-section">' +
-            '<header class="dash-section-head">' +
-              '<h2>Active relationships</h2>' +
-              '<span class="meta">Distinct in open deals</span>' +
-            '</header>' +
-            '<div class="entity-tile-grid" id="ent-tile-grid">' +
-              entityTile('ent-end',    'Endusers',    '#10B981',
-                '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>') +
-              entityTile('ent-part',   'Partners',    '#3B82F6',
-                '<path d="M17 11a3 3 0 1 0-2.83-4M13 11a3 3 0 1 0-2.83-4M11 11a3 3 0 1 1 2.83-4"/><path d="M21 19a6 6 0 0 0-9-5.2"/><path d="M3 19a6 6 0 0 1 9-5.2"/>') +
-              entityTile('ent-cons',   'Consultants', '#F59E0B',
-                '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>') +
-            '</div>' +
-          '</section>' +
-
-          '<section class="dash-section">' +
-            '<header class="dash-section-head">' +
-              '<h2>Pipeline funnel</h2>' +
-              '<span class="meta">By stage</span>' +
-            '</header>' +
-            '<div id="stage-funnel" class="stage-funnel">' +
-              _skelFunnel() +
-            '</div>' +
-          '</section>' +
-
-          (showRegions
-            ? '<section class="dash-section">' +
-                '<header class="dash-section-head">' +
-                  '<h2>Regions</h2>' +
-                  '<span class="meta">' + (isSuper ? 'Pan-India' : 'Your zones') + '</span>' +
-                '</header>' +
-                '<div id="region-tiles" class="region-grid">' +
-                  _skelRegionGrid() +
-                '</div>' +
-              '</section>'
-            : '') +
-
-          '<section class="dash-section">' +
-            '<header class="dash-section-head">' +
-              '<h2>Needs attention</h2>' +
-              '<span class="meta">Stuck + slipped open deals</span>' +
-            '</header>' +
-            '<div id="stuck-table" class="stuck-table-wrap">' +
-              _skelDealRows(4) +
-            '</div>' +
-          '</section>' +
-        '</div>'
-      );
-      loadHomeKpis();
-    }
-
-
-    /* v27.3.0 — KPI tile helper. Generates one tile w/ icon + value + sub. */
-    function kpiTile(id, colorClass, eyebrow, sub, iconPath, navHref) {
-      const navAttr = navHref ? ' data-nav="' + esc(navHref) + '"' : '';
-      return '<button class="kpi-tile ' + colorClass + '" type="button"' + navAttr + '>' +
-        '<span class="kpi-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + iconPath + '</svg></span>' +
-        '<div><div class="kpi-eyebrow">' + esc(eyebrow) + '</div>' +
-          '<div class="kpi-value" id="kpi-' + id + '-val">\u2014</div></div>' +
-        '<div class="kpi-sub" id="kpi-' + id + '-sub">' + esc(sub) + '</div>' +
-      '</button>';
-    }
-
     /* v27.3.3 — Tile used by "Cases by solution" + "Active relationships"
        rows. Lighter than kpiTile; no nav, no sub-text. Colored icon + big
        count + label. Each tile is independently animated on data land. */
@@ -20838,6 +20332,17 @@ function DSH_CSS(){ return '<style>'+[
     // Defensive — handles slow networks, blocked CDN, offline use.
     function _waitForECharts(timeoutMs) {
       const limit = (timeoutMs == null) ? 6000 : timeoutMs;
+      // v2.8.5 - lazy-load ECharts on first chart need (was an eager <script>
+      // in <head>). Guarded by id so it injects once; the poll below resolves
+      // when window.echarts is ready, and the timeout/catch handles a slow CDN.
+      if (!window.echarts && !document.getElementById('echarts-lazy')) {
+        try {
+          const _es = document.createElement('script');
+          _es.id = 'echarts-lazy';
+          _es.src = 'https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js';
+          document.head.appendChild(_es);
+        } catch (_e) {}
+      }
       return new Promise(function (resolve, reject) {
         if (window.echarts) return resolve(window.echarts);
         const start = Date.now();
@@ -22242,6 +21747,12 @@ function DSH_CSS(){ return '<style>'+[
           includeDeleted: includeDeleted
         });
         historyState.total = (r && r.total) || 0;
+        // v2.8.5 - "Load more" appears when the backend has more rows than this
+        // page fetched. Grow-and-refetch (handler bumps limit) keeps it simple.
+        const _rawCount = (r && r.rows || []).length;
+        const _loadMoreHtml = (_rawCount < historyState.total)
+          ? '<div class="hist-load-more"><button class="btn-v3 btn-ghost btn-md" type="button" data-action="hist-load-more">Load more</button></div>'
+          : '';
         let allRows = (r && r.rows) || [];
         // v1.3.0 — Apply the same role/region scoping the Home + Dashboard views
         // use, so History doesn't leak deals outside the viewer's scope. Sales/
@@ -22349,7 +21860,7 @@ function DSH_CSS(){ return '<style>'+[
         }
         // v27.3.0 — Apply sort just before render
         filtered = _sortHistoryRows(filtered, historyState.sort);
-        host.innerHTML = filtered.map(renderHistoryRow).join('');
+        host.innerHTML = filtered.map(renderHistoryRow).join('') + _loadMoreHtml;
       } catch (e) {
         _renderLoadError('hist-list', (e && e.message) || String(e), 'hist-retry');
       }
@@ -22747,7 +22258,7 @@ function DSH_CSS(){ return '<style>'+[
               '<div class="field-v3">' +
                 '<label for="pi-phone">Phone</label>' +
                 '<input id="pi-phone" class="input-v3" type="tel" inputmode="numeric" maxlength="10" value="' + esc(u.phone || '') + '" placeholder="10-digit number" pattern="[0-9]{10}">' +
-                '<div class="field-help small soft">10-digit Indian mobile, no country code or spaces.</div>' +
+                '<div class="field-help small soft">10-digit mobile (no country code or spaces)</div>' +
               '</div>' +
               '<div class="field-v3">' +
                 '<label for="pi-email">Email</label>' +
@@ -23304,6 +22815,20 @@ function DSH_CSS(){ return '<style>'+[
 
     let _activeSavedDealRefId = null;
 
+    // v2.8.3 - Saved-deal stage chip: opens the "Move stage" dropdown (stage
+    // history is now a link inside that sheet). id lets the pick handler swap
+    // the chip in place after a move without a full re-render.
+    function _renderSdStageChip(stage) {
+      if (!stage) return '';
+      const cls = _stageChipClassName(stage);
+      return '<button type="button" id="sd-stage-chip" class="' + cls + ' sd-stage-link" ' +
+        'data-action="sd-stage-menu" style="font-size:10.5px;padding:2px 8px;cursor:pointer" ' +
+        'title="Move stage / view history">' +
+          esc(stage) +
+          '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;vertical-align:-1px;opacity:0.7"><polyline points="6 9 12 15 18 9"/></svg>' +
+        '</button>';
+    }
+
     function showSavedDeal(refId) {
       showChrome(true);
       updateNavActive('#/history');
@@ -23508,14 +23033,8 @@ function DSH_CSS(){ return '<style>'+[
         : '';
 
       // Customer · stage · closing — line 3. closeStr appended only if present.
-      // v27.3.0 — stage badge is now clickable → opens stage history sheet
-      const stageCls = _stageChipClassName(stage);
-      const stageHtml = stage
-        ? '<button type="button" class="' + stageCls + ' sd-stage-link" data-action="sd-history" style="font-size:10.5px;padding:2px 8px;cursor:pointer" title="View stage history">' +
-            esc(stage) +
-            '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;vertical-align:-1px;opacity:0.65"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
-          '</button>'
-        : esc(stage);
+      // v2.8.3 - stage chip opens the "Move stage" dropdown (+ history)
+      const stageHtml = _renderSdStageChip(stage);
       const line3Parts = [esc(customer), stageHtml];
       if (closeStr) line3Parts.push('Closing ' + esc(closeStr));
       const line3Html = '<div class="sd-meta-line">' + line3Parts.join(' \u00b7 ') + '</div>';
@@ -23619,7 +23138,7 @@ function DSH_CSS(){ return '<style>'+[
           sdSelectField('presales_person_id', 'Presales person', deal.presales_person_id, PRESALES_TEAM, { placeholder: '\u2014 select \u2014' }) +
           '<h3 class="h3">Partner contact</h3>' +
           sdField('contact_name',  'Contact name',  deal.contact_name,  { placeholder: 'Site / partner contact person' }) +
-          sdField('contact_phone', 'Contact phone', deal.contact_phone, { inputmode: 'numeric', maxlength: 10, help: '10-digit mobile (no country code, no spaces)' }) +
+          sdField('contact_phone', 'Contact phone', deal.contact_phone, { inputmode: 'numeric', maxlength: 10, help: '10-digit mobile (no country code or spaces)' }) +
           sdField('contact_email', 'Contact email', deal.contact_email, { type: 'email', placeholder: 'name@company.com' }) +
           '<h3 class="h3">Closure</h3>' +
           sdField('close_month', 'Expected closure', deal.close_month, { type: 'month', help: 'Year-month, e.g. 2026-09' }) +
@@ -23683,32 +23202,37 @@ function DSH_CSS(){ return '<style>'+[
           // v27.3.0 glass action bar (6 buttons): Back/Edit, Confirmed, Excel, PDF, WhatsApp, Email
           '<div class="bom-action-bar">' +
             '<div class="bom-action-bar-inner">' +
-              '<button class="action-btn-v3" type="button" data-action="sd-edit" id="sd-btn-edit">' +
-                '<svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
-                '<span class="label">Edit</span>' +
+              '<button class="abtn abtn-ghost" type="button" data-action="sd-edit" id="sd-btn-edit">' +
+                '<svg class="abtn-ico" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+                '<span class="abtn-label">Edit</span>' +
               '</button>' +
-              '<button class="action-btn-v3 act-confirm" type="button" data-action="sd-confirm" id="sd-btn-confirm">' +
-                '<svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' +
-                '<span class="label">Confirm</span>' +
+              '<button class="abtn abtn-primary" type="button" data-action="sd-confirm" id="sd-btn-confirm">' +
+                '<svg class="abtn-ico" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' +
+                '<span class="abtn-label">Confirm</span>' +
               '</button>' +
-              '<button class="action-btn-v3 act-excel" type="button" data-action="sd-excel" id="sd-btn-excel">' +
-                '<svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13l3 3 5-5"/></svg>' +
-                '<span class="label">Excel</span>' +
-              '</button>' +
-              '<button class="action-btn-v3 act-pdf" type="button" data-action="sd-pdf" id="sd-btn-pdf">' +
-                '<svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><polyline points="9 15 12 18 15 15"/></svg>' +
-                '<span class="label">PDF</span>' +
-              '</button>' +
-              '<button class="action-btn-v3 act-wa" type="button" data-action="sd-whatsapp" id="sd-btn-wa">' +
-                '<svg class="icon" viewBox="0 0 24 24"><path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9z"/><path d="M9 10a5 5 0 0 0 5 5"/></svg>' +
-                '<span class="label">WhatsApp</span>' +
-              '</button>' +
-              '<button class="action-btn-v3 act-email" type="button" data-action="sd-email" id="sd-btn-email">' +
-                '<svg class="icon" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 7 12 13 2 7"/></svg>' +
-                '<span class="label">Email</span>' +
-              '</button>' +
-              '<button class="action-btn-v3" type="button" data-action="sd-delete" id="sd-btn-delete" style="margin-left:auto">' +
-                '<svg class="icon" viewBox="0 0 24 24" style="color:#DC2626"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>' +
+              '<span class="abar-div" aria-hidden="true"></span>' +
+              '<span class="abar-cluster">' +
+                '<button class="iconbtn" type="button" data-action="sd-excel" id="sd-btn-excel" title="Export Excel">' +
+                  '<svg class="iconbtn-ico" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13l2 2.5L9 18M15 13l-2 2.5 2 2.5"/></svg>' +
+                  '<small>Excel</small>' +
+                '</button>' +
+                '<button class="iconbtn" type="button" data-action="sd-pdf" id="sd-btn-pdf" title="Export PDF">' +
+                  '<svg class="iconbtn-ico" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><polyline points="9 15 12 18 15 15"/></svg>' +
+                  '<small>PDF</small>' +
+                '</button>' +
+                '<button class="iconbtn" type="button" data-action="sd-whatsapp" id="sd-btn-wa" title="Share on WhatsApp">' +
+                  '<svg class="iconbtn-ico" viewBox="0 0 24 24"><path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9z"/><path d="M9 10a5 5 0 0 0 5 5"/></svg>' +
+                  '<small>WhatsApp</small>' +
+                '</button>' +
+                '<button class="iconbtn" type="button" data-action="sd-email" id="sd-btn-email" title="Share by Email">' +
+                  '<svg class="iconbtn-ico" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 7 12 13 2 7"/></svg>' +
+                  '<small>Email</small>' +
+                '</button>' +
+              '</span>' +
+              '<span class="abar-div" aria-hidden="true"></span>' +
+              '<button class="iconbtn iconbtn-del" type="button" data-action="sd-delete" id="sd-btn-delete" title="Delete deal">' +
+                '<svg class="iconbtn-ico" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>' +
+                '<small>Delete</small>' +
               '</button>' +
             '</div>' +
           '</div>' +
@@ -24033,7 +23557,9 @@ function DSH_CSS(){ return '<style>'+[
             ? (d.reco
                 ? '<button class="btn" type="button" data-action="wiz-rebuild">Rebuild &amp; save \u2192</button>'
                 : '<button class="btn" type="button" data-action="wiz-build">Build &amp; save quote \u2192</button>')
-            : '<button class="btn" type="button" data-action="wiz-next">Next \u2192</button>') +
+            : d.step === 2
+              ? '' /* v2.8.1 — Step 2 (path pick) advances via its in-card "Continue with X" CTA; no separate Next */
+              : '<button class="btn" type="button" data-action="wiz-next">Next \u2192</button>') +
         '</div>';
     }
 
@@ -24137,7 +23663,7 @@ function DSH_CSS(){ return '<style>'+[
           '<div class="sp-16"></div>' +
           fieldCaption('Partner contact') +
           field('contact_name',  'Contact name',  d.contact_name,  { required: true, placeholder: 'Site / partner contact person' }) +
-          field('contact_phone', 'Contact phone', d.contact_phone, { required: true, inputmode: 'numeric', maxlength: 10, help: '10-digit mobile (no country code, no spaces)' }) +
+          field('contact_phone', 'Contact phone', d.contact_phone, { required: true, inputmode: 'numeric', maxlength: 10, help: '10-digit mobile (no country code or spaces)' }) +
           field('contact_email', 'Contact email', d.contact_email, { required: true, type: 'email', placeholder: 'name@company.com' }) +
           '<div class="sp-16"></div>' +
           fieldCaption('Closure') +
@@ -24211,39 +23737,49 @@ function DSH_CSS(){ return '<style>'+[
     }
 
     function renderStep2(d) {
-      // v2.0.0 — Step 2 is ONLY the Guided/Advanced choice (per spec). All
-      // deployment fields moved to Step 3 (guided branch). Tapping a card
-      // advances to Step 3 via the path-pick handler.
-      const isGuided   = d.mode === 'guided';
-      const isAdvanced = d.mode === 'advanced';
-      const err = d.errors && d.errors.mode
-        ? '<div class="banner warn" style="margin-bottom:10px;">' + esc(d.errors.mode) + '</div>' : '';
-      return sectionHeader(2, 'Choose your path', 'How do you want to build this quote?') + err +
-        '<div class="path-pick-grid">' +
-          '<button class="path-pick-card' + (isGuided ? ' is-selected' : '') + '" type="button" ' +
-            'data-action="path-pick" data-mode="guided">' +
-            '<span class="path-pick-icon">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-                '<circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>' +
-            '</span>' +
-            '<span class="path-pick-text">' +
-              '<span class="path-pick-title">Guided</span>' +
-              '<span class="path-pick-sub">Answer a few questions \u2014 we recommend a player</span>' +
-            '</span>' +
-            (isGuided ? '<span class="path-pick-check">\u2713</span>' : '') +
-          '</button>' +
-          '<button class="path-pick-card' + (isAdvanced ? ' is-selected' : '') + '" type="button" ' +
-            'data-action="path-pick" data-mode="advanced">' +
-            '<span class="path-pick-icon">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-                '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
-            '</span>' +
-            '<span class="path-pick-text">' +
-              '<span class="path-pick-title">Advanced</span>' +
-              '<span class="path-pick-sub">Pick exact models and quantities yourself</span>' +
-            '</span>' +
-            (isAdvanced ? '<span class="path-pick-check">\u2713</span>' : '') +
-          '</button>' +
+      // v2.8.1 — "Choose your path" rebuilt (Option 2): a segmented Guided/
+      // Advanced switch + a live preview that updates on toggle + an explicit
+      // "Continue with X" CTA. The toggle (data-action="path-mode") only SELECTS
+      // the mode and repaints; the CTA reuses path-pick to set mode + advance to
+      // Step 3. Default is Guided (the recommended path). The wizard's bottom
+      // Next is suppressed on this step (renderWizActions).
+      const mode = d.mode === 'advanced' ? 'advanced' : 'guided';
+      const isG = mode === 'guided';
+
+      const COMPASS = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>';
+      const SLIDERS = '<svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>';
+      const CK  = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+      const ARR = '<svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+
+      const meta = isG
+        ? { ic: COMPASS, title: 'Guided', rec: true,
+            desc: 'Answer a few quick questions and we\u2019ll recommend the right player.',
+            list: ['A few quick questions', 'We pick the model for you', 'Fastest way to a quote'] }
+        : { ic: SLIDERS, title: 'Advanced', rec: false,
+            desc: 'Browse the full catalog and set exact models and quantities yourself.',
+            list: ['Full BrightSign catalog', 'Exact models & quantities', 'CMS-only deals too'] };
+
+      const listHtml = meta.list.map(function (t) {
+        return '<li>' + CK + '<span>' + esc(t) + '</span></li>';
+      }).join('');
+
+      return sectionHeader(2, 'Choose your path', 'How do you want to build this quote?') +
+        '<div class="path-seg">' +
+          '<button type="button" class="path-seg-btn' + (isG ? ' is-on' : '') + '" data-action="path-mode" data-mode="guided">' +
+            '<span class="path-seg-ic">' + COMPASS + '</span>Guided</button>' +
+          '<button type="button" class="path-seg-btn' + (!isG ? ' is-on' : '') + '" data-action="path-mode" data-mode="advanced">' +
+            '<span class="path-seg-ic">' + SLIDERS + '</span>Advanced</button>' +
+        '</div>' +
+        '<div class="path-prev">' +
+          '<div class="path-prev-ic">' + meta.ic + '</div>' +
+          '<div class="path-prev-body">' +
+            '<div class="path-prev-h">' + esc(meta.title) +
+              (meta.rec ? '<span class="path-prev-rec">Recommended</span>' : '') + '</div>' +
+            '<div class="path-prev-d">' + esc(meta.desc) + '</div>' +
+            '<ul class="path-prev-list">' + listHtml + '</ul>' +
+            '<button class="path-prev-cta" type="button" data-action="path-pick" data-mode="' + mode + '">' +
+              'Continue with ' + esc(meta.title) + ARR + '</button>' +
+          '</div>' +
         '</div>';
     }
 
@@ -24508,75 +24044,15 @@ function DSH_CSS(){ return '<style>'+[
       // at bottom of Step 3 (renderSxBlock).
     }
 
-    function renderStep3Corio(d) {
-      // v27.19.0 — Generic signal form per handwritten CORIO spec (p.1).
-      // Inputs: 4K HDMI / FHD HDMI / HDBaseT / 3G SDI / 12G SDI / DVI-U.
-      // Outputs: 4K HDMI / FHD HDMI / HDBaseT / 3G SDI / 12G SDI.
-      // The engine (recommendCorio) translates these generic signals to the
-      // matching CM or CM2 card per the resolved chassis ecosystem.
-      const inErr = d.errors.corio_io
-        ? '<div class="banner err">' + esc(d.errors.corio_io) + '</div>' : '';
-
-      const CIO = {
-        hdmi:'<svg viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="#E0E7FF"/><path d="M8.5 11.2h11v3.4l-1.8 1.8h-7.4l-1.8-1.8z" stroke="#4F46E5" stroke-width="1.6" stroke-linejoin="round"/><path d="M11 11.2v-1.3h6v1.3" stroke="#4F46E5" stroke-width="1.6" stroke-linejoin="round"/></svg>',
-        bnc:'<svg viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="#EDE9FE"/><circle cx="14" cy="14" r="5.6" stroke="#7C3AED" stroke-width="1.6"/><circle cx="14" cy="14" r="1.7" fill="#7C3AED"/></svg>',
-        rj45:'<svg viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="#D1FAE5"/><path d="M9 10.5h10v7.2H9z" stroke="#059669" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10.5V8.8h4v1.7" stroke="#059669" stroke-width="1.6" stroke-linejoin="round"/><path d="M11.3 17.7v1.5M14 17.7v1.5M16.7 17.7v1.5" stroke="#059669" stroke-width="1.4" stroke-linecap="round"/></svg>',
-        dvi:'<svg viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="#FEF3C7"/><rect x="8" y="10.6" width="12" height="6.8" rx="1.2" stroke="#D97706" stroke-width="1.6"/><path d="M11 13h.01M13.5 13h.01M16 13h.01M11 15h.01M13.5 15h.01M16 15h.01" stroke="#D97706" stroke-width="1.7" stroke-linecap="round"/></svg>'
-      };
-      const inputSignals = [
-        { key:'4K HDMI',  icon:CIO.hdmi, desc:'4K HDMI sources' },
-        { key:'FHD HDMI', icon:CIO.hdmi, desc:'1080p HDMI sources' },
-        { key:'HDBaseT',  icon:CIO.rj45, desc:'HDBaseT sources' },
-        { key:'3G SDI',   icon:CIO.bnc,  desc:'3G-SDI sources' },
-        { key:'12G SDI',  icon:CIO.bnc,  desc:'12G-SDI 4K sources' },
-        { key:'DVI-U',    icon:CIO.dvi,  desc:'DVI-U sources' }
-      ];
-      const outputSignals = [
-        { key:'4K HDMI',  icon:CIO.hdmi, desc:'4K HDMI outputs' },
-        { key:'FHD HDMI', icon:CIO.hdmi, desc:'1080p HDMI outputs' },
-        { key:'HDBaseT',  icon:CIO.rj45, desc:'HDBaseT outputs' },
-        { key:'3G SDI',   icon:CIO.bnc,  desc:'3G-SDI outputs' },
-        { key:'12G SDI',  icon:CIO.bnc,  desc:'12G-SDI outputs' }
-      ];
-
-      return inErr +
-        '<div class="banner info">' +
-          'Enter the number of <strong>signal ports</strong> needed. RECOMMEND picks the chassis ' +
-          '(Micro / Mini / CORIOmaster2) from your canvas count, then auto-fits the right cards. ' +
-          '12G-SDI or &gt;6 canvases require CORIOmaster2 (4K).' +
-        '</div>' +
-        '<h3 class="h3">Canvas configuration</h3>' +
-        '<div class="card">' +
-          stepperRow('corio_canvases', 'Canvas count', 'Independent canvases', d.corio_canvases || 0, { namespace:'__corio_canvas' }) +
-        '</div>' +
-        '<h3 class="h3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;margin-right:6px;opacity:.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>Input signals</h3>' +
-        '<div class="card">' +
-          inputSignals.map(function (s) {
-            return stepperRow(s.key, s.key, s.desc, (d.corio_sig_inputs && d.corio_sig_inputs[s.key]) || 0, { namespace:'corio_sig_inputs', icon:s.icon });
-          }).join('') +
-        '</div>' +
-        '<h3 class="h3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;margin-right:6px;opacity:.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Output signals</h3>' +
-        '<div class="card">' +
-          outputSignals.map(function (s) {
-            return stepperRow(s.key, s.key, s.desc, (d.corio_sig_outputs && d.corio_sig_outputs[s.key]) || 0, { namespace:'corio_sig_outputs', icon:s.icon });
-          }).join('') +
-        '</div>' +
-        '<h3 class="h3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;margin-right:6px;opacity:.5"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>Audio</h3>' +
-        '<div class="card">' +
-          '<div class="field" style="margin:0">' +
-            '<label>Audio required?</label>' +
-            '<div class="sx-pill-group">' + '<button type="button" class="sx-pill' + (d.corio_audio === '' ? ' active' : '') + '" data-action="corio-audio-set" data-value="">No</button>' + '<button type="button" class="sx-pill' + (d.corio_audio === '2-4' || d.corio_audio === '8-8' ? ' active' : '') + '" data-action="corio-audio-set" data-value="2-4">Yes</button>' + '</div>' +
-          '</div>' +
-        '</div>';
-    }
-
     /* ---------- Step 4: LED screens ---------- */
 
     function renderStep3Advanced(d) {
-      // v2.0.0 — Advanced Configure (spec p.2): the full catalog as a grid of
-      // qty steppers (AU335 ... XC4055), replacing the old cart dropdown. XC
-      // models additionally choose the OS — BrightSignOS (variant_key '') or
-      // Windows (variant_key 'win'); both rows verified live in bs pricing.
+      // v2.8.0 — Advanced "composer": catalog (grouped by family) on the left,
+      // a live "Your build" canvas on the right. Reuses the adv-qty / adv-os
+      // handlers and the [{model_id, qty, os?}] advancedSelections shape. XC
+      // models choose OS (BrightSignOS variant_key '' / Windows 'win'). The
+      // cart "remove" reuses adv-qty with data-delta="-qty" (handler clamps to
+      // 0 and splices, then rerenderPreservingScroll repaints both panes).
       const pb = (typeof STORE !== 'undefined' && STORE.getPricebook) ? STORE.getPricebook() : null;
       const catalog = (pb && Array.isArray(pb.catalog)) ? pb.catalog.filter(function (c) { return c.available; }) : [];
       if (!catalog.length) {
@@ -24588,7 +24064,16 @@ function DSH_CSS(){ return '<style>'+[
       const selOf = function (id) { return sel.find(function (s) { return s.model_id === id; }) || null; };
       const total = sel.reduce(function (s, it) { return s + (Number(it.qty) || 0); }, 0);
 
-      const rows = sorted.map(function (c) {
+      // group the catalog by family; family order follows rank (first-seen)
+      const fams = [];
+      const famMap = {};
+      sorted.forEach(function (c) {
+        const g = c.model_group || '\u2014';
+        if (!famMap[g]) { famMap[g] = []; fams.push(g); }
+        famMap[g].push(c);
+      });
+
+      const modelCard = function (c) {
         const s = selOf(c.model_id);
         const qty = s ? (Number(s.qty) || 0) : 0;
         const os = s && s.os === 'win' ? 'win' : '';
@@ -24612,108 +24097,53 @@ function DSH_CSS(){ return '<style>'+[
             '<button type="button" data-action="adv-qty" data-model="' + esc(c.model_id) + '" data-delta="1" aria-label="Increase">+</button>' +
           '</div>' +
         '</div>';
-      }).join('');
+      };
 
-      return sectionHeader(3, 'Configure', 'Pick exact models and quantities \u2014 no engine, your call. CMS-only deals are fine: leave everything at 0.') +
-        fieldCaption('Players', true) +
-        '<div class="adv-model-grid">' + rows + '</div>' +
-        '<p class="help" style="font-weight:600;margin-top:10px;">' + total + ' player' + (total === 1 ? '' : 's') + ' total</p>';
-    }
-
-    /* v27.3.0 — Shared LED-screen renderer. Used by Step 3 (CALICO inline)
-       and by Step 4 (legacy non-CALICO LED path). Each screen card shows
-       W/H/pitch inputs + live badges (pixels, RJ45 ports, HDMI feeds, aspect
-       ratio) and physical dimensions. Aggregate band totals at the bottom. */
-    function renderLedScreens(d) {
-      if (!d.screens || d.screens.length === 0) return '';
-      const totals = { pixels: 0, ledPorts: 0, hdmiFeeds: 0 };
-      const screensHtml = d.screens.map(function(s, idx) {
-        const w = Number(s.w) || 0;
-        const h = Number(s.h) || 0;
-        const px = w * h;
-        const ports = px > 0 ? Math.ceil(px / 650000) : 0;
-        const feeds = px > 0 ? Math.ceil(px / (3840 * 2160)) : 0;
-        const aspect = _ledAspectRatio(w, h);
-        const dims = screenDimensions(s.w, s.h, s.pitch);
-        totals.pixels += px;
-        totals.ledPorts += ports;
-        totals.hdmiFeeds += feeds;
-        const hasComplete = (w > 0 && h > 0);
-        return '<div class="led-card">' +
-          '<div class="led-card-head"><strong>Screen ' + (idx + 1) + '</strong></div>' +
-          '<div class="row gap-2">' +
-            '<div class="field" style="flex:1;margin:0">' +
-              '<label>Width (px)</label>' +
-              '<input type="text" inputmode="numeric" value="' + esc(s.w) + '"' +
-                ' data-action="screen-w" data-idx="' + idx + '">' +
-            '</div>' +
-            '<div class="field" style="flex:1;margin:0">' +
-              '<label>Height (px)</label>' +
-              '<input type="text" inputmode="numeric" value="' + esc(s.h) + '"' +
-                ' data-action="screen-h" data-idx="' + idx + '">' +
-            '</div>' +
-          '</div>' +
-          '<div class="field" style="margin:8px 0 0">' +
-            '<label>Pixel pitch (mm)</label>' +
-            '<input type="text" inputmode="decimal" value="' + esc(s.pitch || '') + '"' +
-              ' placeholder="e.g. 2.50"' +
-              ' data-action="screen-pitch" data-idx="' + idx + '">' +
-            '<div class="help">Typical 0.50\u201350.00 mm \u00b7 2 decimal places</div>' +
-          '</div>' +
-          (hasComplete
-            ? '<div class="led-badge-row">' +
-                '<span class="led-badge"><span class="led-badge-k">Pixels</span><span class="led-badge-v">' + px.toLocaleString('en-IN') + '</span></span>' +
-                '<span class="led-badge"><span class="led-badge-k">RJ45 ports</span><span class="led-badge-v">' + ports + '</span></span>' +
-                '<span class="led-badge"><span class="led-badge-k">HDMI feeds</span><span class="led-badge-v">' + feeds + '</span></span>' +
-                '<span class="led-badge"><span class="led-badge-k">Aspect</span><span class="led-badge-v">' + esc(aspect) + '</span></span>' +
-                // v27.3.13 fix Issue B (Dipenkumar 2026-05-26) — physical
-                // dimensions promoted to pills alongside the other derived
-                // values. Two pills (Size + Diagonal) instead of the prior
-                // inline "Physical: 2898mm × 4410mm · 207.8" strip.
-                (dims.ok
-                  ? '<span class="led-badge"><span class="led-badge-k">Size</span><span class="led-badge-v">' + dims.width_mm + ' \u00d7 ' + dims.height_mm + ' mm</span></span>' +
-                    '<span class="led-badge"><span class="led-badge-k">Diagonal</span><span class="led-badge-v">' + dims.diagonal_inches + '"</span></span>'
-                  : '') +
-              '</div>'
-            : '') +
+      const catHtml = fams.map(function (g) {
+        const items = famMap[g];
+        const cnt = items.reduce(function (a, c) { const s = selOf(c.model_id); return a + (s ? (Number(s.qty) || 0) : 0); }, 0);
+        return '<div class="adv-fam">' +
+          '<div class="adv-fam-label">' + esc(g) +
+            (cnt > 0 ? ' <span class="ct">\u00b7 ' + cnt + '</span>' : '') +
+            '<span class="ln"></span></div>' +
+          '<div class="adv-model-grid">' + items.map(modelCard).join('') + '</div>' +
         '</div>';
       }).join('');
-      const projectorCt = Number((d.calico_outputs && d.calico_outputs.projector) || 0);
-      const totalPorts = totals.hdmiFeeds + projectorCt;
-      // v27.3.0 — slim aggregate summary. Per-screen pills already show
-      // Pixels / RJ45 / HDMI feeds / Aspect, so no need to repeat them.
-      // This line just totals across all screens + projector ports.
-      const aggregateHtml = (d.screens.length > 1 || projectorCt > 0)
-        ? '<div class="led-summary">' +
-            '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
-            '<span><strong>' + totals.pixels.toLocaleString('en-IN') + '</strong> total pixels \u00b7 ' +
-              '<strong>' + totals.ledPorts + '</strong> RJ45 \u00b7 ' +
-              '<strong>' + totalPorts + '</strong> total feeds (' + totals.hdmiFeeds + ' LED + ' + projectorCt + ' projector)' +
-            '</span>' +
-          '</div>'
-        : '';
-      return screensHtml + aggregateHtml;
-    }
 
-    /* v27.3.0 §11 — LED aspect ratio. Returns exact-match label for common
-       ratios within 0.5% tolerance, otherwise "Custom W.WW:1 — tvONE territory". */
-    // v27.3.9 — Aspect ratio for LED screen header badge. Returns a
-    // pre-formatted pill string: "16:9 · Widescreen" when the GCD-reduced
-    // ratio is in ASPECT_NAMES, or just "16:9" (bare ratio) otherwise.
-    // Returns "—" for invalid inputs.
-    //
-    // CHANGED from v27.3.7: previously used 0.5% float-tolerance matching
-    // against a fixed list and returned "Custom 1.78:1" for unknowns.
-    // Per Dipenkumar 2026-05-26 locked spec: exact ratio only (no tolerance),
-    // GCD-reduced, ASPECT_NAMES is the single source of truth for naming.
-    function _ledAspectRatio(w, h) {
-      const wPx = Number(w);
-      const hPx = Number(h);
-      if (!wPx || !hPx || wPx <= 0 || hPx <= 0) return '\u2014';
-      const g = gcd(wPx, hPx);
-      const ratio = (wPx / g) + ':' + (hPx / g);
-      const name = ASPECT_NAMES[ratio];
-      return name ? (ratio + ' \u00b7 ' + name) : ratio;
+      // live build / canvas (rank-ordered)
+      let buildBody;
+      if (!sel.length) {
+        buildBody = '<div class="adv-build-empty">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>' +
+          'Nothing added yet.<br>Tap + on a model to start your build.</div>';
+      } else {
+        const order = {}; sorted.forEach(function (c, i) { order[c.model_id] = i; });
+        const items = sel.slice().filter(function (s) { return (Number(s.qty) || 0) > 0; })
+          .sort(function (a, b) { return (order[a.model_id] || 0) - (order[b.model_id] || 0); });
+        buildBody = items.map(function (s) {
+          const isXC = String(s.model_id).indexOf('XC') === 0;
+          const sub = isXC ? (s.os === 'win' ? 'Windows' : 'BrightSignOS') : '';
+          const q = Number(s.qty) || 0;
+          return '<div class="adv-build-item">' +
+            '<div class="bi-info"><div class="bi-name">' + esc(s.model_id) + '</div>' +
+              (sub ? '<div class="bi-sub">' + sub + '</div>' : '') + '</div>' +
+            '<span class="bi-qty">\u00d7' + q + '</span>' +
+            '<button type="button" class="bi-rm" data-action="adv-qty" data-model="' + esc(s.model_id) + '" data-delta="-' + q + '" aria-label="Remove">\u2715</button>' +
+          '</div>';
+        }).join('');
+      }
+
+      const buildHtml = '<div class="adv-build">' +
+        '<div class="adv-build-head"><span class="t">Your build</span><span class="n">' + total + ' player' + (total === 1 ? '' : 's') + '</span></div>' +
+        '<div class="adv-build-body">' + buildBody + '</div>' +
+        '<div class="adv-build-foot"><span class="lbl">Total players</span><span class="big">' + total + '<small>player' + (total === 1 ? '' : 's') + '</small></span></div>' +
+      '</div>';
+
+      return sectionHeader(3, 'Configure', 'Compose your build \u2014 tap + to add players; your build fills in on the right. CMS-only deals are fine: leave everything at 0.') +
+        '<div class="adv-composer">' +
+          '<div class="adv-cat">' + catHtml + '</div>' +
+          buildHtml +
+        '</div>';
     }
 
     /* ============================================================
@@ -25170,36 +24600,37 @@ function DSH_CSS(){ return '<style>'+[
         ? (d.advancedSelections || []).reduce(function (s, it) { return s + (Number(it.qty) || 0); }, 0)
         : (Number(d.qty_indoor) || 0) + (Number(d.qty_outdoor) || 0);
 
-      // ---- CMS inputs (Step 6 is now CMS-only; Review moved to Step 7) ----
+      // v2.7.5 — reordered: subscription block on top, brand selection last.
+      // Deployment/Term are segmented pills (were dropdowns); when None is
+      // chosen the subscription block is dimmed + non-interactive.
       const cmsChosen = d.cms_vendor && d.cms_vendor !== 'None';
-      // v2.0.0 — seed licenses = player total on first vendor pick.
+      // seed licenses = player total on first vendor pick.
       if (cmsChosen && !(Number(d.cms_qty) > 0) && total > 0) d.cms_qty = total;
-      let cms = sectionHeader(5, 'Content management', 'Pick a CMS to bundle its subscription into the quote, or leave as None. A deal can be CMS-only — no players needed.') +
+
+      let cms = sectionHeader(5, 'Content management', 'Set the subscription terms, then pick a CMS brand \u2014 or choose None for a player-only deal.') +
         (total > 25 ? '<p class="help"><strong>A CMS is required for more than 25 players.</strong></p>' : '');
+
+      // ---- TOP: subscription block (dimmed when None) ----
+      cms += '<div class="cms-subblock' + (cmsChosen ? '' : ' is-disabled') + '">' +
+        '<div class="cms-subblock-title">CMS subscription</div>' +
+        pillGroup('cms_deployment_mode', 'Deployment', d.cms_deployment_mode || '', [
+          { value: 'local', label: 'On-premise (local)' },
+          { value: 'cloud', label: 'Cloud (remote)' }
+        ]) +
+        pillGroup('cms_term', 'Subscription term', String(d.cms_term || ''), [
+          { value: '1', label: '1 yr' },
+          { value: '2', label: '2 yr' },
+          { value: '3', label: '3 yr' },
+          { value: '4', label: '4 yr' },
+          { value: '5', label: '5 yr' }
+        ]) +
+        stepperRow('cms_qty', 'Licenses', 'Defaulted to player count (' + total + ')',
+          Number(d.cms_qty) || 0, { min: 0, max: 500 }) +
+        (cmsChosen ? '' : '<div class="cms-subblock-note">Not needed for a player-only deal \u2014 pick a CMS brand below to configure.</div>') +
+      '</div>';
+
+      // ---- LAST: brand selection ----
       cms += cmsVendorSelect(d.cms_vendor || 'None');
-      // When a vendor is chosen, group its options in a tinted sub-panel so the
-      // section reads as one CMS block rather than three loose dropdowns.
-      if (cmsChosen) {
-        cms += '<div class="cms-subpanel">' +
-          '<div class="cms-subpanel-title">' + esc(d.cms_vendor) + ' subscription</div>' +
-          wizSelect('cms_deployment_mode', 'Deployment', d.cms_deployment_mode || '', [
-            { value: 'local', label: 'On-premise (local)' },
-            { value: 'cloud', label: 'Cloud (hosted)' }
-          ], { placeholder: '\u2014 select \u2014' }) +
-          wizSelect('cms_term', 'Subscription term', String(d.cms_term || ''), [
-            { value: '1', label: '1 year' },
-            { value: '2', label: '2 years' },
-            { value: '3', label: '3 years' },
-            { value: '4', label: '4 years' },
-            { value: '5', label: '5 years' }
-          ], { placeholder: '\u2014 select \u2014' }) +
-          // v2.0.0 — license quantity (spec p.3): seeded to the player total
-          // when the vendor is picked (budget_tier pattern) so the stepper
-          // shows what it will mutate; CMS-only deals step up from 0.
-          stepperRow('cms_qty', 'Licenses', 'Defaulted to player count (' + total + ')',
-            Number(d.cms_qty) || 0, { min: 0, max: 500 }) +
-        '</div>';
-      }
       return cms;
     }
 
@@ -25207,7 +24638,7 @@ function DSH_CSS(){ return '<style>'+[
     // v2.3.1: relocated from the EXPORT IIFE into UI — these are referenced by
     // cmsVendorSelect() below; declaring them in EXPORT left them out of UI scope
     // and threw "ReferenceError: _CMS_LOGO_BRIGHTSIGN is not defined" on Step 5.
-    const _CMS_LOGO_BRIGHTSIGN = 'data:image/png;base64,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';
+    const _CMS_LOGO_BRIGHTSIGN = 'data:image/png;base64,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';
     const _CMS_LOGO_KORBYT     = 'data:image/png;base64,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';
     const _CMS_LOGO_PICKCEL    = 'data:image/png;base64,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';
 
@@ -25215,24 +24646,32 @@ function DSH_CSS(){ return '<style>'+[
     // cards (logo + name) instead of a bare dropdown; the selected one is ringed.
     // Wired via data-action="cms-vendor-pick". 'None' is a plain option.
     function cmsVendorSelect(current) {
+      // v2.7.5 — uniform white logo tiles (consistent in light + dark, since
+      // each brand logo keeps the white background it was designed for) plus a
+      // short descriptor under each name. 'None' uses a monitor glyph.
+      const NONE_ICO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>';
       const vendors = [
-        { value: 'None',       label: 'None \u2014 player only', logo: null },
-        { value: 'BrightSign', label: 'BrightSign CMS',         logo: _CMS_LOGO_BRIGHTSIGN },
-        { value: 'Korbyt',     label: 'Korbyt',                 logo: _CMS_LOGO_KORBYT },
-        { value: 'Pickcel',    label: 'Pickcel',                logo: _CMS_LOGO_PICKCEL }
+        { value: 'None',       label: 'None',           desc: 'Players only \u2014 no CMS', logo: null },
+        { value: 'BrightSign', label: 'BrightSign CMS', desc: 'Native player CMS',          logo: _CMS_LOGO_BRIGHTSIGN },
+        { value: 'Korbyt',     label: 'Korbyt',         desc: 'Enterprise signage',         logo: _CMS_LOGO_KORBYT },
+        { value: 'Pickcel',    label: 'Pickcel',        desc: 'Cloud-native CMS',           logo: _CMS_LOGO_PICKCEL }
       ];
       const cards = vendors.map(function (v) {
         const sel = String(current) === v.value;
-        const logoHtml = v.logo
-          ? '<img class="cms-vendor-logo" src="' + v.logo + '" alt="' + esc(v.value) + '">'
-          : '<span class="cms-vendor-logo cms-vendor-logo-none">\u2014</span>';
+        const tile = v.logo
+          ? '<span class="cms-vtile"><img src="' + v.logo + '" alt="' + esc(v.value) + '"></span>'
+          : '<span class="cms-vtile cms-vtile-none">' + NONE_ICO + '</span>';
         return '<button type="button" class="cms-vendor-card' + (sel ? ' is-selected' : '') + '" ' +
           'data-action="cms-vendor-pick" data-val="' + esc(v.value) + '">' +
-          logoHtml + '<span class="cms-vendor-name">' + esc(v.label) + '</span>' +
+          tile +
+          '<span class="cms-vmeta">' +
+            '<span class="cms-vendor-name">' + esc(v.label) + '</span>' +
+            '<span class="cms-vendor-desc">' + esc(v.desc) + '</span>' +
+          '</span>' +
           (sel ? '<span class="cms-vendor-check">\u2713</span>' : '') +
         '</button>';
       }).join('');
-      return '<div class="field"><label>CMS vendor</label>' +
+      return '<div class="field"><label>CMS brand</label>' +
         '<div class="cms-vendor-grid">' + cards + '</div></div>';
     }
 
@@ -25781,6 +25220,17 @@ function DSH_CSS(){ return '<style>'+[
         if (!actEl) return;
         const action = actEl.getAttribute('data-action');
 
+        // v2.8.1 — Step 2 segmented toggle: select the mode + repaint the
+        // live preview WITHOUT advancing (the "Continue with X" CTA advances
+        // via path-pick below).
+        if (action === 'path-mode') {
+          const m = actEl.getAttribute('data-mode');
+          wizardData.mode = (m === 'advanced') ? 'advanced' : 'guided';
+          saveDraft();
+          rerenderPreservingScroll();
+          return;
+        }
+
         // v1.4.1 — Path choice (inline at top of Step 2).
         if (action === 'path-pick') {
           const mode = actEl.getAttribute('data-mode');
@@ -25851,6 +25301,14 @@ function DSH_CSS(){ return '<style>'+[
         }
 
         // History filter
+        // v2.8.5 - History "Load more": grow the page + re-fetch, preserving
+        // scroll so new rows appear below where you were.
+        if (action === 'hist-load-more') {
+          const _y = window.scrollY || 0;
+          historyState.limit = (historyState.limit || 100) + 100;
+          loadHistoryList().then(function () { try { window.scrollTo(0, _y); } catch (_) {} });
+          return;
+        }
         if (action === 'hist-filter') {
           const f = actEl.getAttribute('data-value');
           setHistoryFilter(f);
@@ -26726,6 +26184,63 @@ function DSH_CSS(){ return '<style>'+[
           if (!_savedDealData) return;
           const ref = _savedDealData.display_ref || _savedDealData.ref_id;
           showRevisionsSheet(ref);
+          return;
+        }
+
+        // v2.8.3 - Saved-deal: open the stage-move dropdown (any stage +
+        // view-history link). Persist/log/notify reuse the autosave pipeline.
+        if (action === 'sd-stage-menu') {
+          if (!_savedDealData) return;
+          const cur = _savedDealData.stage || '';
+          let allowWon = true, allowLost = true;
+          if (Array.isArray(STAGE_META)) {
+            const m = STAGE_META.find(function (r) { return r && r.stage_name === cur; });
+            if (m) { if (m.allow_won === false) allowWon = false; if (m.allow_lost === false) allowLost = false; }
+          }
+          const opts = STAGES.map(function (s) {
+            if (s === 'Closed Won'  && !allowWon)  return '';
+            if (s === 'Closed Lost' && !allowLost) return '';
+            const isCur = (s === cur);
+            const dotCls = _stageChipClassName(s);
+            return '<button type="button" class="sd-stage-opt' + (isCur ? ' is-current' : '') + '"' +
+                   (isCur ? ' disabled aria-disabled="true"' : ' data-action="sd-stage-pick" data-stage="' + esc(s) + '"') + '>' +
+                     '<span class="' + dotCls + ' sd-stage-mini">' + esc(s) + '</span>' +
+                     (isCur ? '<span class="sd-stage-opt-tag">current</span>' : '') +
+                   '</button>';
+          }).join('');
+          openSheet(
+            '<div class="sd-stage-sheet">' +
+              '<h3>Move stage</h3>' +
+              '<div class="sd-stage-opts">' + opts + '</div>' +
+              '<button type="button" class="btn-v3 btn-ghost btn-md sd-stage-hist" data-action="sd-history">View stage history</button>' +
+            '</div>'
+          );
+          return;
+        }
+
+        // v2.8.3 - Saved-deal: apply a picked stage. Mutate _savedDealData.stage
+        // + scheduleAutosave so the existing pipeline persists, writes the
+        // stage_transitions row, and notifies stakeholders. Confirm terminals.
+        if (action === 'sd-stage-pick') {
+          if (!_savedDealData) return;
+          const newStage = actEl.getAttribute('data-stage');
+          if (!newStage || newStage === _savedDealData.stage) { closeSheet(); return; }
+          if ((newStage === 'Closed Won' || newStage === 'Closed Lost') &&
+              !window.confirm('Mark this deal "' + newStage + '"? That sets a terminal stage.')) {
+            return;
+          }
+          _savedDealData.stage = newStage;
+          closeSheet();
+          try {
+            const chip = $('sd-stage-chip');
+            if (chip && chip.parentNode) {
+              const holder = document.createElement('span');
+              holder.innerHTML = _renderSdStageChip(newStage);
+              if (holder.firstChild) chip.parentNode.replaceChild(holder.firstChild, chip);
+            }
+          } catch (e) {}
+          try { scheduleAutosave(); } catch (e) {}
+          try { toast('Stage \u2192 ' + newStage, 'ok'); } catch (e) {}
           return;
         }
 
@@ -28314,10 +27829,7 @@ function DSH_CSS(){ return '<style>'+[
       }
       if (phoneRaw.length > 0) {
         if (!_PHONE_RE.test(phone10)) {
-          UI.setFieldError('f-prof-phone',
-            phone10.length < 10
-              ? 'Enter 10 digits (+91 / spaces / hyphens are accepted).'
-              : 'Phone must be 10 digits.');
+          UI.setFieldError('f-prof-phone', 'Phone must be 10 digits.');
           firstError = firstError || 'i-prof-phone';
         } else {
           payload.phone = phone10;

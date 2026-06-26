@@ -2,6 +2,36 @@
 // v2.3.0 (2026-06-13)
 //
 // Changelog (BrightSign):
+//   v2.8.5 — CACHE_NAME bump: lazy-load ECharts (was eager) + History
+//     "Load more". No SW logic change.
+//   v2.8.4 — CACHE_NAME bump: removed ~880 lines of dead tvONE-fork / legacy
+//     code (showDashboard legacy body, showDashboardLegacy, Corio/LED helpers)
+//     + unified phone hint text. No SW logic change.
+//   v2.8.3 — CACHE_NAME bump for one-tap stage move (saved-deal chip ->
+//     "Move stage" dropdown; reuses the autosave persist/log/notify pipeline).
+//     No SW logic change.
+//   v2.8.2 — CACHE_NAME bump for the BUG-2 phone cap (Super-admin Users
+//     panel phone field maxlength 20 -> 10, numeric). No SW logic change.
+//   v2.8.1 — CACHE_NAME bump for the Step 2 "Choose your path" rebuild (segmented
+//     Guided/Advanced switch + live preview + Continue CTA). No SW logic change.
+//   v2.8.0 — CACHE_NAME bump for the advanced-mode cart/canvas composer (Step 3
+//     reworked into a grouped catalog + live "Your build" canvas; same handlers,
+//     same advancedSelections shape). No SW logic change.
+//   v2.7.7 — CACHE_NAME bump for the quote-PDF fix: rupee sign -> "Rs" so the
+//     price column renders + right-aligns correctly (helvetica has no U+20B9).
+//     No SW logic change.
+//   v2.7.6 — CACHE_NAME bump for the result-page bottom action bar redesign
+//     (Confirm primary / Edit ghost / neutral export-share cluster / muted
+//     separated Delete) + .sd-view bottom-padding so the bar clears the price
+//     toggle. No SW logic change.
+//   v2.7.5 — CACHE_NAME bump for the CMS Step-5 redesign (uniform white logo
+//     tiles + rebuilt BrightSign asset, Deployment/Term pills, "Cloud (remote)",
+//     subscription-block-on-top / brand-last, None dims the block) and an
+//     app-wide dark-mode contrast fix (muted text #8A887E->#A3A199 + new
+//     --c-accent-text token repointed across 18 accent-text usages). No SW logic change.
+//   v2.7.4 — CACHE_NAME bump for Phase 4 close-out: ticker actor names (BUG-1)
+//     now read camelCase RPC keys; first-login profile phone hard-capped to 10
+//     digits (BUG-2) to match the app-wide standard.
 //   v2.7.3 — CACHE_NAME bump for the saved-deal autosave fix: edits (line
 //     discount %, ladder steppers) recomputed live but never persisted because
 //     the re-render cleared the just-scheduled autosave timer. Guarded so the
@@ -125,7 +155,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v2.7.3';
+const CACHE_NAME = 'brightsign-v2.8.5';
 const SHELL_URLS = [
   './',
   './index.html'
