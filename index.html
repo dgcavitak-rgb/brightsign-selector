@@ -3488,6 +3488,16 @@
     html[data-theme="dark"] .disc-approval-chip {
       background:rgba(245,158,11,0.18); border-color:rgba(251,191,36,0.30); color:#FBBF24;
     }
+
+    /* v2.8.12 — #6 saved-views + #7 pipeline-export toolbar row. */
+    .hist-views-row { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:2px 0 12px; }
+    .saved-view-chip { display:inline-flex; align-items:center; background:var(--c-sunk); border:1px solid var(--c-border); border-radius:999px; overflow:hidden; }
+    .saved-view-chip > button[data-action="hist-apply-view"] { background:transparent; border:0; color:var(--c-fg-soft); font:inherit; font-size:12px; font-weight:600; padding:5px 4px 5px 11px; cursor:pointer; }
+    .saved-view-x { background:transparent; border:0; color:var(--c-fg-mute); font-size:15px; line-height:1; padding:5px 9px 5px 4px; cursor:pointer; }
+    .saved-view-x:hover { color:#EF4444; }
+    .saved-view-add { display:inline-flex; align-items:center; gap:4px; background:transparent; border:1px dashed var(--c-border-st); border-radius:999px; color:var(--c-accent-text); font:inherit; font-size:12px; font-weight:600; padding:5px 11px; cursor:pointer; }
+    .hist-export-btn { margin-left:auto; display:inline-flex; align-items:center; gap:5px; background:transparent; border:1px solid var(--c-border-st); border-radius:8px; color:var(--c-accent-text); font:inherit; font-size:12px; font-weight:600; padding:6px 11px; cursor:pointer; }
+    .hist-export-btn:disabled { opacity:.6; cursor:wait; }
     .sx-da-row {
       display: flex; align-items: center; gap: var(--s-3);
       padding: var(--s-3) 0;
@@ -9037,7 +9047,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.8.11',
+      version: 'brightsign-v2.8.12',
       build_date: '2026-06-26',
       constants,
       calico,
@@ -12321,9 +12331,80 @@
       return doc.output('blob');
     }
 
+    // v2.8.12 — #7 Pipeline report (Excel). Self-contained: the UI layer (which
+    // owns STORE + role/region scoping) passes pre-scoped rows + a by-stage
+    // summary; this just lays out a 2-sheet workbook. No customer-facing branding
+    // chrome — it's an internal management report. ExcelJS uses system fonts that
+    // include the ₹ glyph, so (unlike the PDF path) ₹ is safe here.
+    async function pipelineExcel(rows, summary, opts) {
+      opts = opts || {};
+      const XL = await loadExcelJS();
+      const wb = new XL.Workbook();
+      wb.creator = 'BrightSign Selector';
+      wb.created = new Date();
+      const PURPLE = 'FF37236A', WHITE = 'FFFFFFFF', SUNK = 'FFF2F1ED', AMBER = 'FFB45309';
+
+      const ws = wb.addWorksheet('Pipeline', { views: [{ state: 'frozen', ySplit: 2 }] });
+      const title = ws.getCell('A1');
+      title.value = 'BrightSign Pipeline' + (opts.scopeLabel ? '  \u2014  ' + opts.scopeLabel : '') +
+        '   (' + (new Date()).toISOString().slice(0, 10) + ')';
+      title.font = { name: 'Calibri', bold: true, size: 13, color: { argb: WHITE } };
+      title.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: PURPLE } };
+      ws.mergeCells('A1:I1');
+      title.alignment = { vertical: 'middle' };
+      ws.getRow(1).height = 24;
+
+      const headers = ['Ref', 'Project', 'Customer', 'Stage', 'Value (\u20B9)', 'Close month', 'Max disc %', 'Approval', 'Owner'];
+      const hr = ws.getRow(2);
+      headers.forEach(function (h, i) {
+        const c = hr.getCell(i + 1);
+        c.value = h;
+        c.font = { name: 'Calibri', bold: true, size: 10, color: { argb: WHITE } };
+        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: PURPLE } };
+        c.alignment = { vertical: 'middle', horizontal: (i === 4 || i === 6) ? 'right' : 'left' };
+      });
+      hr.height = 18;
+      [16, 30, 24, 18, 16, 13, 11, 14, 22].forEach(function (w, i) { ws.getColumn(i + 1).width = w; });
+
+      (rows || []).forEach(function (r, idx) {
+        const row = ws.addRow([
+          r.ref || '', r.project || '', r.customer || '', r.stage || '',
+          (r.value != null ? r.value : ''), r.closeMonth || '',
+          (r.discountPct != null ? r.discountPct : ''),
+          r.needsApproval ? 'Needs approval' : '', r.owner || ''
+        ]);
+        row.getCell(5).numFmt = '#,##0';
+        if (idx % 2 === 1) {
+          for (let i = 1; i <= 9; i++) row.getCell(i).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: SUNK } };
+        }
+        if (r.needsApproval) {
+          row.getCell(7).font = { name: 'Calibri', bold: true, color: { argb: AMBER } };
+          row.getCell(8).font = { name: 'Calibri', bold: true, color: { argb: AMBER } };
+        }
+      });
+
+      const ss = wb.addWorksheet('By stage');
+      ['Stage', 'Count', 'Total value (\u20B9)'].forEach(function (h, i) {
+        const c = ss.getRow(1).getCell(i + 1);
+        c.value = h;
+        c.font = { name: 'Calibri', bold: true, color: { argb: WHITE } };
+        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: PURPLE } };
+      });
+      ss.getColumn(1).width = 22; ss.getColumn(2).width = 10; ss.getColumn(3).width = 18;
+      (summary || []).forEach(function (s) {
+        const row = ss.addRow([s.stage, s.count, s.value]);
+        row.getCell(3).numFmt = '#,##0';
+      });
+
+      const buffer = await wb.xlsx.writeBuffer();
+      return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    }
+
     return {
       // Public API
       excel, pdf, download, filename,
+      // v2.8.12 — #7 pipeline report
+      pipelineExcel,
       // Lazy-load helpers (exposed for direct CDN-reachability smoke testing)
       loadExcelJS, loadJsPDF, loadHtml2Canvas,
       // v27.3.14d — Expose embedded brand logos so the login page (UI module,
@@ -21661,6 +21742,38 @@ function DSH_CSS(){ return '<style>'+[
       }
     }
 
+    /* v2.8.12 — #6 Saved views. Per-user, persisted in localStorage (per-device,
+       same store the auth cache uses; no backend). A view captures the current
+       History filter/stage/region/search/sort so a user can one-tap recall a
+       working set (e.g. "My open >10L"). */
+    function _savedViewsKey() {
+      const u = STORE.currentUser();
+      return 'bs_saved_views:' + ((u && u.username) || 'anon');
+    }
+    function _loadSavedViews() {
+      try { const a = JSON.parse(localStorage.getItem(_savedViewsKey()) || '[]'); return Array.isArray(a) ? a : []; }
+      catch (e) { return []; }
+    }
+    function _saveSavedViews(arr) {
+      try { localStorage.setItem(_savedViewsKey(), JSON.stringify(arr || [])); } catch (e) {}
+    }
+    /* Renders the whole toolbar row: saved-view chips + "Save view" + the #7
+       "Export pipeline" button. Rebuilt in place by the save/delete handlers. */
+    function _renderHistViewsRow() {
+      let html = '';
+      _loadSavedViews().forEach(function (v) {
+        html += '<span class="saved-view-chip">' +
+          '<button type="button" data-action="hist-apply-view" data-view-id="' + esc(v.id) + '">' + esc(v.name) + '</button>' +
+          '<button type="button" class="saved-view-x" data-action="hist-del-view" data-view-id="' + esc(v.id) + '" aria-label="Delete view">\u00d7</button>' +
+        '</span>';
+      });
+      html += '<button type="button" class="saved-view-add" data-action="hist-save-view">' +
+        '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Save view</button>';
+      html += '<button type="button" class="hist-export-btn" data-action="export-pipeline">' +
+        '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export pipeline</button>';
+      return html;
+    }
+
     /* v2.8.11 — #4 Discount-approval signal. A deal needs approval when its
        effective discount (the greater of project_discount and the max line
        discount) is >= DISCOUNT_APPROVAL_PCT. Mirrors the backend
@@ -21866,6 +21979,8 @@ function DSH_CSS(){ return '<style>'+[
               '<option value="value_desc">Highest value</option>' +
             '</select>' +
           '</div>' +
+          /* v2.8.12 — #6 saved views + #7 pipeline export */
+          '<div class="hist-views-row" id="hist-views">' + _renderHistViewsRow() + '</div>' +
           /* Result count meta */
           '<div class="hist-meta" id="hist-meta">&nbsp;</div>' +
           /* v27.3.0 — Summary panel (open / won / lost counts of filtered set) */
@@ -26565,6 +26680,115 @@ function DSH_CSS(){ return '<style>'+[
           if (!_savedDealData) return;
           const ref = _savedDealData.display_ref || _savedDealData.ref_id;
           showRevisionsSheet(ref);
+          return;
+        }
+
+        // v2.8.12 — #7 Pipeline report export (Excel). Gathers scoped deals,
+        // resolves owner names from the roster cache, groups by stage.
+        if (action === 'export-pipeline') {
+          const btn = actEl;
+          if (btn) btn.disabled = true;
+          (async function () {
+            try {
+              const r = await STORE.listDeals({ limit: 500, offset: 0 });
+              let rows = (r && r.rows) || [];
+              const u = STORE.currentUser() || {};
+              const isSuper = (u.permission_tier === 'super');
+              const isBuHead = (u.org_function === 'BU Head');
+              if (!isSuper) {
+                if (isBuHead && u.region) {
+                  const myR = String(u.region || '').split(',').map(function (s) { return s.trim().toLowerCase(); }).filter(Boolean);
+                  rows = rows.filter(function (d) {
+                    const rr = String(d.region_owner || d.region || '').toLowerCase();
+                    return d.sales_person_id === u.id || d.presales_person_id === u.id || (rr && myR.indexOf(rr) >= 0);
+                  });
+                } else if (u.id) {
+                  rows = rows.filter(function (d) { return d.sales_person_id === u.id || d.presales_person_id === u.id; });
+                }
+              }
+              rows = rows.filter(function (d) { return !d.deleted_at; });
+              const expRows = rows.map(function (d) {
+                const disc = _dealMaxDiscountPct(d);
+                let owner = '';
+                if (d.sales_person_id && STORE.rosterById) {
+                  const o = STORE.rosterById(d.sales_person_id);
+                  owner = (o && (o.full_name || o.fullName)) || '';
+                }
+                return {
+                  ref: d.display_ref, project: d.project, customer: d.customer_name,
+                  stage: d.stage, value: Number(d.deal_value_inr) || 0,
+                  closeMonth: d.close_month ? _formatCloseMonth(d.close_month) : '',
+                  discountPct: Math.round(disc), needsApproval: disc >= DISCOUNT_APPROVAL_PCT,
+                  owner: owner
+                };
+              });
+              const byStage = {};
+              expRows.forEach(function (x) {
+                const k = x.stage || '\u2014';
+                if (!byStage[k]) byStage[k] = { stage: k, count: 0, value: 0 };
+                byStage[k].count++; byStage[k].value += (x.value || 0);
+              });
+              const summary = Object.keys(byStage).map(function (k) { return byStage[k]; });
+              const scopeLabel = isSuper ? 'All deals' : (isBuHead ? (u.region || 'Region') : (u.full_name || 'My deals'));
+              const blob = await EXPORT.pipelineExcel(expRows, summary, { scopeLabel: scopeLabel });
+              EXPORT.download(blob, 'BrightSign_Pipeline_' + (new Date()).toISOString().slice(0, 10) + '.xlsx');
+              try { toast('Pipeline exported (' + expRows.length + ' deals)', 'ok'); } catch (e) {}
+            } catch (e) {
+              try { toast('Export failed: ' + (e && e.message || e), 'err'); } catch (_e) {}
+            } finally {
+              if (btn) btn.disabled = false;
+            }
+          })();
+          return;
+        }
+
+        // v2.8.12 — #6 Saved views: capture the current History filter set.
+        if (action === 'hist-save-view') {
+          const name = (window.prompt('Name this view:') || '').trim();
+          if (!name) return;
+          const views = _loadSavedViews();
+          views.push({
+            id: 'v' + Date.now(), name: name,
+            filter: historyState.filter, stage: historyState.stage,
+            region: historyState.region, search: historyState.search,
+            sort: historyState.sort
+          });
+          _saveSavedViews(views);
+          const host = $('hist-views'); if (host) host.innerHTML = _renderHistViewsRow();
+          try { toast('View saved', 'ok'); } catch (e) {}
+          return;
+        }
+        // v2.8.12 — #6 Apply a saved view (sets state + syncs the controls).
+        if (action === 'hist-apply-view') {
+          const id = actEl.getAttribute('data-view-id');
+          const v = _loadSavedViews().filter(function (x) { return x.id === id; })[0];
+          if (!v) return;
+          historyState.filter = v.filter || 'all';
+          historyState.stage  = v.stage || null;
+          historyState.region = v.region || null;
+          historyState.search = v.search || '';
+          historyState.sort   = v.sort || 'updated_desc';
+          const si = $('hist-search'); if (si) si.value = v.search || '';
+          const so = $('hist-sort');   if (so) so.value = historyState.sort;
+          const clr = document.querySelector('[data-action="hist-clear-search"]'); if (clr) clr.hidden = !v.search;
+          const chipRow = $('hist-chips');
+          if (chipRow) {
+            chipRow.querySelectorAll('.hist-chip').forEach(function (b) {
+              const on = b.getAttribute('data-value') === historyState.filter;
+              b.classList.toggle('hist-chip-active', on);
+              b.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+          }
+          loadHistoryList();
+          try { toast('View: ' + v.name, 'ok'); } catch (e) {}
+          return;
+        }
+        // v2.8.12 — #6 Delete a saved view.
+        if (action === 'hist-del-view') {
+          const id = actEl.getAttribute('data-view-id');
+          _saveSavedViews(_loadSavedViews().filter(function (x) { return x.id !== id; }));
+          const host = $('hist-views'); if (host) host.innerHTML = _renderHistViewsRow();
+          try { toast('View deleted', 'ok'); } catch (e) {}
           return;
         }
 

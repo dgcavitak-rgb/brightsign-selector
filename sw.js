@@ -2,6 +2,12 @@
 // v2.3.0 (2026-06-13)
 //
 // Changelog (BrightSign):
+//   v2.8.12 — CACHE_NAME bump: saved views (#6) + pipeline report export (#7).
+//     Both UI-only, no backend change. #6: per-user History views (filter/stage/
+//     region/search/sort) persisted in localStorage, save/apply/delete chips in
+//     the History toolbar. #7: "Export pipeline" button → 2-sheet Excel
+//     (scoped deal list + by-stage summary) via the existing ExcelJS loader.
+//     No SW logic change.
 //   v2.8.11 — CACHE_NAME bump: discount-approval signal (#4). UI-only — no
 //     backend change. Deals whose effective discount (max of project_discount
 //     and any line discount) is >= 15% (mirrors discount_high_list) get an amber
@@ -174,7 +180,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v2.8.11';
+const CACHE_NAME = 'brightsign-v2.8.12';
 const SHELL_URLS = [
   './',
   './index.html'
