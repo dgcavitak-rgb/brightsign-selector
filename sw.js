@@ -2,6 +2,11 @@
 // v2.3.0 (2026-06-13)
 //
 // Changelog (BrightSign):
+//   v2.8.11 — CACHE_NAME bump: discount-approval signal (#4). UI-only — no
+//     backend change. Deals whose effective discount (max of project_discount
+//     and any line discount) is >= 15% (mirrors discount_high_list) get an amber
+//     "Approval needed · N%" badge on the saved-deal header (auto-updates on
+//     inline disc edits) and a compact chip on History rows. No SW logic change.
 //   v2.8.10 — CACHE_NAME bump: per-deal follow-up (#2). New deals.next_followup_at
 //     + next_followup_note columns; followup_set / followup_due_list RPCs;
 //     bs_deal_get patched to surface the fields. Frontend: Home "Follow-ups due"
@@ -169,7 +174,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v2.8.10';
+const CACHE_NAME = 'brightsign-v2.8.11';
 const SHELL_URLS = [
   './',
   './index.html'

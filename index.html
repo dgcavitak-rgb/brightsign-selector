@@ -3463,6 +3463,31 @@
     html[data-theme="dark"] .sx-hint-strip.is-success svg { color: #4ADE80; }
     html[data-theme="dark"] .sx-hint-strip.is-warn        { background: rgba(245,158,11,0.16); border-color: rgba(251,191,36,0.30); color: #FBBF24; }
     html[data-theme="dark"] .sx-hint-strip.is-warn svg    { color: #FBBF24; }
+
+    /* v2.8.11 — #4 Discount-approval signal. Amber warning, themed to match the
+       is-warn strip palette. Badge = saved-deal (full label); chip = history row
+       (compact). Threshold mirrors discount_high_list (max_pct >= 15). */
+    .disc-approval-badge {
+      display:inline-flex; align-items:center; gap:4px;
+      font-size:11px; font-weight:700; line-height:1; white-space:nowrap;
+      padding:3px 9px; border-radius:999px;
+      background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.32);
+      color:#92400E;
+    }
+    .disc-approval-badge svg { flex:none; }
+    html[data-theme="dark"] .disc-approval-badge {
+      background:rgba(245,158,11,0.16); border-color:rgba(251,191,36,0.30); color:#FBBF24;
+    }
+    .disc-approval-chip {
+      display:inline-flex; align-items:center; gap:3px;
+      font-size:10px; font-weight:700; line-height:1; white-space:nowrap;
+      padding:2px 7px; border-radius:999px;
+      background:rgba(245,158,11,0.14); border:1px solid rgba(245,158,11,0.30);
+      color:#92400E;
+    }
+    html[data-theme="dark"] .disc-approval-chip {
+      background:rgba(245,158,11,0.18); border-color:rgba(251,191,36,0.30); color:#FBBF24;
+    }
     .sx-da-row {
       display: flex; align-items: center; gap: var(--s-3);
       padding: var(--s-3) 0;
@@ -9012,7 +9037,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.8.10',
+      version: 'brightsign-v2.8.11',
       build_date: '2026-06-26',
       constants,
       calico,
@@ -21636,6 +21661,38 @@ function DSH_CSS(){ return '<style>'+[
       }
     }
 
+    /* v2.8.11 — #4 Discount-approval signal. A deal needs approval when its
+       effective discount (the greater of project_discount and the max line
+       discount) is >= DISCOUNT_APPROVAL_PCT. Mirrors the backend
+       discount_high_list logic (max_pct >= 15) so the UI signal and the
+       dashboard/RPC agree. The hard cap stays 20% (computeQuote clamps);
+       15-20% is the "needs sign-off" band. No backend change. */
+    const DISCOUNT_APPROVAL_PCT = 15;
+    function _dealMaxDiscountPct(deal) {
+      if (!deal) return 0;
+      let m = Math.max(Number(deal.project_discount) || 0, Number(deal.projectDiscount) || 0);
+      if (Array.isArray(deal.lines)) {
+        deal.lines.forEach(function (l) {
+          const v = Number(l && l.line_discount_pct) || 0; if (v > m) m = v;
+        });
+      }
+      const map = deal.raw_submission && deal.raw_submission.line_discounts;
+      if (map && typeof map === 'object') {
+        Object.keys(map).forEach(function (k) {
+          const v = Number(map[k]) || 0; if (v > m) m = v;
+        });
+      }
+      return m;
+    }
+    function _dealNeedsApproval(deal) {
+      return _dealMaxDiscountPct(deal) >= DISCOUNT_APPROVAL_PCT;
+    }
+    const _APPROVAL_SVG = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+    function _approvalBadgeHtml(pct) {
+      return '<span class="disc-approval-badge" title="Discount ' + Math.round(pct) + '% needs approval (policy: ' + DISCOUNT_APPROVAL_PCT + '%+)">' +
+        _APPROVAL_SVG + 'Approval needed \u00b7 ' + Math.round(pct) + '%</span>';
+    }
+
     function renderHistoryRow(d) {
       const ref   = d.display_ref || d.ref_id || '\u2014';
       const proj  = d.project || '(no project name)';
@@ -21647,6 +21704,11 @@ function DSH_CSS(){ return '<style>'+[
       // here (parity with the dashboard) and the app-wide price toggle applies.
       const val   = (bsPricesVisible() && d.deal_value_inr > 0) ? fmtINR(d.deal_value_inr) : '';
       const stageCls = _stageChipClassName(stage);
+      // v2.8.11 — #4 discount-approval signal for this row
+      const _apPct = _dealMaxDiscountPct(d);
+      const _apChip = (_apPct >= DISCOUNT_APPROVAL_PCT)
+        ? '<span class="disc-approval-chip" title="' + Math.round(_apPct) + '% discount \u2014 needs approval">' + _APPROVAL_SVG + Math.round(_apPct) + '%</span>'
+        : '';
 
       // v27.3.13 — Enrich history rows with 2 productive at-a-glance fields
       // per Dipenkumar 2026-05-26 (request: "can we have a little more
@@ -21700,6 +21762,7 @@ function DSH_CSS(){ return '<style>'+[
             renderStageAgeBadge(d) +
             (cust ? '<span>' + esc(cust) + '</span>' : '') +
             (val  ? '<span class="mono">' + esc(val) + '</span>' : '') +
+            _apChip +
           '</div>' +
           // v27.3.13 — Second meta row (solution · closes month). Renders only
           // when at least one of the two fields has a value, keeping cards
@@ -22957,6 +23020,14 @@ function DSH_CSS(){ return '<style>'+[
       return t.getDate() + ' ' + mo[t.getMonth()] + ' ' + t.getFullYear();
     }
 
+    /* v2.8.11 — #4 Discount-approval signal: saved-deal badge. Empty string when
+       under the threshold. Re-renders for free via _rerenderSavedDealPreservingScroll
+       on every inline disc edit. */
+    function _renderSdApprovalLine() {
+      if (!_savedDealData || !_dealNeedsApproval(_savedDealData)) return '';
+      return _approvalBadgeHtml(_dealMaxDiscountPct(_savedDealData));
+    }
+
     function showSavedDeal(refId) {
       showChrome(true);
       updateNavActive('#/history');
@@ -23309,6 +23380,7 @@ function DSH_CSS(){ return '<style>'+[
             '<div class="h1 sd-title">' + esc(project) + '</div>' +
             line3Html +
             '<div class="sd-meta-line" id="sd-followup-line" style="margin-top:6px">' + _renderSdFollowupLine() + '</div>' +
+            (_renderSdApprovalLine() ? '<div class="sd-meta-line" id="sd-approval-line" style="margin-top:6px">' + _renderSdApprovalLine() + '</div>' : '') +
             line4Html +
             line5Html +
             line6Html +
