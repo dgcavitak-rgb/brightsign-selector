@@ -9012,7 +9012,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.8.9',
+      version: 'brightsign-v2.8.10',
       build_date: '2026-06-26',
       constants,
       calico,
@@ -10327,6 +10327,35 @@
       return (r && r.rows) || (Array.isArray(r) ? r : []);
     }
 
+    /* v2.8.10 — Per-deal follow-up (#2). Backend: followup_set / followup_due_list
+       (MIGRATION add_deal_followup_fields_and_rpcs). Single next-follow-up model:
+       one date + note per deal. p_at=null clears. The note is trimmed server-side. */
+    async function followupSet(refId, atISO, note) {
+      const u = currentUser();
+      if (!refId) return { ok: false, error: 'no_ref' };
+      return rpc('followup_set', {
+        p_ref_id: String(refId),
+        p_at:     atISO ? String(atISO) : null,
+        p_note:   (typeof note === 'string') ? note : null,
+        p_actor:  (u && u.id) || null
+      });
+    }
+    /* Home-widget feed. actor defaults to the signed-in user so each person sees
+       their own chase list; pass actor=null explicitly for an unscoped (BU/Super)
+       view. Returns an array (may be []); never throws on empty. */
+    async function followupDue(horizonDays, actorOverride) {
+      const u = currentUser();
+      const actor = (actorOverride === null)
+        ? null
+        : (actorOverride || (u && u.id) || null);
+      const r = await rpc('followup_due_list', {
+        p_app:          APP_TAG,
+        p_actor:        actor,
+        p_horizon_days: (typeof horizonDays === 'number' && horizonDays > 0) ? horizonDays : 7
+      });
+      return Array.isArray(r) ? r : [];
+    }
+
     /* v27.9.0 — Push notification RPC wrappers. Backend RPCs ship in
        MIGRATION-v27_9_0-push-notifications.sql. Frontend callers should
        guard against failure (offline, master toggle off, backend not
@@ -10648,6 +10677,8 @@
       usersListAll, userCreate, userUpdate, userSetActive, userAdminReset,
       // v27.3.0 — duplicate + custom stages (v27.7 partial restore)
       duplicateDeal, stageList,
+      // v2.8.10 — per-deal follow-up (#2)
+      followupSet, followupDue,
       // v27.7-alpha1 — Pipeline stages CRUD (Session A backend)
       stageCreate, stageUpdate, stageSetActive, stageReorder,
       // v27.3.0 — Stage transitions history (silent-drop restore)
@@ -17149,6 +17180,15 @@
               '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>') +
           '</section>' +
 
+          /* v2.8.10 — #2 Per-deal follow-up: chase list at top of Home */
+          '<section class="deal-list-card" id="home-followups-card">' +
+            '<header class="deal-list-head">' +
+              '<h2>Follow-ups due</h2>' +
+              '<span class="meta" id="home-followups-count"></span>' +
+            '</header>' +
+            '<div id="home-list-followups">' + _skelDealRows(2) + '</div>' +
+          '</section>' +
+
           /* v27.3.2 — Top-5 list cards per spec photo 3 */
           '<section class="deal-list-card">' +
             '<header class="deal-list-head">' +
@@ -17214,6 +17254,9 @@
        last day. */
     async function loadHomeAll(isSuper) {
       try {
+        // v2.8.10 — #2: fire the follow-up feed in parallel; self-contained,
+        // self-catching, never blocks the deal lists below.
+        _renderFollowups(isSuper);
         const r = await STORE.listDeals({ limit: 500, offset: 0 });
         const all = (r && r.rows) || [];
         const u = STORE.currentUser() || {};
@@ -17345,6 +17388,78 @@
           '</div>' +
         '</div>';
       }).join('');
+    }
+
+    /* v2.8.10 — #2 Per-deal follow-up: Home "Follow-ups due" widget.
+       Fetches the actor-scoped due feed (Super sees all via actor=null). Overdue
+       rows flagged red via the existing .stuck-days-bad chip. Tap opens the deal
+       through the shared [data-nav] handler. Failure is non-fatal — the rest of
+       Home still renders. */
+    async function _renderFollowups(isSuper) {
+      const host = $('home-list-followups');
+      const countEl = $('home-followups-count');
+      if (!host) return;
+      let rows = [];
+      try {
+        rows = await STORE.followupDue(7, isSuper ? null : undefined);
+      } catch (e) {
+        console.error('followupDue failed:', e);
+        host.innerHTML = '<div class="empty-state" style="padding:20px 16px">' +
+          '<p class="empty-state-body">Couldn\u2019t load follow-ups.</p></div>';
+        if (countEl) countEl.textContent = '';
+        return;
+      }
+      if (countEl) {
+        const overdue = rows.filter(function (r) { return r.is_overdue; }).length;
+        countEl.textContent = rows.length
+          ? (rows.length + ' due' + (overdue ? ' \u00b7 ' + overdue + ' overdue' : ''))
+          : '';
+      }
+      if (!rows.length) {
+        host.innerHTML = '<div class="empty-state" style="padding:24px 16px">' +
+          '<div class="empty-state-illustration"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>' +
+          '<p class="empty-state-body">No follow-ups in the next 7 days.</p>' +
+        '</div>';
+        return;
+      }
+      host.innerHTML = rows.slice(0, 6).map(function (d, idx) {
+        const ref = d.display_ref || '\u2014';
+        const stageCls = _stageChipClassName(d.stage_name);
+        const dueLabel = _fmtFollowupDue(d.next_followup_at, d.is_overdue);
+        const chipCls = d.is_overdue ? 'stuck-days stuck-days-bad' : 'stuck-days';
+        const valChip = (isSuper && Number(d.deal_value_inr) > 0)
+          ? '<span class="meta" style="margin-left:8px">\u20B9' + _fmtLakh(Number(d.deal_value_inr)) + '</span>'
+          : '';
+        const note = d.next_followup_note
+          ? '<div class="deal-list-row-sub" style="opacity:.85">\u2192 ' + esc(d.next_followup_note) + '</div>'
+          : '';
+        return '<div class="deal-list-row" data-nav="#/quote/' + esc(ref) + '">' +
+          '<div class="deal-list-row-num">' + (idx + 1) + '</div>' +
+          '<div class="deal-list-row-main">' +
+            '<div class="deal-list-row-title">' + esc(d.project || '\u2014') + '</div>' +
+            '<div class="deal-list-row-sub">' + esc(ref) +
+              (d.customer_name ? ' \u00b7 ' + esc(d.customer_name) : '') + valChip +
+            '</div>' + note +
+          '</div>' +
+          '<div class="deal-list-row-aside">' +
+            '<span class="' + stageCls + '" style="font-size:10px">' + esc(d.stage_name || '\u2014') + '</span>' +
+            '<div style="margin-top:4px"><span class="' + chipCls + '">' + dueLabel + '</span></div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    /* Short due label for the follow-up chip. Date-only granularity, local TZ. */
+    function _fmtFollowupDue(iso, isOverdue) {
+      const t = new Date(iso);
+      if (isNaN(t.getTime())) return isOverdue ? 'Overdue' : 'Due';
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const day = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+      const diff = Math.round((day.getTime() - today.getTime()) / 86400000);
+      if (diff < 0)   return Math.abs(diff) + 'd over';
+      if (diff === 0) return 'Today';
+      if (diff === 1) return 'Tomorrow';
+      return 'in ' + diff + 'd';
     }
 
     /* Days slipped = days since the LAST day of the deal's close_month.
@@ -22813,6 +22928,35 @@ function DSH_CSS(){ return '<style>'+[
         '</button>';
     }
 
+    /* v2.8.10 — #2 Per-deal follow-up: control line content. Shows the current
+       follow-up (date + note) when set, else a "Set follow-up" affordance. Both
+       open the same sd-followup-menu sheet. Returned as inner HTML so the click
+       handlers can re-render the line in place (#sd-followup-line) after save. */
+    function _renderSdFollowupLine() {
+      const fuAt   = _savedDealData && _savedDealData.next_followup_at;
+      const fuNote = (_savedDealData && _savedDealData.next_followup_note) || '';
+      const pill = 'display:inline-flex;align-items:center;gap:4px;font:inherit;font-size:11px;font-weight:600;cursor:pointer;border-radius:999px;padding:3px 10px;';
+      if (fuAt) {
+        return '<button type="button" data-action="sd-followup-menu" title="Edit follow-up" ' +
+            'style="' + pill + 'background:var(--c-accent-lt);color:var(--c-accent-text);border:1px solid transparent;">' +
+            '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>' +
+            'Follow-up ' + esc(_fmtFollowupDate(fuAt)) +
+          '</button>' +
+          (fuNote ? '<span style="color:var(--c-fg-mute);font-size:11px;margin-left:6px">\u2192 ' + esc(fuNote) + '</span>' : '');
+      }
+      return '<button type="button" data-action="sd-followup-menu" ' +
+          'style="' + pill + 'background:transparent;color:var(--c-accent-text);border:1px solid var(--c-border-st);">' +
+          '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>' +
+          'Set follow-up' +
+        '</button>';
+    }
+    function _fmtFollowupDate(iso) {
+      const t = new Date(iso);
+      if (isNaN(t.getTime())) return '';
+      const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return t.getDate() + ' ' + mo[t.getMonth()] + ' ' + t.getFullYear();
+    }
+
     function showSavedDeal(refId) {
       showChrome(true);
       updateNavActive('#/history');
@@ -23164,6 +23308,7 @@ function DSH_CSS(){ return '<style>'+[
             '</div>' +
             '<div class="h1 sd-title">' + esc(project) + '</div>' +
             line3Html +
+            '<div class="sd-meta-line" id="sd-followup-line" style="margin-top:6px">' + _renderSdFollowupLine() + '</div>' +
             line4Html +
             line5Html +
             line6Html +
@@ -26348,6 +26493,64 @@ function DSH_CSS(){ return '<style>'+[
           if (!_savedDealData) return;
           const ref = _savedDealData.display_ref || _savedDealData.ref_id;
           showRevisionsSheet(ref);
+          return;
+        }
+
+        // v2.8.10 — #2 Per-deal follow-up: open the set/edit sheet (native
+        // date input + note). Prefilled from _savedDealData when already set.
+        if (action === 'sd-followup-menu') {
+          if (!_savedDealData) return;
+          const curAt = _savedDealData.next_followup_at ? String(_savedDealData.next_followup_at).slice(0, 10) : '';
+          const curNote = _savedDealData.next_followup_note || '';
+          const fieldCss = 'width:100%;height:44px;padding:0 12px;font:inherit;font-size:15px;border:1.5px solid var(--c-border);border-radius:10px;background:var(--c-bg);color:var(--c-fg);box-sizing:border-box;';
+          openSheet(
+            '<div class="sd-stage-sheet">' +
+              '<h3>Follow-up</h3>' +
+              '<label style="display:block;font-size:12px;color:var(--c-fg-mute);margin:2px 0 4px">Date</label>' +
+              '<input type="date" id="fu-date" value="' + esc(curAt) + '" style="' + fieldCss + '">' +
+              '<label style="display:block;font-size:12px;color:var(--c-fg-mute);margin:12px 0 4px">Note (optional)</label>' +
+              '<input type="text" id="fu-note" value="' + esc(curNote) + '" maxlength="200" placeholder="e.g. Chase for PO" style="' + fieldCss + '">' +
+              '<div style="display:flex;gap:8px;margin-top:16px">' +
+                '<button type="button" data-action="sd-followup-save" style="flex:1;height:44px;border:0;border-radius:10px;background:var(--c-accent);color:var(--c-fg-rev);font:inherit;font-weight:700;font-size:14px;cursor:pointer">Save</button>' +
+                (curAt ? '<button type="button" data-action="sd-followup-clear" style="height:44px;padding:0 16px;border:1px solid var(--c-border-st);border-radius:10px;background:transparent;color:var(--c-accent-text);font:inherit;font-weight:600;font-size:14px;cursor:pointer">Clear</button>' : '') +
+              '</div>' +
+            '</div>'
+          );
+          return;
+        }
+
+        // v2.8.10 — #2: save the follow-up. Date-only granularity; note trimmed
+        // server-side. Updates _savedDealData + re-renders the line in place.
+        if (action === 'sd-followup-save') {
+          if (!_savedDealData) return;
+          const ref = _savedDealData.display_ref || _savedDealData.ref_id;
+          const dateEl = $('fu-date'), noteEl = $('fu-note');
+          const dateStr = (dateEl && dateEl.value || '').trim();
+          const noteStr = (noteEl && noteEl.value || '').trim();
+          if (!dateStr) { toast('Pick a date', 'err'); return; }
+          STORE.followupSet(ref, dateStr, noteStr).then(function (r) {
+            if (r && r.ok === false) { toast('Save failed: ' + (r.error || 'unknown'), 'err'); return; }
+            _savedDealData.next_followup_at   = (r && r.next_followup_at) || dateStr;
+            _savedDealData.next_followup_note = (r && r.next_followup_note) || (noteStr || null);
+            closeSheet();
+            try { const el = $('sd-followup-line'); if (el) el.innerHTML = _renderSdFollowupLine(); } catch (e) {}
+            toast('Follow-up set', 'ok');
+          }).catch(function (err) { toast('Save failed: ' + (err && err.message || err), 'err'); });
+          return;
+        }
+
+        // v2.8.10 — #2: clear the follow-up.
+        if (action === 'sd-followup-clear') {
+          if (!_savedDealData) return;
+          const ref = _savedDealData.display_ref || _savedDealData.ref_id;
+          STORE.followupSet(ref, null, null).then(function (r) {
+            if (r && r.ok === false) { toast('Clear failed: ' + (r.error || 'unknown'), 'err'); return; }
+            _savedDealData.next_followup_at = null;
+            _savedDealData.next_followup_note = null;
+            closeSheet();
+            try { const el = $('sd-followup-line'); if (el) el.innerHTML = _renderSdFollowupLine(); } catch (e) {}
+            toast('Follow-up cleared', 'ok');
+          }).catch(function (err) { toast('Clear failed: ' + (err && err.message || err), 'err'); });
           return;
         }
 

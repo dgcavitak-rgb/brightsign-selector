@@ -2,6 +2,11 @@
 // v2.3.0 (2026-06-13)
 //
 // Changelog (BrightSign):
+//   v2.8.10 — CACHE_NAME bump: per-deal follow-up (#2). New deals.next_followup_at
+//     + next_followup_note columns; followup_set / followup_due_list RPCs;
+//     bs_deal_get patched to surface the fields. Frontend: Home "Follow-ups due"
+//     widget (actor-scoped, overdue-flagged) + saved-deal "Set follow-up" sheet
+//     (native date + note). No SW logic change.
 //   v2.8.9 — CACHE_NAME bump: Customer/party directory wired into the
 //     wizard (Step-1 End user / Partner / Consultant pickers backed by
 //     party_search / party_upsert RPCs). No SW logic change.
@@ -164,7 +169,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v2.8.9';
+const CACHE_NAME = 'brightsign-v2.8.10';
 const SHELL_URLS = [
   './',
   './index.html'
