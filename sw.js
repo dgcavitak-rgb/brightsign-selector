@@ -2,6 +2,8 @@
 // v2.3.0 (2026-06-13)
 //
 // Changelog (BrightSign):
+//   v2.8.6 — CACHE_NAME bump so the corrected About build-date (2026-06-26)
+//     reaches clients. No SW logic change.
 //   v2.8.5 — CACHE_NAME bump: lazy-load ECharts (was eager) + History
 //     "Load more". No SW logic change.
 //   v2.8.4 — CACHE_NAME bump: removed ~880 lines of dead tvONE-fork / legacy
@@ -155,7 +157,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v2.8.5';
+const CACHE_NAME = 'brightsign-v2.8.6';
 const SHELL_URLS = [
   './',
   './index.html'

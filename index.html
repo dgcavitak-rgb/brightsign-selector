@@ -7567,6 +7567,11 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v2.8.6  (2026-06-26)  — Fix: the About modal's BUILD DATE field showed a
+       stale 2026-06-25 — the v2.8.2-v2.8.5 bumps updated CATALOG.version but
+       not CATALOG.build_date. Corrected to 2026-06-26 and added build_date to
+       the version-bump checklist (bump version + build_date + sw CACHE_NAME in
+       lockstep) so it can't drift again. No logic change.
      v2.8.5  (2026-06-26)  — Perf quick wins (batch 1).
        (1) ECharts is now lazy-loaded on the first dashboard chart instead of an
        eager <script> in <head> — _waitForECharts injects the CDN on demand
@@ -8976,8 +8981,8 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.8.5',
-      build_date: '2026-06-25',
+      version: 'brightsign-v2.8.6',
+      build_date: '2026-06-26',
       constants,
       calico,
       mv,
