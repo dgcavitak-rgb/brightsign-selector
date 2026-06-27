@@ -1,7 +1,28 @@
 // BrightSign Selector — Service Worker
-// v2.12.0 (2026-06-27)
+// v2.13.2 (2026-06-27)
 //
 // Changelog (BrightSign):
+//   v2.13.2 — CACHE_NAME bump: name-resolution fix. The saved-deal header (and
+//     every other labelFor caller) showed a raw UUID for a sales/presales owner
+//     whose org_function didn't match the role-filtered *_TEAM lists. labelFor
+//     now falls back to the full live roster before surfacing a bare id, so
+//     owners always render by name. One-function, system-wide fix.
+//   v2.13.1 — CACHE_NAME bump: approval workflow round-out. (1) Deal owners
+//     (sales + presales) now get an in-app notification when a super
+//     approves/rejects their discount — server-side in the approval RPC, so it
+//     can't be missed. (2) New Super-only "Pending approvals" queue in the
+//     account menu: every deal still awaiting discount sign-off in one focused
+//     list (highest-discount first); tap a row to open and decide. Frontend +
+//     backend (notification is RPC-side).
+//   v2.13.0 — CACHE_NAME bump: honesty-audit close-out. (1) deal_save now
+//     archives a full revision snapshot per edit into `revisions` (powers the
+//     previously-empty revisions viewer) and carries a coupled party guard that
+//     defends linked customer/partner/consultant ids against a name-present /
+//     empty-id resave. (2) Real discount-approval workflow: super-tier reviewers
+//     Approve / Reject a high-discount deal (>=15%) in place; the decision +
+//     covered pct persist and the pending/approved/rejected state is derived on
+//     read (history chips + saved-deal badge reflect it). (3) bs_deal_get now
+//     returns the approval + v2.12.0 loss fields. UI + backend.
 //   v2.12.0 — CACHE_NAME bump: Closed Lost reason capture. Moving a deal to
 //     "Closed Lost" (from the saved-deal stage menu OR a History row) now
 //     routes through a reason-capture sheet — a single-select 8-reason
@@ -208,7 +229,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v2.12.0';
+const CACHE_NAME = 'brightsign-v2.13.2';
 const SHELL_URLS = [
   './',
   './index.html'

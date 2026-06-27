@@ -3495,6 +3495,39 @@
       background:rgba(245,158,11,0.18); border-color:rgba(251,191,36,0.30); color:#FBBF24;
     }
 
+    /* v2.13.0 — resolved approval states. Approved = emerald, Rejected = red.
+       These override the amber base when the decision is known. */
+    .disc-approval-badge.disc-ok, .disc-approval-chip.disc-ok {
+      background:rgba(5,150,105,0.12); border-color:rgba(5,150,105,0.34); color:#047857;
+    }
+    html[data-theme="dark"] .disc-approval-badge.disc-ok,
+    html[data-theme="dark"] .disc-approval-chip.disc-ok {
+      background:rgba(16,185,129,0.16); border-color:rgba(16,185,129,0.32); color:#34D399;
+    }
+    .disc-approval-badge.disc-no, .disc-approval-chip.disc-no {
+      background:rgba(220,38,38,0.10); border-color:rgba(220,38,38,0.32); color:#B91C1C;
+    }
+    html[data-theme="dark"] .disc-approval-badge.disc-no,
+    html[data-theme="dark"] .disc-approval-chip.disc-no {
+      background:rgba(239,68,68,0.16); border-color:rgba(248,113,113,0.32); color:#F87171;
+    }
+    /* v2.13.0 — super-only Approve / Reject inline actions on the saved-deal
+       approval line, plus the reviewer-note line beneath the badge. */
+    .disc-appr-actions { display:inline-flex; gap:6px; margin-left:8px; vertical-align:middle; }
+    .disc-appr-btn {
+      display:inline-flex; align-items:center; gap:4px; cursor:pointer;
+      font-size:11px; font-weight:700; line-height:1; white-space:nowrap;
+      padding:4px 10px; border-radius:999px; border:1px solid transparent;
+    }
+    .disc-appr-btn svg { flex:none; }
+    .disc-appr-yes { background:rgba(5,150,105,0.12); border-color:rgba(5,150,105,0.40); color:#047857; }
+    .disc-appr-yes:hover { background:rgba(5,150,105,0.20); }
+    .disc-appr-no  { background:rgba(220,38,38,0.10); border-color:rgba(220,38,38,0.40); color:#B91C1C; }
+    .disc-appr-no:hover  { background:rgba(220,38,38,0.18); }
+    html[data-theme="dark"] .disc-appr-yes { background:rgba(16,185,129,0.18); border-color:rgba(16,185,129,0.40); color:#34D399; }
+    html[data-theme="dark"] .disc-appr-no  { background:rgba(239,68,68,0.18); border-color:rgba(248,113,113,0.40); color:#F87171; }
+    .disc-appr-note { margin-top:5px; font-size:11px; font-style:italic; color:var(--c-muted, #6b7280); }
+
     /* v2.8.12 — #6 saved-views + #7 pipeline-export toolbar row. */
     .hist-views-row { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:2px 0 12px; }
     .saved-view-chip { display:inline-flex; align-items:center; background:var(--c-sunk); border:1px solid var(--c-border); border-radius:999px; overflow:hidden; }
@@ -9208,7 +9241,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.12.0',
+      version: 'brightsign-v2.13.2',
       build_date: '2026-06-27',
       constants,
       calico,
@@ -10890,6 +10923,30 @@
       }
     }
 
+    /* v2.13.0 — Discount approval decision. Records approve/reject (+ optional
+       note) on the deal via bs_deal_set_discount_approval, which server-GATES to
+       super tier and computes the effective discount the decision covers. The
+       pending/approved/rejected state is DERIVED on read (_dealApprovalState), so
+       this writes only the decision. Pass the actor's user id first so the RPC
+       can resolve + tier-check (username/email are accepted as fallback). */
+    async function bsDealSetDiscountApproval(ref, decision, note) {
+      if (!ref || !decision) return { ok: false, error: 'ref + decision required' };
+      const u = _user || null;
+      const actor = (u && (u.id || u.username || u.loginName)) || null;
+      try {
+        const r = await rpc('bs_deal_set_discount_approval', {
+          p_ref:      String(ref),
+          p_decision: String(decision),
+          p_note:     (note && String(note).trim()) || null,
+          p_actor:    actor,
+          p_app:      APP_TAG
+        });
+        return (r && typeof r === 'object') ? r : { ok: false, error: 'bad_response' };
+      } catch (e) {
+        return { ok: false, error: String((e && e.message) || e) };
+      }
+    }
+
     async function customerUpsert(payload) {
       // DB signature is customer_upsert(p_payload, p_actor) — p_actor is the
       // audit actor (created_by / updated_by), not the app tag.
@@ -10962,6 +11019,8 @@
       bsHealthCheck, bsReconcileParties, bsDealSetStage,
       // v2.12.0 — Closed Lost reason capture
       bsDealSetLossReason,
+      // v2.13.0 — Discount approval workflow (super-gated)
+      bsDealSetDiscountApproval,
       // v27.3.1 — Pipeline snapshots for dashboard weekly trend chart
       pipelineSnapshotList,
       // v27.7.2 — F7: explicit error-logger for callers that catch + log
@@ -14521,7 +14580,19 @@
     function labelFor(uuid, list) {
       if (!uuid) return '';
       const m = (list || []).find(o => o && o.value === uuid);
-      return m ? m.label : uuid;
+      if (m) return m.label;
+      // v2.13.2 — the *_TEAM lists are role-filtered (Sales = Sales/BU-Head,
+      // Presales = Presales), so a deal owner whose org_function doesn't match —
+      // or any legacy/edge user — would render as a bare UUID. Fall back to the
+      // full live roster (same source the Pending-approvals queue uses) before
+      // surfacing a raw id. If the roster also misses, keep the id as a last
+      // resort so the value is at least traceable.
+      try {
+        const r  = (typeof STORE !== 'undefined' && STORE.rosterById) ? STORE.rosterById(uuid) : null;
+        const nm = r && String(r.full_name || '').trim();
+        if (nm) return nm;
+      } catch (_) {}
+      return uuid;
     }
 
     // v27.2.0 — Return the full live-roster record for a UUID, or null
@@ -15848,6 +15919,35 @@
       );
     }
 
+    /* v2.13.0 — Discount approval confirm sheet. Opened from the saved-deal
+       approval line's super-only Approve / Reject buttons. Captures an optional
+       reviewer note, writes the decision via bs_deal_set_discount_approval, then
+       reloads the deal so the badge + resolved state refresh. The pending
+       decision + ref live in _apprCtx so closeSheet (which wipes the sheet body)
+       doesn't strand them. */
+    let _apprCtx = null;
+    function showDiscountApprovalSheet(decision, ref) {
+      const dec = (decision === 'rejected') ? 'rejected' : 'approved';
+      _apprCtx = { decision: dec, ref: ref || '' };
+      const isApprove = dec === 'approved';
+      const pct = _savedDealData ? Math.round(_dealMaxDiscountPct(_savedDealData)) : null;
+      openSheet(
+        '<div class="sd-stage-sheet appr-sheet">' +
+          '<h3>' + (isApprove ? 'Approve discount' : 'Reject discount') + '</h3>' +
+          (ref ? '<div class="loss-sub">' + esc(ref) + (pct != null ? ' \u00b7 ' + pct + '% discount' : '') + '</div>' : '') +
+          '<label class="loss-flabel" for="appr-note">Note (optional)</label>' +
+          '<input type="text" id="appr-note" class="loss-field" maxlength="200" placeholder="' +
+            (isApprove ? 'e.g. strategic account \u2014 cleared by RM' : 'e.g. trim to policy and resubmit') + '">' +
+          '<div class="loss-actions">' +
+            '<button type="button" class="btn-v3 btn-ghost btn-md" data-action="appr-cancel">Cancel</button>' +
+            '<button type="button" id="appr-confirm-btn" class="btn-v3 ' + (isApprove ? 'btn-primary' : 'btn-danger') + ' btn-md" data-action="appr-confirm">' +
+              (isApprove ? 'Approve discount' : 'Reject discount') + '</button>' +
+          '</div>' +
+        '</div>'
+      );
+      setTimeout(function () { const f = $('appr-note'); if (f) f.focus(); }, 60);
+    }
+
     // v27.7.4 — F6: bind ESC handler + focus trap once. Called from mount().
     // ESC: close the sheet if open. Calls closeSheet (not the confirm
     //   sheet's explicit handler) — for the confirm sheet this is the
@@ -16358,6 +16458,56 @@
       }
     }
 
+    /* v2.13.1 — Pending approvals queue (Super-only). A focused list of every
+       deal whose discount still needs sign-off (derived state 'pending'),
+       sourced from the deal list + _dealApprovalState. Tapping a row opens that
+       deal, where the Approve / Reject controls live. Sorted highest-discount
+       first so the biggest asks surface at the top. */
+    async function showPendingApprovalsSheet() {
+      openSheet(
+        '<div class="notif-sheet">' +
+          '<div class="notif-sheet-head"><h3>Pending approvals</h3></div>' +
+          '<div id="pa-list">' + _skelDealRows(3) + '</div>' +
+        '</div>'
+      );
+      try {
+        const res  = await STORE.listDeals({ limit: 200 });
+        const rows = (res && res.rows) || (Array.isArray(res) ? res : []);
+        const pending = rows.filter(function (d) {
+          try { return _dealApprovalState(d).state === 'pending'; } catch (_) { return false; }
+        }).sort(function (a, b) { return _dealMaxDiscountPct(b) - _dealMaxDiscountPct(a); });
+        const list = $('pa-list');
+        if (!list) return;
+        if (pending.length === 0) {
+          list.innerHTML = '<div class="empty-state" style="padding:32px 16px"><p class="empty-state-body">No deals awaiting approval \u2014 all clear \u2713</p></div>';
+          return;
+        }
+        list.innerHTML = pending.map(function (d) {
+          const ref  = d.display_ref || d.ref_id || '';
+          const proj = d.project || '(no project name)';
+          const cust = d.customer_name || '';
+          const pct  = Math.round(_dealMaxDiscountPct(d));
+          let owner = '';
+          try {
+            const o = d.sales_person_id && STORE.rosterById && STORE.rosterById(d.sales_person_id);
+            if (o) owner = o.full_name || o.username || '';
+          } catch (_) {}
+          const meta = [cust, owner].filter(Boolean).join(' \u00b7 ') || ref;
+          return '<button class="notif-row" type="button" data-nav="#/quote/' + esc(ref) + '">' +
+            '<span class="notif-icon">' + _APPROVAL_SVG + '</span>' +
+            '<div class="notif-body">' +
+              '<div class="notif-msg"><strong>' + esc(proj) + '</strong>' +
+                ' <span class="disc-approval-chip" style="margin-left:4px">' + pct + '%</span></div>' +
+              '<div class="notif-meta">' + esc(meta) + '</div>' +
+            '</div>' +
+          '</button>';
+        }).join('');
+      } catch (e) {
+        const list = $('pa-list');
+        if (list) list.innerHTML = '<div class="banner err" style="margin:12px">Could not load: ' + esc(e.message || String(e)) + '</div>';
+      }
+    }
+
     /* v27.3.0 — User menu sheet (avatar dropdown replacement, Super sees admin tools) */
     function showUserMenuSheet() {
       const u = STORE.currentUser();
@@ -16381,6 +16531,9 @@
         // v2.10.0 — Data health (read-only diagnosis + reconcile)
         items.push({ label: 'Data health', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
           act: 'um-health' });
+        // v2.13.1 — Pending approvals queue (deals awaiting discount sign-off)
+        items.push({ label: 'Pending approvals', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>',
+          act: 'um-approvals' });
       }
       items.push({ label: 'About this app', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
         act: 'um-about' });
@@ -22333,6 +22486,64 @@ function DSH_CSS(){ return '<style>'+[
         _APPROVAL_SVG + 'Approval needed \u00b7 ' + Math.round(pct) + '%</span>';
     }
 
+    // v2.13.0 — icons for the resolved approval states
+    const _APPROVAL_OK_SVG = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+    const _APPROVAL_NO_SVG = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+
+    /* v2.13.0 — Derived discount-approval STATE. The deal stores only the
+       decision (discount_approval_status + the pct it covers); pending vs
+       approved vs rejected is computed here against the CURRENT effective
+       discount. A decision "covers" any discount up to the pct it was made at,
+       so raising the discount past that pct re-opens it as pending.
+         not_required : effective discount < policy threshold (no badge)
+         approved     : decision 'approved' and still covers current discount
+         rejected     : decision 'rejected' and still covers current discount
+         pending      : threshold met, no covering decision (never reviewed, or
+                        discount now exceeds the last decision's pct) */
+    function _dealApprovalState(deal) {
+      const eff = _dealMaxDiscountPct(deal);
+      if (eff < DISCOUNT_APPROVAL_PCT) return { state: 'not_required', pct: eff };
+      const status = deal && deal.discount_approval_status;
+      const apvPct = Number(deal && deal.discount_approval_pct) || 0;
+      const covers = apvPct >= eff - 0.001;
+      if ((status === 'approved' || status === 'rejected') && covers) {
+        return {
+          state: status, pct: eff, approvedPct: apvPct,
+          by:   (deal.discount_approved_by_name || ''),
+          at:   (deal.discount_approved_at || ''),
+          note: (deal.discount_approval_note || '')
+        };
+      }
+      return { state: 'pending', pct: eff };
+    }
+
+    // Full pill (saved-deal) for a resolved state. '' when no approval applies.
+    function _approvalStateBadgeHtml(st) {
+      if (!st || st.state === 'not_required') return '';
+      if (st.state === 'approved') {
+        return '<span class="disc-approval-badge disc-ok" title="Discount ' + Math.round(st.pct) +
+          '% approved' + (st.by ? ' by ' + esc(st.by) : '') + '">' + _APPROVAL_OK_SVG +
+          'Approved \u00b7 ' + Math.round(st.pct) + '%' + (st.by ? ' \u00b7 ' + esc(st.by) : '') + '</span>';
+      }
+      if (st.state === 'rejected') {
+        return '<span class="disc-approval-badge disc-no" title="Discount ' + Math.round(st.pct) +
+          '% rejected' + (st.by ? ' by ' + esc(st.by) : '') + '">' + _APPROVAL_NO_SVG +
+          'Rejected \u00b7 ' + Math.round(st.pct) + '%' + (st.by ? ' \u00b7 ' + esc(st.by) : '') + '</span>';
+      }
+      return _approvalBadgeHtml(st.pct); // pending
+    }
+
+    // Compact chip (history rows) for a resolved state. '' when none applies.
+    function _approvalStateChipHtml(st) {
+      if (!st || st.state === 'not_required') return '';
+      const pct = Math.round(st.pct);
+      if (st.state === 'approved')
+        return '<span class="disc-approval-chip disc-ok" title="' + pct + '% \u2014 approved">' + _APPROVAL_OK_SVG + pct + '%</span>';
+      if (st.state === 'rejected')
+        return '<span class="disc-approval-chip disc-no" title="' + pct + '% \u2014 rejected">' + _APPROVAL_NO_SVG + pct + '%</span>';
+      return '<span class="disc-approval-chip" title="' + pct + '% \u2014 needs approval">' + _APPROVAL_SVG + pct + '%</span>';
+    }
+
     function renderHistoryRow(d) {
       const ref   = d.display_ref || d.ref_id || '\u2014';
       const proj  = d.project || '(no project name)';
@@ -22344,11 +22555,10 @@ function DSH_CSS(){ return '<style>'+[
       // here (parity with the dashboard) and the app-wide price toggle applies.
       const val   = (bsPricesVisible() && d.deal_value_inr > 0) ? fmtINR(d.deal_value_inr) : '';
       const stageCls = _stageChipClassName(stage);
-      // v2.8.11 — #4 discount-approval signal for this row
-      const _apPct = _dealMaxDiscountPct(d);
-      const _apChip = (_apPct >= DISCOUNT_APPROVAL_PCT)
-        ? '<span class="disc-approval-chip" title="' + Math.round(_apPct) + '% discount \u2014 needs approval">' + _APPROVAL_SVG + Math.round(_apPct) + '%</span>'
-        : '';
+      // v2.8.11 / v2.13.0 — discount-approval signal for this row, reflecting
+      // the RESOLVED state (pending/approved/rejected) when the list carries the
+      // decision columns; falls back to a pending chip for high-discount rows.
+      const _apChip = _approvalStateChipHtml(_dealApprovalState(d));
 
       // v27.3.13 — Enrich history rows with 2 productive at-a-glance fields
       // per Dipenkumar 2026-05-26 (request: "can we have a little more
@@ -23731,8 +23941,29 @@ function DSH_CSS(){ return '<style>'+[
        under the threshold. Re-renders for free via _rerenderSavedDealPreservingScroll
        on every inline disc edit. */
     function _renderSdApprovalLine() {
-      if (!_savedDealData || !_dealNeedsApproval(_savedDealData)) return '';
-      return _approvalBadgeHtml(_dealMaxDiscountPct(_savedDealData));
+      if (!_savedDealData) return '';
+      const st = _dealApprovalState(_savedDealData);
+      if (st.state === 'not_required') return '';
+      const badge = _approvalStateBadgeHtml(st);
+      // v2.13.0 — super-tier reviewers can set / overturn the decision in place.
+      // Only the action that CHANGES the current state is offered (pending shows
+      // both). Non-super users see the badge only.
+      const u = (STORE.currentUser && STORE.currentUser()) || null;
+      const isSuper = !!(u && u.permission_tier === 'super');
+      const ref = _savedDealData.display_ref || _savedDealData.ref_id || '';
+      let actions = '';
+      if (isSuper && ref) {
+        const approveBtn = '<button type="button" class="disc-appr-btn disc-appr-yes" data-action="disc-approve" data-ref="' + esc(ref) + '">' + _APPROVAL_OK_SVG + 'Approve</button>';
+        const rejectBtn  = '<button type="button" class="disc-appr-btn disc-appr-no" data-action="disc-reject" data-ref="' + esc(ref) + '">' + _APPROVAL_NO_SVG + 'Reject</button>';
+        if (st.state === 'approved')      actions = rejectBtn;
+        else if (st.state === 'rejected') actions = approveBtn;
+        else                              actions = approveBtn + rejectBtn;
+        actions = '<span class="disc-appr-actions">' + actions + '</span>';
+      }
+      // Optional reviewer note (shown under the badge when a decision exists).
+      const noteLine = (st.note && (st.state === 'approved' || st.state === 'rejected'))
+        ? '<div class="disc-appr-note">\u201C' + esc(st.note) + '\u201D</div>' : '';
+      return badge + actions + noteLine;
     }
 
     function showSavedDeal(refId) {
@@ -27276,6 +27507,10 @@ function DSH_CSS(){ return '<style>'+[
           showDataHealthSheet();
           return;
         }
+        if (action === 'um-approvals') {
+          showPendingApprovalsSheet();
+          return;
+        }
         if (action === 'dh-refresh') {
           showDataHealthSheet();   // fresh check, clears any prior reconcile result
           return;
@@ -27311,6 +27546,48 @@ function DSH_CSS(){ return '<style>'+[
           if (!_savedDealData) return;
           const ref = _savedDealData.display_ref || _savedDealData.ref_id;
           showRevisionsSheet(ref);
+          return;
+        }
+
+        // v2.13.0 — Discount approval (super-only). The buttons render only for
+        // super-tier viewers; the RPC re-checks the tier server-side. Open the
+        // confirm/note sheet, then write + reload.
+        if (action === 'disc-approve' || action === 'disc-reject') {
+          if (!_savedDealData) return;
+          const ref = actEl.getAttribute('data-ref') ||
+                      _savedDealData.display_ref || _savedDealData.ref_id;
+          if (!ref) { toast('Cannot review: no reference ID.', 'err'); return; }
+          showDiscountApprovalSheet(action === 'disc-approve' ? 'approved' : 'rejected', ref);
+          return;
+        }
+        if (action === 'appr-cancel') {
+          _apprCtx = null;
+          closeSheet();
+          return;
+        }
+        if (action === 'appr-confirm') {
+          if (!_apprCtx || !_apprCtx.ref) { closeSheet(); return; }
+          const ctx  = _apprCtx;
+          const note = ($('appr-note') && $('appr-note').value.trim()) || '';
+          const btn  = document.querySelector('[data-action="appr-confirm"]');
+          const reset = function () {
+            if (btn) { btn.disabled = false; btn.textContent = ctx.decision === 'approved' ? 'Approve discount' : 'Reject discount'; }
+          };
+          if (btn) { btn.disabled = true; btn.textContent = ctx.decision === 'approved' ? 'Approving\u2026' : 'Rejecting\u2026'; }
+          STORE.bsDealSetDiscountApproval(ctx.ref, ctx.decision, note).then(function (r) {
+            if (r && r.ok) {
+              _apprCtx = null;
+              closeSheet();
+              toast(ctx.decision === 'approved' ? 'Discount approved.' : 'Discount rejected.', 'ok');
+              showSavedDeal(ctx.ref);  // reload so the badge + resolved state refresh
+            } else {
+              reset();
+              toast((r && r.error) ? ('Could not save: ' + r.error) : 'Could not save the decision.', 'err');
+            }
+          }).catch(function () {
+            reset();
+            toast('Could not save \u2014 check your connection.', 'err');
+          });
           return;
         }
 
@@ -27507,6 +27784,7 @@ function DSH_CSS(){ return '<style>'+[
               '<h3>Move stage</h3>' +
               '<div class="sd-stage-opts">' + opts + '</div>' +
               '<button type="button" class="btn-v3 btn-ghost btn-md sd-stage-hist" data-action="sd-history">View stage history</button>' +
+              '<button type="button" class="btn-v3 btn-ghost btn-md sd-stage-hist" data-action="sd-revisions">View revisions</button>' +
             '</div>'
           );
           return;
@@ -28972,6 +29250,13 @@ function DSH_CSS(){ return '<style>'+[
       // v2.12.0 — Closed Lost reason capture (sheet + taxonomy) for smoke reach.
       showLossReasonSheet:     showLossReasonSheet,
       _LOSS_REASONS:           LOSS_REASONS,
+      // v2.13.0 — discount approval workflow (sheet + derive fn) for smoke reach.
+      showDiscountApprovalSheet: showDiscountApprovalSheet,
+      _dealApprovalState:        _dealApprovalState,
+      _approvalStateBadgeHtml:   _approvalStateBadgeHtml,
+      _approvalStateChipHtml:    _approvalStateChipHtml,
+      // v2.13.1 — pending-approvals queue (super-only)
+      showPendingApprovalsSheet: showPendingApprovalsSheet,
       // smoke renderer
       _renderSmokeOutput: renderSmokeOutput
     };
