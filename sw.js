@@ -1,7 +1,16 @@
 // BrightSign Selector — Service Worker
-// v2.13.2 (2026-06-27)
+// v2.13.3 (2026-06-27)
 //
 // Changelog (BrightSign):
+//   v2.13.3 — CACHE_NAME bump: saved-deal approval badge fix. After Approve/
+//     Reject the server persisted the decision correctly, but the saved-deal
+//     view kept showing "Approval needed" + both buttons. Cause: the reload
+//     re-hydrates via hydrateWizardFromDeal, whose HEADER whitelist drops the
+//     discount_approval_* columns, so _renderSdApprovalLine recomputed 'pending'.
+//     Fix: the approval columns are now snapshotted into a dedicated var on each
+//     deal-get load (never merged into _savedDealData, so buildSavePayload can't
+//     leak them into raw_submission) and overlaid only at render time. Soft
+//     re-renders preserve the snapshot. One-file frontend change; no backend.
 //   v2.13.2 — CACHE_NAME bump: name-resolution fix. The saved-deal header (and
 //     every other labelFor caller) showed a raw UUID for a sales/presales owner
 //     whose org_function didn't match the role-filtered *_TEAM lists. labelFor
@@ -229,7 +238,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v2.13.2';
+const CACHE_NAME = 'brightsign-v2.13.3';
 const SHELL_URLS = [
   './',
   './index.html'

@@ -9241,7 +9241,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.13.2',
+      version: 'brightsign-v2.13.3',
       build_date: '2026-06-27',
       constants,
       calico,
@@ -14865,6 +14865,13 @@
 
     // Module-level autosave state (one saved-deal is viewed at a time).
     let _savedDealData    = null;
+    // v2.13.3 — approval state is carried on deal COLUMNS, not the wizard shape.
+    // hydrateWizardFromDeal's HEADER whitelist intentionally drops the
+    // discount_approval_* fields (and buildSavePayload would otherwise stow any
+    // stray key into raw_submission, where the load-time flatten could resurrect
+    // a stale decision). So the approval snapshot lives here, beside _savedDealData
+    // but never merged into it — _renderSdApprovalLine overlays it at render time.
+    let _savedDealApproval = null;
     let _savedDealRefId   = null;
     let _autosaveTimer    = null;
     let _autosaveInFlight = false;
@@ -15268,6 +15275,7 @@
         }
       }
       _savedDealData    = null;
+      _savedDealApproval = null;   // v2.13.3 — clear approval snapshot on teardown
       _savedDealRefId   = null;
       _autosaveInFlight = false;
     }
@@ -23942,7 +23950,14 @@ function DSH_CSS(){ return '<style>'+[
        on every inline disc edit. */
     function _renderSdApprovalLine() {
       if (!_savedDealData) return '';
-      const st = _dealApprovalState(_savedDealData);
+      // v2.13.3 — overlay the approval snapshot (carried separately from the
+      // wizard shape) so the badge reflects the persisted decision after a
+      // reload. _dealApprovalState still reads the discount data (lines etc.)
+      // from _savedDealData; only the discount_approval_* fields come from the snapshot.
+      const _apprSrc = _savedDealApproval
+        ? Object.assign({}, _savedDealData, _savedDealApproval)
+        : _savedDealData;
+      const st = _dealApprovalState(_apprSrc);
       if (st.state === 'not_required') return '';
       const badge = _approvalStateBadgeHtml(st);
       // v2.13.0 — super-tier reviewers can set / overturn the decision in place.
@@ -24104,6 +24119,19 @@ function DSH_CSS(){ return '<style>'+[
       try { _hydratedDeal = hydrateWizardFromDeal(deal); }
       catch (_) { _hydratedDeal = deal; }
       _savedDealData    = _hydratedDeal;
+      // v2.13.3 — refresh the approval snapshot ONLY from a real deal-get payload
+      // (which always carries the discount_approval_status key, even when null).
+      // Soft re-renders pass the flat _savedDealData back in — it has no such key,
+      // so the snapshot is preserved across rebuild/edit-toggle re-renders.
+      if (deal && Object.prototype.hasOwnProperty.call(deal, 'discount_approval_status')) {
+        _savedDealApproval = {
+          discount_approval_status:  (deal.discount_approval_status  != null) ? deal.discount_approval_status  : null,
+          discount_approval_pct:     (deal.discount_approval_pct     != null) ? deal.discount_approval_pct     : null,
+          discount_approved_by_name: (deal.discount_approved_by_name != null) ? deal.discount_approved_by_name : '',
+          discount_approved_at:      (deal.discount_approved_at      != null) ? deal.discount_approved_at      : '',
+          discount_approval_note:    (deal.discount_approval_note    != null) ? deal.discount_approval_note    : ''
+        };
+      }
       _savedDealRefId   = (deal && (deal.display_ref || deal.ref || deal.id)) || null;
       _autosaveInFlight = false;
       _savedDealLastSavedStage = (deal && deal.stage) || null;  // v27.3.0 confetti baseline
@@ -28223,6 +28251,7 @@ function DSH_CSS(){ return '<style>'+[
                 if (r && r.ok === true) {
                   if (_autosaveTimer) { clearTimeout(_autosaveTimer); _autosaveTimer = null; }
                   _savedDealData    = null;
+                  _savedDealApproval = null;   // v2.13.3 — clear approval snapshot
                   _savedDealRefId   = null;
                   _autosaveInFlight = false;
                   toast(ref + ' deleted. Restore from History \u2192 Deleted.', 'ok');
@@ -29255,6 +29284,10 @@ function DSH_CSS(){ return '<style>'+[
       _dealApprovalState:        _dealApprovalState,
       _approvalStateBadgeHtml:   _approvalStateBadgeHtml,
       _approvalStateChipHtml:    _approvalStateChipHtml,
+      // v2.13.3 — exposed for the boot harness to drive the saved-deal approval
+      // render path (hydrate-strip -> snapshot-overlay -> badge) end to end.
+      renderSavedDealLoaded:     renderSavedDealLoaded,
+      _renderSdApprovalLine:     _renderSdApprovalLine,
       // v2.13.1 — pending-approvals queue (super-only)
       showPendingApprovalsSheet: showPendingApprovalsSheet,
       // smoke renderer
