@@ -2334,6 +2334,12 @@
     .history-row .meta-secondary .meta-sep {
       color: var(--c-border-st, var(--c-border));
     }
+    /* v2.11.0 — Tappable stage chip in History rows (quick stage change).
+       The chip is a <span> inside the row <button>; these make it read as an
+       interactive control. The caret (\u25be) is part of the chip text. */
+    .history-row .hist-stage-chip { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .history-row .hist-stage-chip:hover { filter: brightness(0.93); }
+    .history-row .hist-stage-chip:active { transform: scale(0.96); }
 
     /* alpha.8.3 — Soft-deleted history rows: muted, non-clickable container */
     .history-row-deleted { cursor: default; opacity: 0.75; }
@@ -6327,6 +6333,39 @@
     .sd-stage-opt-tag { margin-left: auto; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-faint, rgba(127,127,127,0.7)); }
     .sd-stage-hist { width: 100%; }
 
+    /* v2.12.0 — Closed Lost reason-capture sheet. Single-select reason list
+       (8-reason taxonomy) + optional competitor / notes + danger confirm.
+       Mirrors the .sd-stage-* sheet; selection state lives on
+       .loss-opt.is-selected (tracked in _lossCtx so closeSheet, which wipes
+       sheet-body, doesn't strand it). */
+    .loss-sheet h3 { margin: 0 0 4px; }
+    .loss-sub { margin: 0 0 12px; font: 12px var(--f-mono, monospace); color: var(--c-fg-mute); letter-spacing: .02em; }
+    .loss-opts { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .loss-opt { display: flex; align-items: flex-start; gap: 11px; width: 100%; padding: 11px 13px;
+      border: 1px solid var(--c-border, rgba(127,127,127,0.18)); border-radius: 12px;
+      background: var(--c-elev, transparent); color: var(--c-fg, inherit);
+      font-family: var(--font-display, inherit); text-align: left; cursor: pointer;
+      transition: background .12s ease, border-color .12s ease, transform .12s ease;
+      -webkit-tap-highlight-color: transparent; }
+    .loss-opt:hover { background: var(--c-hover, rgba(127,127,127,0.08)); }
+    .loss-opt:active { transform: scale(0.99); }
+    .loss-opt.is-selected { border-color: var(--c-err, #B91C1C); background: var(--c-err-lt, rgba(185,28,28,0.10)); }
+    .loss-opt-radio { flex: 0 0 auto; width: 16px; height: 16px; margin-top: 2px; border-radius: 999px;
+      border: 2px solid var(--c-border-st, rgba(127,127,127,0.5)); position: relative; transition: border-color .12s ease; }
+    .loss-opt.is-selected .loss-opt-radio { border-color: var(--c-err, #B91C1C); }
+    .loss-opt.is-selected .loss-opt-radio::after { content: ''; position: absolute; inset: 2px;
+      border-radius: 999px; background: var(--c-err, #B91C1C); }
+    .loss-opt-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .loss-opt-label { font-size: 14px; font-weight: 700; line-height: 1.25; color: var(--c-fg); }
+    .loss-opt-hint { font-size: 12px; line-height: 1.3; color: var(--c-fg-mute); }
+    .loss-flabel { display: block; font-size: 12px; color: var(--c-fg-mute); margin: 10px 0 4px; }
+    .loss-field { width: 100%; height: 44px; padding: 0 12px; font: inherit; font-size: 15px;
+      border: 1.5px solid var(--c-border); border-radius: 10px; background: var(--c-bg); color: var(--c-fg);
+      box-sizing: border-box; }
+    .loss-field:focus { outline: none; border-color: var(--c-accent); }
+    .loss-actions { display: flex; gap: 8px; margin-top: 18px; }
+    .loss-actions .btn-v3 { flex: 1; }
+
     /* --- v27.3.0 Pull-to-refresh --- */
     .ptr-indicator {
       position: fixed;
@@ -7421,6 +7460,71 @@
     @media (min-width: 720px) { .skeleton-grid { grid-template-columns: repeat(4, 1fr); } }
 
     /* --- v27.3.0 NOTIFICATION SHEET (D6-D9 restore) --- */
+    /* v2.10.0 — Data health sheet (Super-only). All on existing theme tokens so
+       light + dark inherit. dh- prefix avoids collisions with app components. */
+    .dh-wrap { padding: 2px 2px 6px; }
+    .dh-head { display: flex; align-items: flex-start; gap: 10px; padding: 6px 4px 12px; }
+    .dh-head h3 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 19px; letter-spacing: -0.01em; color: var(--ink-strong); }
+    .dh-head .dh-sub { font-size: 12px; color: var(--ink-soft); margin-top: 3px; }
+    .dh-refresh { margin-left: auto; width: 36px; height: 36px; border-radius: var(--r-pill); border: 1px solid var(--border-mid);
+      background: var(--bg-card); color: var(--ink-mid); display: grid; place-items: center; cursor: pointer; flex: none; }
+    .dh-refresh:active { transform: scale(0.94); }
+    .dh-refresh[disabled] { opacity: .5; }
+    .dh-kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin: 0 2px 16px; }
+    .dh-kpi { background: var(--bg-subtle); border: 1px solid var(--border-soft); border-radius: var(--r-md); padding: 13px 8px; text-align: center; }
+    .dh-kn { font-size: 20px; font-weight: 800; font-family: var(--font-display); line-height: 1.05; letter-spacing: -0.02em; color: var(--ink-strong); }
+    .dh-kl { font-size: 10.5px; color: var(--ink-soft); margin-top: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .dh-hero { border-radius: var(--r-md); padding: 14px 16px; margin: 0 2px 16px; display: flex; align-items: center; gap: 12px; border: 1px solid transparent; }
+    .dh-hic { width: 40px; height: 40px; border-radius: var(--r-pill); display: grid; place-items: center; flex: none; }
+    .dh-htt { font-weight: 700; font-size: 15px; font-family: var(--font-display); color: var(--ink-strong); }
+    .dh-hss { font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; }
+    .dh-hero.dh-ok { background: var(--success-soft); border-color: color-mix(in srgb, var(--success) 30%, transparent); }
+    .dh-hero.dh-ok .dh-hic { background: var(--success); color: #fff; }
+    .dh-hero.dh-warn { background: var(--warning-soft); border-color: color-mix(in srgb, var(--warning) 32%, transparent); }
+    .dh-hero.dh-warn .dh-hic { background: var(--warning); color: #fff; }
+    .dh-eyebrow { font-size: 10.5px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--ink-soft);
+      margin: 18px 4px 9px; display: flex; align-items: center; gap: 8px; }
+    .dh-eyebrow .dh-hint { font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--ink-faint); font-size: 11px; }
+    .dh-tiles { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin: 0 2px; }
+    .dh-tile { background: var(--bg-subtle); border: 1px solid var(--border-soft); border-radius: var(--r-md); padding: 13px 10px; text-align: center; }
+    .dh-tile .dh-n { font-size: 26px; font-weight: 800; font-family: var(--font-display); line-height: 1; letter-spacing: -0.02em; }
+    .dh-tile .dh-l { font-size: 11px; color: var(--ink-soft); margin-top: 6px; font-weight: 600; }
+    .dh-tile.dh-has .dh-n { color: var(--warning); }
+    .dh-tile.dh-zero .dh-n { color: var(--ink-faint); }
+    .dh-subline { font-size: 12.5px; color: var(--ink-mid); margin: 11px 6px 0; display: flex; align-items: center; gap: 7px; }
+    .dh-subline b { color: var(--ink-strong); }
+    .dh-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+    .dh-dot.dh-ok { background: var(--success); } .dh-dot.dh-warn { background: var(--warning); } .dh-dot.dh-err { background: var(--danger); }
+    .dh-cta { width: calc(100% - 4px); margin: 14px 2px 0; border: 0; border-radius: var(--r-md); background: var(--cta-grad); color: #fff;
+      font: inherit; font-weight: 700; font-size: 15px; font-family: var(--font-display); padding: 14px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 9px; box-shadow: var(--shadow-card); }
+    .dh-cta:active { transform: translateY(1px); }
+    .dh-cta[disabled] { opacity: .6; cursor: default; }
+    .dh-ctanote { font-size: 11.5px; color: var(--ink-soft); line-height: 1.45; margin: 9px 6px 0; }
+    .dh-rows { margin: 0 2px; }
+    .dh-row { display: flex; align-items: center; gap: 11px; padding: 11px 2px; border-bottom: 1px solid var(--border-soft); }
+    .dh-row:last-child { border-bottom: 0; }
+    .dh-rl { font-size: 13.5px; color: var(--ink-mid); flex: 1; }
+    .dh-rv { font-size: 13px; font-weight: 700; }
+    .dh-rv.dh-ok { color: var(--ink-faint); } .dh-rv.dh-warn { color: var(--warning); } .dh-rv.dh-err { color: var(--danger); }
+    .dh-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .dh-chip { font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: var(--r-pill); background: var(--danger-soft);
+      color: var(--danger); border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent); }
+    .dh-dup { font-size: 12.5px; color: var(--ink-mid); padding: 8px 0; border-bottom: 1px solid var(--border-soft); }
+    .dh-dup:last-child { border-bottom: 0; } .dh-dup b { color: var(--ink-strong); } .dh-dup .dh-tag { color: var(--ink-faint); font-size: 11px; }
+    .dh-muted { color: var(--ink-faint); }
+    .dh-result { margin: 0 2px 16px; border-radius: var(--r-md); padding: 14px 16px; background: var(--success-soft);
+      border: 1px solid color-mix(in srgb, var(--success) 30%, transparent); }
+    .dh-rtt { font-weight: 700; font-size: 14.5px; font-family: var(--font-display); color: var(--ink-strong); display: flex; align-items: center; gap: 9px; }
+    .dh-rstats { display: flex; gap: 18px; margin-top: 10px; }
+    .dh-rn { font-size: 22px; font-weight: 800; font-family: var(--font-display); line-height: 1; color: var(--ink-strong); }
+    .dh-rk { font-size: 11px; color: var(--ink-soft); margin-top: 3px; font-weight: 600; }
+    .dh-amb { margin-top: 12px; border-top: 1px solid color-mix(in srgb, var(--warning) 30%, transparent); padding-top: 11px; }
+    .dh-ah { font-size: 12px; font-weight: 700; color: var(--warning); display: flex; align-items: center; gap: 7px; }
+    .dh-ai { font-size: 12px; color: var(--ink-mid); padding: 7px 0 0; }
+    .dh-ai b { color: var(--ink-strong); } .dh-ai .dh-mt { color: var(--warning); font-weight: 700; }
+    .dh-err-banner { margin: 8px 2px; border-radius: var(--r-md); padding: 14px 16px; background: var(--danger-soft);
+      border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent); color: var(--ink-mid); font-size: 13px; }
     .notif-sheet { padding: 4px 0 16px; }
     .notif-sheet-head {
       display: flex; align-items: center; justify-content: space-between;
@@ -7606,6 +7710,63 @@
   /* ============================================================
      BRIGHTSIGN SELECTOR — CHANGELOG
      ------------------------------------------------------------
+     v2.11.0 (2026-06-26)  — NEW: quick stage-change from History rows (no need to
+       open the deal). Each active History row's stage chip is now tappable (caret
+       affordance) and opens the "Move stage" sheet; the pick persists via a new
+       atomic RPC bs_deal_set_stage, which sets deals.stage_id (trigger re-stamps
+       the SLA clock), logs the stage_transitions audit row, and resolves the actor
+       for attribution — then the row's chip + aging badge update in place (no list
+       reload). Terminal stages (Won/Lost) still confirm; Won/Lost gating reuses
+       STAGE_META allow_won/allow_lost. The body click dispatch was tweaked so a
+       nested [data-action] inside a [data-nav] row wins (chip vs. row navigation).
+       The quick path LOGS the transition (auditable) but deliberately does NOT
+       notify owners (avoids notification spam during bulk pipeline tidy-up); the
+       in-deal stage move still notifies. Verified: node --check, jsdom boot (5
+       IIFEs, no ReferenceError, wrapper exposed, v2.9/2.10 regressions intact),
+       a fetch-stubbed interaction test (chip tap → sheet → real RPC → in-place
+       chip/badge update), and exhaustive live RPC tests (happy / no-op / bad-ref
+       / bad-stage / attribution). CATALOG.version + build_date + sw.js -> v2.11.0.
+     v2.10.0 (2026-06-26)  — NEW: Data health panel + per-party export (Super-only).
+       (1) "Data health" entry in the Super avatar menu opens a read-only diagnosis
+       sheet backed by the bs_health_check RPC (expanded this release): an overview
+       strip (open deals / open value / parties), a Pipeline hygiene section over
+       OPEN deals (no owner / no value / no BoM / no contact / past close month /
+       follow-up overdue / stuck past stage SLA), a Linking section (name-but-no-
+       party-link per role + drifted names) with a "Reconcile now" button that runs
+       bs_reconcile_parties (links unambiguous name matches, resyncs drift, reports
+       ambiguous; never creates/deletes parties) and shows the result inline, a
+       Directory section (duplicate parties, unused parties, models with no price),
+       and an Integrity section (missing stage, orphan lines/specs/contacts).
+       (2) An "Export" button on each party's Customer 360 view produces a 2-sheet
+       Excel (party attributes + deal rollup, and the party's deals) via the
+       existing ExcelJS loader. New STORE wrappers bsHealthCheck / bsReconcileParties
+       (Super-gated) and EXPORT.partyExcel; backend bs_health_check expanded
+       additively (existing keys unchanged). Verified with node --check + a jsdom
+       hydrate/health harness. CATALOG.version + build_date + sw.js -> v2.10.0.
+     v2.9.0  (2026-06-26)  — FIX: edit-hydration dropped all three party links.
+       Opening a SAVED deal in Edit restored scalar fields (project/venue/city)
+       but rendered the End user / Partner / Consultant pickers EMPTY instead of
+       as linked chips, and saving then SILENTLY NULLED the links (names persisted,
+       ids lost). Root cause: hydrateWizardFromDeal's HEADER map carried the three
+       *_name fields but not the three *_party_id fields, so wizardData had no id
+       to satisfy renderPartyControl's "id && name -> Linked chip" test, and the
+       resave forwarded '' for each id (deal_save NULLs empty). Fix is purely the
+       hydrate side: map customer_party_id / partner_party_id / consultant_party_id
+       in HEADER. Chips now restore on edit AND buildSavePayload forwards the real
+       uuid (the ids were already in STRUCTURED_COLS), so the round-trip preserves
+       links. No DB change (all party RPCs + the don't-clobber guard are separate,
+       already-live backend work). Verified with a headless hydrate harness
+       (linked round-trip, unlinked stays empty, no chip-from-name-alone).
+       CATALOG.version + build_date + sw.js CACHE_NAME -> v2.9.0.
+     v2.8.12 (2026-06-26)  — #6 Saved views (per-user History filter sets, persisted
+       in localStorage) + #7 Pipeline report export (Excel) — both added as a single
+       History toolbar row. Frontend-only.
+     v2.8.11 (2026-06-26)  — #4 Discount-approval signal. A deal needing approval
+       (max line / project discount over threshold) now shows an amber caution badge
+       on the saved-deal view and in the History row. Frontend-only.
+     v2.8.10 (2026-06-26)  — #2 Per-deal follow-up. One next-follow-up date + note
+       per deal, with a "Follow-ups due" widget on Home. Backed by additive RPCs
+       followup_set / followup_due_list (migration add_deal_followup_fields_and_rpcs).
      v2.8.9  (2026-06-26)  — Customer/party directory wired into the wizard.
        Step 1's End user / Partner / Consultant are now directory-backed party
        pickers (typeahead + create-new) instead of free text. Picking links
@@ -9047,8 +9208,8 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.8.12',
-      build_date: '2026-06-26',
+      version: 'brightsign-v2.12.0',
+      build_date: '2026-06-27',
       constants,
       calico,
       mv,
@@ -10653,6 +10814,82 @@
       return rpc('party_upsert', { p_payload: payload, p_actor: actor || null });
     }
 
+    /* v2.10.0 — Data health (Super-only). Two additive RPCs (already live):
+       bs_health_check(p_app) -> read-only diagnosis envelope (overview totals,
+       pipeline hygiene, linking gaps, directory, integrity). bs_reconcile_parties
+       (p_app, p_actor) -> conservative self-heal: links unambiguous name matches,
+       resyncs drifted names, reports ambiguous; never creates/deletes parties.
+       Both return a plain object with {ok:true,...} or {ok:false,error}. */
+    async function bsHealthCheck() {
+      const u = _user || null;
+      if (!u || u.permission_tier !== 'super') return { ok: false, error: 'forbidden' };
+      try {
+        const r = await rpc('bs_health_check', { p_app: APP_TAG });
+        return (r && typeof r === 'object') ? r : { ok: false, error: 'bad_response' };
+      } catch (e) {
+        return { ok: false, error: String((e && e.message) || e) };
+      }
+    }
+    async function bsReconcileParties() {
+      const u = _user || null;
+      if (!u || u.permission_tier !== 'super') return { ok: false, error: 'forbidden' };
+      const actor = (u.loginName || u.username || u.full_name || u.id || 'reconcile');
+      try {
+        const r = await rpc('bs_reconcile_parties', { p_app: APP_TAG, p_actor: actor });
+        return (r && typeof r === 'object') ? r : { ok: false, error: 'bad_response' };
+      } catch (e) {
+        return { ok: false, error: String((e && e.message) || e) };
+      }
+    }
+    /* v2.11.0 — Quick stage change from the History list. One atomic RPC sets
+       deals.stage_id (trigger deals_stage_stamp re-stamps current_stage_entered_at)
+       AND appends the stage_transitions audit row — no open deal / autosave
+       needed. The quick path intentionally does NOT notify owners (avoids
+       notification spam during bulk History tidy-up); the in-deal stage move
+       still notifies stakeholders. */
+    async function bsDealSetStage(ref, toStage, notes) {
+      if (!ref || !toStage) return { ok: false, error: 'ref + toStage required' };
+      const u = _user || null;
+      const actor = (u && (u.username || u.loginName)) || null;
+      try {
+        const r = await rpc('bs_deal_set_stage', {
+          p_ref:      String(ref),
+          p_to_stage: String(toStage),
+          p_actor:    actor,
+          p_notes:    notes || null,
+          p_app:      APP_TAG
+        });
+        return (r && typeof r === 'object') ? r : { ok: false, error: 'bad_response' };
+      } catch (e) {
+        return { ok: false, error: String((e && e.message) || e) };
+      }
+    }
+
+    /* v2.12.0 — Closed Lost reason capture. Records loss_reason /
+       loss_competitor / loss_notes on the deal via the atomic
+       bs_deal_set_loss_reason RPC (matches by display_ref + app). The RPC
+       does NOT touch the stage — the caller sets "Closed Lost" separately
+       (bs_deal_set_stage for the History quick path, or the saved-deal
+       autosave pipeline). Empty competitor / notes are sent as null. */
+    async function bsDealSetLossReason(ref, reason, competitor, notes) {
+      if (!ref || !reason) return { ok: false, error: 'ref + reason required' };
+      const u = _user || null;
+      const actor = (u && (u.username || u.loginName)) || null;
+      try {
+        const r = await rpc('bs_deal_set_loss_reason', {
+          p_ref:        String(ref),
+          p_reason:     String(reason),
+          p_competitor: (competitor && String(competitor).trim()) || null,
+          p_notes:      (notes && String(notes).trim()) || null,
+          p_actor:      actor,
+          p_app:        APP_TAG
+        });
+        return (r && typeof r === 'object') ? r : { ok: false, error: 'bad_response' };
+      } catch (e) {
+        return { ok: false, error: String((e && e.message) || e) };
+      }
+    }
+
     async function customerUpsert(payload) {
       // DB signature is customer_upsert(p_payload, p_actor) — p_actor is the
       // audit actor (created_by / updated_by), not the app tag.
@@ -10721,6 +10958,10 @@
       // v27.3.0 — Customer directory + 360 + merge (D1-D3 silent-drop restores)
       customerList, customerUpsert, customerDelete, customerMerge, customer360,
       partySearch, partyUpsert,
+      // v2.10.0 — Data health (Super-only)
+      bsHealthCheck, bsReconcileParties, bsDealSetStage,
+      // v2.12.0 — Closed Lost reason capture
+      bsDealSetLossReason,
       // v27.3.1 — Pipeline snapshots for dashboard weekly trend chart
       pipelineSnapshotList,
       // v27.7.2 — F7: explicit error-logger for callers that catch + log
@@ -12400,11 +12641,92 @@
       return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     }
 
+    // v2.10.0 — Per-party export (Excel). Internal report: one "Party" sheet with
+    // the directory attributes + a deal rollup, and one "Deals" sheet listing the
+    // party's deals. UI passes the party object (from the directory cache) + its
+    // deals array (STORE.customer360 rows); this only lays out the workbook.
+    async function partyExcel(party, deals) {
+      party = party || {}; deals = Array.isArray(deals) ? deals : [];
+      const XL = await loadExcelJS();
+      const wb = new XL.Workbook();
+      wb.creator = 'BrightSign Selector';
+      wb.created = new Date();
+      const PURPLE = 'FF37236A', WHITE = 'FFFFFFFF', SUNK = 'FFF2F1ED';
+      const today = (new Date()).toISOString().slice(0, 10);
+
+      // rollup (mirror of the Customer 360 KPIs)
+      const live = deals.filter(function (d) { return !d.deleted_at; });
+      const wonCount  = live.filter(function (d) { return d.stage === 'Closed Won'; }).length;
+      const openCount = live.filter(function (d) { return d.stage && d.stage !== 'Closed Won' && d.stage !== 'Closed Lost'; }).length;
+      const wonValue  = live.filter(function (d) { return d.stage === 'Closed Won'; }).reduce(function (s, d) { return s + (Number(d.deal_value_inr) || 0); }, 0);
+      const openValue = live.filter(function (d) { return d.stage && d.stage !== 'Closed Won' && d.stage !== 'Closed Lost'; }).reduce(function (s, d) { return s + (Number(d.deal_value_inr) || 0); }, 0);
+
+      // ---- Sheet 1: Party ----
+      const ps = wb.addWorksheet('Party');
+      ps.getColumn(1).width = 20; ps.getColumn(2).width = 46;
+      const ph = ps.getCell('A1');
+      ph.value = 'Party \u2014 ' + (party.name || '\u2014') + '   (' + today + ')';
+      ph.font = { name: 'Calibri', bold: true, size: 13, color: { argb: WHITE } };
+      ph.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: PURPLE } };
+      ps.mergeCells('A1:B1'); ph.alignment = { vertical: 'middle' }; ps.getRow(1).height = 24;
+      const attrs = [
+        ['Name', party.name || ''],
+        ['Type', party.party_type || 'customer'],
+        ['City', party.city || ''],
+        ['State', party.state || ''],
+        ['Industry', party.industry || ''],
+        ['Country', party.country || ''],
+        ['Website', party.website || ''],
+        ['', ''],
+        ['Total deals', String(live.length)],
+        ['Open deals', String(openCount)],
+        ['Won deals', String(wonCount)],
+        ['Open value (\u20B9)', openValue ? openValue.toLocaleString('en-IN') : '0'],
+        ['Won value (\u20B9)', wonValue ? wonValue.toLocaleString('en-IN') : '0']
+      ];
+      attrs.forEach(function (kv, i) {
+        const row = ps.addRow(kv);
+        row.getCell(1).font = { name: 'Calibri', bold: true, color: { argb: 'FF3F3D38' } };
+        if (i % 2 === 1) { row.getCell(1).fill = row.getCell(2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: SUNK } }; }
+      });
+
+      // ---- Sheet 2: Deals ----
+      const ds = wb.addWorksheet('Deals', { views: [{ state: 'frozen', ySplit: 1 }] });
+      const headers = ['Ref', 'Project', 'Stage', 'Value (\u20B9)', 'Close month'];
+      const hr = ds.getRow(1);
+      headers.forEach(function (h, i) {
+        const c = hr.getCell(i + 1);
+        c.value = h;
+        c.font = { name: 'Calibri', bold: true, size: 10, color: { argb: WHITE } };
+        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: PURPLE } };
+        c.alignment = { vertical: 'middle', horizontal: (i === 3) ? 'right' : 'left' };
+      });
+      hr.height = 18;
+      [18, 32, 20, 16, 14].forEach(function (w, i) { ds.getColumn(i + 1).width = w; });
+      live.forEach(function (d, idx) {
+        let cm = '';
+        const raw = d.close_month || d.closeMonth;
+        if (raw) { cm = String(raw).slice(0, 7); }
+        const row = ds.addRow([
+          d.display_ref || d.ref || '', d.project || '', d.stage || '',
+          (d.deal_value_inr != null ? Number(d.deal_value_inr) : ''), cm
+        ]);
+        row.getCell(4).numFmt = '#,##0';
+        if (idx % 2 === 1) { for (let i = 1; i <= 5; i++) row.getCell(i).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: SUNK } }; }
+      });
+      if (!live.length) { ds.addRow(['No deals for this party.']); }
+
+      const buffer = await wb.xlsx.writeBuffer();
+      return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    }
+
     return {
       // Public API
       excel, pdf, download, filename,
       // v2.8.12 — #7 pipeline report
       pipelineExcel,
+      // v2.10.0 — per-party export
+      partyExcel,
       // Lazy-load helpers (exposed for direct CDN-reachability smoke testing)
       loadExcelJS, loadJsPDF, loadHtml2Canvas,
       // v27.3.14d — Expose embedded brand logos so the login page (UI module,
@@ -15195,7 +15517,17 @@
 
       // ---- 1. Deal header columns (bs_deal_get top level) ----
       // Direct 1:1 columns the wizard's Step-1 form binds to.
+      // v2.9.0 — *_party_id are LOAD-BEARING and must be mapped alongside the
+      // *_name fields. renderPartyControl shows the "Linked" chip only when BOTH
+      // wizardData[role+'_party_id'] AND the matching _name are truthy. The names
+      // were always restored here; the ids were not, so opening a linked deal in
+      // Edit rendered all three pickers EMPTY, and a resave then sent '' for each
+      // id (buildSavePayload forwards STRUCTURED_COLS verbatim), which deal_save
+      // NULLed — silently dropping every party link. Mapping the ids restores the
+      // chips on edit AND lets the resave forward the real uuid, so the round-trip
+      // preserves the links. Do NOT remove these three keys.
       const HEADER = ['project', 'customer_name', 'partner_name', 'consultant_name',
+        'customer_party_id', 'partner_party_id', 'consultant_party_id',
         'venue_type', 'city', 'state', 'stage', 'lead_source',
         'sales_person_id', 'presales_person_id', 'close_month',
         'contact_name', 'contact_phone', 'contact_email',
@@ -15459,6 +15791,61 @@
         }
       } catch (_) {}
       _previousFocus = null;
+    }
+
+    /* v2.12.0 — Closed Lost reason capture. When a deal is moved to "Closed
+       Lost" (from the saved-deal stage menu OR a History row) we intercept
+       before the stage changes and open this sheet: a single-select reason
+       picker (8-reason taxonomy) plus an optional competitor name and a
+       free-text note. On confirm, the originating mechanism still sets the
+       stage (sd = autosave pipeline; hist = atomic bs_deal_set_stage), and we
+       additionally persist loss_reason / loss_competitor / loss_notes via the
+       atomic bs_deal_set_loss_reason RPC. The pick is tracked in module-level
+       _lossCtx so closeSheet (which wipes sheet-body) doesn't strand it. */
+    const LOSS_REASONS = [
+      { id: 'price',       label: 'Price / Budget',        hint: 'Commercials too high, or budget was cut' },
+      { id: 'competitor',  label: 'Lost to competitor',    hint: 'Chose a competing brand or product' },
+      { id: 'incumbent',   label: 'Stayed with incumbent', hint: 'Kept the existing solution — no change' },
+      { id: 'technical',   label: 'Technical fit',         hint: 'Did not meet technical / feature needs' },
+      { id: 'timing',      label: 'Timing / delayed',      hint: 'Decision pushed out indefinitely' },
+      { id: 'cancelled',   label: 'Project cancelled',     hint: 'Project shelved or scrapped entirely' },
+      { id: 'no_decision', label: 'No decision / cold',    hint: 'Went cold; no decision was made' },
+      { id: 'other',       label: 'Other',                 hint: 'Something else — add a note below' }
+    ];
+    let _lossCtx = null;
+
+    function showLossReasonSheet(ctx) {
+      _lossCtx = {
+        mode:   (ctx && ctx.mode) || 'sd',
+        ref:    (ctx && ctx.ref)  || '',
+        from:   (ctx && ctx.from) || '',
+        reason: null
+      };
+      const opts = LOSS_REASONS.map(function (r) {
+        return '<button type="button" class="loss-opt" data-action="loss-reason-pick"' +
+               ' data-id="' + esc(r.id) + '" data-reason="' + esc(r.label) + '">' +
+                 '<span class="loss-opt-radio" aria-hidden="true"></span>' +
+                 '<span class="loss-opt-txt">' +
+                   '<span class="loss-opt-label">' + esc(r.label) + '</span>' +
+                   '<span class="loss-opt-hint">' + esc(r.hint) + '</span>' +
+                 '</span>' +
+               '</button>';
+      }).join('');
+      openSheet(
+        '<div class="sd-stage-sheet loss-sheet">' +
+          '<h3>Why was this lost?</h3>' +
+          (_lossCtx.ref ? '<div class="loss-sub">' + esc(_lossCtx.ref) + '</div>' : '') +
+          '<div class="loss-opts" role="radiogroup" aria-label="Loss reason">' + opts + '</div>' +
+          '<label class="loss-flabel" for="loss-competitor">Competitor (optional)</label>' +
+          '<input type="text" id="loss-competitor" class="loss-field" maxlength="80" placeholder="e.g. competing brand / product">' +
+          '<label class="loss-flabel" for="loss-notes">Notes (optional)</label>' +
+          '<input type="text" id="loss-notes" class="loss-field" maxlength="200" placeholder="Context for the team">' +
+          '<div class="loss-actions">' +
+            '<button type="button" class="btn-v3 btn-ghost btn-md" data-action="loss-cancel">Cancel</button>' +
+            '<button type="button" id="loss-confirm-btn" class="btn-v3 btn-danger btn-md" data-action="loss-confirm" disabled aria-disabled="true">Mark Closed Lost</button>' +
+          '</div>' +
+        '</div>'
+      );
     }
 
     // v27.7.4 — F6: bind ESC handler + focus trap once. Called from mount().
@@ -15991,6 +16378,9 @@
         // v27.6 — Pipeline stages preview (read-only; custom-stage management ships in v27.7+)
         items.push({ label: 'Pipeline stages', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>',
           act: 'um-stages' });
+        // v2.10.0 — Data health (read-only diagnosis + reconcile)
+        items.push({ label: 'Data health', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+          act: 'um-health' });
       }
       items.push({ label: 'About this app', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
         act: 'um-about' });
@@ -16012,6 +16402,143 @@
           }).join('') +
         '</div>'
       );
+    }
+
+    /* ---------- v2.10.0 — Data health sheet (Super-only) ---------- */
+    let _dhResult = null;   // last reconcile result (shown until next fresh check)
+
+    function _dhIc(name) {
+      if (name === 'check') return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      if (name === 'warn')  return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+      if (name === 'link')  return '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+      return '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>';
+    }
+    function _dhInr(n) { n = Number(n) || 0; if (n >= 1e7) return '\u20b9' + (n / 1e7).toFixed(2) + ' Cr'; if (n >= 1e5) return '\u20b9' + (n / 1e5).toFixed(2) + ' L'; return '\u20b9' + n.toLocaleString('en-IN'); }
+    function _dhSumRoles(o) { o = o || {}; return (Number(o.customer) || 0) + (Number(o.partner) || 0) + (Number(o.consultant) || 0); }
+    function _dhTile(n, label) { n = Number(n) || 0; return '<div class="dh-tile ' + (n > 0 ? 'dh-has' : 'dh-zero') + '"><div class="dh-n">' + n + '</div><div class="dh-l">' + label + '</div></div>'; }
+    function _dhHrow(label, n, sev) { n = Number(n) || 0; const cls = n > 0 ? (sev || 'dh-warn') : 'dh-ok'; return '<div class="dh-row"><div class="dh-rl">' + label + '</div><div class="dh-rv ' + cls + '">' + n + '</div></div>'; }
+
+    function _dhRenderBody(h, result) {
+      const t = h.totals || { parties: {} };
+      const hy = h.hygiene || {};
+      const linkable = _dhSumRoles(h.deals_name_no_link);
+      const stale = _dhSumRoles(h.deals_stale_name);
+      const hyTotal = (Number(hy.open_no_owner) || 0) + (Number(hy.open_no_value) || 0) + (Number(hy.open_no_lines) || 0) +
+        (Number(hy.open_no_contact) || 0) + (Number(hy.open_past_close) || 0) + (Number(hy.followups_overdue) || 0) + (Number(hy.open_over_sla) || 0);
+      const dups = (h.duplicate_parties || []).length;
+      const noPrice = (h.available_models_no_price || []).length;
+      const integrity = (Number(h.deals_missing_stage) || 0) + (Number(h.orphan_project_lines) || 0) +
+        (Number(h.orphan_bs_deal_specs) || 0) + (Number(h.orphan_contacts) || 0) + (Number(h.parties_no_deals) || 0);
+      const issues = linkable + stale + hyTotal + dups + noPrice + integrity;
+      const partiesTotal = _dhSumRoles(t.parties);
+      const nl = h.deals_name_no_link || {};
+      let out = '';
+
+      // reconcile result banner
+      if (result && result.ok !== false) {
+        const lk = _dhSumRoles(result.linked), rs = _dhSumRoles(result.resynced), amb = (result.ambiguous_skipped || []).length;
+        out += '<div class="dh-result"><div class="dh-rtt">' + _dhIc('check') + ' Reconcile complete</div>' +
+          '<div class="dh-rstats">' +
+            '<div><div class="dh-rn">' + lk + '</div><div class="dh-rk">LINKED</div></div>' +
+            '<div><div class="dh-rn">' + rs + '</div><div class="dh-rk">RESYNCED</div></div>' +
+            '<div><div class="dh-rn">' + amb + '</div><div class="dh-rk">NEEDS REVIEW</div></div>' +
+          '</div>' +
+          (amb ? '<div class="dh-amb"><div class="dh-ah">' + _dhIc('warn') + ' Manual review needed</div>' +
+            (result.ambiguous_skipped || []).map(function (a) {
+              return '<div class="dh-ai"><b>' + esc(a.ref || '\u2014') + '</b> \u00b7 ' + esc(a.role || '') + ' \u201c' + esc(a.name || '') +
+                '\u201d matches <span class="dh-mt">' + (Number(a.matches) || 0) + ' parties</span> \u2014 pick one on the deal</div>';
+            }).join('') + '</div>' : '') + '</div>';
+      } else if (result && result.ok === false) {
+        out += '<div class="dh-err-banner">Reconcile failed: ' + esc(result.error || 'unknown error') + '</div>';
+      }
+
+      // overview
+      out += '<div class="dh-kpis">' +
+        '<div class="dh-kpi"><div class="dh-kn">' + (Number(t.deals_open) || 0) + '</div><div class="dh-kl">Open deals</div></div>' +
+        '<div class="dh-kpi"><div class="dh-kn">' + _dhInr(t.open_value_inr) + '</div><div class="dh-kl">Open value</div></div>' +
+        '<div class="dh-kpi"><div class="dh-kn">' + partiesTotal + '</div><div class="dh-kl">Parties</div></div>' +
+      '</div>';
+
+      // hero
+      if (issues === 0) {
+        out += '<div class="dh-hero dh-ok"><div class="dh-hic">' + _dhIc('check') + '</div><div><div class="dh-htt">All clear</div>' +
+          '<div class="dh-hss">No hygiene gaps, linking gaps, drift, duplicates, or integrity issues.</div></div></div>';
+      } else {
+        out += '<div class="dh-hero dh-warn"><div class="dh-hic">' + _dhIc('warn') + '</div><div><div class="dh-htt">' + issues +
+          ' item' + (issues > 1 ? 's' : '') + ' need attention</div><div class="dh-hss">' + hyTotal + ' hygiene \u00b7 ' + linkable +
+          ' linkable \u00b7 ' + (dups + noPrice + integrity) + ' directory/integrity</div></div></div>';
+      }
+
+      // pipeline hygiene
+      out += '<div class="dh-eyebrow">Pipeline hygiene <span class="dh-hint">\u00b7 open deals</span></div><div class="dh-rows">' +
+        _dhHrow('No owner assigned', hy.open_no_owner) +
+        _dhHrow('No deal value', hy.open_no_value) +
+        _dhHrow('No BoM / line items', hy.open_no_lines) +
+        _dhHrow('No contact details', hy.open_no_contact) +
+        _dhHrow('Past close month', hy.open_past_close) +
+        _dhHrow('Follow-up overdue', hy.followups_overdue) +
+        _dhHrow('Stuck past stage SLA', hy.open_over_sla) +
+      '</div>';
+
+      // linking
+      out += '<div class="dh-eyebrow">Linking <span class="dh-hint">\u00b7 reconcile heals these</span></div>' +
+        '<div class="dh-tiles">' + _dhTile(nl.customer, 'End user') + _dhTile(nl.partner, 'Partner') + _dhTile(nl.consultant, 'Consultant') + '</div>' +
+        '<div class="dh-subline"><span class="dh-dot ' + (stale > 0 ? 'dh-warn' : 'dh-ok') + '"></span><span>Drifted names to resync: <b>' + stale + '</b></span></div>' +
+        '<button class="dh-cta" type="button" data-action="dh-reconcile">' + _dhIc('link') + 'Reconcile now</button>' +
+        '<div class="dh-ctanote">Links a deal only when its name matches <b>exactly one</b> party of the right type, and resyncs names that drifted from their linked party. Ambiguous matches are reported, never guessed. Never creates or deletes parties.</div>';
+
+      // directory
+      out += '<div class="dh-eyebrow">Directory <span class="dh-hint">\u00b7 reconcile can\u2019t fix these</span></div><div class="dh-rows">';
+      if (dups === 0) { out += '<div class="dh-row"><div class="dh-rl">Duplicate parties</div><div class="dh-rv dh-ok">none</div></div>'; }
+      else {
+        out += '<div class="dh-row" style="display:block"><div style="display:flex"><div class="dh-rl">Duplicate parties</div><div class="dh-rv dh-warn">' + dups + '</div></div>' +
+          (h.duplicate_parties || []).map(function (d) {
+            return '<div class="dh-dup"><b>' + esc(d.name || '') + '</b> <span class="dh-tag">' + esc(d.type || '') + '</span> \u00b7 ' + (Number(d.count) || 0) + ' copies \u2014 merge candidate</div>';
+          }).join('') + '</div>';
+      }
+      out += _dhHrow('Unused parties (no deals)', h.parties_no_deals);
+      if (noPrice === 0) { out += '<div class="dh-row"><div class="dh-rl">Available models without a price</div><div class="dh-rv dh-ok">none</div></div>'; }
+      else {
+        out += '<div class="dh-row" style="display:block"><div style="display:flex"><div class="dh-rl">Models without a price <span class="dh-muted">(silent POA)</span></div><div class="dh-rv dh-err">' + noPrice + '</div></div><div class="dh-chips">' +
+          (h.available_models_no_price || []).map(function (m) { return '<span class="dh-chip">' + esc(m) + '</span>'; }).join('') + '</div></div>';
+      }
+      out += '</div>';
+
+      // integrity
+      out += '<div class="dh-eyebrow">Integrity</div><div class="dh-rows">' +
+        _dhHrow('Deals missing a stage', h.deals_missing_stage, 'dh-err') +
+        _dhHrow('Orphan project lines', h.orphan_project_lines, 'dh-err') +
+        _dhHrow('Orphan spec rows', h.orphan_bs_deal_specs, 'dh-err') +
+        _dhHrow('Orphan contacts', h.orphan_contacts, 'dh-err') +
+      '</div>';
+
+      return out;
+    }
+
+    async function showDataHealthSheet(keepResult) {
+      const u = STORE.currentUser() || {};
+      if (u.permission_tier !== 'super') { toast('Super access required.', 'err'); return; }
+      if (!keepResult) _dhResult = null;
+      openSheet(
+        '<div class="notif-sheet"><div class="dh-wrap">' +
+          '<div class="dh-head"><div><h3>Data health</h3>' +
+            '<div class="dh-sub" id="dh-sub">Checking\u2026</div></div>' +
+            '<button class="dh-refresh" type="button" data-action="dh-refresh" aria-label="Re-check">' + _dhIc('spark') + '</button></div>' +
+          '<div id="dh-body"><div class="dh-rows"><div class="dh-row"><div class="dh-rl dh-muted">Loading\u2026</div></div></div></div>' +
+        '</div></div>'
+      );
+      let h;
+      try { h = await STORE.bsHealthCheck(); }
+      catch (e) { h = { ok: false, error: String((e && e.message) || e) }; }
+      const body = $('dh-body'), sub = $('dh-sub');
+      if (!body) return;  // sheet was closed mid-fetch
+      if (!h || h.ok === false) {
+        body.innerHTML = '<div class="dh-err-banner">Could not load health: ' + esc((h && h.error) || 'unknown error') + '</div>';
+        if (sub) sub.textContent = 'Check failed';
+        return;
+      }
+      body.innerHTML = _dhRenderBody(h, _dhResult);
+      if (sub) sub.textContent = (_dhResult ? 'Reconciled just now' : 'Checked just now') + ' \u00b7 BrightSign';
     }
 
     /* v27.6 — Pipeline stages preview (Super-only, read-only).
@@ -21868,7 +22395,12 @@ function DSH_CSS(){ return '<style>'+[
           '<div class="ref">' + esc(ref) + '</div>' +
           '<div class="proj">' + esc(proj) + '</div>' +
           '<div class="meta">' +
-            '<span class="' + stageCls + '">' + esc(stage) + '</span>' +
+            // v2.11.0 — tappable stage chip: opens the "Move stage" sheet for
+            // this row and persists via bs_deal_set_stage (no need to open the
+            // deal). Kept a <span> (the row is a <button>; can't nest buttons);
+            // the body click dispatch lets this nested [data-action] win over
+            // the row's [data-nav]. The caret signals it's tappable.
+            '<span class="' + stageCls + ' hist-stage-chip" data-action="hist-stage" data-ref="' + esc(ref) + '" data-stage="' + esc(stage) + '" role="button" title="Move stage">' + esc(stage) + '\u00a0\u25be</span>' +
             // v27.8.0 (Tier-1.3) — Stage aging badge. Empty string when no
             // SLA / closed stage / pre-login. Sits right next to stage chip
             // so users see "Negotiation · 12d/10d" at a glance.
@@ -21889,6 +22421,43 @@ function DSH_CSS(){ return '<style>'+[
               '</div>'
             : '') +
         '</button>';
+    }
+
+    /* v2.11.0 — Optimistically update one History row's stage chip + aging
+       badge in place after a quick stage change (avoids a full list reload).
+       Finds the row's tappable chip by [data-ref], swaps its stage class /
+       text / caret, and recomputes the adjacent aging badge for the freshly
+       entered stage (badge is removed for closed stages). Fully defensive:
+       any miss is a silent no-op and the correct state appears on the next
+       History load. */
+    function _histUpdateRowStage(ref, newStage) {
+      try {
+        const key = (window.CSS && CSS.escape) ? CSS.escape(ref) : ref;
+        const chip = document.querySelector('.hist-stage-chip[data-ref="' + key + '"]');
+        if (!chip) return;
+        chip.className = _stageChipClassName(newStage) + ' hist-stage-chip';
+        chip.setAttribute('data-stage', newStage);
+        chip.textContent = newStage + '\u00a0\u25be';
+        // Recompute the adjacent aging badge for the new (just-entered) stage.
+        const faux = { stage: newStage, current_stage_entered_at: new Date().toISOString() };
+        const badgeHtml = renderStageAgeBadge(faux);
+        const sib = chip.nextElementSibling;
+        const sibIsBadge = !!(sib && sib.classList &&
+          (sib.classList.contains('chip-success') ||
+           sib.classList.contains('chip-warning') ||
+           sib.classList.contains('chip-danger')));
+        if (badgeHtml) {
+          const holder = document.createElement('span');
+          holder.innerHTML = badgeHtml;
+          const newBadge = holder.firstChild;
+          if (newBadge) {
+            if (sibIsBadge) chip.parentNode.replaceChild(newBadge, sib);
+            else chip.parentNode.insertBefore(newBadge, chip.nextSibling);
+          }
+        } else if (sibIsBadge) {
+          sib.parentNode.removeChild(sib);
+        }
+      } catch (e) {}
     }
 
     /* ============================================================
@@ -22363,6 +22932,26 @@ function DSH_CSS(){ return '<style>'+[
     }
 
     /* Customer 360 sheet — show deals + value totals for a single customer */
+    /* v2.10.0 — Per-party export. Pulls the party's deals (the same data the
+       360 view loads) and hands them + the party row to EXPORT.partyExcel, then
+       downloads. No new backend call beyond customer360. */
+    async function exportParty(customerId, btnEl) {
+      const cust = _customersCache.find(function (c) { return c.id === customerId; });
+      if (!cust) { toast('Party not found', 'err'); return; }
+      if (btnEl) btnEl.disabled = true;
+      try {
+        const deals = await STORE.customer360(customerId);
+        const blob = await EXPORT.partyExcel(cust, Array.isArray(deals) ? deals : []);
+        const safe = String(cust.name || 'party').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '').slice(0, 40) || 'party';
+        EXPORT.download(blob, 'BrightSign_Party_' + safe + '_' + (new Date()).toISOString().slice(0, 10) + '.xlsx');
+        toast('Export ready', 'success');
+      } catch (e) {
+        toast('Export failed: ' + ((e && e.message) || String(e)), 'err');
+      } finally {
+        if (btnEl) btnEl.disabled = false;
+      }
+    }
+
     async function showCustomer360(customerId) {
       const cust = _customersCache.find(c => c.id === customerId);
       if (!cust) { UI.toast('Customer not found', 'err'); return; }
@@ -22386,6 +22975,9 @@ function DSH_CSS(){ return '<style>'+[
           '<div class="cust-360-actions">' +
             '<button class="btn-v3 btn-ghost btn-sm" type="button" data-action="cust-edit" data-id="' + esc(customerId) + '">' +
               '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit' +
+            '</button>' +
+            '<button class="btn-v3 btn-ghost btn-sm" type="button" data-action="cust-export" data-id="' + esc(customerId) + '">' +
+              '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export' +
             '</button>' +
             (isSuper
               ? '<button class="btn-v3 btn-ghost btn-sm" type="button" data-action="cust-merge" data-id="' + esc(customerId) + '">' +
@@ -25685,18 +26277,24 @@ function DSH_CSS(){ return '<style>'+[
 
       // CLICK delegation
       document.body.addEventListener('click', function(e) {
-        // Nav buttons (anywhere with data-nav)
+        // Nav buttons (anywhere with data-nav).
+        // v2.11.0 — a more-specific [data-action] nested inside the nav element
+        // (e.g. the History row's tappable stage chip) takes precedence: skip
+        // navigation and fall through to the action dispatch below.
         const navBtn = e.target.closest('[data-nav]');
         if (navBtn) {
-          e.preventDefault();
-          const target = navBtn.getAttribute('data-nav');
-          if (location.hash === target) {
-            // Same route — force re-render via custom event
-            window.dispatchEvent(new HashChangeEvent('hashchange'));
-          } else {
-            location.hash = target;
+          const innerAct = e.target.closest('[data-action]');
+          if (!(innerAct && navBtn.contains(innerAct))) {
+            e.preventDefault();
+            const target = navBtn.getAttribute('data-nav');
+            if (location.hash === target) {
+              // Same route — force re-render via custom event
+              window.dispatchEvent(new HashChangeEvent('hashchange'));
+            } else {
+              location.hash = target;
+            }
+            return;
           }
-          return;
         }
 
         // Sheet backdrop close
@@ -26385,6 +26983,11 @@ function DSH_CSS(){ return '<style>'+[
           if (id) UI.showCustomerEditor(id);
           return;
         }
+        if (action === 'cust-export') {
+          const id = actEl.getAttribute('data-id');
+          if (id) exportParty(id, actEl);
+          return;
+        }
         if (action === 'cust-save') {
           const id = actEl.getAttribute('data-id');  // null for new
           const payload = {
@@ -26668,6 +27271,34 @@ function DSH_CSS(){ return '<style>'+[
           showAboutSheet();
           return;
         }
+        // v2.10.0 — Data health (Super-only)
+        if (action === 'um-health') {
+          showDataHealthSheet();
+          return;
+        }
+        if (action === 'dh-refresh') {
+          showDataHealthSheet();   // fresh check, clears any prior reconcile result
+          return;
+        }
+        if (action === 'dh-reconcile') {
+          const btn = actEl;
+          if (btn) { btn.disabled = true; btn.textContent = 'Reconciling\u2026'; }
+          (async function () {
+            let r;
+            try { r = await STORE.bsReconcileParties(); }
+            catch (e) { r = { ok: false, error: String((e && e.message) || e) }; }
+            _dhResult = r;
+            if (r && r.ok !== false) {
+              const lk = (Number((r.linked || {}).customer) || 0) + (Number((r.linked || {}).partner) || 0) + (Number((r.linked || {}).consultant) || 0);
+              const rs = (Number((r.resynced || {}).customer) || 0) + (Number((r.resynced || {}).partner) || 0) + (Number((r.resynced || {}).consultant) || 0);
+              toast('Reconcile done \u2014 ' + lk + ' linked, ' + rs + ' resynced.', 'success');
+            } else {
+              toast('Reconcile failed: ' + ((r && r.error) || 'unknown error'), 'err');
+            }
+            showDataHealthSheet(true);   // re-fetch health + show the result banner
+          })();
+          return;
+        }
         if (action === 'um-logout') {
           closeSheet();
           STORE.logout();
@@ -26888,7 +27519,18 @@ function DSH_CSS(){ return '<style>'+[
           if (!_savedDealData) return;
           const newStage = actEl.getAttribute('data-stage');
           if (!newStage || newStage === _savedDealData.stage) { closeSheet(); return; }
-          if ((newStage === 'Closed Won' || newStage === 'Closed Lost') &&
+          // v2.12.0 — Closed Lost routes through the reason-capture sheet, which
+          // sets the stage AND records loss_reason on confirm (replaces the bare
+          // terminal confirm for this stage only).
+          if (newStage === 'Closed Lost') {
+            showLossReasonSheet({
+              mode: 'sd',
+              ref:  (_savedDealData.display_ref || _savedDealData.ref_id || ''),
+              from: _savedDealData.stage || ''
+            });
+            return;
+          }
+          if (newStage === 'Closed Won' &&
               !window.confirm('Mark this deal "' + newStage + '"? That sets a terminal stage.')) {
             return;
           }
@@ -26912,6 +27554,169 @@ function DSH_CSS(){ return '<style>'+[
           if (!_savedDealData) return;
           const ref = _savedDealData.display_ref || _savedDealData.ref_id;
           showStageTransitionsSheet(ref);
+          return;
+        }
+
+        // v2.11.0 — History row: open the "Move stage" sheet for this deal and
+        // persist via bs_deal_set_stage (no need to open the deal). Reuses the
+        // saved-deal sheet styling; options carry the ref so the pick handler
+        // knows which row to update. Self-contained — never touches
+        // _savedDealData (the History list has no "open" deal).
+        if (action === 'hist-stage') {
+          const ref = actEl.getAttribute('data-ref') || '';
+          const cur = actEl.getAttribute('data-stage') || '';
+          if (!ref) return;
+          let allowWon = true, allowLost = true;
+          if (Array.isArray(STAGE_META)) {
+            const m = STAGE_META.find(function (r) { return r && r.stage_name === cur; });
+            if (m) { if (m.allow_won === false) allowWon = false; if (m.allow_lost === false) allowLost = false; }
+          }
+          const opts = STAGES.map(function (s) {
+            if (s === 'Closed Won'  && !allowWon)  return '';
+            if (s === 'Closed Lost' && !allowLost) return '';
+            const isCur = (s === cur);
+            const dotCls = _stageChipClassName(s);
+            return '<button type="button" class="sd-stage-opt' + (isCur ? ' is-current' : '') + '"' +
+                   (isCur ? ' disabled aria-disabled="true"'
+                          : ' data-action="hist-stage-pick" data-ref="' + esc(ref) +
+                            '" data-from="' + esc(cur) + '" data-stage="' + esc(s) + '"') + '>' +
+                     '<span class="' + dotCls + ' sd-stage-mini">' + esc(s) + '</span>' +
+                     (isCur ? '<span class="sd-stage-opt-tag">current</span>' : '') +
+                   '</button>';
+          }).join('');
+          openSheet(
+            '<div class="sd-stage-sheet">' +
+              '<h3>Move stage</h3>' +
+              '<div style="margin:-6px 0 12px;font-size:12px;color:var(--c-fg-mute)">' + esc(ref) + '</div>' +
+              '<div class="sd-stage-opts">' + opts + '</div>' +
+            '</div>'
+          );
+          return;
+        }
+
+        // v2.11.0 — History row: apply a picked stage via bs_deal_set_stage.
+        // Confirms terminal stages, calls the atomic RPC, then optimistically
+        // updates this row's chip + aging badge in place. The quick path does
+        // NOT notify owners by design (see STORE.bsDealSetStage).
+        if (action === 'hist-stage-pick') {
+          const ref       = actEl.getAttribute('data-ref') || '';
+          const newStage  = actEl.getAttribute('data-stage') || '';
+          const fromStage = actEl.getAttribute('data-from') || '';
+          if (!ref || !newStage || newStage === fromStage) { closeSheet(); return; }
+          // v2.12.0 — Closed Lost routes through the reason-capture sheet, which
+          // does the atomic stage move AND records loss_reason on confirm
+          // (replaces the bare terminal confirm for this stage only).
+          if (newStage === 'Closed Lost') {
+            showLossReasonSheet({ mode: 'hist', ref: ref, from: fromStage });
+            return;
+          }
+          if (newStage === 'Closed Won' &&
+              !window.confirm('Mark "' + ref + '" as "' + newStage + '"? That sets a terminal stage.')) {
+            return;
+          }
+          closeSheet();
+          STORE.bsDealSetStage(ref, newStage).then(function (r) {
+            if (r && r.ok) {
+              try { _histUpdateRowStage(ref, newStage); } catch (e) {}
+              try { toast(ref + ': stage \u2192 ' + newStage, 'ok'); } catch (e) {}
+            } else {
+              try { toast('Couldn\u2019t move stage: ' + ((r && r.error) || 'unknown'), 'err'); } catch (e) {}
+            }
+          }).catch(function (err) {
+            try { toast('Couldn\u2019t move stage: ' + ((err && err.message) || String(err)), 'err'); } catch (e) {}
+          });
+          return;
+        }
+
+        // v2.12.0 — Closed Lost: pick a reason (single-select). Tracks the
+        // choice in _lossCtx, toggles the radio styling, enables Confirm.
+        if (action === 'loss-reason-pick') {
+          if (!_lossCtx) return;
+          _lossCtx.reason = actEl.getAttribute('data-reason') || null;
+          try {
+            const grp = actEl.closest && actEl.closest('.loss-opts');
+            if (grp) {
+              const all = grp.querySelectorAll('.loss-opt');
+              for (let i = 0; i < all.length; i++) all[i].classList.remove('is-selected');
+            }
+            actEl.classList.add('is-selected');
+          } catch (e) {}
+          // Picking "Lost to competitor" jumps focus to the competitor field.
+          try {
+            if (actEl.getAttribute('data-id') === 'competitor') {
+              const c = $('loss-competitor'); if (c) c.focus();
+            }
+          } catch (e) {}
+          const cbtn = $('loss-confirm-btn');
+          if (cbtn) { cbtn.disabled = false; cbtn.removeAttribute('aria-disabled'); }
+          return;
+        }
+
+        // v2.12.0 — Closed Lost: cancel out (no stage change, no record).
+        if (action === 'loss-cancel') {
+          _lossCtx = null;
+          closeSheet();
+          return;
+        }
+
+        // v2.12.0 — Closed Lost: confirm. Sets the stage to Closed Lost via the
+        // originating mechanism (sd = autosave pipeline; hist = atomic
+        // bs_deal_set_stage) AND records loss_reason / loss_competitor /
+        // loss_notes via the atomic bs_deal_set_loss_reason RPC.
+        if (action === 'loss-confirm') {
+          if (!_lossCtx || !_lossCtx.reason) {
+            try { toast('Pick a reason first', 'err'); } catch (e) {}
+            return;
+          }
+          const lctx       = _lossCtx;
+          const lreason    = lctx.reason;
+          const lcomp      = ($('loss-competitor') && $('loss-competitor').value || '').trim();
+          const lnotes     = ($('loss-notes') && $('loss-notes').value || '').trim();
+          const lref       = lctx.ref;
+          _lossCtx = null;
+          closeSheet();
+
+          const _recordLoss = function () {
+            return STORE.bsDealSetLossReason(lref, lreason, lcomp, lnotes);
+          };
+
+          if (lctx.mode === 'hist') {
+            // Quick path: atomic stage move, then record the reason; update the
+            // row chip + aging badge in place. Like the plain quick path this
+            // does NOT notify owners (see STORE.bsDealSetStage).
+            STORE.bsDealSetStage(lref, 'Closed Lost').then(function (r) {
+              if (!(r && r.ok)) {
+                try { toast('Couldn\u2019t move stage: ' + ((r && r.error) || 'unknown'), 'err'); } catch (e) {}
+                return;
+              }
+              try { _histUpdateRowStage(lref, 'Closed Lost'); } catch (e) {}
+              _recordLoss().then(function (rr) {
+                if (rr && rr.ok) { try { toast(lref + ': Closed Lost \u00b7 ' + lreason, 'ok'); } catch (e) {} }
+                else { try { toast('Stage moved, reason not saved: ' + ((rr && rr.error) || 'unknown'), 'err'); } catch (e) {} }
+              }).catch(function () { try { toast('Stage moved, but reason not saved', 'err'); } catch (e) {} });
+            }).catch(function (err) {
+              try { toast('Couldn\u2019t move stage: ' + ((err && err.message) || String(err)), 'err'); } catch (e) {}
+            });
+            return;
+          }
+
+          // sd mode: open saved deal. Mutate stage + re-render chip + autosave
+          // (the existing persist/log/notify pipeline), then record the reason.
+          if (!_savedDealData) return;
+          _savedDealData.stage = 'Closed Lost';
+          try {
+            const chip = $('sd-stage-chip');
+            if (chip && chip.parentNode) {
+              const holder = document.createElement('span');
+              holder.innerHTML = _renderSdStageChip('Closed Lost');
+              if (holder.firstChild) chip.parentNode.replaceChild(holder.firstChild, chip);
+            }
+          } catch (e) {}
+          try { scheduleAutosave(); } catch (e) {}
+          _recordLoss().then(function (rr) {
+            if (rr && rr.ok) { try { toast('Closed Lost \u00b7 ' + lreason, 'ok'); } catch (e) {} }
+            else { try { toast('Stage set, reason not saved: ' + ((rr && rr.error) || 'unknown'), 'err'); } catch (e) {} }
+          }).catch(function () { try { toast('Stage set, but reason not saved', 'err'); } catch (e) {} });
           return;
         }
 
@@ -28164,6 +28969,9 @@ function DSH_CSS(){ return '<style>'+[
       _handleStageSave:        _handleStageSave,
       // v27.7-alpha3 — Duplicate deal sheet (Session B frontend).
       showDuplicateDealSheet:  showDuplicateDealSheet,
+      // v2.12.0 — Closed Lost reason capture (sheet + taxonomy) for smoke reach.
+      showLossReasonSheet:     showLossReasonSheet,
+      _LOSS_REASONS:           LOSS_REASONS,
       // smoke renderer
       _renderSmokeOutput: renderSmokeOutput
     };

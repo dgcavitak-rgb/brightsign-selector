@@ -1,7 +1,35 @@
 // BrightSign Selector — Service Worker
-// v2.3.0 (2026-06-13)
+// v2.12.0 (2026-06-27)
 //
 // Changelog (BrightSign):
+//   v2.12.0 — CACHE_NAME bump: Closed Lost reason capture. Moving a deal to
+//     "Closed Lost" (from the saved-deal stage menu OR a History row) now
+//     routes through a reason-capture sheet — a single-select 8-reason
+//     taxonomy plus optional competitor + notes — instead of the bare
+//     terminal confirm. On confirm the stage still moves (sd = autosave
+//     pipeline; hist = atomic bs_deal_set_stage) AND loss_reason /
+//     loss_competitor / loss_notes persist via the new atomic
+//     bs_deal_set_loss_reason RPC. Frontend + additive backend RPC; no SW
+//     logic change — bump forces clients onto the new index.html.
+//   v2.11.0 — CACHE_NAME bump: quick stage-change from History rows. The stage
+//     chip on each active History row is now tappable (caret affordance) and opens
+//     the "Move stage" sheet without opening the deal; the pick persists via the
+//     new atomic bs_deal_set_stage RPC (sets stage_id + logs stage_transitions +
+//     re-stamps the SLA clock), then updates the row chip + aging badge in place.
+//     Terminal stages (Won/Lost) still confirm. The quick path logs the transition
+//     (auditable) but does NOT notify owners by design (avoids bulk-tidy spam).
+//   v2.10.0 — CACHE_NAME bump: Data health panel + per-party export (Super-only).
+//     Super avatar menu gains a "Data health" sheet (overview + pipeline hygiene +
+//     linking/reconcile + directory + integrity, backed by the expanded
+//     bs_health_check / bs_reconcile_parties RPCs), and Customer 360 gains an
+//     "Export" button (2-sheet Excel). Frontend + additive backend RPC; no SW
+//     logic change — bump forces clients onto the new index.html.
+//   v2.9.0 — CACHE_NAME bump: edit-hydration party-link fix. Opening a saved
+//     deal in Edit now restores the End user / Partner / Consultant pickers as
+//     linked chips (hydrateWizardFromDeal was mapping the *_name fields but not
+//     the *_party_id fields), and resaving preserves the links instead of
+//     silently NULLing them. Frontend-only, no backend/DB change. No SW logic
+//     change — bump exists only to force clients onto the corrected index.html.
 //   v2.8.12 — CACHE_NAME bump: saved views (#6) + pipeline report export (#7).
 //     Both UI-only, no backend change. #6: per-user History views (filter/stage/
 //     region/search/sort) persisted in localStorage, save/apply/delete chips in
@@ -180,7 +208,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v2.8.12';
+const CACHE_NAME = 'brightsign-v2.12.0';
 const SHELL_URLS = [
   './',
   './index.html'
