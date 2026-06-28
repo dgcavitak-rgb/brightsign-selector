@@ -9201,7 +9201,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.22.0',
+      version: 'brightsign-v2.24.0',
       build_date: '2026-06-28',
       constants,
       sx
@@ -9781,13 +9781,24 @@
       // guided
       const reco = d.reco;
       if (reco && reco.segments) {
+        // v2.23.0 B4 — STORE owns its resolver (no UI lexical access). Same model
+        // for both deployments -> one summed line tagged Indoor + Outdoor, matching
+        // the single merged hero. A stepped rung difference -> two lines.
         const inSeg = reco.segments.indoor, outSeg = reco.segments.outdoor;
-        const dual = !!(inSeg && outSeg);
-        if (inSeg && inSeg.ladder && inSeg.ladder.length) {
-          playerLine(d.pickIndoor || inSeg.recommendedId, Number(d.qty_indoor) || 0, dual ? 'indoor' : '');
-        }
-        if (outSeg && outSeg.ladder && outSeg.ladder.length) {
-          playerLine(d.pickOutdoor || outSeg.recommendedId, Number(d.qty_outdoor) || 0, 'outdoor');
+        const resolve = function (key, seg) {
+          let p = d[key] || seg.recommendedId;
+          return seg.ladder.some(function (x) { return x.model_id === p; }) ? p : seg.recommendedId;
+        };
+        const qIn = Number(d.qty_indoor) || 0, qOut = Number(d.qty_outdoor) || 0;
+        const inOk  = !!(inSeg  && inSeg.ladder  && inSeg.ladder.length  && qIn  > 0);
+        const outOk = !!(outSeg && outSeg.ladder && outSeg.ladder.length && qOut > 0);
+        const pkIn  = inOk  ? resolve('pickIndoor',  inSeg)  : null;
+        const pkOut = outOk ? resolve('pickOutdoor', outSeg) : null;
+        if (inOk && outOk && pkIn === pkOut) {
+          playerLine(pkIn, qIn + qOut, 'indoor + outdoor');
+        } else {
+          if (inOk)  playerLine(pkIn,  qIn,  outOk ? 'indoor' : '');
+          if (outOk) playerLine(pkOut, qOut, 'outdoor');
         }
       }
       }
@@ -9828,7 +9839,7 @@
           if (sub) cmsLine(d.cms_vendor + '-sub',
             'CMS License \u2014 ' + (cloud ? 'Cloud' : 'On-premise') + ' \u00b7 ' + term + 'yr',
             licQty, sub.unit_price_inr, 'Recurring');
-          cmsLine(d.cms_vendor + '-custom', 'CMS Customization', 1,
+          if (d.cms_customization) cmsLine(d.cms_vendor + '-custom', 'CMS Customization', 1,
             Number(d.cms_customization_price) || 0, 'Based on scope of customization');
         }
       }
@@ -15395,6 +15406,8 @@
         cms_vendor: 'None',             // BrightSign|Korbyt|Pickcel|None
         cms_deployment_mode: '',        // 'local' | 'cloud'
         cms_term: 0,                    // 1..5 years
+        cms_customization: false,      // v2.24.0 C4 - opt-in: render the customization line
+        custom_integration: false,     // v2.24.0 C1 - bespoke integration forces CMS
         cms_customization_price: 0,    // v2.2.0 — manual result-page line; 0 = pending scope
         line_discounts: {},            // v2.2.0 — per-line disc% by SKU (result-page inline edit)
         // advanced (cart) mode
@@ -15586,6 +15599,12 @@
         // way (raw_submission only; no DDL). Without this, reopening a deal
         // would re-seed it to 0 and silently drop the priced line on resave.
         if (raw.cms_customization_price != null) w.cms_customization_price = Number(raw.cms_customization_price) || 0;
+        // v2.24.0 C1/C4 - round-trip the integration flag + the opt-in customization
+        // toggle. Legacy deals carrying a non-zero customization price seed the toggle
+        // ON so resave keeps the priced line.
+        if (raw.custom_integration != null) w.custom_integration = !!raw.custom_integration;
+        if (raw.cms_customization != null) w.cms_customization = !!raw.cms_customization;
+        else if (Number(raw.cms_customization_price) > 0) w.cms_customization = true;
         // v2.2.0 — per-line disc% map round-trips via raw_submission the
         // same way (buildSavePayload's raw catch-all sweeps it on save).
         if (raw.line_discounts && typeof raw.line_discounts === 'object') w.line_discounts = raw.line_discounts;
@@ -25207,22 +25226,13 @@ function DSH_CSS(){ return '<style>'+[
       // v2.0.0 — guided Configure page (spec p.1): Substep 1 = player quantity
       // (indoor/outdoor steppers; deployment type is now DERIVED from the two
       // quantities — the engine already keys segments off qty_indoor/qty_outdoor)
-      // + budget tier. Substep 2 = technical spec, gaining the NEW content-type
+      // Substep 2 = technical spec, gaining the NEW content-type
       // field. Values 'av'/'video'/'audio' are deliberate: buildBsSpec routes
       // audio-only via content.indexOf('audio'), so "av" must NOT contain the
       // substring "audio" or Audio+Video deals would all get AU335.
       const indoor  = Number(d.qty_indoor)  || 0;
       const outdoor = Number(d.qty_outdoor) || 0;
       const total   = indoor + outdoor;
-      const tiers = [
-        { value: 'Basic',       label: 'Basic',       series: 'LS SERIES' },
-        { value: 'Standard',    label: 'Standard',    series: 'HD SERIES' },
-        { value: 'Performance', label: 'Performance', series: 'XD SERIES' },
-        { value: 'Advance',     label: 'Advance',     series: 'XT SERIES' },
-        { value: 'Flagship',    label: 'Flagship',    series: 'XC SERIES' }
-      ];
-      const cur = d.budget_tier || 'Standard';
-      if (!d.budget_tier) d.budget_tier = cur;
       const content = d.content || 'av';
       if (!d.content) d.content = content;
       const audioOnly = content === 'audio';
@@ -25254,14 +25264,11 @@ function DSH_CSS(){ return '<style>'+[
           toggleRow('gpio',    'GPIO',                'Buttons, sensors, relays',                !!d.gpio);
 
       return '' +
-        sectionHeader(3, 'Configure', 'Quantities, budget and the technical spec. CMS-only deals are fine \u2014 leave both quantities at 0.') +
+        sectionHeader(3, 'Configure', 'Quantities and the technical spec. CMS-only deals are fine \u2014 leave both quantities at 0.') +
         fieldCaption('Player quantity', true) +
         stepperRow('qty_indoor',  'Indoor players',  'Standard signage',          indoor,  { min: 0, max: 200 }) +
         stepperRow('qty_outdoor', 'Outdoor players', 'Outdoor deployment', outdoor, { min: 0, max: 200 }) +
         '<p class="help" style="font-weight:600;">' + total + ' player' + (total === 1 ? '' : 's') + ' total</p>' +
-        '<div class="sp-16"></div>' +
-        fieldCaption('Budget tier', true) +
-        tierSlider('budget_tier', cur, tiers) +
         '<div class="sp-16"></div>' +
         fieldCaption('Content type', true) +
         iconCardGroup('content', content, [
@@ -25839,8 +25846,18 @@ function DSH_CSS(){ return '<style>'+[
       // seed licenses = player total on first vendor pick.
       if (cmsChosen && !(Number(d.cms_qty) > 0) && total > 0) d.cms_qty = total;
 
+      // v2.24.0 C2/C3 - CMS mandatory when ANY trigger holds; banner names them.
+      const cmsReasons = [];
+      if (total >= 25)                       cmsReasons.push('25 or more players');
+      if (d.custom_integration)              cmsReasons.push('custom integration');
+      if (d.cms_deployment_mode === 'cloud') cmsReasons.push('cloud deployment');
+      const cmsMandatory = cmsReasons.length > 0;
+
       let cms = sectionHeader(5, 'Content management', 'Set the subscription terms, then pick a CMS brand \u2014 or choose None for a player-only deal.') +
-        (total > 25 ? '<p class="help"><strong>A CMS is required for more than 25 players.</strong></p>' : '');
+        toggleRow('custom_integration', 'Custom integration required', 'Bespoke API, middleware or SI work; forces a CMS', !!d.custom_integration) +
+        (cmsMandatory
+          ? '<p class="help"><strong>A CMS is required (' + esc(cmsReasons.join(', ')) + ').' + (cmsChosen ? '' : ' Pick a brand below.') + '</strong></p>'
+          : '');
 
       // ---- TOP: subscription block (dimmed when None) ----
       cms += '<div class="cms-subblock' + (cmsChosen ? '' : ' is-disabled') + '">' +
@@ -25858,6 +25875,7 @@ function DSH_CSS(){ return '<style>'+[
         ]) +
         stepperRow('cms_qty', 'Licenses', 'Defaults to one per player (' + total + '). Lower it if you need fewer seats.',
           Number(d.cms_qty) || 0, { min: 0, max: 500 }) +
+        toggleRow('cms_customization', 'Add customization line', 'Scope-based line, priced on the quote when known', !!d.cms_customization) +
         (cmsChosen ? '' : '<div class="cms-subblock-note">Not needed for a player-only deal \u2014 pick a CMS brand below to configure.</div>') +
       '</div>';
 
@@ -25934,7 +25952,6 @@ function DSH_CSS(){ return '<style>'+[
                            (Number(d.qty_indoor) > 0 && Number(d.qty_outdoor) > 0 ? ' + ' : '') +
                            (Number(d.qty_outdoor) > 0 ? d.qty_outdoor + ' outdoor' : '');
         add('Players', (envSummary || 'none (CMS-only)') + ' \u00b7 ' + total + ' total', 3);
-        if (d.budget_tier) add('Budget tier', d.budget_tier, 3);
         add('Content', d.content === 'audio' ? 'Audio only' : d.content === 'video' ? 'Video only' : 'Audio + Video', 3);
         if (d.content !== 'audio') {
           add('Resolution', d.resolution || 'FHD', 3);
@@ -26098,15 +26115,23 @@ function DSH_CSS(){ return '<style>'+[
       return pills;
     }
 
-    function renderHeroCard(d, segKey, seg, qty, showPrices, ctx) {
-      let pick = (segKey === 'indoor' ? d.pickIndoor : d.pickOutdoor) || seg.recommendedId;
+    // v2.23.0 B4 — resolve the model a segment currently shows (recommended, or
+    // the rung the user stepped to). 'both'/'indoor' read pickIndoor; 'outdoor'
+    // reads pickOutdoor. Shared by the hero renderer and the merge gate.
+    function bsResolvePick(d, segKey, seg) {
+      let pick = (segKey === 'outdoor' ? d.pickOutdoor : d.pickIndoor) || seg.recommendedId;
       if (!seg.ladder.some(function (p) { return p.model_id === pick; })) pick = seg.recommendedId;
+      return pick;
+    }
+
+    function renderHeroCard(d, segKey, seg, qty, showPrices, ctx) {
+      const pick = bsResolvePick(d, segKey, seg);
       const ids = seg.ladder.map(function (p) { return p.model_id; });
       const idx = Math.max(0, ids.indexOf(pick));
       const p = seg.ladder[idx] || {};
       const isReco = p.model_id === seg.recommendedId;
       const badge = isReco ? _bsPill('Recommended') : _bsPill('Selected');
-      const label = segKey === 'indoor' ? 'Indoor player' : 'Outdoor player';
+      const label = segKey === 'indoor' ? 'Indoor player' : segKey === 'outdoor' ? 'Outdoor player' : 'Indoor + Outdoor';
       const pills = _heroPills(p).map(function (t) {
         return '<span class="hero-pill">' + esc(t) + '</span>';
       }).join('');
@@ -26254,15 +26279,21 @@ function DSH_CSS(){ return '<style>'+[
           }
           return '<div class="banner warn">' + esc(why) + '</div>';
         };
-        if (segs.indoor && segs.indoor.ladder && segs.indoor.ladder.length && (Number(d.qty_indoor) || 0) > 0) {
-          html += renderHeroCard(d, 'indoor', segs.indoor, Number(d.qty_indoor) || 0, showPrices, ctx);
+        // v2.23.0 B4 — both deployments resolving to the same model collapse to
+        // one hero (qty summed, tagged Indoor + Outdoor). They split only when
+        // the user steps one ladder to a different rung.
+        const _qIn = Number(d.qty_indoor) || 0, _qOut = Number(d.qty_outdoor) || 0;
+        const _inOk  = !!(segs.indoor  && segs.indoor.ladder  && segs.indoor.ladder.length  && _qIn  > 0);
+        const _outOk = !!(segs.outdoor && segs.outdoor.ladder && segs.outdoor.ladder.length && _qOut > 0);
+        const _pkIn  = _inOk  ? bsResolvePick(d, 'indoor',  segs.indoor)  : null;
+        const _pkOut = _outOk ? bsResolvePick(d, 'outdoor', segs.outdoor) : null;
+        if (_inOk && _outOk && _pkIn === _pkOut) {
+          html += renderHeroCard(d, 'both', segs.indoor, _qIn + _qOut, showPrices, ctx);
         } else {
-          html += segNoMatch('indoor', segs.indoor, Number(d.qty_indoor) || 0);
-        }
-        if (segs.outdoor && segs.outdoor.ladder && segs.outdoor.ladder.length && (Number(d.qty_outdoor) || 0) > 0) {
-          html += renderHeroCard(d, 'outdoor', segs.outdoor, Number(d.qty_outdoor) || 0, showPrices, ctx);
-        } else {
-          html += segNoMatch('outdoor', segs.outdoor, Number(d.qty_outdoor) || 0);
+          if (_inOk)  html += renderHeroCard(d, 'indoor',  segs.indoor,  _qIn,  showPrices, ctx);
+          else        html += segNoMatch('indoor',  segs.indoor,  _qIn);
+          if (_outOk) html += renderHeroCard(d, 'outdoor', segs.outdoor, _qOut, showPrices, ctx);
+          else        html += segNoMatch('outdoor', segs.outdoor, _qOut);
         }
       }
       const lines = STORE.bomLines(d);
@@ -26704,15 +26735,15 @@ function DSH_CSS(){ return '<style>'+[
           const ctx = actEl.getAttribute('data-ctx') || 'wiz';
           const d = (ctx === 'sd') ? _savedDealData : wizardData;
           if (!d || !seg || !dir) return;
-          const segObj = d.reco && d.reco.segments && d.reco.segments[seg];
+          const segObj = d.reco && d.reco.segments && d.reco.segments[seg === 'outdoor' ? 'outdoor' : 'indoor'];
           if (!segObj || !Array.isArray(segObj.ladder) || !segObj.ladder.length) return;
           const ids = segObj.ladder.map(function (p) { return p.model_id; });
-          const key = seg === 'indoor' ? 'pickIndoor' : 'pickOutdoor';
-          let idx = ids.indexOf(d[key] || segObj.recommendedId);
+          const keys = seg === 'both' ? ['pickIndoor', 'pickOutdoor'] : [seg === 'outdoor' ? 'pickOutdoor' : 'pickIndoor'];
+          let idx = ids.indexOf(d[keys[0]] || segObj.recommendedId);
           if (idx === -1) idx = Math.max(0, ids.indexOf(segObj.recommendedId));
           const next = Math.max(0, Math.min(ids.length - 1, idx + dir));
           if (next === idx) return;
-          d[key] = ids[next];
+          keys.forEach(function (k) { d[k] = ids[next]; });
           if (ctx === 'sd') { scheduleAutosave(); _rerenderSavedDealPreservingScroll(); }
           else { saveDraft(); rerenderPreservingScroll(); }
           return;
@@ -29892,10 +29923,12 @@ function DSH_CSS(){ return '<style>'+[
         const hasCms = !!(d.cms_vendor && d.cms_vendor !== 'None') ||
           (Array.isArray(d.advancedAccessories) ? d.advancedAccessories : [])
             .some(function (a) { return a.kind === 'cms'; });
-        if (playerQty > 25 && !hasCms) {
+        const cmsMandatory = playerQty >= 25 || d.cms_deployment_mode === 'cloud' || !!d.custom_integration;
+        if (cmsMandatory && !hasCms) {
           UI.saveDraft();
           UI.renderWizard();
-          UI.toast('CMS is mandatory for more than 25 players \u2014 pick one in the Content management step.', 'err');
+          const cmsWhy = playerQty >= 25 ? '25 or more players' : (d.custom_integration ? 'custom integration' : 'cloud deployment');
+          UI.toast('CMS is required (' + cmsWhy + ') \u2014 pick one in the Content management step.', 'err');
           return;
         }
         d.reco = null;  // advanced lines come from the cart via STORE.bomLines
@@ -29987,8 +30020,6 @@ function DSH_CSS(){ return '<style>'+[
        STORE.getPricebook(); pricing is applied later by the BOM layer.
        ============================================================ */
 
-    // Budget tier -> catalog model_group (budget = lowest priority).
-    const BS_TIER_GROUP = { Basic: 'LS', Standard: 'HD', Performance: 'XD', Advance: 'XT', Flagship: 'XC' };
 
     // Resolution request -> the token that must appear in res_csv.
     function bsResToken(r) {
@@ -30023,6 +30054,7 @@ function DSH_CSS(){ return '<style>'+[
         qtyOutdoor:       Number(d.qty_outdoor) || 0,
         cmsVendor:        d.cms_vendor || 'None',
         cmsMode:          d.cms_deployment_mode || '',
+        customIntegration: truthy(d.custom_integration),
         cmsTerm:          Number(d.cms_term) || 0
       };
     }
@@ -30057,17 +30089,15 @@ function DSH_CSS(){ return '<style>'+[
       if (spec.gpio)            pool = pool.filter(function (p) { return p.gpio === true; });
       if (spec.ssd)             pool = pool.filter(function (p) { return p.ssd_capable === true; });
       if (spec.power === 'poe') pool = pool.filter(function (p) { return p.poe === true; });
-      if (segment === 'outdoor') pool = pool.filter(function (p) { return p.chassis === 'aluminium' || p.chassis === 'metal'; });
 
       if (!pool.length) return { error: 'no-match', ladder: [] };
 
       // ---- Ladder: cheapest -> priciest. NOT affected by budget. ----
       const ladder = pool.slice().sort(function (a, b) { return (Number(a.rank) || 0) - (Number(b.rank) || 0); });
 
-      // ---- Budget = lowest priority: only picks the recommended rung. ----
-      const tierGroup = BS_TIER_GROUP[spec.budgetTier] || null;
-      const inTier = tierGroup ? ladder.filter(function (p) { return p.model_group === tierGroup; }) : [];
-      const recommended = inTier.length ? inTier[0] : ladder[0];
+      // ---- Price-optimal pick: cheapest tech-valid model (v2.23.0 B2).
+      //      Budget tier removed; the hero stepper handles premium step-up. ----
+      const recommended = ladder[0];
 
       return { ladder: ladder, recommendedId: recommended.model_id };
     }
@@ -30092,8 +30122,10 @@ function DSH_CSS(){ return '<style>'+[
       if (totalPlayers <= 0 && !cmsLic) error = 'Add player quantities \u2014 or make it a CMS-only deal (pick a CMS and set licenses on step 5).';
       if (indoor  && indoor.error  === 'no-match') error = (error ? error + ' ' : '') + 'No indoor player meets the spec.';
       if (outdoor && outdoor.error === 'no-match') error = (error ? error + ' ' : '') + 'No outdoor player meets the spec.';
-      if (totalPlayers > 25 && (!spec.cmsVendor || spec.cmsVendor === 'None')) {
-        error = (error ? error + ' ' : '') + 'CMS is mandatory for more than 25 players \u2014 pick a CMS vendor.';
+      const cmsMandatory = totalPlayers >= 25 || spec.cmsMode === 'cloud' || spec.customIntegration;
+      if (cmsMandatory && (!spec.cmsVendor || spec.cmsVendor === 'None')) {
+        const cmsWhy = totalPlayers >= 25 ? '25 or more players' : (spec.customIntegration ? 'custom integration' : 'cloud deployment');
+        error = (error ? error + ' ' : '') + 'CMS is required (' + cmsWhy + ') \u2014 pick a CMS vendor.';
       }
 
       return {
