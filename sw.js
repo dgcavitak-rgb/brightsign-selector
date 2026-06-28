@@ -1,4 +1,22 @@
 // BrightSign Selector — Service Worker
+//   v2.14.1 — CACHE_NAME bump: dead tvONE-fork removal (phase 2 — code grep-zero).
+//   Removed the last executable CALICO/CORIO/MV/tvONE legacy tokens: stripped
+//   solutionType/calico_*/mv_*/corio_*/corio_canvases from STRUCTURAL_FIELDS and
+//   the calico_inputs/outputs maps from HUMAN_LABELS (sx + LED retained); rewrote
+//   __smoke / __smokeUI / __smokeStore / __smokeExportAsync / __smokeIntegration
+//   fixtures to BS shapes (Player/HD1026, content/resolution → raw_submission, BS
+//   series dashboard filters); removed dead step-validation + reco.cards/chassis
+//   probes and fixed two dangling refs (calicoMock, defaultWizard().sx_data);
+//   renamed live CSS/markup .mark-tvone→.mark-brand, .login-tvone-logo→
+//   .login-brand-logo, repurposed .is-tvone→.is-brightsign (BrightSign lead-source
+//   pill now renders). Only changelog/doc prose retains the legacy words. No
+//   functional change to BrightSign paths. __smokeUI runs clean (no throw).
+//   v2.14.0 — CACHE_NAME bump: dead tvONE-fork removal (phase 1). Removed dead
+//   family handlers/renders (solution-pick/vp, mv-input*, corio-audio, renderStep3Mv,
+//   renderSavedDealIoSection, familyLabel), __calico_led/__corio_canvas stepper
+//   branches, vestigial product-mix + family-count dashboard widgets, calico/mv/corio
+//   CATALOG data objects + mocks, and the smoke checks that tested only dead data.
+//   sx + LED retained. No functional change to BrightSign paths. (~850 lines.)
 // v2.13.3 (2026-06-27)
 //
 // Changelog (BrightSign):
@@ -238,7 +256,7 @@
 // the activate handler. Promotes hard-refresh semantics for users with the
 // PWA installed.
 
-const CACHE_NAME = 'brightsign-v2.13.3';
+const CACHE_NAME = 'brightsign-v2.20.0';
 const SHELL_URLS = [
   './',
   './index.html'
