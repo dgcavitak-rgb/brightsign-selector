@@ -7034,7 +7034,7 @@
       display: flex; gap: 6px;
       overflow-x: auto;
       padding-bottom: 4px;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
       scrollbar-width: none;
       -ms-overflow-style: none;
     }
@@ -7230,7 +7230,7 @@
       display: flex; flex-wrap: nowrap; gap: 8px;
       grid-template-columns: none;
       overflow-x: auto; -webkit-overflow-scrolling: touch;
-      margin: 0 0 14px; padding-bottom: 2px;
+      margin: 0 0 10px; padding-bottom: 2px;
       scrollbar-width: none;
     }
     .hist-summary.hist-summary-top::-webkit-scrollbar { display: none; }
@@ -7241,7 +7241,7 @@
     .page-header.page-header-tight { margin-bottom: 14px; }
     .hist-toolbar {
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-      margin: 0 0 12px;
+      margin: 0 0 10px;
     }
     .hist-toolbar .hist-sort-select { padding: 6px 26px 6px 11px; font-size: 12px; }
     .hist-toolbar .hist-meta {
@@ -9201,7 +9201,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.20.0',
+      version: 'brightsign-v2.21.0',
       build_date: '2026-06-28',
       constants,
       sx
@@ -25677,7 +25677,7 @@ function DSH_CSS(){ return '<style>'+[
         // Clamp any previously-set qty that now exceeds the cap (e.g. user
         // lowered total players after setting a higher Wi-Fi count).
         if ((Number(d.wifi_qty) || 0) > capMax) d.wifi_qty = capMax;
-        html += stepperRow('wifi_qty', 'Wi-Fi modules', '0 = one per player (' + total + ') \u00b7 max ' + capMax, Number(d.wifi_qty) || 0, { max: capMax });
+        html += stepperRow('wifi_qty', 'Wi-Fi modules', '0 = auto (one per player, ' + total + '). Or enter an exact qty, max ' + capMax + '.', Number(d.wifi_qty) || 0, { max: capMax });
       }
       html += toggleRow('ssd', 'SSD storage', 'M.2 SSD for local media (XD / XT / XC only)', !!d.ssd);
       if (d.ssd) {
@@ -25690,7 +25690,7 @@ function DSH_CSS(){ return '<style>'+[
           { value: '1024GB', label: '1 TB' }
         ]);
         if ((Number(d.ssd_qty) || 0) > capMax) d.ssd_qty = capMax;
-        html += stepperRow('ssd_qty', 'SSD drives', '0 = one per player (' + total + ') \u00b7 max ' + capMax, Number(d.ssd_qty) || 0, { max: capMax });
+        html += stepperRow('ssd_qty', 'SSD drives', '0 = auto (one per player, ' + total + '). Or enter an exact qty, max ' + capMax + '.', Number(d.ssd_qty) || 0, { max: capMax });
       }
       return html;
     }
@@ -25861,7 +25861,7 @@ function DSH_CSS(){ return '<style>'+[
           { value: '4', label: '4 yr' },
           { value: '5', label: '5 yr' }
         ]) +
-        stepperRow('cms_qty', 'Licenses', 'Defaulted to player count (' + total + ')',
+        stepperRow('cms_qty', 'Licenses', 'Defaults to one per player (' + total + '). Lower it if you need fewer seats.',
           Number(d.cms_qty) || 0, { min: 0, max: 500 }) +
         (cmsChosen ? '' : '<div class="cms-subblock-note">Not needed for a player-only deal \u2014 pick a CMS brand below to configure.</div>') +
       '</div>';
@@ -29100,8 +29100,9 @@ function DSH_CSS(){ return '<style>'+[
               '</select></div>' +
           '</div>' +
           '<div class="pp-frow"><label for="fu-deal">Link a deal <span class="pp-opt">optional</span></label>' +
-            '<input id="fu-deal" type="text" list="fu-deal-list" value="' + esc(dealVal) + '" placeholder="Deal ref, e.g. BS-1234" autocomplete="off">' +
-            '<datalist id="fu-deal-list"></datalist></div>' +
+            '<select id="fu-deal"><option value="">Not linked</option>' +
+              (dealVal ? '<option value="' + esc(dealVal) + '" selected>' + esc(dealVal) + '</option>' : '') +
+            '</select></div>' +
           (existing
             ? '<button type="button" class="fu-delete-link" data-action="fu-delete" data-id="' + esc(existing.id) + '">Delete this follow-up</button>'
             : '') +
@@ -29112,14 +29113,24 @@ function DSH_CSS(){ return '<style>'+[
       setTimeout(function () { const f = $('fu-title'); if (f) f.focus(); }, 60);
       if (STORE.listDeals) {
         STORE.listDeals({ limit: 500 }).then(function (deals) {
-          const dl = $('fu-deal-list');
-          if (!dl || !Array.isArray(deals)) return;
-          dl.innerHTML = deals.map(function (d) {
+          const sel = $('fu-deal');
+          if (!sel || !Array.isArray(deals)) return;
+          const opts = ['<option value="">Not linked</option>'];
+          deals.forEach(function (d) {
             const ref = d.display_ref || d.ref || '';
-            if (!ref) return '';
-            const lbl = d.project || d.customer_name || '';
-            return '<option value="' + esc(ref) + '">' + esc(lbl) + '</option>';
-          }).join('');
+            if (!ref) return;
+            const nm = d.project || d.customer_name || ref;
+            opts.push('<option value="' + esc(ref) + '">' + esc(nm) + ' \u00b7 ' + esc(ref) + '</option>');
+          });
+          sel.innerHTML = opts.join('');
+          if (dealVal) {
+            sel.value = dealVal;
+            if (sel.value !== dealVal) {
+              const o = document.createElement('option');
+              o.value = dealVal; o.textContent = dealVal; o.selected = true;
+              sel.appendChild(o);
+            }
+          }
         }).catch(function () {});
       }
     }
