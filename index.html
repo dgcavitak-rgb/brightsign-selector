@@ -9201,7 +9201,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.21.0',
+      version: 'brightsign-v2.22.0',
       build_date: '2026-06-28',
       constants,
       sx
@@ -13024,9 +13024,9 @@
         || 'EXPORT.VAPID_PUBLIC_KEY not defined');
 
     /* ---------- v27.8.2 Sprint 1 UX polish ---------- */
-    check('v27.8.2 W1: defaultWizard close_month is YYYY-MM (today+60d)',
+    check('v2.22.0 A4: defaultWizard close_month starts empty (no pre-fill)',
       () => {
-        // Indirect: we expect default to be a non-empty YYYY-MM string.
+        // A4: default close_month is empty now (user makes a real pick).
         // Can't easily call defaultWizard from here (closure-scoped); spot
         // check via source-text inspection of the IIFE-internal default.
         const src = (typeof UI.showWizard === 'function')
@@ -15362,11 +15362,6 @@
     /* ---------- State ---------- */
 
     function defaultWizard() {
-      const _defaultClose = (function () {
-        const dt = new Date();
-        dt.setDate(dt.getDate() + 60);
-        return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
-      })();
       return {
         step: 1,
         mode: '',                       // '' until path chosen at Step 2 | 'guided' | 'advanced'
@@ -15376,7 +15371,7 @@
         venue_type: '', city: '', state: '',
         stage: 'Qualified', lead_source: '',
         sales_person_id: '', presales_person_id: '',
-        close_month: _defaultClose,
+        close_month: '',
         contact_name: '', contact_phone: '', contact_email: '',
         internal_notes: '', external_notes: '',
         // project context
@@ -16978,7 +16973,7 @@
             '<h3>' + (isEdit ? 'Edit user' : 'New user') + '</h3><span class="chip-v3 chip-accent">SUPER</span>' +
           '</div>' +
           '<div class="field-v3"><label>Username *</label>' +
-            '<input class="input-v3" id="ue-username" type="text" maxlength="40" autocomplete="off" value="' + esc(curUn) + '"' + (isEdit ? ' disabled' : ' placeholder="e.g. arvind"') + '>' +
+            '<input class="input-v3" id="ue-username" type="text" maxlength="40" autocomplete="off" value="' + esc(curUn) + '"' + (isEdit ? ' disabled' : ' placeholder="username"') + '>' +
             (isEdit ? '<div style="font-size:11px;color:var(--ink-soft);margin-top:4px">Username can\'t be changed.</div>' : '') +
           '</div>' +
           '<div class="field-v3"><label>Full name *</label>' +
@@ -17372,7 +17367,7 @@
           '<p style="font-size:13px;color:var(--ink-soft);margin:0 0 12px">Your request goes to a Super user for review. You\'ll receive a temporary password by email once approved.</p>' +
           '<div class="field-v3">' +
             '<label>Username</label>' +
-            '<input type="text" class="input-v3" id="rp-username" autocomplete="username" placeholder="your.username">' +
+            '<input type="text" class="input-v3" id="rp-username" autocomplete="username" placeholder="username">' +
           '</div>' +
           '<div class="field-v3">' +
             '<label>Reason <span style="color:var(--ink-faint);font-weight:400">(optional)</span></label>' +
@@ -17746,7 +17741,7 @@
                 '<img class="login-cavitak-logo" src="' + EXPORT.LOGO_CAVITAK_DURI + '" alt="Cavitak Marketing" />' +
               '</div>' +
               '<h1 class="login-title">BrightSign Product Selector</h1>' +
-              '<div class="login-subtitle">Cavitak Marketing \u00b7 sign in to continue</div>' +
+              '<div class="login-subtitle">Cavitak Marketing \u00b7 BrightSign India Distributor</div>' +
             '</div>' +
             inner +
             '<div class="login-foot">' +
@@ -17766,7 +17761,7 @@
               '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="login-input-icon"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0116 0v1"/></svg>' +
               '<input class="input-v3 input-v3-iconed" id="i-username" name="username" type="text" ' +
                    'autocomplete="username" autocapitalize="off" autocorrect="off" ' +
-                   'spellcheck="false" placeholder="your.username" required>' +
+                   'spellcheck="false" placeholder="username" required>' +
             '</div>' +
             '<div class="err" hidden></div>' +
           '</div>' +
@@ -24283,8 +24278,8 @@ function DSH_CSS(){ return '<style>'+[
           '<h3 class="h3">Closure</h3>' +
           sdField('close_month', 'Expected closure', deal.close_month, { type: 'month', help: 'Year-month, e.g. 2026-09' }) +
           '<h3 class="h3">Notes</h3>' +
-          sdTextarea('internal_notes', 'Internal notes', deal.internal_notes, { rows: 3, placeholder: 'Team-only \u2014 never in exports' }) +
-          sdTextarea('external_notes', 'External notes', deal.external_notes, { rows: 3, placeholder: 'Shown in customer exports' }) +
+          sdTextarea('internal_notes', 'Internal notes', deal.internal_notes, { rows: 3, placeholder: 'Team-only \u2014 never in customer exports' }) +
+          sdTextarea('external_notes', 'External notes', deal.external_notes, { rows: 3, placeholder: 'Customer-facing \u2014 shown in exports' }) +
         '</form>';
 
       // ---- v2.2.0: User-inputs summary (shared rows w/ Step-6 Review) ----
@@ -25000,8 +24995,8 @@ function DSH_CSS(){ return '<style>'+[
           field('close_month', 'Expected closure', d.close_month, { required: true, type: 'month', help: 'Year-month, e.g. 2026-09' }) +
           '<div class="sp-16"></div>' +
           fieldCaption('Notes') +
-          textareaField('internal_notes', 'Internal notes', d.internal_notes, { rows: 3, placeholder: 'Team-only \u2014 never in exports' }) +
-          textareaField('external_notes', 'External notes', d.external_notes, { rows: 3, placeholder: 'Shown in customer exports' }) +
+          textareaField('internal_notes', 'Internal notes', d.internal_notes, { rows: 3, placeholder: 'Team-only \u2014 never in customer exports' }) +
+          textareaField('external_notes', 'External notes', d.external_notes, { rows: 3, placeholder: 'Customer-facing \u2014 shown in exports' }) +
         '</form>';
     }
 
@@ -25262,7 +25257,7 @@ function DSH_CSS(){ return '<style>'+[
         sectionHeader(3, 'Configure', 'Quantities, budget and the technical spec. CMS-only deals are fine \u2014 leave both quantities at 0.') +
         fieldCaption('Player quantity', true) +
         stepperRow('qty_indoor',  'Indoor players',  'Standard signage',          indoor,  { min: 0, max: 200 }) +
-        stepperRow('qty_outdoor', 'Outdoor players', 'Aluminium / metal chassis', outdoor, { min: 0, max: 200 }) +
+        stepperRow('qty_outdoor', 'Outdoor players', 'Outdoor deployment', outdoor, { min: 0, max: 200 }) +
         '<p class="help" style="font-weight:600;">' + total + ' player' + (total === 1 ? '' : 's') + ' total</p>' +
         '<div class="sp-16"></div>' +
         fieldCaption('Budget tier', true) +
@@ -26082,7 +26077,7 @@ function DSH_CSS(){ return '<style>'+[
 
     function _heroPills(c) {
       // Feature pills straight off the catalog row carried by the ladder:
-      // res_csv · outputs · poe · hdmi_in · touch · gpio · chassis.
+      // res_csv · outputs · poe · hdmi_in · touch · gpio.
       // (No SSD pill — ssd_capable tri-state is an OPEN engine decision.)
       const yes = function (v) {
         if (v === true) return true;
@@ -26100,8 +26095,6 @@ function DSH_CSS(){ return '<style>'+[
       if (yes(c.hdmi_in)) pills.push('HDMI in');
       if (yes(c.touch))   pills.push('Touch');
       if (yes(c.gpio))    pills.push('GPIO');
-      const ch = String(c.chassis || '').trim();
-      if (ch) pills.push(ch.charAt(0).toUpperCase() + ch.slice(1) + ' chassis');
       return pills;
     }
 
