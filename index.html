@@ -2070,6 +2070,9 @@
       border-top: 1px solid var(--c-border); z-index: 5;
       box-shadow: 0 -6px 16px -10px rgba(0,0,0,0.25); }
     .wiz-actionbar .grow { flex: 1; }
+    /* v2.25.0 D1 - dock the action bar at the bottom even when the step is short. */
+    .v273-page.wiz-page { display: flex; flex-direction: column; min-height: 100%; padding-bottom: 0; }
+    .v273-page.wiz-page > #wiz-step-body { flex: 1 1 auto; min-height: 0; }
     .wiz-summary { display: flex; flex-direction: column; gap: 10px; }
     .wiz-summary .sum-row { display: flex; justify-content: space-between;
       gap: 12px; padding: 8px 0;
@@ -9201,7 +9204,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.24.0',
+      version: 'brightsign-v2.25.0',
       build_date: '2026-06-28',
       constants,
       sx
@@ -24467,7 +24470,7 @@ function DSH_CSS(){ return '<style>'+[
       const d = wizardData;
       const visibleSteps = computeVisibleSteps(d);
       setRoot(
-        '<div class="v273-page">' +
+        '<div class="v273-page wiz-page">' +
           renderWizStepper(d.step, visibleSteps) +
           '<div id="wiz-step-body">' + renderStepBody(d) + '</div>' +
           renderWizActions(d) +
@@ -25001,7 +25004,7 @@ function DSH_CSS(){ return '<style>'+[
           '<div class="sp-16"></div>' +
           fieldCaption('Stage & owners') +
           selectField('stage', 'Stage', d.stage, STAGES, { required: true }) +
-          selectField('lead_source', 'Lead origin', d.lead_source, LEAD_SOURCES, { placeholder: '\u2014 select \u2014', required: true }) +
+          pillGroup('lead_source', 'Lead origin', d.lead_source || '', LEAD_SOURCES, { required: true, error: d.errors && d.errors.lead_source }) +
           selectField('sales_person_id',    'Sales person',    d.sales_person_id,    SALES_TEAM,    { placeholder: '\u2014 select \u2014', required: true }) +
           selectField('presales_person_id', 'Presales person', d.presales_person_id, PRESALES_TEAM, { placeholder: '\u2014 select \u2014', required: true }) +
           '<div class="sp-16"></div>' +
@@ -25036,10 +25039,11 @@ function DSH_CSS(){ return '<style>'+[
           'data-action="pill-set" data-key="' + esc(key) + '" data-val="' + esc(v) + '">' +
           esc(l) + '</button>';
       }).join('');
-      return '<div class="field pill-field" id="f-' + esc(key) + '">' +
-        '<label>' + esc(label) + '</label>' +
+      return '<div class="field pill-field' + (opts.error ? ' has-error' : '') + '" id="f-' + esc(key) + '">' +
+        '<label>' + esc(label) + (opts.required ? ' *' : '') + '</label>' +
         '<div class="pill-group">' + pills + '</div>' +
         (opts.sub ? '<div class="pill-sub">' + esc(opts.sub) + '</div>' : '') +
+        (opts.error ? '<div class="err">' + esc(opts.error) + '</div>' : '') +
       '</div>';
     }
 
@@ -25131,11 +25135,13 @@ function DSH_CSS(){ return '<style>'+[
         '</div>' +
         '<div class="stepper">' +
           '<button type="button" data-action="step-dec" data-ns="' + esc(ns) + '" data-key="' + esc(key) + '"' +
+            ' data-min="' + min + '" data-max="' + max + '"' +
             (value <= min ? ' disabled' : '') + '>\u2212</button>' +
           '<input type="text" inputmode="numeric" value="' + value + '"' +
             ' data-action="step-set" data-ns="' + esc(ns) + '" data-key="' + esc(key) + '"' +
             ' aria-label="' + esc(name) + ' count">' +
           '<button type="button" data-action="step-inc" data-ns="' + esc(ns) + '" data-key="' + esc(key) + '"' +
+            ' data-min="' + min + '" data-max="' + max + '"' +
             (value >= max ? ' disabled' : '') + '>+</button>' +
         '</div>' +
       '</div>';
@@ -25268,7 +25274,7 @@ function DSH_CSS(){ return '<style>'+[
         fieldCaption('Player quantity', true) +
         stepperRow('qty_indoor',  'Indoor players',  'Standard signage',          indoor,  { min: 0, max: 200 }) +
         stepperRow('qty_outdoor', 'Outdoor players', 'Outdoor deployment', outdoor, { min: 0, max: 200 }) +
-        '<p class="help" style="font-weight:600;">' + total + ' player' + (total === 1 ? '' : 's') + ' total</p>' +
+        '<p class="help" id="wiz-qty-total" style="font-weight:600;">' + total + ' player' + (total === 1 ? '' : 's') + ' total</p>' +
         '<div class="sp-16"></div>' +
         fieldCaption('Content type', true) +
         iconCardGroup('content', content, [
@@ -26580,6 +26586,7 @@ function DSH_CSS(){ return '<style>'+[
           const val = actEl.getAttribute('data-val');
           if (key) {
             wizardData[key] = val;
+            if (wizardData.errors) delete wizardData.errors[key];
             saveDraft();
             rerenderPreservingScroll();
           }
@@ -26671,21 +26678,37 @@ function DSH_CSS(){ return '<style>'+[
 
         // Stepper +/-
         if (action === 'step-inc' || action === 'step-dec') {
+          // v2.25.0 D2 - in-place quantity update: patch the input + button
+          // disabled states (and the step-3 player total) without a full
+          // re-render, so the steppers no longer flicker the whole wizard.
           const ns  = actEl.getAttribute('data-ns');
           const key = actEl.getAttribute('data-key');
-          if (ns) {
-            wizardData[ns][key] = (Number(wizardData[ns][key]) || 0) + (action === 'step-inc' ? 1 : -1);
-            if (wizardData[ns][key] < 0) wizardData[ns][key] = 0;
+          const min = Number(actEl.getAttribute('data-min')) || 0;
+          const maxAttr = actEl.getAttribute('data-max');
+          const max = (maxAttr === null || maxAttr === '') ? Infinity : Number(maxAttr);
+          const cur = ns ? (Number(wizardData[ns][key]) || 0) : (Number(wizardData[key]) || 0);
+          let next = cur + (action === 'step-inc' ? 1 : -1);
+          if (next < min) next = min;
+          if (next > max) next = max;
+          if (ns) wizardData[ns][key] = next; else wizardData[key] = next;
+          const stepper = actEl.closest('.stepper');
+          const inp = stepper && stepper.querySelector('input[data-action="step-set"]');
+          if (inp) {
+            inp.value = next;
+            const dec = stepper.querySelector('button[data-action="step-dec"]');
+            const inc = stepper.querySelector('button[data-action="step-inc"]');
+            if (dec) dec.disabled = next <= min;
+            if (inc) inc.disabled = next >= max;
+            const totalEl = document.getElementById('wiz-qty-total');
+            if (totalEl) {
+              const t = (Number(wizardData.qty_indoor) || 0) + (Number(wizardData.qty_outdoor) || 0);
+              totalEl.textContent = t + ' player' + (t === 1 ? '' : 's') + ' total';
+            }
+            saveDraft();
           } else {
-            // v1.4.1 — bare-key steppers (e.g. qty_indoor, qty_outdoor on the
-            // Deployment step) write directly to the top-level wizard field.
-            // Previously this branch was a no-op, so those steppers did nothing.
-            const min = 0; // v2.0.0 — qty_total retired; all steppers floor at 0
-            wizardData[key] = (Number(wizardData[key]) || 0) + (action === 'step-inc' ? 1 : -1);
-            if (wizardData[key] < min) wizardData[key] = min;
+            saveDraft();
+            rerenderPreservingScroll();
           }
-          saveDraft();
-          rerenderPreservingScroll();
           return;
         }
 
