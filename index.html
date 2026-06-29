@@ -2065,10 +2065,16 @@
     .wiz-actionbar { position: sticky;
       bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
       background: var(--c-bg);
-      margin: 16px -16px 0; padding: 12px 16px;
+      background: color-mix(in srgb, var(--c-bg) 85%, transparent);
+      -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+      margin: 16px -16px 0; padding: 13px 16px;
       display: flex; gap: 10px; align-items: center;
       border-top: 1px solid var(--c-border); z-index: 5;
-      box-shadow: 0 -6px 16px -10px rgba(0,0,0,0.25); }
+      border-radius: 14px 14px 0 0;
+      box-shadow: 0 -10px 30px -14px rgba(0,0,0,0.34); }
+    /* v2.28.0 - primary action gets a soft accent glow (hero-tech). */
+    .wiz-actionbar .btn:not(.btn-ghost):not(.btn-text) {
+      box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--c-accent) 60%, transparent); }
     .wiz-actionbar .grow { flex: 1; }
     /* v2.25.0 D1 - dock the action bar at the bottom even when the step is short. */
     .v273-page.wiz-page { display: flex; flex-direction: column; min-height: 100%; padding-bottom: 0; }
@@ -6768,9 +6774,8 @@
        page reads caption → control → space uniformly (Player quantity /
        Budget tier / Content type / Technical spec / Capabilities). */
     .pill-field > label {
-      display: block; font-size: 12px; font-weight: 700;
-      letter-spacing: 0.05em; text-transform: uppercase;
-      color: var(--c-fg-mute); margin: 0 0 10px;
+      display: block; font-size: 13px; font-weight: 600;
+      color: var(--c-fg-soft); margin: 0 0 6px;
     }
     .pill-group { display: flex; gap: 8px; flex-wrap: wrap; }
     .pill-btn {
@@ -9215,7 +9220,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.27.0',
+      version: 'brightsign-v2.29.0',
       build_date: '2026-06-29',
       constants,
       sx
@@ -25009,12 +25014,12 @@ function DSH_CSS(){ return '<style>'+[
           partyField('consultant', 'Consultant',   false) +
           '<div class="sp-16"></div>' +
           fieldCaption('Location') +
-          selectField('venue_type', 'Venue type', d.venue_type, VENUE_TYPES, { placeholder: '\u2014 select \u2014', required: true }) +
+          pillGroup('venue_type', 'Venue type', d.venue_type || '', VENUE_TYPES, { required: true, error: d.errors && d.errors.venue_type }) +
           field('city',  'City',  d.city,  { required: true, list: 'cities-list', placeholder: 'Start typing\u2026' }) +
           field('state', 'State', d.state, { required: true, placeholder: 'Auto-fills from city; type if City = Other' }) +
           '<div class="sp-16"></div>' +
           fieldCaption('Stage & owners') +
-          selectField('stage', 'Stage', d.stage, STAGES, { required: true }) +
+          pillGroup('stage', 'Stage', d.stage || '', STAGES, { required: true, error: d.errors && d.errors.stage }) +
           pillGroup('lead_source', 'Lead origin', d.lead_source || '', LEAD_SOURCES, { required: true, error: d.errors && d.errors.lead_source }) +
           selectField('sales_person_id',    'Sales person',    d.sales_person_id,    SALES_TEAM,    { placeholder: '\u2014 select \u2014', required: true }) +
           selectField('presales_person_id', 'Presales person', d.presales_person_id, PRESALES_TEAM, { placeholder: '\u2014 select \u2014', required: true }) +
