@@ -9220,7 +9220,7 @@
       // boot log). The calico/mv/corio/sx catalog data below is legacy tvONE
       // (retained for the dormant RECOMMEND engine + smoke harness); BS uses
       // the pricebook + recommendPlayer engine, not this object.
-      version: 'brightsign-v2.29.0',
+      version: 'brightsign-v2.30.0',
       build_date: '2026-06-29',
       constants,
       sx
@@ -25014,12 +25014,12 @@ function DSH_CSS(){ return '<style>'+[
           partyField('consultant', 'Consultant',   false) +
           '<div class="sp-16"></div>' +
           fieldCaption('Location') +
-          pillGroup('venue_type', 'Venue type', d.venue_type || '', VENUE_TYPES, { required: true, error: d.errors && d.errors.venue_type }) +
+          selectField('venue_type', 'Venue type', d.venue_type, VENUE_TYPES, { placeholder: '\u2014 select \u2014', required: true }) +
           field('city',  'City',  d.city,  { required: true, list: 'cities-list', placeholder: 'Start typing\u2026' }) +
           field('state', 'State', d.state, { required: true, placeholder: 'Auto-fills from city; type if City = Other' }) +
           '<div class="sp-16"></div>' +
           fieldCaption('Stage & owners') +
-          pillGroup('stage', 'Stage', d.stage || '', STAGES, { required: true, error: d.errors && d.errors.stage }) +
+          selectField('stage', 'Stage', d.stage, STAGES, { required: true }) +
           pillGroup('lead_source', 'Lead origin', d.lead_source || '', LEAD_SOURCES, { required: true, error: d.errors && d.errors.lead_source }) +
           selectField('sales_person_id',    'Sales person',    d.sales_person_id,    SALES_TEAM,    { placeholder: '\u2014 select \u2014', required: true }) +
           selectField('presales_person_id', 'Presales person', d.presales_person_id, PRESALES_TEAM, { placeholder: '\u2014 select \u2014', required: true }) +
